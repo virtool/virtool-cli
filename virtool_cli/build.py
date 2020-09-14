@@ -1,7 +1,6 @@
 import os
 import json
 import arrow
-import argparse
 
 OTU_KEYS = [
     "_id",
@@ -25,48 +24,8 @@ SEQUENCE_KEYS = [
     "sequence"
 ]
 
-parser = argparse.ArgumentParser(description="Build a reference.json file from a virtool reference src directory")
 
-parser.add_argument(
-    "src",
-    type=str,
-    help="the path to the database src directory",
-)
-
-parser.add_argument(
-    "-i", "--indent",
-    dest="indent",
-    action="store_true",
-    default=False
-)
-
-parser.add_argument(
-    "-V",
-    type=str,
-    dest="version",
-    default=None,
-    help="the version string to include in the reference.json file"
-)
-
-parser.add_argument(
-    "-f",
-    type=str,
-    dest="output",
-    default="reference.json",
-    help="the output path for the reference.json file"
-)
-
-# @click.command()
-# @click.argument("src", nargs=1, default="src", help="the path to the database src directory")
-# @click.option("-i", "--indent", is_flag=True)
-# @click.option("-V", default=None, type=str, help="the version string to include in the reference.json file")
-# @click.option("-f", default="reference.json", type=str, help="the output path for the reference.json file")
-
-args = parser.parse_args()
-
-
-if __name__ == "__main__":
-    src_path = args.src
+def build(src_path, output, ref_indent, version):
 
     try:
         with open(os.path.join(src_path, "meta.json"), "r") as f:
@@ -120,16 +79,16 @@ if __name__ == "__main__":
 
             otus.append(otu)
 
-    with open(args.output, "w") as f:
+    with open(output, "w") as f:
         data.update({
             "otus": otus,
-            "name": args.version,
+            "name": version,
             "created_at": arrow.utcnow().isoformat()
         })
 
         indent = None
-        
-        if args.indent:
+
+        if ref_indent:
             indent = 4
 
         json.dump(data, f, indent=indent, sort_keys=True)
