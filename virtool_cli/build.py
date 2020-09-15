@@ -102,8 +102,8 @@ def parse_isolate(isolate_path):
     with open(os.path.join(isolate_path, "isolate.json"), "r") as f:
         isolate = json.load(f)
 
-    sequence_ids = [i for i in os.listdir(isolate_path) if i != "isolate.json" and i[0] != "."]
-
     isolate["sequences"] = list()
+
+    sequence_ids = [i for i in os.listdir(isolate_path) if i != "isolate.json" and i[0] != "."]
 
     return isolate, sequence_ids
