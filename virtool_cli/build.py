@@ -48,11 +48,11 @@ def build(src_path, output, indent, version):
 
         for otu_path in otu_paths:
 
-            otu, isolate_ids = parse_otu(src_path, otu_path)
+            otu, isolate_ids = parse_otu(otu_path)
 
             for isolate_path in [os.path.join(otu_path, i) for i in isolate_ids]:
                 
-                isolate, sequence_ids = parse_isolate(src_path, isolate_path)
+                isolate, sequence_ids = parse_isolate(isolate_path)
 
                 for sequence_path in [os.path.join(isolate_path, i) for i in sequence_ids]:
                     
@@ -87,7 +87,7 @@ def parse_alpha(src_path, alpha):
     return [os.path.join(src_path, alpha, otu) for otu in os.listdir(os.path.join(src_path, alpha))]
 
     
-def parse_otu(src_path, otu_path):
+def parse_otu(otu_path):
     with open(os.path.join(otu_path, "otu.json"), "r") as f:
         otu = json.load(f)
 
@@ -98,7 +98,7 @@ def parse_otu(src_path, otu_path):
     return otu, isolate_ids
 
 
-def parse_isolate(src_path, isolate_path):
+def parse_isolate(isolate_path):
     with open(os.path.join(isolate_path, "isolate.json"), "r") as f:
         isolate = json.load(f)
 
