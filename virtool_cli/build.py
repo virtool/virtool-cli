@@ -24,14 +24,9 @@ SEQUENCE_KEYS = [
     "sequence"
 ]
 
+def build(src_path, output, indent, version):
 
-def build(src_path, output, ref_indent, version):
-
-    try:
-        with open(os.path.join(src_path, "meta.json"), "r") as f:
-            meta = json.load(f)
-    except FileNotFoundError:
-        meta = dict()
+    meta = parse_meta(src_path)
 
     data = {
         "data_type": meta.get("data_type", "genome"),
@@ -47,29 +42,20 @@ def build(src_path, output, ref_indent, version):
     except ValueError:
         pass
 
-    used_ids = list()
-
     for alpha in alpha_paths:
-        otu_paths = [os.path.join(src_path, alpha, otu) for otu in os.listdir(os.path.join(src_path, alpha))]
+
+        otu_paths = parse_alpha(src_path, alpha)
 
         for otu_path in otu_paths:
 
-            with open(os.path.join(otu_path, "otu.json"), "r") as f:
-                otu = json.load(f)
-
-            otu["isolates"] = list()
-
-            isolate_ids = [i for i in os.listdir(otu_path) if i != "otu.json" and i[0] != "."]
+            otu, isolate_ids = parse_otu(src_path, otu_path)
 
             for isolate_path in [os.path.join(otu_path, i) for i in isolate_ids]:
-                with open(os.path.join(isolate_path, "isolate.json"), "r") as f:
-                    isolate = json.load(f)
-
-                sequence_ids = [i for i in os.listdir(isolate_path) if i != "isolate.json" and i[0] != "."]
-
-                isolate["sequences"] = list()
+                
+                isolate, sequence_ids = parse_isolate(src_path, isolate_path)
 
                 for sequence_path in [os.path.join(isolate_path, i) for i in sequence_ids]:
+                    
                     with open(sequence_path, "r") as f:
                         sequence = json.load(f)
 
@@ -86,9 +72,38 @@ def build(src_path, output, ref_indent, version):
             "created_at": arrow.utcnow().isoformat()
         })
 
-        indent = None
+        json.dump(data, f, indent=4 if indent else None, sort_keys=True)
 
-        if ref_indent:
-            indent = 4
 
-        json.dump(data, f, indent=indent, sort_keys=True)
+def parse_meta(src_path):
+    try:
+        with open(os.path.join(src_path, "meta.json"), "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return dict()
+
+
+def parse_alpha(src_path, alpha):
+    return [os.path.join(src_path, alpha, otu) for otu in os.listdir(os.path.join(src_path, alpha))]
+
+    
+def parse_otu(src_path, otu_path):
+    with open(os.path.join(otu_path, "otu.json"), "r") as f:
+        otu = json.load(f)
+
+    otu["isolates"] = list()
+
+    isolate_ids = [i for i in os.listdir(otu_path) if i != "otu.json" and i[0] != "."]
+
+    return otu, isolate_ids
+
+
+def parse_isolate(src_path, isolate_path):
+    with open(os.path.join(isolate_path, "isolate.json"), "r") as f:
+        isolate = json.load(f)
+
+    sequence_ids = [i for i in os.listdir(isolate_path) if i != "isolate.json" and i[0] != "."]
+
+    isolate["sequences"] = list()
+
+    return isolate, sequence_ids
