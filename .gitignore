@@ -1,5 +1,4 @@
 .idea
 .cache
 /venv
-/src
 __pycache__
