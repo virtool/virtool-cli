@@ -17,9 +17,12 @@ def cli():
 def build(src_path, output, indent, version):
     """
     Build a Virtool reference JSON file from a data directory.
-       
+
     """
-    virtool_cli.build.build(src_path, output, indent, version)
+    try:
+        virtool_cli.build.build(src_path, output, indent, version)
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo("Not a valid src directory")
 
 
 @cli.command()
@@ -28,9 +31,14 @@ def build(src_path, output, indent, version):
 def divide(src_path, output):
     """
     Divide a reference.json file from a Virtool into a src tree.
-    
+
     """
-    virtool_cli.divide.divide(src_path, output)
+    try:
+        if not src_path.endswith(".json"):
+            raise TypeError
+        virtool_cli.divide.divide(src_path, output)
+    except (TypeError, FileNotFoundError):
+        click.echo("Specified reference file either does not exist or is not a proper JSON file")
 
 
 if __name__ == "__main__":
