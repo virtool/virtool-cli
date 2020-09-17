@@ -30,7 +30,7 @@ def build(src_path, output, indent, version):
 @click.option("-o", "--output", default="src", type=str, help="the output path for divided source directory tree")
 def divide(src_path, output):
     """
-    Divide a reference.json file from a Virtool into a src tree.
+    Divide a reference.json file from Virtool into a src tree.
 
     """
     try:
