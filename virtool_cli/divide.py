@@ -32,6 +32,7 @@ def divide(src_path: str, output: str):
     Parameters:
         src_path (str): Path to a reference.json file
         output (str): Path to the where the src tree should be generated
+
     """
 
     shutil.rmtree(output, ignore_errors=True)
@@ -75,6 +76,7 @@ def build_otu(output: str, otu: dict) -> str:
 
     Returns:
         otu_path (str): Path to a newly generated OTU directory
+
     """
     lower_name = otu["name"].lower()
     first_letter = lower_name[0]
@@ -108,6 +110,7 @@ def build_isolate(otu_path: str, isolate: dict) -> str:
 
     Returns:
         isolate_path: A path to a newly generated isolate directory
+
     """
     isolate_path = os.path.join(otu_path, isolate["id"])
     os.mkdir(isolate_path)
@@ -125,6 +128,7 @@ def build_sequence(isolate_path: str, sequence: dict):
         isolate_path (str): A path to a specified isolate
         sequence (dict): A dictionary containing information on one of the 
                          isolates' sequences
+    
     """
     with open(os.path.join(isolate_path, "{}.json".format(sequence["_id"])), "w") as f:
         json.dump({key: sequence[key] for key in SEQUENCE_KEYS}, f, indent=4)

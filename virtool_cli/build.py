@@ -34,7 +34,7 @@ def build(src_path: str, output: str, indent: bool, version: str):
         output (str): The output path for the reference.json file
         indent (bool): A flag to indicate whether the output file should be indented
         version (str): The version string to include in the reference.json file
-    
+
     """
     meta = parse_meta(src_path)
 
@@ -92,6 +92,7 @@ def parse_meta(src_path: str) -> list:
 
     Returns:
         The deserialized meta.json object or an empty dictionary.
+
     """
     try:
         with open(os.path.join(src_path, "meta.json"), "r") as f:
@@ -125,7 +126,7 @@ def parse_otu(otu_path: str) -> (dict, list):
     Returns:
         otu (dict): The dictionary for a given OTU
         isolate_ids (list): List of all isolate IDs for a given OTU
-    
+
     """
     with open(os.path.join(otu_path, "otu.json"), "r") as f:
         otu = json.load(f)
