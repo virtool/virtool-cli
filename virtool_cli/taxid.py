@@ -95,6 +95,6 @@ def get_name_from_path(path):
             return otu["name"]
 
 
-if __name__ == "__main__":
+def taxid(src_path):
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(run("tests/files/src"))
+    loop.run_until_complete(run(src_path))

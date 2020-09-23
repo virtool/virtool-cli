@@ -1,6 +1,7 @@
 import click
 import virtool_cli.build
 import virtool_cli.divide
+import virtool_cli.taxid
 
 
 @click.group()
@@ -40,6 +41,18 @@ def divide(src_path, output):
     except (TypeError, FileNotFoundError):
         click.echo("Specified reference file either does not exist or is not a proper JSON file")
 
+
+@cli.command()
+@click.option("-src", "--src_path", required=True, type=str, help="the path to the input reference.json file")
+def taxid(src_path):
+    """
+    Fetch taxid for all OTU in given src directory
+
+    """
+    try:
+        virtool_cli.taxid.taxid(src_path)
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo("Not a valid src directory")
 
 if __name__ == "__main__":
     cli()
