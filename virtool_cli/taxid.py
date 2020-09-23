@@ -1,58 +1,75 @@
 import os
-import config
 import time
 import json
 import asyncio
-import concurrent.futures
 from Bio import Entrez
 from concurrent.futures.thread import ThreadPoolExecutor
 
+Entrez.email  = os.environ["NCBI_EMAIL"]
+API_KEY = os.environ["NCBI_API_KEY"]
 
-def taxid(src_path: str, force_update: bool):
-    otu_paths = get_paths(src_path)
-    Entrez.email = config.email
 
-    start = time.time()
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        executor.map(fetch, otu_paths, [force_update]*len(otu_paths))
-        executor.shutdown(wait=True)
+async def run(src_path: str):
+    executor = ThreadPoolExecutor(max_workers=10)
+    loop = asyncio.get_event_loop()
+
+    paths = get_paths(src_path)
+
+    coros = list()
+
+    for path in paths[:5]:
+        name = get_name_from_path(path)
+        
+        if name:
+            coro = loop.run_in_executor(executor, fetch_taxid, name)
+            coros.append(coro)
+
+            await asyncio.sleep(0.3)
+        else:
+            paths.remove(path)
+
+    results = await asyncio.gather(*coros)
     
-    print(str(time.time()-start))
-    #asyncio.run(run(otu_paths, force_update))
     
-
-# async def run(otu_paths: list, force_update: bool):
+    names = []
+    taxids = []
+    # parse through results
+    for name, taxid in results:
+        names.append(name)
+        taxids.append(taxid)
     
-#     tasks = []
-#     for path in otu_paths:
-#         task = asyncio.create_task(fetch(path, force_update))
-#         tasks.append(task)
+    for name, taxid, path, in zip(names, taxids, paths):
+        with open(os.path.join(path, "otu.json"), 'r+') as f:
+            otu = json.load(f)
 
-#     await asyncio.gather(*tasks)
-#     #await asyncio.wait(tasks)
-#     #asyncio.run(tasks)
-
-
-def fetch(otu_path: str, force_update: bool):
-
-    with open(os.path.join(otu_path, "otu.json"), "r") as f:
-        otu = json.load(f)
+            if otu["name"] == name:
+                otu["taxid"] = taxid
+                f.seek(0)
+                json.dump(otu, f, indent=4)
     
-    print("Finding " + otu["name"])
-    #await asyncio.sleep(0.2)
-    handle = Entrez.esearch(db="taxonomy", term=otu["name"], api_key=config.API_KEY)
+    if not results:
+        print("All OTUs are up to date")
+
+    print(f"Retrieved {len(taxids)} taxids for {len(names)} OTUs")
+        
+
+
+def fetch_taxid(name):
+    handle = Entrez.esearch(db="taxonomy", term=name, api_key=API_KEY)
     record = Entrez.read(handle)
-    print(otu['name'] + " done")
 
-    if "taxid" not in otu or force_update:
-        try:
-            otu["taxid"] = record["IdList"][0]
-        except IndexError:
-            otu["taxid"] = None
+    try:
+        taxid = record["IdList"][0]
+        print(f"Received: {name} {taxid}")
+    except IndexError:
+        print(f"Could not receive: {name}")
+        taxid = None
+
+
+    return name, taxid
 
 
 def get_paths(src_path: str):
-
     alpha_paths = os.listdir(src_path)
     paths = []
 
@@ -68,5 +85,16 @@ def get_paths(src_path: str):
     return paths
 
 
+def get_name_from_path(path):
+    with open(os.path.join(path, "otu.json"), 'r') as f:
+        otu = json.load(f)
+
+        try:
+            if otu["taxid"]: return None
+        except KeyError:
+            return otu["name"]
+
+
 if __name__ == "__main__":
-    taxid("tests/files/src", True)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run("tests/files/src"))
