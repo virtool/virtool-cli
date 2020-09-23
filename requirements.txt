@@ -10,5 +10,5 @@ python-dateutil==2.6.1
 six==1.11.0
 Click==7.0
 biopython==1.78
-numpy==1.19.2
+rich==7.0.0
 
