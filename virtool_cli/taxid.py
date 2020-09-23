@@ -19,11 +19,13 @@ async def run(src_path: str):
 
     coros = list()
     console = Console()
-    for path in track(paths, description="[green]Retrieving..."):
+
+    for path in track(paths[:500], description="[green]Retrieving..."):
         name = get_name_from_path(path)
 
         if name:
-            coro = loop.run_in_executor(executor, fetch_taxid, name, console)
+            coro = loop.run_in_executor(
+                executor, fetch_taxid, name, path, console)
             coros.append(coro)
 
             await asyncio.sleep(0.3)
@@ -38,33 +40,31 @@ async def run(src_path: str):
     # parse through results
     for name, taxid in results:
         names.append(name)
-        taxids.append(taxid)
+        if taxid:
+            taxids.append(taxid)
 
-    for name, taxid, path, in zip(names, taxids, paths):
-        with open(os.path.join(path, "otu.json"), 'r+') as f:
-            otu = json.load(f)
-
-            if otu["name"] == name:
-                otu["taxid"] = taxid
-                f.seek(0)
-                json.dump(otu, f, indent=4)
-
-    if not results:
-        print("All OTUs are up to date")
-    console = Console()
-    console.print(f"Retrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
+    console.print(
+        f"Retrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
 
 
-def fetch_taxid(name, console):
+def fetch_taxid(name, path, console):
     handle = Entrez.esearch(db="taxonomy", term=name, api_key=API_KEY)
     record = Entrez.read(handle)
 
     try:
         taxid = record["IdList"][0]
-        console.print(f"    {name} {taxid} ✔️", style="green")
+        console.print(f"    {name} {taxid} :heavy_check_mark:", style="green")
     except IndexError:
-        console.print(f"Could not retrieve: {name} ❌", style="red")
+        console.print(f"    {name} :x:", style="red")
         taxid = None
+
+    with open(os.path.join(path, "otu.json"), 'r+') as f:
+        otu = json.load(f)
+
+        if otu["name"] == name:
+            otu["taxid"] = taxid
+            f.seek(0)
+            json.dump(otu, f, indent=4)
 
     return name, taxid
 
