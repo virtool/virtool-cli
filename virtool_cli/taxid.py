@@ -4,11 +4,13 @@ import json
 import asyncio
 from rich.console import Console
 from rich.progress import track
+from rich.progress import Progress
 from Bio import Entrez
 from concurrent.futures.thread import ThreadPoolExecutor
 
 Entrez.email = os.environ["NCBI_EMAIL"]
 API_KEY = os.environ["NCBI_API_KEY"]
+progress = Progress()
 
 
 async def run(src_path: str):
@@ -19,54 +21,65 @@ async def run(src_path: str):
 
     coros = list()
     console = Console()
+    otus = {}
 
-    for path in track(paths[:500], description="[green]Retrieving..."):
+    for path in track(paths[:100], description="[green]Retrieving..."):
         name = get_name_from_path(path)
 
         if name:
-            coro = loop.run_in_executor(
-                executor, fetch_taxid, name, path, console)
+            coro = await fetch_taxid_call(executor, name, path, console, loop)
             coros.append(coro)
-
-            await asyncio.sleep(0.3)
-        else:
-            paths.remove(path)
+            otus[name] = path
+            await asyncio.sleep(0.2)
 
     results = await asyncio.gather(*coros)
 
     names = []
     taxids = []
 
-    # parse through results
     for name, taxid in results:
         names.append(name)
         if taxid:
             taxids.append(taxid)
 
+        update_otu(name, taxid, otus[name])
+        await asyncio.sleep(0.05)
+
     console.print(
         f"Retrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
 
 
-def fetch_taxid(name, path, console):
+def fetch_taxid(name, path):
     handle = Entrez.esearch(db="taxonomy", term=name, api_key=API_KEY)
     record = Entrez.read(handle)
 
     try:
         taxid = record["IdList"][0]
-        console.print(f"    {name} {taxid} :heavy_check_mark:", style="green")
     except IndexError:
-        console.print(f"    {name} :x:", style="red")
         taxid = None
 
+    return name, taxid
+
+
+async def fetch_taxid_call(executor, name, path, console, loop):
+    console.print(f"    {name}")
+    coro = loop.run_in_executor(executor, fetch_taxid, name, path)
+
+    return coro
+
+
+def update_otu(name, taxid, path):
+    console = Console()
     with open(os.path.join(path, "otu.json"), 'r+') as f:
         otu = json.load(f)
 
-        if otu["name"] == name:
-            otu["taxid"] = taxid
-            f.seek(0)
-            json.dump(otu, f, indent=4)
-
-    return name, taxid
+        if taxid:
+            console.print(f"Retrieved {name} {taxid} :heavy_check_mark:", style="green")
+        else:
+            console.print(f"Could not receive {name} :x:", style="red")
+        otu["taxid"] = taxid
+        f.seek(0)
+        json.dump(otu, f, indent=4)
 
 
 def get_paths(src_path: str):
