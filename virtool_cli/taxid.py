@@ -3,7 +3,6 @@ TODO:
 - add docstrings
 - look at aiojobs docs
 - look at docs about asyncio.Queue
-- have force-all option to get or replace all taxids
 bonus: figure out why it hangs at the very end
 """
 
@@ -22,7 +21,7 @@ Entrez.email = os.environ["NCBI_EMAIL"]
 API_KEY = os.environ["NCBI_API_KEY"]
 
 
-async def run(src_path: str):
+async def run(src_path: str, force_update: bool):
     scheduler = await aiojobs.create_scheduler(limit=5)
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
 
@@ -37,7 +36,7 @@ async def run(src_path: str):
     with Progress("[progress.description]{task.description}", "{task.fields[result]}") as progress:
         # Submit jobs to scheduler and create progress tasks.
         for path in paths:
-            name = await get_name_from_path(path)
+            name = await get_name_from_path(path, force_update)
 
             if name:
                 otu_paths[name] = path
@@ -123,12 +122,12 @@ def get_paths(src_path: str):
 
 
 # Changed this to use aiofiles
-async def get_name_from_path(path):
+async def get_name_from_path(path, force_update):
     async with aiofiles.open(os.path.join(path, "otu.json"), "r") as f:
         otu = json.loads(await f.read())
 
         try:
-            if otu["taxid"] is not None:
+            if otu["taxid"] is not None and not force_update:
                 return None
             else:
                 return otu["name"]
@@ -136,6 +135,5 @@ async def get_name_from_path(path):
             return otu["name"]
 
 
-def taxid(src_path):
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run(src_path))
+def taxid(src_path, force_update):
+    asyncio.run(run(src_path, force_update))

@@ -44,15 +44,17 @@ def divide(src_path, output):
 
 @cli.command()
 @click.option("-src", "--src_path", required=True, type=str, help="the path to the input reference.json file")
-def taxid(src_path):
+@click.option("-f", "--force_update", is_flag=True)
+def taxid(src_path, force_update):
     """
     Fetch taxid for all OTU in given src directory
 
     """
     try:
-        virtool_cli.taxid.taxid(src_path)
+        virtool_cli.taxid.taxid(src_path, force_update)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid src directory")
+
 
 if __name__ == "__main__":
     cli()
