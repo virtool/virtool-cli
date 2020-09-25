@@ -1,38 +1,62 @@
-import os
-import time
-import json
+"""
+TODO:
+- add docstrings
+- look at aiojobs docs
+- look at docs about asyncio.Queue
+- have force-all option to get or replace all taxids
+bonus: figure out why it hangs at the very end
+"""
+
 import asyncio
-from rich.console import Console
-from rich.progress import track
-from rich.progress import Progress
-from Bio import Entrez
+import json
+import os
 from concurrent.futures.thread import ThreadPoolExecutor
+
+import aiofiles
+import aiojobs
+from Bio import Entrez
+from rich.console import Console
+from rich.progress import Progress
 
 Entrez.email = os.environ["NCBI_EMAIL"]
 API_KEY = os.environ["NCBI_API_KEY"]
-progress = Progress()
 
 
 async def run(src_path: str):
-    executor = ThreadPoolExecutor(max_workers=10)
-    loop = asyncio.get_event_loop()
+    scheduler = await aiojobs.create_scheduler(limit=5)
+    asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
 
     paths = get_paths(src_path)
 
-    coros = list()
     console = Console()
-    otus = {}
+    results = list()
 
-    for path in track(paths[:100], description="[green]Retrieving..."):
-        name = get_name_from_path(path)
+    q = asyncio.Queue()
+    otu_paths = {}
 
-        if name:
-            coro = await fetch_taxid_call(executor, name, path, console, loop)
-            coros.append(coro)
-            otus[name] = path
-            await asyncio.sleep(0.2)
+    with Progress("[progress.description]{task.description}", "{task.fields[result]}") as progress:
+        # Submit jobs to scheduler and create progress tasks.
+        for path in paths:
+            name = await get_name_from_path(path)
 
-    results = await asyncio.gather(*coros)
+            if name:
+                otu_paths[name] = path
+                task = progress.add_task(description=f"Retrieving taxon ID for {name}", result="")
+
+                await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
+                await asyncio.sleep(0.2)
+
+        # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
+        while True:
+            try:
+                results.append(q.get_nowait())
+            except asyncio.QueueEmpty:
+                if not scheduler.active_count:
+                    break
+
+            await asyncio.sleep(0.3)
+
+        await scheduler.close()
 
     names = []
     taxids = []
@@ -41,15 +65,12 @@ async def run(src_path: str):
         names.append(name)
         if taxid:
             taxids.append(taxid)
+        update_otu(taxid, otu_paths[name])
 
-        update_otu(name, taxid, otus[name])
-        await asyncio.sleep(0.05)
-
-    console.print(
-        f"Retrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
+    console.print(f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
 
 
-def fetch_taxid(name, path):
+def fetch_taxid(name):
     handle = Entrez.esearch(db="taxonomy", term=name, api_key=API_KEY)
     record = Entrez.read(handle)
 
@@ -61,22 +82,24 @@ def fetch_taxid(name, path):
     return name, taxid
 
 
-async def fetch_taxid_call(executor, name, path, console, loop):
-    console.print(f"    {name}")
-    coro = loop.run_in_executor(executor, fetch_taxid, name, path)
+async def fetch_taxid_call(name, progress, q, task):
+    name, taxid = await asyncio.get_event_loop().run_in_executor(None, fetch_taxid, name)
 
-    return coro
+    if taxid is None:
+        description = f"[red]Retrieving taxon ID for {name}"
+        result = f"[red]:x: Not found"
+    else:
+        description = f"[green]Retrieving taxon ID for {name}"
+        result = f"[green]:heavy_check_mark: {taxid}"
+
+    progress.update(task, description=description, result=result)
+
+    await q.put((name, taxid))
 
 
-def update_otu(name, taxid, path):
-    console = Console()
+def update_otu(taxid, path):
     with open(os.path.join(path, "otu.json"), 'r+') as f:
         otu = json.load(f)
-
-        if taxid:
-            console.print(f"Retrieved {name} {taxid} :heavy_check_mark:", style="green")
-        else:
-            console.print(f"Could not receive {name} :x:", style="red")
         otu["taxid"] = taxid
         f.seek(0)
         json.dump(otu, f, indent=4)
@@ -99,13 +122,16 @@ def get_paths(src_path: str):
     return paths
 
 
-def get_name_from_path(path):
-    with open(os.path.join(path, "otu.json"), 'r') as f:
-        otu = json.load(f)
+# Changed this to use aiofiles
+async def get_name_from_path(path):
+    async with aiofiles.open(os.path.join(path, "otu.json"), "r") as f:
+        otu = json.loads(await f.read())
 
         try:
-            if otu["taxid"]:
+            if otu["taxid"] is not None:
                 return None
+            else:
+                return otu["name"]
         except KeyError:
             return otu["name"]
 
