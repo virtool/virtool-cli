@@ -20,6 +20,8 @@ from rich.progress import Progress
 Entrez.email = os.environ["NCBI_EMAIL"]
 API_KEY = os.environ["NCBI_API_KEY"]
 
+missed_otus = {"otus": []}
+
 
 async def run(src_path: str, force_update: bool):
     """
@@ -46,14 +48,16 @@ async def run(src_path: str, force_update: bool):
 
     with Progress("[progress.description]{task.description}", "{task.fields[result]}") as progress:
         # Submit jobs to scheduler and create progress tasks.
-        for path in paths:
+
+        for path in paths[:100]:
             name = await get_name_from_path(path, force_update)
 
             if name:
                 otu_paths[name] = path
                 task = progress.add_task(description=f"Retrieving taxon ID for {name}", result="")
 
-                await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
+                job = await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
+
                 await asyncio.sleep(0.2)
 
         # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
@@ -78,6 +82,10 @@ async def run(src_path: str, force_update: bool):
         update_otu(taxid, otu_paths[name])
 
     console.print(f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
+    if len(missed_otus["otus"]):
+        console.print(f"OTUs that could not be retrieved have been logged to missed_otus.json", style="green")
+        with open("missed_otus.json", 'w') as f:
+            json.dump(missed_otus, f, indent=4)
 
 
 def fetch_taxid(name: str) -> (str, str):
@@ -98,6 +106,7 @@ def fetch_taxid(name: str) -> (str, str):
         taxid = record["IdList"][0]
     except IndexError:
         taxid = None
+        missed_otus["otus"].append(name)
 
     return taxid
 
@@ -114,6 +123,7 @@ async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queu
         task (int): ID for a given progress task
 
     """
+
     taxid = await asyncio.get_event_loop().run_in_executor(None, fetch_taxid, name)
 
     if taxid is None:
