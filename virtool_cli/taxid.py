@@ -15,10 +15,10 @@ import aiofiles
 import aiojobs
 from Bio import Entrez
 from rich.console import Console
-from rich.progress import Progress
+from rich.progress import BarColumn, Progress, TimeRemainingColumn
 
 Entrez.email = os.environ["NCBI_EMAIL"]
-API_KEY = os.environ["NCBI_API_KEY"]
+Entrez.api_key = os.environ["NCBI_API_KEY"]
 
 missed_otus = {"otus": []}
 
@@ -46,18 +46,23 @@ async def run(src_path: str, force_update: bool):
     q = asyncio.Queue()
     otu_paths = {}
 
-    with Progress("[progress.description]{task.description}", "{task.fields[result]}") as progress:
-        # Submit jobs to scheduler and create progress tasks.
+    progress = Progress(
+        "[progress.description]{task.description}",
+        BarColumn(),
+        "[magenta]{task.completed} of {task.total} ids searched",
+        TimeRemainingColumn()
+    )
 
-        for path in paths[:100]:
+    with progress:
+        task = progress.add_task("Retrieving...", total=len(paths[:50]))
+
+        for path in paths[:50]:
             name = await get_name_from_path(path, force_update)
-
+            progress.update(task, description=f"Retrieving {name}")
             if name:
                 otu_paths[name] = path
-                task = progress.add_task(description=f"Retrieving taxon ID for {name}", result="")
 
-                job = await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
-
+                await scheduler.spawn(fetch_taxid_call(name, progress, q, task, console))
                 await asyncio.sleep(0.2)
 
         # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
@@ -68,7 +73,7 @@ async def run(src_path: str, force_update: bool):
                 if not scheduler.active_count:
                     break
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
 
         await scheduler.close()
 
@@ -99,7 +104,7 @@ def fetch_taxid(name: str) -> (str, str):
     Returns:
         Taxon id for a given OTU
     """
-    handle = Entrez.esearch(db="taxonomy", term=name, api_key=API_KEY)
+    handle = Entrez.esearch(db="taxonomy", term=name)
     record = Entrez.read(handle)
 
     try:
@@ -111,7 +116,7 @@ def fetch_taxid(name: str) -> (str, str):
     return taxid
 
 
-async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queue, task: int):
+async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queue, task, console):
     """
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
@@ -123,7 +128,6 @@ async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queu
         task (int): ID for a given progress task
 
     """
-
     taxid = await asyncio.get_event_loop().run_in_executor(None, fetch_taxid, name)
 
     if taxid is None:
@@ -133,8 +137,8 @@ async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queu
         description = f"[green]Retrieved taxon ID for {name}"
         result = f"[green]:heavy_check_mark: {taxid}"
 
-    progress.update(task, description=description, result=result)
-
+    progress.print(description, result)
+    progress.update(task, advance=1)
     await q.put((name, taxid))
 
 
