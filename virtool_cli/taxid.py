@@ -39,12 +39,19 @@ async def run(src_path: str, force_update: bool):
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
 
     paths = get_paths(src_path)
+    checked_names = []
+    otu_paths = {}
+
+    for path in paths:
+        name = await get_name_from_path(path, force_update)
+        if name is not None:
+            otu_paths[name] = path
+            checked_names.append(name)
 
     console = Console()
     results = list()
 
     q = asyncio.Queue()
-    otu_paths = {}
 
     progress = Progress(
         "[progress.description]{task.description}",
@@ -54,16 +61,13 @@ async def run(src_path: str, force_update: bool):
     )
 
     with progress:
-        task = progress.add_task("Retrieving...", total=len(paths[:50]))
+        task = progress.add_task("Retrieving...", total=len(checked_names))
 
-        for path in paths[:50]:
-            name = await get_name_from_path(path, force_update)
+        for name in checked_names:
             progress.update(task, description=f"Retrieving {name}")
-            if name:
-                otu_paths[name] = path
 
-                await scheduler.spawn(fetch_taxid_call(name, progress, q, task, console))
-                await asyncio.sleep(0.2)
+            await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
+            await asyncio.sleep(0.2)
 
         # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
         while True:
@@ -116,7 +120,7 @@ def fetch_taxid(name: str) -> (str, str):
     return taxid
 
 
-async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queue, task, console):
+async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queue, task: int):
     """
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
