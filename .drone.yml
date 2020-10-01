@@ -9,10 +9,3 @@ steps:
       commands:
           - pip install -qr requirements.txt
           - pytest -x --cov --cov-report xml
-
-services:
-  - name: mongo
-    image: mongo:4.4
-    command: [--nojournal]
-    ports:
-      - 27017
