@@ -1,13 +1,19 @@
 import setuptools
 
+with open("README.md", "r") as readme:
+    long_description = readme.read()
 
 setuptools.setup(
     name="virtool_cli",
-    packages=setuptools.find_packages(exclude="tests"),
     version="0.0.1",
     description="a command line interface for working with Virtool data",
-    install_requires=["click"],
+    long_description=long_description,
+    license="MIT",
+    platforms="linux",
+    python_requires=">=3.6",
     url="https://github.com/virtool/virtool-cli",
+    packages=setuptools.find_packages(exclude="tests"),
+    install_requires=["click"],
     entry_points={
         "console_scripts": [
             "virtool = virtool_cli.run:cli",
