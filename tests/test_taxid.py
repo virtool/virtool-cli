@@ -9,8 +9,7 @@ TEST_PATH = "tests/files/src_a"
 @pytest.fixture(scope="session", autouse=True)
 def command():
     command = [
-        "python", "virtool_cli/run.py",
-        "taxid", "-src",
+        "virtool", "taxid", "-src",
         TEST_PATH, "-f"]
     subprocess.call(command)
 
