@@ -17,8 +17,8 @@ from Bio import Entrez
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn
 
-Entrez.email = os.environ.get("NCBI_EMAIL", default="")
-Entrez.api_key = os.environ.get("NCBI_API_KEY", default="")
+Entrez.email = os.environ.get("NCBI_EMAIL")
+Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
 missed_otus = {"otus": []}
 
@@ -66,8 +66,8 @@ async def run(src_path: str, force_update: bool):
             progress.update(task, description=f"Retrieving {name}")
 
             await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
-            if Entrez.email == "" or Entrez.api_key == "":
-                await asyncio.sleep(0.4)
+            if Entrez.email is None or Entrez.api_key is None:
+                await asyncio.sleep(0.5)
             else:
                 await asyncio.sleep(0.15)
 
