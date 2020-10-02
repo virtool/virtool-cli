@@ -15,7 +15,8 @@ def output(tmpdir):
 @pytest.fixture()
 def command(output):
     return [
-        "virtool", "divide", "-o", str(output),
+        "python", "virtool_cli/run.py",
+        "divide", "-o", str(output),
         "-src"]
 
 

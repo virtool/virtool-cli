@@ -16,7 +16,8 @@ def output(tmpdir):
 @pytest.fixture()
 def command(output):
     return [
-        "virtool", "build", "-o", str(output),
+        "python", "virtool_cli/run.py",
+        "build", "-o", str(output),
         "-src", "tests/files/src"]
 
 
@@ -59,7 +60,8 @@ def test_indent(command, output, indent):
 
     """
     generate_expected = [
-        "virtool", "build", "-src",
+        "python", "virtool_cli/run.py",
+        "build", "-src",
         "tests/files/src"]
     if indent:
         command.append("-i")
