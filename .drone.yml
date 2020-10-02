@@ -1,0 +1,11 @@
+kind: pipeline
+name: default
+type: docker
+
+steps:
+
+    - name: test
+      image: python:3.7-buster
+      commands:
+          - pip install -qr requirements.txt
+          - pytest -x --cov --cov-report xml
