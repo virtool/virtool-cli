@@ -26,7 +26,7 @@ def output(tmpdir):
 @pytest.fixture()
 def command(output):
     return [
-        "python", "run.py",
+        "python", "virtool_cli/run.py",
         "build", "-o", str(output),
         "-src", "tests/files/src"]
 
@@ -69,6 +69,11 @@ def test_indent(command, output, indent):
     Test that the indent in the reference.json file is properly set
 
     """
+    generate_expected = [
+        "python", "virtool_cli/run.py",
+        "build", "-src",
+        "tests/files/src"]
+    
     if indent:
         command.append("-i")
         expected_path = TEST_WITH_INDENT_PATH
