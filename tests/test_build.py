@@ -8,16 +8,6 @@ TEST_PATH = "tests/files/reference.json"
 TEST_WITH_INDENT_PATH = "tests/files/reference_with_indent.json"
 
 
-@pytest.fixture(scope="session", autouse=True)
-def generate_directory():
-    command = [
-        "python", "virtool_cli/run.py",
-        "divde", "-src",
-        TEST_PATH, "-o",
-        "tests/files/src"]
-    subprocess.call(command)
-
-
 @pytest.fixture()
 def output(tmpdir):
     return tmpdir.join("reference.json")
@@ -69,10 +59,6 @@ def test_indent(command, output, indent):
     Test that the indent in the reference.json file is properly set
 
     """
-    generate_expected = [
-        "python", "virtool_cli/run.py",
-        "build", "-src",
-        "tests/files/src"]
     
     if indent:
         command.append("-i")
