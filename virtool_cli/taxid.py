@@ -160,7 +160,7 @@ def update_otu(taxid: str, path: str):
     """
     with open(os.path.join(path, "otu.json"), 'r+') as f:
         otu = json.load(f)
-        otu["taxid"] = taxid
+        otu["taxid"] = int(taxid) if taxid else taxid
         f.seek(0)
         json.dump(otu, f, indent=4)
 
