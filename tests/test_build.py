@@ -8,6 +8,15 @@ TEST_PATH = "tests/files/reference.json"
 TEST_WITH_INDENT_PATH = "tests/files/reference_with_indent.json"
 
 
+@pytest.fixture(scope="session", autouse=True)
+def generate_directory():
+    command = [
+        "python", "run.py",
+        "divde", "-src",
+        TEST_PATH, "-o",
+        "tests/files/src"]
+    subprocess.call(command)
+
 @pytest.fixture()
 def output(tmpdir):
     return tmpdir.join("reference.json")
@@ -59,20 +68,12 @@ def test_indent(command, output, indent):
     Test that the indent in the reference.json file is properly set
 
     """
-    generate_expected = [
-        "python", "run.py",
-        "build", "-src",
-        "tests/files/src"]
     if indent:
         command.append("-i")
-        generate_expected.append("-i")
         expected_path = TEST_WITH_INDENT_PATH
     else:
         expected_path = TEST_PATH
 
-    generate_expected.extend(["-o", expected_path])
-
-    subprocess.call(generate_expected)
     subprocess.call(command)
 
     expected_size = os.path.getsize(expected_path)
