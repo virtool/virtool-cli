@@ -11,11 +11,12 @@ TEST_WITH_INDENT_PATH = "tests/files/reference_with_indent.json"
 @pytest.fixture(scope="session", autouse=True)
 def generate_directory():
     command = [
-        "python", "run.py",
+        "python", "virtool_cli/run.py",
         "divde", "-src",
         TEST_PATH, "-o",
         "tests/files/src"]
     subprocess.call(command)
+
 
 @pytest.fixture()
 def output(tmpdir):
