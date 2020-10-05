@@ -8,6 +8,7 @@ OTU_KEYS = [
     "name",
     "abbreviation",
     "schema"
+    "taxid"
 ]
 
 ISOLATE_KEYS = [
