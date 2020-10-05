@@ -59,7 +59,7 @@ def test_indent(command, output, indent):
     Test that the indent in the reference.json file is properly set
 
     """
-    
+
     if indent:
         command.append("-i")
         expected_path = TEST_WITH_INDENT_PATH
