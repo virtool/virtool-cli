@@ -7,7 +7,7 @@ A command line tool for working with Virtool data.
 
 ## Installation
 
-```
+```shell script
 git clone https://github.com/virtool/virtool-cli.git
 pip install .
 ```
@@ -16,40 +16,39 @@ pip install .
 #### Build
 To build a `reference.json` file from a src directory
 
-```
+```shell script
 virtool build -src DIRECTORY_PATH -o OUTPUT_PATH
 ```
 
 If you wish for the output file to be more easily readable you can specify it to be indented
 
-```
+```shell script
 virtool build -src DIRECTORY_PATH -i
 ```
 
 To specify a version to include in the `reference.json` file
 
-```
+```shell script
 virtool build -src DIRECTORY_PATH -V VERSION
 ```
-
 
 #### Divide
 If you have an existing `reference.json` you can divide it into a src directory
 
-```
+```shell script
 virtool divide -src REFERENCE_PATH -o OUTPUT_PATH
 ```
 
 #### Taxid
 To fetch taxon ids for OTUs in a given src directory that do not currently have one
 
-```
+```shell script
 virtool taxid -src DIRECTORY_PATH
 ```
 
 If you wish to force a taxon id lookup for all OTUs
 
-```
+```shell script
 virtool taxid -src DIRECTORY_PATH -f
 ```
 
