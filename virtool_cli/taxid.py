@@ -166,33 +166,6 @@ def update_otu(taxid: str, path: str):
         json.dump(otu, f, indent=4)
 
 
-# def get_paths(src_path: str) -> list:
-#     """
-#     Generates a list of paths to all OTU in a src directory.
-#
-#     Parameters:
-#         src_path (str): Path to a src database directory
-#
-#     Returns:
-#         A list containing paths to all OTU in a src directory
-#
-#     """
-#     alpha_paths = os.listdir(src_path)
-#     paths = []
-#
-#     for alpha in alpha_paths:
-#         if alpha == "meta.json":
-#             continue
-#
-#         otu_paths = [os.path.join(src_path, alpha, otu)
-#                      for otu in os.listdir(os.path.join(src_path, alpha))]
-#
-#         for otu in otu_paths:
-#             paths.append(otu)
-#
-#     return paths
-
-
 async def get_name_from_path(path: str, force_update: bool) -> Union[str, None]:
     """
     Given a path to an OTU, returns the name of the OTU. If a taxon id already exists
