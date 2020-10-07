@@ -14,6 +14,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 import aiofiles
 import aiojobs
 from Bio import Entrez
+from virtool_cli.utils import get_paths
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn
 
@@ -165,31 +166,31 @@ def update_otu(taxid: str, path: str):
         json.dump(otu, f, indent=4)
 
 
-def get_paths(src_path: str) -> list:
-    """
-    Generates a list of paths to all OTU in a src directory.
-
-    Parameters:
-        src_path (str): Path to a src database directory
-
-    Returns:
-        A list containing paths to all OTU in a src directory
-
-    """
-    alpha_paths = os.listdir(src_path)
-    paths = []
-
-    for alpha in alpha_paths:
-        if alpha == "meta.json":
-            continue
-
-        otu_paths = [os.path.join(src_path, alpha, otu)
-                     for otu in os.listdir(os.path.join(src_path, alpha))]
-
-        for otu in otu_paths:
-            paths.append(otu)
-
-    return paths
+# def get_paths(src_path: str) -> list:
+#     """
+#     Generates a list of paths to all OTU in a src directory.
+#
+#     Parameters:
+#         src_path (str): Path to a src database directory
+#
+#     Returns:
+#         A list containing paths to all OTU in a src directory
+#
+#     """
+#     alpha_paths = os.listdir(src_path)
+#     paths = []
+#
+#     for alpha in alpha_paths:
+#         if alpha == "meta.json":
+#             continue
+#
+#         otu_paths = [os.path.join(src_path, alpha, otu)
+#                      for otu in os.listdir(os.path.join(src_path, alpha))]
+#
+#         for otu in otu_paths:
+#             paths.append(otu)
+#
+#     return paths
 
 
 async def get_name_from_path(path: str, force_update: bool) -> Union[str, None]:
