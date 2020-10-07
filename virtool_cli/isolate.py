@@ -44,6 +44,9 @@ async def isolate(src):
         if not taxid:
             continue
 
+        # get mapping of all isolates to their folder name
+        isolates = await fetch_isolates(path)
+
         # determine retmax
         handle = Entrez.esearch(db="nucleotide", term=f"txid{taxid}[orgn]", retmax=0)
         record = Entrez.read(handle)
@@ -61,6 +64,7 @@ async def isolate(src):
             print()
             for feature in seq.features:
                 if feature.type == "source":
+                    pass
                     print(feature.qualifiers['isolate'], seq.seq)
 
 
@@ -72,6 +76,18 @@ async def get_taxid(path):
     async with aiofiles.open(os.path.join(path, "otu.json"), "r") as f:
         otu = json.loads(await f.read())
         return otu["taxid"] if "taxid" in otu else None
+
+
+async def fetch_isolates(path):
+    isolates = {}
+    for folder in os.listdir(path):
+        if folder != "otu.json":
+            if "isolate.json" in set(os.listdir(os.path.join(path, folder))):
+                async with aiofiles.open(os.path.join(path, folder, "isolate.json"), "r") as f:
+                    isolate = json.loads(await f.read())
+                    isolates[isolate["source_name"]] = folder
+
+    return isolates
 
 
 def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Union[None, Iterable[str]] = None) -> str:
