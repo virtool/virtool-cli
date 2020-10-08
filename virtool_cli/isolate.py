@@ -10,7 +10,7 @@ import aiofiles
 import aiojobs
 from Bio import Entrez, SeqIO
 
-import virtool_cli.taxid
+from virtool_cli.utils import get_paths, get_taxids, get_isolates
 
 ISOLATE_KEYS = [
     "id",
@@ -36,58 +36,74 @@ async def isolate(src):
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
 
     # get paths for all OTU in the directory
-    paths = virtool_cli.taxid.get_paths(src)
-
-    for path in paths:
+    paths = get_paths(src)
+    taxids = await get_taxids(paths)
+    cache = {}
+    for path in taxids.keys():
         # only fetch OTU that have a taxid
-        taxid = await get_taxid(path)
-        if not taxid:
+        if taxids[path] is None:
             continue
 
         # get mapping of all isolates to their folder name
-        isolates = await fetch_isolates(path)
-
-        # determine retmax
-        handle = Entrez.esearch(db="nucleotide", term=f"txid{taxid}[orgn]", retmax=0)
-        record = Entrez.read(handle)
-        search_max = record["Count"]
-
-        handle = Entrez.esearch(db="nucleotide", term=f"txid{taxid}[orgn]", retmax=search_max)
-        record = Entrez.read(handle)
-        alist = record["IdList"]
+        isolates = await get_isolates(path)
 
         # approach 1
-        handle = Entrez.efetch(db="nuccore", id=alist, rettype="gb", retmode="text")
+        accessions = await check_cache(taxids[path])
+
+        if not accessions:
+            accessions = []
+            record = Entrez.read(Entrez.elink(dbfrom="taxonomy", db="nucleotide", id=taxids[path]))
+            for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
+                accessions.append(linksetdb["Id"])
+
+            cache_taxid(taxids[path], accessions)
+
+        handle = Entrez.efetch(db="nucleotide", id=accessions, rettype="gb", retmode="text")
         record = SeqIO.parse(handle, "gb")
 
+        count = []
         for seq in record:
-            print()
             for feature in seq.features:
                 if feature.type == "source":
-                    pass
-                    print(feature.qualifiers['isolate'], seq.seq)
+                    if "isolate" not in feature.qualifiers:
+                        count.append(seq)
+
+        actual = []
+        print("Accessions found:", len(accessions))
+        print("Accessions with no isolate in feature qualifier:", len(count))
+        for seq in count:
+            if "isolate" not in seq.description:
+                actual.append(seq)
+        print("Accessions with no isolate in feature qualifier AND no isolate in definition:", len(actual))
 
 
 async def run():
     pass
 
 
-async def get_taxid(path):
-    async with aiofiles.open(os.path.join(path, "otu.json"), "r") as f:
-        otu = json.loads(await f.read())
-        return otu["taxid"] if "taxid" in otu else None
+def cache_taxid(taxid, accessions):
+    if not os.path.isdir(".cli"):
+        os.mkdir(".cli")
+        with open(".cli/accessions_cache.json", "w") as f:
+            json.dump({}, f, indent=4)
+
+    with open(".cli/accessions_cache.json", "r+") as f:
+        cache = json.load(f)
+        cache[taxid] = accessions
+        f.seek(0)
+        json.dump(cache, f, indent=4)
 
 
-async def fetch_isolates(path):
-    isolates = {}
-    for folder in os.listdir(path):
-        if folder != "otu.json":
-            if "isolate.json" in set(os.listdir(os.path.join(path, folder))):
-                async with aiofiles.open(os.path.join(path, folder, "isolate.json"), "r") as f:
-                    isolate = json.loads(await f.read())
-                    isolates[isolate["source_name"]] = folder
+async def check_cache(taxid):
+    if not os.path.isdir(".cli"):
+        return None
 
-    return isolates
+    async with aiofiles.open(".cli/accessions_cache.json", "r") as f:
+        cache = json.loads(await f.read())
+        try:
+            return cache[str(taxid)]
+        except KeyError:
+            return None
 
 
 def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Union[None, Iterable[str]] = None) -> str:
