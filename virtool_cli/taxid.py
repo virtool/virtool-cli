@@ -1,10 +1,3 @@
-"""
-TODO:
-- look at aiojobs docs
-- look at docs about asyncio.Queue
-bonus: figure out why it hangs at the very end
-"""
-
 import asyncio
 import json
 import os
