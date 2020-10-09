@@ -3,5 +3,9 @@
     "name": "Yacon necrotic mottle virus",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 1561150
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

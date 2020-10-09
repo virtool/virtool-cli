@@ -3,5 +3,9 @@
     "name": "Vanilla distortion mosaic virus",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 326202
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

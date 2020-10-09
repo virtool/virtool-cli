@@ -3,5 +3,9 @@
     "name": "Dahlia latent viroid",
     "abbreviation": "DLVd",
     "schema": [],
+<<<<<<< master
     "taxid": 1278205
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

@@ -3,5 +3,9 @@
     "name": "Wasabi mottle virus",
     "abbreviation": "WMoV",
     "schema": [],
+<<<<<<< master
     "taxid": 1169032
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

@@ -3,5 +3,9 @@
     "name": "Oat blue dwarf virus",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 56879
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

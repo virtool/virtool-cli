@@ -3,5 +3,9 @@
     "name": "Lamium leaf distortion virus",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 515320
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

@@ -3,5 +3,9 @@
     "name": "Cabbage leaf curl Jamaica virus",
     "abbreviation": "CabLCJV",
     "schema": [],
+<<<<<<< master
     "taxid": 345184
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

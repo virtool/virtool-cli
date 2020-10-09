@@ -3,5 +3,9 @@
     "name": "Pagoda yellow mosaic associated virus",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 1505530
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

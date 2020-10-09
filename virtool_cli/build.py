@@ -6,7 +6,7 @@ OTU_KEYS = [
     "_id",
     "name",
     "abbreviation",
-    "schema"
+    "schema",
     "taxid"
 ]
 

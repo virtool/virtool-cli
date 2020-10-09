@@ -3,5 +3,9 @@
     "name": "Radish leaf curl betasatellite",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 662596
+=======
+    "taxid": null
+>>>>>>> Update test files
 }
