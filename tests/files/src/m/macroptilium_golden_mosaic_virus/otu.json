@@ -3,5 +3,9 @@
     "name": "Macroptilium golden mosaic virus",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 51676
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

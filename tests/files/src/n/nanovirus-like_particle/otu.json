@@ -3,5 +3,9 @@
     "name": "Nanovirus-like particle",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 96892
+=======
+    "taxid": null
+>>>>>>> Update test files
 }

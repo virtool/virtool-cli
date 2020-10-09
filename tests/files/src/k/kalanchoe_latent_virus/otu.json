@@ -3,5 +3,9 @@
     "name": "Kalanchoe latent virus",
     "abbreviation": "",
     "schema": [],
+<<<<<<< master
     "taxid": 132477
+=======
+    "taxid": null
+>>>>>>> Update test files
 }
