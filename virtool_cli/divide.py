@@ -1,13 +1,12 @@
-import os
 import json
+import os
 import shutil
-
 
 OTU_KEYS = [
     "_id",
     "name",
     "abbreviation",
-    "schema"
+    "schema",
     "taxid"
 ]
 
@@ -25,6 +24,7 @@ SEQUENCE_KEYS = [
     "host",
     "sequence"
 ]
+
 
 def divide(src_path: str, output: str):
     """
@@ -49,13 +49,12 @@ def divide(src_path: str, output: str):
             isolates = otu.pop("isolates")
 
             for isolate in isolates:
-                
+
                 isolate_path = build_isolate(otu_path, isolate)
-                
+
                 sequences = isolate.pop("sequences")
 
                 for sequence in sequences:
-                    
                     build_sequence(isolate_path, sequence)
 
         with open(os.path.join(output, "meta.json"), "w") as f:
@@ -93,8 +92,8 @@ def build_otu(output: str, otu: dict) -> str:
     with open(os.path.join(otu_path, "otu.json"), "w") as f:
         if "schema" not in otu:
             otu["schema"] = list()
-                
-        json.dump({key: otu[key] for key in OTU_KEYS}, f, indent=4)
+
+        json.dump({key: otu.get(key) for key in OTU_KEYS}, f, indent=4)
 
     return otu_path
 
@@ -120,6 +119,7 @@ def build_isolate(otu_path: str, isolate: dict) -> str:
         json.dump({key: isolate[key] for key in ISOLATE_KEYS}, f, indent=4)
 
     return isolate_path
+
 
 def build_sequence(isolate_path: str, sequence: dict):
     """
