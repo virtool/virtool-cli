@@ -44,49 +44,52 @@ async def isolate(src):
 
     # get mapping of all OTU paths to their taxid
     taxids = await get_taxids(paths)
-    unknown = 0
-    for path in paths[:200]:
 
-        # only fetch OTU that have a taxid
-        if taxids[path] is None:
-            continue
+    # tasks = [run(taxids[path], path) for path in paths]
+    # await asyncio.gather(*tasks)
 
-        # get mapping of all isolates to their folder name
-        isolates = await get_isolates(path)
-
-        accessions = await check_accessions_cache(taxids[path])
-
-        if not accessions:
-            accessions = {}
-            record = Entrez.read(Entrez.elink(
-                dbfrom="taxonomy", db="nucleotide", id=taxids[path], idtype="acc"))
-
-            for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
-                accessions[linksetdb["Id"]] = None
-
-            await cache_accessions(str(taxids[path]), accessions)
-        try:
-            handle = Entrez.efetch(db="nucleotide", id=[accession for accession in accessions.keys()], rettype="gb",
-                                   retmode="text")
-        except HTTPError:
-            unknown += 1
-
-        # this is somehow exponentially slower than the fetch itself
-        records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
-
-        no_data = 0
-        for seq in [seq.features for seq in records.values()]:
-            isolate_data = await get_qualifiers(seq)
-            if isolate_data["isolate"] is None and isolate_data["strain"] is None:
-                no_data += 1
-        print(
-            f"Isolate source data not found in {no_data} out of {len(records)} records")
-
-    print(f"{unknown} taxids were not found in the nucleotide database")
+    for path in paths:
+        await scheduler.spawn(run(taxids[path], path))
+        await asyncio.sleep(0.5)
 
 
-async def run():
-    pass
+async def run(taxid, path):
+    # only fetch OTU that have a taxid
+    if taxid is None:
+        return
+
+    # get mapping of all isolates to their folder name
+    isolates = await get_isolates(path)
+
+    accessions = await check_accessions_cache(taxid)
+
+    if not accessions:
+        accessions = {}
+        record = Entrez.read(Entrez.elink(
+            dbfrom="taxonomy", db="nucleotide", id=taxid, idtype="acc"))
+
+        for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
+            accessions[linksetdb["Id"]] = None
+
+        await cache_accessions(str(taxid), accessions)
+
+        records = await fetch(accessions)
+
+    no_data = 0
+    for seq in [seq.features for seq in records.values()]:
+        isolate_data = await get_qualifiers(seq)
+        if isolate_data["isolate"] is None and isolate_data["strain"] is None:
+            no_data += 1
+    print(
+        f"Isolate source data not found in {no_data} out of {len(records)} records")
+
+
+async def fetch(accessions):
+    handle = Entrez.efetch(db="nucleotide", id=[accession for accession in accessions.keys()], rettype="gb",
+                            retmode="text")
+    
+    # this is somehow exponentially slower than the fetch itself
+    return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
 async def get_qualifiers(seq):
@@ -109,7 +112,6 @@ async def cache_accessions(taxid, accessions):
             cache[taxid] = accessions
 
     async with aiofiles.open(".cli/accessions_cache.json", "w") as f:
-        f.seek(0)
         await f.write(json.dumps(cache, indent=4))
 
 
