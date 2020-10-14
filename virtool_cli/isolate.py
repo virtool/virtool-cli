@@ -29,15 +29,19 @@ SEQUENCE_KEYS = [
     "sequence"
 ]
 
+accessions = {}
+
 qualifiers = ["isolate", "strain"]
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
-
 async def isolate(src):
     scheduler = await aiojobs.create_scheduler(limit=5)
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
+
+    global accessions 
+    accessions = check_accessions_cache() if check_accessions_cache() is not None else {}
 
     # get paths for all OTU in the directory
     paths = get_paths(src)
@@ -49,39 +53,39 @@ async def isolate(src):
     # await asyncio.gather(*tasks)
 
     for path in paths:
+        # only fetch OTU that have a taxid
+        if taxids[path] is None:
+            continue
+
         await scheduler.spawn(run(taxids[path], path))
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.1)
+
+    cache_accessions(accessions)
 
 
 async def run(taxid, path):
-    # only fetch OTU that have a taxid
-    if taxid is None:
-        return
+    global accessions
 
     # get mapping of all isolates to their folder name
     isolates = await get_isolates(path)
 
-    accessions = await check_accessions_cache(taxid)
-
-    if not accessions:
-        accessions = {}
+    if not accessions.get(taxid):
         record = Entrez.read(Entrez.elink(
             dbfrom="taxonomy", db="nucleotide", id=taxid, idtype="acc"))
-
+        acc_dict = {}
         for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
-            accessions[linksetdb["Id"]] = None
+            acc_dict[linksetdb["Id"]] = None
 
-        await cache_accessions(str(taxid), accessions)
+        accessions[taxid] = acc_dict
 
-        records = await fetch(accessions)
+    records = await fetch(accessions[taxid])
 
     no_data = 0
     for seq in [seq.features for seq in records.values()]:
         isolate_data = await get_qualifiers(seq)
         if isolate_data["isolate"] is None and isolate_data["strain"] is None:
             no_data += 1
-    print(
-        f"Isolate source data not found in {no_data} out of {len(records)} records")
+    print(f"Isolate source data not found in {no_data} out of {len(records)} records")
 
 
 async def fetch(accessions):
@@ -102,17 +106,12 @@ async def get_qualifiers(seq):
     return isolate_data
 
 
-async def cache_accessions(taxid, accessions):
+def cache_accessions(accessions):
     if not os.path.isdir(".cli"):
         os.mkdir(".cli")
-        cache = {taxid: accessions}
-    else:
-        async with aiofiles.open(".cli/accessions_cache.json", "r") as f:
-            cache = json.loads(await f.read())
-            cache[taxid] = accessions
 
-    async with aiofiles.open(".cli/accessions_cache.json", "w") as f:
-        await f.write(json.dumps(cache, indent=4))
+    with open(".cli/accessions_cache.json", "w") as f:
+        json.dump(accessions, f, indent=4)
 
 
 def cache_records(taxid, records):
@@ -129,14 +128,14 @@ def cache_records(taxid, records):
         json.dump(cache, f, indent=4)
 
 
-async def check_accessions_cache(taxid):
+def check_accessions_cache():
     if not os.path.isdir(".cli"):
-        return None
+        return {}
 
-    async with aiofiles.open(".cli/accessions_cache.json", "r") as f:
-        cache = json.loads(await f.read())
+    with open(".cli/accessions_cache.json", "r") as f:
+        cache = json.load(f)
 
-        return cache.get(str(taxid))
+        return cache
 
 
 async def check_records_cache():
@@ -164,6 +163,4 @@ def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Uni
 
 
 if __name__ == '__main__':
-    if os.path.exists(".cli"):
-        shutil.rmtree(".cli")
     asyncio.run(isolate("tests/files/src"))
