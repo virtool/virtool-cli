@@ -35,12 +35,14 @@ qualifiers = ["isolate", "strain"]
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
+bad = {"bad_requests": []}
+
 
 async def isolate(src):
-    scheduler = await aiojobs.create_scheduler(limit=5)
-    asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
+    scheduler = await aiojobs.create_scheduler()
+    asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
-    global accessions 
+    global accessions
     accessions = check_accessions_cache() if check_accessions_cache() is not None else {}
 
     # get paths for all OTU in the directory
@@ -49,18 +51,28 @@ async def isolate(src):
     # get mapping of all OTU paths to their taxid
     taxids = await get_taxids(paths)
 
-    # tasks = [run(taxids[path], path) for path in paths]
-    # await asyncio.gather(*tasks)
-
-    for path in paths:
+    for path in paths[:10]:
         # only fetch OTU that have a taxid
         if taxids[path] is None:
             continue
 
-        await scheduler.spawn(run(taxids[path], path))
+        await scheduler.spawn(run(str(taxids[path]), path))
+        if Entrez.email is None or Entrez.api_key is None:
+            await asyncio.sleep(0.8)
+        else:
+            await asyncio.sleep(0.2)
+
+    while True:
+        if not scheduler.active_count:
+            await scheduler.close()
+            break
         await asyncio.sleep(0.1)
 
     cache_accessions(accessions)
+    
+    with open("bad_requests.json", "w") as f:
+        f.seek(0)
+        json.dump(bad, f, indent=4)
 
 
 async def run(taxid, path):
@@ -69,30 +81,35 @@ async def run(taxid, path):
     # get mapping of all isolates to their folder name
     isolates = await get_isolates(path)
 
+    records = await asyncio.get_event_loop().run_in_executor(None, fetch, accessions, taxid)
+
+    if records is not None:
+        no_data = 0
+        for seq in [seq for seq in records.values() if seq.seq]:
+            isolate_data = await get_qualifiers(seq.features)
+            if isolate_data["isolate"] is None and isolate_data["strain"] is None:
+                no_data += 1
+        print(
+            f"Isolate source data not found in {no_data} out of {len(records)} records")
+    else:
+        bad["bad_requests"].append(taxid)
+
+
+def fetch(accessions, taxid):
     if not accessions.get(taxid):
         record = Entrez.read(Entrez.elink(
             dbfrom="taxonomy", db="nucleotide", id=taxid, idtype="acc"))
         acc_dict = {}
+
         for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
             acc_dict[linksetdb["Id"]] = None
-
         accessions[taxid] = acc_dict
+    try:
+        handle = Entrez.efetch(db="nucleotide", id=[accession for accession in accessions[taxid]], rettype="gb",
+                retmode="text")
+    except HTTPError:
+        return None
 
-    records = await fetch(accessions[taxid])
-
-    no_data = 0
-    for seq in [seq.features for seq in records.values()]:
-        isolate_data = await get_qualifiers(seq)
-        if isolate_data["isolate"] is None and isolate_data["strain"] is None:
-            no_data += 1
-    print(f"Isolate source data not found in {no_data} out of {len(records)} records")
-
-
-async def fetch(accessions):
-    handle = Entrez.efetch(db="nucleotide", id=[accession for accession in accessions.keys()], rettype="gb",
-                            retmode="text")
-    
-    # this is somehow exponentially slower than the fetch itself
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
@@ -111,6 +128,7 @@ def cache_accessions(accessions):
         os.mkdir(".cli")
 
     with open(".cli/accessions_cache.json", "w") as f:
+        f.seek(0)
         json.dump(accessions, f, indent=4)
 
 
@@ -136,10 +154,6 @@ def check_accessions_cache():
         cache = json.load(f)
 
         return cache
-
-
-async def check_records_cache():
-    pass
 
 
 def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Union[None, Iterable[str]] = None) -> str:
