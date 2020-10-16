@@ -12,7 +12,7 @@ import aiofiles
 import aiojobs
 from Bio import Entrez, SeqIO
 
-from virtool_cli.utils import get_paths, get_taxids, get_isolates
+from virtool_cli.utils import *
 
 ISOLATE_KEYS = [
     "id",
@@ -30,12 +30,10 @@ SEQUENCE_KEYS = [
 ]
 
 accessions = {}
-
-qualifiers = ["isolate", "strain"]
+unique_ids = {}
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
-bad = {"bad_requests": []}
 
 
 async def isolate(src):
@@ -51,7 +49,10 @@ async def isolate(src):
     # get mapping of all OTU paths to their taxid
     taxids = await get_taxids(paths)
 
-    for path in paths[:10]:
+    global unique_ids
+    unique_ids = await get_unique_ids(paths)
+
+    for path in paths:
         # only fetch OTU that have a taxid
         if taxids[path] is None:
             continue
@@ -69,30 +70,35 @@ async def isolate(src):
         await asyncio.sleep(0.1)
 
     cache_accessions(accessions)
-    
-    with open("bad_requests.json", "w") as f:
-        f.seek(0)
-        json.dump(bad, f, indent=4)
 
 
 async def run(taxid, path):
-    global accessions
 
-    # get mapping of all isolates to their folder name
     isolates = await get_isolates(path)
 
     records = await asyncio.get_event_loop().run_in_executor(None, fetch, accessions, taxid)
-
+    
     if records is not None:
-        no_data = 0
-        for seq in [seq for seq in records.values() if seq.seq]:
-            isolate_data = await get_qualifiers(seq.features)
-            if isolate_data["isolate"] is None and isolate_data["strain"] is None:
-                no_data += 1
-        print(
-            f"Isolate source data not found in {no_data} out of {len(records)} records")
-    else:
-        bad["bad_requests"].append(taxid)
+        for accession in [accession for accession in records.values() if accession.seq]:
+            isolate_data = await get_qualifiers(accession.features)
+
+            # try to find isolate type and name automatically
+            found = None
+            for qualifier in ["isolate", "strain"]:
+                if qualifier in isolate_data:
+                    found = qualifier
+                    break
+            if found:
+                # see if isolate directory already exists
+                if isolate_data.get(found)[0] in isolates:
+                    isolate_name = isolate_data.get(found)[0]
+                    isolate_path = os.path.join(path, isolates.get(isolate_name))
+                    await store_sequence(isolate_path, accession, isolate_data)
+                else:
+                    pass
+            # else pass manual input to user
+            else:
+                pass
 
 
 def fetch(accessions, taxid):
@@ -106,7 +112,7 @@ def fetch(accessions, taxid):
         accessions[taxid] = acc_dict
     try:
         handle = Entrez.efetch(db="nucleotide", id=[accession for accession in accessions[taxid]], rettype="gb",
-                retmode="text")
+                               retmode="text")
     except HTTPError:
         return None
 
@@ -118,12 +124,13 @@ async def get_qualifiers(seq):
     isolate_data = {}
 
     for feature in f:
-        for qualifier in qualifiers:
+        for qualifier in feature.qualifiers:
             isolate_data[qualifier] = feature.qualifiers.get(qualifier)
     return isolate_data
 
 
 def cache_accessions(accessions):
+    """Cache a mapping of taxon ids to all accessions found"""
     if not os.path.isdir(".cli"):
         os.mkdir(".cli")
 
@@ -132,18 +139,34 @@ def cache_accessions(accessions):
         json.dump(accessions, f, indent=4)
 
 
-def cache_records(taxid, records):
-    with open(".cli/accessions_cache.json", "r+") as f:
-        cache = json.load(f)
+async def store_sequence(path, new_seq, data):
 
-        # can't cache features since they are SeqRecord objects
-        for record in records.values():
-            new_record = {"definition": record.description,
-                          "url": f"https://www.ncbi.nlm.nih.gov/nuccore/{record.id}", "sequence": str(record.seq),
-                          "features": [str(feature) for feature in record.features if feature.type == "source"]}
-            cache[taxid][record.id] = new_record
-        f.seek(0)
-        json.dump(cache, f, indent=4)
+    sequences = await get_sequences(path)
+
+    # check if accession doesn't already exist
+    if new_seq.id in sequences:
+        return
+
+    # generate new sequence id
+    new_id = random_alphanumeric(8, False, unique_ids)
+
+    await update_ids(new_id)
+
+    seq_file = {"_id": new_id,
+                "accession": new_seq.id,
+                "definition": new_seq.description,
+                "host": data.get("host")[0] if data.get("host") is not None else None,
+                "sequence": str(new_seq.seq)
+                }
+
+    async with aiofiles.open(os.path.join(path, new_id + ".json"), "w") as f:
+        await f.write(json.dumps(seq_file, indent=4))
+
+
+async def update_ids(id):
+    global unique_ids
+
+    unique_ids.add(id)
 
 
 def check_accessions_cache():
@@ -177,4 +200,4 @@ def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Uni
 
 
 if __name__ == '__main__':
-    asyncio.run(isolate("tests/files/src"))
+    asyncio.run(isolate("tests/files/src_d"))
