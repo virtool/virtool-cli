@@ -52,3 +52,29 @@ async def get_isolates(path):
                     isolates[isolate["source_name"]] = folder
 
     return isolates
+
+
+async def get_sequences(path):
+    """Returns a mapping of sequence accessions to their file name in a isolate directory"""
+    sequences = {}
+    for seq_file in os.listdir(path):
+        if seq_file != "isolate.json":
+            async with aiofiles.open(os.path.join(path, seq_file), "r") as f:
+                sequence = json.loads(await f.read())
+                sequences[sequence["accession"]] = seq_file
+
+    return sequences
+
+
+async def get_unique_ids(paths):
+    """Returns a mapping of all isolate and accessions to their random alphanumeric id to ensure ids stay unique"""
+    unique_ids = set()
+    for path in paths:
+        for isolate_folder in os.listdir(path):
+            if isolate_folder != "otu.json":
+                unique_ids.add(isolate_folder)
+                for seq_file in os.listdir(os.path.join(path, isolate_folder)):
+                    if seq_file != "isolate.json":
+                        unique_ids.add(seq_file.rstrip(".json"))
+    
+    return unique_ids
