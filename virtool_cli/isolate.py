@@ -5,7 +5,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
 from rich.console import Console
 
-import shutil
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Union, Iterable
 from urllib.error import HTTPError
@@ -13,7 +12,7 @@ import aiofiles
 import aiojobs
 from Bio import Entrez, SeqIO
 
-from virtool_cli.utils import *
+from virtool_cli.utils import get_paths, get_taxids, get_isolates, get_sequences, get_unique_ids
 
 ISOLATE_KEYS = [
     "id",
@@ -138,7 +137,7 @@ async def get_qualifiers(seq):
 
 
 def cache_accessions(accessions):
-    """Cache a mapping of taxon ids to all accessions found"""
+    """Cache a mapping of taxon ids to all accessions found."""
     if not os.path.isdir(".cli"):
         os.mkdir(".cli")
 
@@ -188,10 +187,10 @@ async def store_isolate(path, accession, source_name, source_type):
     return new_id
 
 
-async def update_ids(id):
+async def update_ids(new_id):
     global unique_ids
 
-    unique_ids.add(id)
+    unique_ids.add(new_id)
 
 
 def check_accessions_cache():
@@ -207,6 +206,7 @@ def check_accessions_cache():
 def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Union[None, Iterable[str]] = None) -> str:
     """
     Generates a random string composed of letters and numbers.
+
     :param length: the length of the string.
     :param mixed_case: included alpha characters will be mixed case instead of lowercase
     :param excluded: strings that may not be returned.
