@@ -17,7 +17,7 @@ Entrez.api_key = os.environ.get("NCBI_API_KEY")
 missed_otus = {"otus": []}
 
 
-async def run(src_path: str, force_update: bool):
+async def taxid(src_path: str, force_update: bool):
     """
     Asynchronously finds taxon ids for all OTU in a given src directory and
     writes them to each respective otu.json file.
@@ -186,7 +186,7 @@ async def get_name_from_path(path: str, force_update: bool) -> Union[str, None]:
             return otu["name"]
 
 
-def taxid(src_path: str, force_update: bool):
+def run(src_path: str, force_update: bool):
     """
     Creates and runs the event loop to asynchronously find taxon ids for all OTU in a src directory
 
@@ -195,4 +195,4 @@ def taxid(src_path: str, force_update: bool):
         force_update (bool): Flag to indicate whether all OTUs should be searched for regardless
                              if they already have a taxon id
     """
-    asyncio.run(run(src_path, force_update))
+    asyncio.run(taxid(src_path, force_update))
