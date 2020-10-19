@@ -3,6 +3,7 @@ import json
 import os
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
+from rich.console import Console
 
 import shutil
 from string import ascii_letters, ascii_lowercase, digits
@@ -37,7 +38,7 @@ Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
 
 async def isolate(src):
-    scheduler = await aiojobs.create_scheduler()
+    scheduler = await aiojobs.create_scheduler(limit=10)
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
     global accessions
@@ -67,17 +68,16 @@ async def isolate(src):
         if not scheduler.active_count:
             await scheduler.close()
             break
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
 
     cache_accessions(accessions)
 
 
 async def run(taxid, path):
-
     isolates = await get_isolates(path)
 
     records = await asyncio.get_event_loop().run_in_executor(None, fetch, accessions, taxid)
-    
+
     if records is not None:
         for accession in [accession for accession in records.values() if accession.seq]:
             isolate_data = await get_qualifiers(accession.features)
@@ -88,20 +88,23 @@ async def run(taxid, path):
                 if qualifier in isolate_data:
                     found = qualifier
                     break
-            if found:
-                # see if isolate directory already exists
-                if isolate_data.get(found)[0] in isolates:
-                    isolate_name = isolate_data.get(found)[0]
-                    isolate_path = os.path.join(path, isolates.get(isolate_name))
-                    await store_sequence(isolate_path, accession, isolate_data)
-                else:
-                    pass
-            # else pass manual input to user
-            else:
-                pass
+
+            if not found:
+                continue
+
+            # see if isolate directory already exists and create it if needed
+            if isolate_data.get(found)[0] not in isolates:
+                new_id = await store_isolate(path, accession, isolate_data.get(found)[0], found)
+                isolates[isolate_data.get(found)[0]] = new_id
+
+            isolate_name = isolate_data.get(found)[0]
+            isolate_path = os.path.join(path, isolates.get(isolate_name))
+            await store_sequence(isolate_path, accession, isolate_data)
 
 
 def fetch(accessions, taxid):
+    console = Console()
+
     if not accessions.get(taxid):
         record = Entrez.read(Entrez.elink(
             dbfrom="taxonomy", db="nucleotide", id=taxid, idtype="acc"))
@@ -110,13 +113,18 @@ def fetch(accessions, taxid):
         for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
             acc_dict[linksetdb["Id"]] = None
         accessions[taxid] = acc_dict
+
     try:
         handle = Entrez.efetch(db="nucleotide", id=[accession for accession in accessions[taxid]], rettype="gb",
                                retmode="text")
     except HTTPError:
+        console.print(f"Could not find isolate data for {taxid}", style="red")
         return None
 
-    return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
+    records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
+    console.print(f"Found isolate data for {taxid}", style="green")
+
+    return records
 
 
 async def get_qualifiers(seq):
@@ -139,12 +147,11 @@ def cache_accessions(accessions):
         json.dump(accessions, f, indent=4)
 
 
-async def store_sequence(path, new_seq, data):
-
+async def store_sequence(path, accession, data):
     sequences = await get_sequences(path)
 
     # check if accession doesn't already exist
-    if new_seq.id in sequences:
+    if accession.id in sequences:
         return
 
     # generate new sequence id
@@ -153,14 +160,32 @@ async def store_sequence(path, new_seq, data):
     await update_ids(new_id)
 
     seq_file = {"_id": new_id,
-                "accession": new_seq.id,
-                "definition": new_seq.description,
+                "accession": accession.id,
+                "definition": accession.description,
                 "host": data.get("host")[0] if data.get("host") is not None else None,
-                "sequence": str(new_seq.seq)
+                "sequence": str(accession.seq)
                 }
 
     async with aiofiles.open(os.path.join(path, new_id + ".json"), "w") as f:
         await f.write(json.dumps(seq_file, indent=4))
+        await f.seek(0)
+
+
+async def store_isolate(path, accession, source_name, source_type):
+    new_id = random_alphanumeric(8, False, unique_ids)
+    os.mkdir(os.path.join(path, new_id))
+
+    isolate = {
+        "id": new_id,
+        "source_type": source_type,
+        "source_name": source_name,
+        "default": False
+    }
+
+    async with aiofiles.open(os.path.join(path, new_id, "isolate.json"), "w") as f:
+        await f.write(json.dumps(isolate, indent=4))
+
+    return new_id
 
 
 async def update_ids(id):
@@ -200,4 +225,4 @@ def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Uni
 
 
 if __name__ == '__main__':
-    asyncio.run(isolate("tests/files/src_d"))
+    asyncio.run(isolate("tests/files/src"))
