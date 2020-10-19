@@ -26,7 +26,7 @@ SEQUENCE_KEYS = [
 ]
 
 
-def build(src_path: str, output: str, indent: bool, version: str):
+def run(src_path: str, output: str, indent: bool, version: str):
     """
     Build a Virtool reference JSON file from a data directory.
 

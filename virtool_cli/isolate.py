@@ -58,7 +58,7 @@ async def isolate(src):
         if taxids[path] is None:
             continue
 
-        await scheduler.spawn(run(str(taxids[path]), path))
+        await scheduler.spawn(fetch(str(taxids[path]), path))
         if Entrez.email is None or Entrez.api_key is None:
             await asyncio.sleep(0.8)
         else:
@@ -73,10 +73,10 @@ async def isolate(src):
     cache_accessions(accessions)
 
 
-async def run(taxid, path):
+async def fetch(taxid, path):
     isolates = await get_isolates(path)
 
-    records = await asyncio.get_event_loop().run_in_executor(None, fetch, accessions, taxid)
+    records = await asyncio.get_event_loop().run_in_executor(None, get_records, accessions, taxid)
 
     if records is not None:
         for accession in [accession for accession in records.values() if accession.seq]:
@@ -102,7 +102,7 @@ async def run(taxid, path):
             await store_sequence(isolate_path, accession, isolate_data)
 
 
-def fetch(accessions, taxid):
+def get_records(accessions, taxid):
     console = Console()
 
     if not accessions.get(taxid):
@@ -224,5 +224,5 @@ def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Uni
     return random_alphanumeric(length=length, excluded=excluded)
 
 
-if __name__ == '__main__':
+def run(src):
     asyncio.run(isolate("tests/files/src"))
