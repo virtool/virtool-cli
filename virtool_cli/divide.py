@@ -26,7 +26,7 @@ SEQUENCE_KEYS = [
 ]
 
 
-def divide(src_path: str, output: str):
+def run(src_path: str, output: str):
     """
     Divide a reference.json file from Virtool into a src tree.
 
