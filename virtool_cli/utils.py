@@ -4,8 +4,7 @@ import os
 
 
 def get_paths(src_path: str) -> list:
-    """
-    Generates a list of paths to all OTU in a src directory.
+    """Generates a list of paths to all OTU in a src directory.
 
     Parameters:
         src_path (str): Path to a src database directory
@@ -31,7 +30,7 @@ def get_paths(src_path: str) -> list:
 
 
 async def get_taxids(paths):
-    """Returns a mapping of every OTU to their taxid"""
+    """Returns a mapping of every OTU to their taxid."""
     taxids = {}
     for otu_path in paths:
         async with aiofiles.open(os.path.join(otu_path, "otu.json"), "r+") as f:
@@ -42,7 +41,7 @@ async def get_taxids(paths):
 
 
 async def get_isolates(path):
-    """Returns a mapping to every isolate and their folder name"""
+    """Returns a mapping to every isolate and their folder name."""
     isolates = {}
     for folder in os.listdir(path):
         if folder != "otu.json":
@@ -55,7 +54,7 @@ async def get_isolates(path):
 
 
 async def get_sequences(path):
-    """Returns a mapping of sequence accessions to their file name in a isolate directory"""
+    """Returns a mapping of sequence accessions to their file name in a isolate directory."""
     sequences = {}
     for seq_file in os.listdir(path):
         if seq_file != "isolate.json":
@@ -67,7 +66,7 @@ async def get_sequences(path):
 
 
 async def get_unique_ids(paths):
-    """Returns a mapping of all isolate and accessions to their random alphanumeric id to ensure ids stay unique"""
+    """Returns a mapping of all isolate and accessions to their random alphanumeric id to ensure ids stay unique."""
     unique_ids = set()
     for path in paths:
         for isolate_folder in os.listdir(path):
@@ -76,5 +75,5 @@ async def get_unique_ids(paths):
                 for seq_file in os.listdir(os.path.join(path, isolate_folder)):
                     if seq_file != "isolate.json":
                         unique_ids.add(seq_file.rstrip(".json"))
-    
+
     return unique_ids
