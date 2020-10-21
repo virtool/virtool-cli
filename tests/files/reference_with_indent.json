@@ -1,5 +1,5 @@
 {
-    "created_at": "2020-10-21T21:36:54.070201+00:00",
+    "created_at": "2020-10-21T22:20:46.052550+00:00",
     "data_type": "genome",
     "name": null,
     "organism": "virus",
@@ -25,7 +25,8 @@
                 }
             ],
             "name": "Vanilla distortion mosaic virus",
-            "schema": []
+            "schema": [],
+            "taxid": 326202
         },
         {
             "_id": "c93ec9a9",
@@ -133,7 +134,8 @@
                 }
             ],
             "name": "Abaca bunchy top virus",
-            "schema": []
+            "schema": [],
+            "taxid": 438782
         },
         {
             "_id": "f8a56910",
@@ -156,7 +158,8 @@
                 }
             ],
             "name": "Gaillardia latent virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1468172
         },
         {
             "_id": "407d8a21",
@@ -179,7 +182,8 @@
                 }
             ],
             "name": "Kalanchoe latent virus",
-            "schema": []
+            "schema": [],
+            "taxid": 132477
         },
         {
             "_id": "e5b6dd57",
@@ -202,7 +206,8 @@
                 }
             ],
             "name": "Zantedeschia mild mosaic virus",
-            "schema": []
+            "schema": [],
+            "taxid": 270478
         },
         {
             "_id": "2031cb7f",
@@ -239,7 +244,8 @@
                 }
             ],
             "name": "Impatiens necrotic spot virus",
-            "schema": []
+            "schema": [],
+            "taxid": 11612
         },
         {
             "_id": "dd21fd8f",
@@ -262,7 +268,8 @@
                 }
             ],
             "name": "Pagoda yellow mosaic associated virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1505530
         },
         {
             "_id": "34f59aff",
@@ -320,7 +327,8 @@
                 }
             ],
             "name": "Fig mosaic virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1980427
         },
         {
             "_id": "e1dfb3ef",
@@ -343,7 +351,8 @@
                 }
             ],
             "name": "Oat blue dwarf virus",
-            "schema": []
+            "schema": [],
+            "taxid": 56879
         },
         {
             "_id": "d86d0412",
@@ -366,7 +375,8 @@
                 }
             ],
             "name": "Tall oatgrass mosaic virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1414644
         },
         {
             "_id": "9da7c10d",
@@ -389,7 +399,8 @@
                 }
             ],
             "name": "Radish leaf curl betasatellite",
-            "schema": []
+            "schema": [],
+            "taxid": 662596
         },
         {
             "_id": "a89b6529",
@@ -412,7 +423,8 @@
                 }
             ],
             "name": "Habenaria mosaic virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1324128
         },
         {
             "_id": "3962f6ec",
@@ -442,7 +454,8 @@
                 }
             ],
             "name": "Jacquemontia mosaic Yucatan virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1198450
         },
         {
             "_id": "fbd9391c",
@@ -465,7 +478,8 @@
                 }
             ],
             "name": "Lamium leaf distortion virus",
-            "schema": []
+            "schema": [],
+            "taxid": 515320
         },
         {
             "_id": "5d877144",
@@ -488,7 +502,8 @@
                 }
             ],
             "name": "Yacon necrotic mottle virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1561150
         },
         {
             "_id": "ae0f2a35",
@@ -511,7 +526,8 @@
                 }
             ],
             "name": "Nanovirus-like particle",
-            "schema": []
+            "schema": [],
+            "taxid": 96892
         },
         {
             "_id": "7d0ffa77",
@@ -534,7 +550,8 @@
                 }
             ],
             "name": "East Asian Passiflora virus",
-            "schema": []
+            "schema": [],
+            "taxid": 341167
         },
         {
             "_id": "c55afad6",
@@ -557,7 +574,8 @@
                 }
             ],
             "name": "Bamboo mosaic virus",
-            "schema": []
+            "schema": [],
+            "taxid": 35286
         },
         {
             "_id": "71d15b86",
@@ -580,7 +598,8 @@
                 }
             ],
             "name": "Ugandan cassava brown streak virus",
-            "schema": []
+            "schema": [],
+            "taxid": 946046
         },
         {
             "_id": "edfaaf2b",
@@ -610,7 +629,8 @@
                 }
             ],
             "name": "Macroptilium golden mosaic virus",
-            "schema": []
+            "schema": [],
+            "taxid": 51676
         },
         {
             "_id": "0bfdb8bc",
@@ -633,7 +653,8 @@
                 }
             ],
             "name": "Wasabi mottle virus",
-            "schema": []
+            "schema": [],
+            "taxid": 1169032
         },
         {
             "_id": "ab6bd88a",
@@ -656,7 +677,8 @@
                 }
             ],
             "name": "Dahlia latent viroid",
-            "schema": []
+            "schema": [],
+            "taxid": 1278205
         },
         {
             "_id": "d226290f",
@@ -708,7 +730,8 @@
                 }
             ],
             "name": "Cabbage leaf curl Jamaica virus",
-            "schema": []
+            "schema": [],
+            "taxid": 345184
         },
         {
             "_id": "6bc81904",
@@ -731,7 +754,8 @@
                 }
             ],
             "name": "Saccharum streak virus",
-            "schema": []
+            "schema": [],
+            "taxid": 683179
         }
     ]
 }
