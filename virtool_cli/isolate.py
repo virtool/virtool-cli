@@ -14,114 +14,123 @@ from rich.console import Console
 
 from virtool_cli.utils import get_otu_paths, get_taxid_map, get_isolates, get_sequences, get_unique_ids
 
-ISOLATE_KEYS = [
-    "id",
-    "source_type",
-    "source_name",
-    "default"
-]
-
-SEQUENCE_KEYS = [
-    "_id",
-    "accession",
-    "definition",
-    "host",
-    "sequence"
-]
-
-accessions = {}
-unique_ids = {}
-
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
 REQUEST_INTERVAL = 0.2 if Entrez.email and Entrez.api_key else 0.8
 
+
 async def isolate(src):
     scheduler = await aiojobs.create_scheduler(limit=10)
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
-    global accessions
-    accessions = check_accessions_cache() if check_accessions_cache() is not None else {}
+    q = asyncio.Queue()
+
+    existing_accessions = check_accessions_cache()
 
     # get paths for all OTU in the directory
-    paths = get_paths(src)
+    paths = get_otu_paths(src)
 
     # get mapping of all OTU paths to their taxid
-    taxids = await get_taxids(paths)
+    taxid_otu_path_map = await get_taxid_map(paths)
 
-    global unique_ids
     unique_ids = await get_unique_ids(paths)
 
     for path in paths:
         # only fetch OTU that have a taxid
-        if taxids[path] is None:
+        taxid = taxid_otu_path_map[path]
+
+        if taxid is None:
             continue
 
-        await scheduler.spawn(fetch_otu_isolates(taxid, taxid_otu_path_map, path))
+        accessions = existing_accessions.get(taxid)
+
+        await scheduler.spawn(fetch_otu_isolates(taxid, path, accessions, unique_ids, q))
 
         await asyncio.sleep(REQUEST_INTERVAL)
+
+    results_to_cache = list()
+
     while True:
-        if not scheduler.active_count:
-            await scheduler.close()
-            break
-        await asyncio.sleep(0.5)
+        try:
+            results_to_cache.append(q.get_nowait())
+        except asyncio.QueueEmpty:
+            if not scheduler.active_count:
+                break
 
-    cache_accessions(accessions)
+        await asyncio.sleep(0.01)
+
+    await scheduler.close()
+
+    new_cache = dict()
+    for taxid, accessions in results_to_cache:
+        new_cache[taxid] = accessions
+
+    existing_accessions.update(new_cache)
+
+    cache_accessions(existing_accessions)
 
 
-async def fetch(taxid, path):
+async def fetch_otu_isolates(taxid, path, accessions, unique_ids, queue):
+    # get existing isolates
     isolates = await get_isolates(path)
 
-    records = await asyncio.get_event_loop().run_in_executor(None, get_records, accessions, taxid)
+    records, new_accessions = await asyncio.get_event_loop().run_in_executor(None, get_records, accessions, taxid)
 
     if records is not None:
         for accession in [accession for accession in records.values() if accession.seq]:
             isolate_data = await get_qualifiers(accession.features)
 
             # try to find isolate type and name automatically
-            found = None
+            isolate_type = None
             for qualifier in ["isolate", "strain"]:
                 if qualifier in isolate_data:
-                    found = qualifier
+                    isolate_type = qualifier
                     break
 
-            if not found:
+            if not isolate_type:
                 continue
 
             # see if isolate directory already exists and create it if needed
-            if isolate_data.get(found)[0] not in isolates:
-                new_id = await store_isolate(path, accession, isolate_data.get(found)[0], found)
-                isolates[isolate_data.get(found)[0]] = new_id
+            isolate_name = isolate_data.get(isolate_type)[0]
 
-            isolate_name = isolate_data.get(found)[0]
+            if isolate_name not in isolates:
+                new_id = await store_isolate(path, isolate_name, isolate_type, unique_ids)
+                unique_ids.add(new_id)
+                isolates[isolate_name] = new_id
+
             isolate_path = os.path.join(path, isolates.get(isolate_name))
-            await store_sequence(isolate_path, accession, isolate_data)
+            new_id = await store_sequence(isolate_path, accession, isolate_data, unique_ids)
+            unique_ids.add(new_id)
+
+            await queue.put((taxid, new_accessions))
 
 
 def get_records(accessions, taxid):
     console = Console()
 
-    if not accessions.get(taxid):
+    if accessions is None:
+        accessions = []
         record = Entrez.read(Entrez.elink(
             dbfrom="taxonomy", db="nucleotide", id=taxid, idtype="acc"))
-        acc_dict = {}
 
         for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
-            acc_dict[linksetdb["Id"]] = None
-        accessions[taxid] = acc_dict
+            accessions.append(linksetdb["Id"])
 
     try:
-        handle = Entrez.efetch(db="nucleotide", id=[accession for accession in accessions[taxid]], rettype="gb",
-                               retmode="text")
+        records = fetch_records(accessions)
+        console.print(f"Found isolate data for {taxid}", style="green")
     except HTTPError:
         console.print(f"Could not find isolate data for {taxid}", style="red")
         return None
 
-    records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
-    console.print(f"Found isolate data for {taxid}", style="green")
+    return records, accessions
 
-    return records
+
+def fetch_records(accessions):
+    handle = Entrez.efetch(db="nucleotide", id=accessions, rettype="gb",
+                           retmode="text")
+    return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
 async def get_qualifiers(seq):
@@ -144,7 +153,7 @@ def cache_accessions(accessions):
         json.dump(accessions, f, indent=4)
 
 
-async def store_sequence(path, accession, data):
+async def store_sequence(path, accession, data, unique_ids):
     sequences = await get_sequences(path)
 
     # check if accession doesn't already exist
@@ -153,8 +162,6 @@ async def store_sequence(path, accession, data):
 
     # generate new sequence id
     new_id = random_alphanumeric(8, False, unique_ids)
-
-    await update_ids(new_id)
 
     seq_file = {"_id": new_id,
                 "accession": accession.id,
@@ -167,12 +174,14 @@ async def store_sequence(path, accession, data):
         await f.write(json.dumps(seq_file, indent=4))
         await f.seek(0)
 
+    return new_id
 
-async def store_isolate(path, accession, source_name, source_type):
+
+async def store_isolate(path, source_name, source_type, unique_ids):
     new_id = random_alphanumeric(8, False, unique_ids)
     os.mkdir(os.path.join(path, new_id))
 
-    isolate = {
+    new_isolate = {
         "id": new_id,
         "source_type": source_type,
         "source_name": source_name,
@@ -180,15 +189,9 @@ async def store_isolate(path, accession, source_name, source_type):
     }
 
     async with aiofiles.open(os.path.join(path, new_id, "isolate.json"), "w") as f:
-        await f.write(json.dumps(isolate, indent=4))
+        await f.write(json.dumps(new_isolate, indent=4))
 
     return new_id
-
-
-async def update_ids(new_id):
-    global unique_ids
-
-    unique_ids.add(new_id)
 
 
 def check_accessions_cache():
@@ -223,4 +226,4 @@ def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Uni
 
 
 def run(src):
-    asyncio.run(isolate("tests/files/src"))
+    asyncio.run(isolate(src))
