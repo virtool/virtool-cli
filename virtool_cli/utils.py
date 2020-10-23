@@ -28,9 +28,10 @@ def get_otu_paths(src_path: str) -> list:
 
 async def get_taxid_map(paths):
     """Returns a mapping of every OTU to their taxid."""
-    taxids = {}
+    taxids = dict()
+
     for otu_path in paths:
-        async with aiofiles.open(os.path.join(otu_path, "otu.json"), "r+") as f:
+        async with aiofiles.open(os.path.join(otu_path, "otu.json"), "r") as f:
             otu = json.loads(await f.read())
             taxids[otu_path] = otu["taxid"]
 
@@ -39,25 +40,26 @@ async def get_taxid_map(paths):
 
 async def get_isolates(path):
     """Returns a mapping to every isolate and their folder name."""
-    isolates = {}
+    isolates = dict()
+
     for folder in os.listdir(path):
-        if folder != "otu.json":
-            if "isolate.json" in set(os.listdir(os.path.join(path, folder))):
-                async with aiofiles.open(os.path.join(path, folder, "isolate.json"), "r") as f:
-                    isolate = json.loads(await f.read())
-                    isolates[isolate["source_name"]] = folder
+        if folder != "otu.json" and "isolate.json" in set(os.listdir(os.path.join(path, folder))):
+            async with aiofiles.open(os.path.join(path, folder, "isolate.json"), "r") as f:
+                isolate = json.loads(await f.read())
+                isolates[isolate["source_name"]] = folder
 
     return isolates
 
 
 async def get_sequences(path):
     """Returns a mapping of sequence accessions to their file name in a isolate directory."""
-    sequences = {}
-    for seq_file in os.listdir(path):
-        if seq_file != "isolate.json":
-            async with aiofiles.open(os.path.join(path, seq_file), "r") as f:
+    sequences = dict()
+
+    for sequence_path in os.listdir(path):
+        if sequence_path != "isolate.json":
+            async with aiofiles.open(os.path.join(path, sequence_path), "r") as f:
                 sequence = json.loads(await f.read())
-                sequences[sequence["accession"]] = seq_file
+                sequences[sequence["accession"]] = sequence_path
 
     return sequences
 
