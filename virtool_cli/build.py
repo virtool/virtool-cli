@@ -84,7 +84,7 @@ def run(src_path: str, output: str, indent: bool, version: str):
         json.dump(data, f, indent=4 if indent else None, sort_keys=True)
 
 
-def parse_meta(src_path: str) -> list:
+def parse_meta(src_path: str) -> dict:
     """
     Deserializes and returns meta.json if found, else returns an empty dictionary.
 
