@@ -7,7 +7,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 import aiofiles
 import aiojobs
 from Bio import Entrez
-from virtool_cli.utils import get_paths
+from virtool_cli.utils import get_otu_paths
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn
 
@@ -32,7 +32,7 @@ async def taxid(src_path: str, force_update: bool):
     scheduler = await aiojobs.create_scheduler(limit=5)
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
 
-    paths = get_paths(src_path)
+    paths = get_otu_paths(src_path)
     checked_names = []
     otu_paths = {}
 
