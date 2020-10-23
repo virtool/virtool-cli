@@ -3,16 +3,16 @@ import json
 import os
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
-from rich.console import Console
-
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Union, Iterable
 from urllib.error import HTTPError
+
 import aiofiles
 import aiojobs
 from Bio import Entrez, SeqIO
+from rich.console import Console
 
-from virtool_cli.utils import get_paths, get_taxids, get_isolates, get_sequences, get_unique_ids
+from virtool_cli.utils import get_otu_paths, get_taxid_map, get_isolates, get_sequences, get_unique_ids
 
 ISOLATE_KEYS = [
     "id",
