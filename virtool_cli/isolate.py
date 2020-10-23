@@ -62,13 +62,7 @@ async def isolate(src):
 
     await scheduler.close()
 
-    new_cache = dict()
-    for taxid, accessions in results_to_cache:
-        new_cache[taxid] = accessions
-
-    existing_accessions.update(new_cache)
-
-    cache_accessions(existing_accessions)
+    update_cache(existing_accessions, results_to_cache)
 
 
 async def fetch_otu_isolates(taxid, path, accessions, unique_ids, queue):
@@ -88,7 +82,7 @@ async def fetch_otu_isolates(taxid, path, accessions, unique_ids, queue):
                     isolate_type = qualifier
                     break
 
-            if not isolate_type:
+            if isolate_type is None:
                 continue
 
             # see if isolate directory already exists and create it if needed
@@ -104,6 +98,23 @@ async def fetch_otu_isolates(taxid, path, accessions, unique_ids, queue):
             unique_ids.add(new_id)
 
             await queue.put((taxid, new_accessions))
+
+
+def update_cache(existing_cache, results):
+    """
+    Updates the existing accessions cache with fetch results
+
+    :param existing_cache: The existing cache from the .cli folder
+    :param results: List of tuples pulled out of the asyncio Queue containing each taxid and their accessions
+    :return: The updated cache to write to file
+    """
+    new_accessions = dict()
+    for taxid, accessions in results:
+        new_accessions[taxid] = accessions
+
+    new_cache = existing_cache.update(new_accessions)
+
+    cache_accessions(new_cache)
 
 
 def get_records(accessions, taxid):
