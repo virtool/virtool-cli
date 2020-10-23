@@ -1,6 +1,7 @@
-import aiofiles
 import json
 import os
+
+import aiofiles
 
 
 def get_otu_paths(src_path: str) -> list:
