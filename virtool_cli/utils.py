@@ -3,15 +3,12 @@ import json
 import os
 
 
-def get_paths(src_path: str) -> list:
-    """Generates a list of paths to all OTU in a src directory.
+def get_otu_paths(src_path: str) -> list:
+    """
+    Generates a list of paths to all OTUs in a src directory.
 
-    Parameters:
-        src_path (str): Path to a src database directory
-
-    Returns:
-        A list containing paths to all OTU in a src directory
-
+    :param src_path: Path to a src database directory
+    :return: paths to all OTU in a src directory
     """
     alpha_paths = os.listdir(src_path)
     paths = []
@@ -29,7 +26,7 @@ def get_paths(src_path: str) -> list:
     return paths
 
 
-async def get_taxids(paths):
+async def get_taxid_map(paths):
     """Returns a mapping of every OTU to their taxid."""
     taxids = {}
     for otu_path in paths:
@@ -68,6 +65,7 @@ async def get_sequences(path):
 async def get_unique_ids(paths):
     """Returns a mapping of all isolate and accessions to their random alphanumeric id to ensure ids stay unique."""
     unique_ids = set()
+
     for path in paths:
         for isolate_folder in os.listdir(path):
             if isolate_folder != "otu.json":
