@@ -17,7 +17,7 @@ from virtool_cli.utils import get_otu_paths, get_taxid_map, get_isolates, get_se
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
-REQUEST_INTERVAL = 0.2 if Entrez.email and Entrez.api_key else 0.8
+REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.8
 
 
 async def isolate(src):
@@ -38,7 +38,7 @@ async def isolate(src):
 
     for path in paths:
         # only fetch OTU that have a taxid
-        taxid = taxid_otu_path_map[path]
+        taxid = str(taxid_otu_path_map[path])
 
         if taxid is None:
             continue
@@ -122,7 +122,7 @@ def get_records(accessions, taxid):
         console.print(f"Found isolate data for {taxid}", style="green")
     except HTTPError:
         console.print(f"Could not find isolate data for {taxid}", style="red")
-        return None
+        return None, None
 
     return records, accessions
 
