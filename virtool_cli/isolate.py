@@ -35,6 +35,7 @@ unique_ids = {}
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
+REQUEST_INTERVAL = 0.2 if Entrez.email and Entrez.api_key else 0.8
 
 async def isolate(src):
     scheduler = await aiojobs.create_scheduler(limit=10)
@@ -57,12 +58,9 @@ async def isolate(src):
         if taxids[path] is None:
             continue
 
-        await scheduler.spawn(fetch(str(taxids[path]), path))
-        if Entrez.email is None or Entrez.api_key is None:
-            await asyncio.sleep(0.8)
-        else:
-            await asyncio.sleep(0.2)
+        await scheduler.spawn(fetch_otu_isolates(taxid, taxid_otu_path_map, path))
 
+        await asyncio.sleep(REQUEST_INTERVAL)
     while True:
         if not scheduler.active_count:
             await scheduler.close()
