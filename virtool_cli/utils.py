@@ -27,8 +27,13 @@ def get_otu_paths(src_path: str) -> list:
     return paths
 
 
-async def get_taxid_map(paths):
-    """Returns a mapping of every OTU to their taxid."""
+async def get_taxid_map(paths) -> dict:
+    """
+    Returns a mapping of every OTU path to their taxid.
+
+    :param paths: List of paths to all OTU in a reference
+    :return: A mapping of every OTU path to their taxid
+    """
     taxids = dict()
 
     for otu_path in paths:
@@ -39,8 +44,13 @@ async def get_taxid_map(paths):
     return taxids
 
 
-async def get_isolates(path):
-    """Returns a mapping to every isolate and their folder name."""
+async def get_isolates(path) -> dict:
+    """
+    Returns a mapping to every isolate and their folder name.
+
+    :param path: A path to a OTU in a reference
+    :return: A mapping of all of an OTU's isolates to their folder name (id)
+    """
     isolates = dict()
 
     for folder in os.listdir(path):
@@ -52,8 +62,13 @@ async def get_isolates(path):
     return isolates
 
 
-async def get_sequences(path):
-    """Returns a mapping of sequence accessions to their file name in a isolate directory."""
+async def get_sequences(path) -> dict:
+    """
+    Returns a mapping of sequence accessions to their file name in a isolate directory.
+
+    :param path: A path to an isolate in a reference
+    :return: A mapping of all accessions in an isolate to their file name (id)
+    """
     sequences = dict()
 
     for sequence_path in os.listdir(path):
@@ -65,8 +80,13 @@ async def get_sequences(path):
     return sequences
 
 
-async def get_unique_ids(paths):
-    """Returns a mapping of all isolate and accessions to their random alphanumeric id to ensure ids stay unique."""
+async def get_unique_ids(paths) -> set:
+    """
+    Returns a set of all unique random alphanumeric ids in a reference
+
+    :param paths: List of paths to all OTU in a reference
+    :return: A set containing all unique Virtool ids
+    """
     unique_ids = set()
 
     for path in paths:
