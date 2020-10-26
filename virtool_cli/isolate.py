@@ -34,8 +34,6 @@ async def isolate(src):
     # get mapping of all OTU paths to their taxid
     taxid_otu_path_map = await get_taxid_map(paths)
 
-    unique_ids = await get_unique_ids(paths)
-
     for path in paths:
         taxid = str(taxid_otu_path_map[path])
 
@@ -44,7 +42,7 @@ async def isolate(src):
 
         accessions = existing_accessions.get(taxid)
 
-        await scheduler.spawn(fetch_otu_isolates(taxid, path, accessions, unique_ids, q))
+        await scheduler.spawn(fetch_otu_isolates(taxid, path, accessions, paths, q))
 
         await asyncio.sleep(REQUEST_INTERVAL)
 
@@ -65,34 +63,37 @@ async def isolate(src):
     write_cache(updated_cache)
 
 
-async def fetch_otu_isolates(taxid, path, accessions, unique_ids, queue):
+async def fetch_otu_isolates(taxid, path, accessions, paths, queue):
     # get existing isolates
     isolates = await get_isolates(path)
 
     records, new_accessions = await asyncio.get_event_loop().run_in_executor(None, get_records, accessions, taxid)
+
+    isolate_ids, sequence_ids = await get_unique_ids(paths)
 
     if records is not None:
         for accession in [accession for accession in records.values() if accession.seq]:
             accession_data = await get_qualifiers(accession.features)
 
             # try to find isolate type and name automatically
-            isolate_type = find_isolate(accession_data)
+            isolate_type = await find_isolate(accession_data)
 
             if isolate_type is None:
                 continue
 
             # see if isolate directory already exists and create it if needed
+
             isolate_name = accession_data.get(isolate_type)[0]
 
             if isolate_name not in isolates:
-                new_id = await store_isolate(path, isolate_name, isolate_type, unique_ids)
-                unique_ids.add(new_id)
+                new_id = await store_isolate(path, isolate_name, isolate_type, isolate_ids)
+                isolate_ids.add(new_id)
                 isolates[isolate_name] = new_id
 
             # create new sequence file
             isolate_path = os.path.join(path, isolates.get(isolate_name))
-            new_id = await store_sequence(isolate_path, accession, accession_data, unique_ids)
-            unique_ids.add(new_id)
+            new_id = await store_sequence(isolate_path, accession, accession_data, sequence_ids)
+            sequence_ids.add(new_id)
 
             await queue.put((taxid, new_accessions))
 

@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Tuple
 
 import aiofiles
 
@@ -80,21 +81,22 @@ async def get_sequences(path) -> dict:
     return sequences
 
 
-async def get_unique_ids(paths) -> set:
+async def get_unique_ids(paths) -> Tuple[set, set]:
     """
     Returns a set of all unique random alphanumeric ids in a reference
 
     :param paths: List of paths to all OTU in a reference
     :return: A set containing all unique Virtool ids
     """
-    unique_ids = set()
+    isolate_ids = set()
+    sequence_ids = set()
 
     for path in paths:
         for isolate_folder in os.listdir(path):
             if isolate_folder != "otu.json":
-                unique_ids.add(isolate_folder)
+                isolate_ids.add(isolate_folder)
                 for seq_file in os.listdir(os.path.join(path, isolate_folder)):
                     if seq_file != "isolate.json":
-                        unique_ids.add(seq_file.rstrip(".json"))
+                        sequence_ids.add(seq_file.rstrip(".json"))
 
-    return unique_ids
+    return isolate_ids, sequence_ids
