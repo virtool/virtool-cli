@@ -37,7 +37,6 @@ async def isolate(src):
     unique_ids = await get_unique_ids(paths)
 
     for path in paths:
-        # only fetch OTU that have a taxid
         taxid = str(taxid_otu_path_map[path])
 
         if taxid is None:
@@ -50,7 +49,6 @@ async def isolate(src):
         await asyncio.sleep(REQUEST_INTERVAL)
 
     results_to_cache = list()
-
     while True:
         try:
             results_to_cache.append(q.get_nowait())
@@ -62,7 +60,9 @@ async def isolate(src):
 
     await scheduler.close()
 
-    update_cache(existing_accessions, results_to_cache)
+    updated_cache = update_cache(existing_accessions, results_to_cache)
+
+    write_cache(updated_cache)
 
 
 async def fetch_otu_isolates(taxid, path, accessions, unique_ids, queue):
@@ -73,28 +73,25 @@ async def fetch_otu_isolates(taxid, path, accessions, unique_ids, queue):
 
     if records is not None:
         for accession in [accession for accession in records.values() if accession.seq]:
-            isolate_data = await get_qualifiers(accession.features)
+            accession_data = await get_qualifiers(accession.features)
 
             # try to find isolate type and name automatically
-            isolate_type = None
-            for qualifier in ["isolate", "strain"]:
-                if qualifier in isolate_data:
-                    isolate_type = qualifier
-                    break
+            isolate_type = find_isolate(accession_data)
 
             if isolate_type is None:
                 continue
 
             # see if isolate directory already exists and create it if needed
-            isolate_name = isolate_data.get(isolate_type)[0]
+            isolate_name = accession_data.get(isolate_type)[0]
 
             if isolate_name not in isolates:
                 new_id = await store_isolate(path, isolate_name, isolate_type, unique_ids)
                 unique_ids.add(new_id)
                 isolates[isolate_name] = new_id
 
+            # create new sequence file
             isolate_path = os.path.join(path, isolates.get(isolate_name))
-            new_id = await store_sequence(isolate_path, accession, isolate_data, unique_ids)
+            new_id = await store_sequence(isolate_path, accession, accession_data, unique_ids)
             unique_ids.add(new_id)
 
             await queue.put((taxid, new_accessions))
@@ -106,15 +103,14 @@ def update_cache(existing_cache, results):
 
     :param existing_cache: The existing cache from the .cli folder
     :param results: List of tuples pulled out of the asyncio Queue containing each taxid and their accessions
-    :return: The updated cache to write to file
     """
     new_accessions = dict()
     for taxid, accessions in results:
         new_accessions[taxid] = accessions
 
-    new_cache = existing_cache.update(new_accessions)
+    existing_cache.update(new_accessions)
 
-    cache_accessions(new_cache)
+    return existing_cache
 
 
 def get_records(accessions, taxid):
@@ -122,8 +118,8 @@ def get_records(accessions, taxid):
 
     if accessions is None:
         accessions = []
-        record = Entrez.read(Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", id=taxid, idtype="acc"))
+        record = Entrez.read(Entrez.elink(dbfrom="taxonomy", db="nucleotide",
+                                          id=taxid, idtype="acc"))
 
         for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
             accessions.append(linksetdb["Id"])
@@ -139,8 +135,9 @@ def get_records(accessions, taxid):
 
 
 def fetch_records(accessions):
-    handle = Entrez.efetch(db="nucleotide", id=accessions, rettype="gb",
-                           retmode="text")
+    handle = Entrez.efetch(db="nucleotide", id=accessions,
+                           rettype="gb", retmode="text")
+
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
@@ -154,14 +151,14 @@ async def get_qualifiers(seq):
     return isolate_data
 
 
-def cache_accessions(accessions):
-    """Cache a mapping of taxon ids to all accessions found."""
-    if not os.path.isdir(".cli"):
-        os.mkdir(".cli")
+async def find_isolate(isolate_data):
+    isolate_type = None
+    for qualifier in ["isolate", "strain"]:
+        if qualifier in isolate_data:
+            isolate_type = qualifier
+            break
 
-    with open(".cli/accessions_cache.json", "w") as f:
-        f.seek(0)
-        json.dump(accessions, f, indent=4)
+    return isolate_type
 
 
 async def store_sequence(path, accession, data, unique_ids):
@@ -213,6 +210,20 @@ def check_accessions_cache():
         cache = json.load(f)
 
         return cache
+
+
+def write_cache(accessions):
+    """
+    Cache a mapping of taxon ids to all accessions found.
+
+    :param accessions: Dictionary containing an updated mapping of taxids to their accessions
+    """
+    if not os.path.isdir(".cli"):
+        os.mkdir(".cli")
+
+    with open(".cli/accessions_cache.json", "w") as f:
+        f.seek(0)
+        json.dump(accessions, f, indent=4)
 
 
 def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Union[None, Iterable[str]] = None) -> str:
