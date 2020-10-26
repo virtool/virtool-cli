@@ -4,7 +4,7 @@ import os
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Union, Iterable
+from typing import Union, Iterable, Tuple
 from urllib.error import HTTPError
 
 import aiofiles
@@ -21,12 +21,17 @@ REQUEST_INTERVAL = 0.4 if Entrez.email and Entrez.api_key else 0.6
 
 
 async def isolate(src):
+    """
+    Runs routines to find new isolates for OTU in a reference directory and writes newfound accessions to local cache
+
+    :param src: Path to a given reference directory
+    """
     scheduler = await aiojobs.create_scheduler(limit=10)
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
     q = asyncio.Queue()
 
-    existing_accessions = check_accessions_cache()
+    existing_accessions = get_cache()
 
     # get paths for all OTU in the directory
     paths = get_otu_paths(src)
@@ -64,7 +69,16 @@ async def isolate(src):
 
 
 async def fetch_otu_isolates(taxid, path, accessions, paths, queue):
-    # get existing isolates
+    """
+    Routine to fetch new isolates for a given OTU, creating a directory for each
+
+    :param taxid: The taxon id for a given OTU
+    :param path: Path to a given OTU in a reference directory
+    :param accessions: List of accessions for the given taxon id from local cache
+    :param paths: List of all paths to every OTU in a reference
+    :param queue: Asyncio queue to put newfound accessions onto for caching purposes
+    """
+
     isolates = await get_isolates(path)
 
     records, new_accessions = await asyncio.get_event_loop().run_in_executor(None, get_records, accessions, taxid)
@@ -98,7 +112,7 @@ async def fetch_otu_isolates(taxid, path, accessions, paths, queue):
             await queue.put((taxid, new_accessions))
 
 
-def update_cache(existing_cache, results):
+def update_cache(existing_cache, results) -> dict:
     """
     Updates the existing accessions cache with fetch results
 
@@ -114,7 +128,14 @@ def update_cache(existing_cache, results):
     return existing_cache
 
 
-def get_records(accessions, taxid):
+def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, None]]:
+    """
+    Search the NCBI database for accession ids if not found in cache, then fetches all accession records
+
+    :param accessions: A list of accession ids if found in cache, else None
+    :param taxid: Taxon id for a given OTU
+    :return: A dictionary with all the accession records and a list containing all accession ids, or None if records aren't found
+    """
     console = Console()
 
     if accessions is None:
@@ -135,14 +156,26 @@ def get_records(accessions, taxid):
     return records, accessions
 
 
-def fetch_records(accessions):
+def fetch_records(accessions) -> dict:
+    """
+    Fetch all accession ids given by a list, then converts the records to a SeqIO dictionary object
+
+    :param accessions: List of accession ids
+    :return: A SeqIO dictionary object
+    """
     handle = Entrez.efetch(db="nucleotide", id=accessions,
                            rettype="gb", retmode="text")
 
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
-async def get_qualifiers(seq):
+async def get_qualifiers(seq) -> dict:
+    """
+    Get relevant qualifiers in a Genbank record
+
+    :param seq: SeqIO features object for a particular accession
+    :return: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
+    """
     f = [feature for feature in seq if feature.type == "source"]
     isolate_data = {}
 
@@ -152,7 +185,13 @@ async def get_qualifiers(seq):
     return isolate_data
 
 
-async def find_isolate(isolate_data):
+async def find_isolate(isolate_data) -> str:
+    """
+    Determine the source type in a Genbank record
+
+    :param isolate_data: Dictionary containing qualifiers in a features section of a Genbank record
+    :return:
+    """
     isolate_type = None
     for qualifier in ["isolate", "strain"]:
         if qualifier in isolate_data:
@@ -162,7 +201,16 @@ async def find_isolate(isolate_data):
     return isolate_type
 
 
-async def store_sequence(path, accession, data, unique_ids):
+async def store_sequence(path, accession, data, unique_ids) -> Union[str, None]:
+    """
+    Creates a new sequence file for a given isolate
+
+    :param path: Path to a isolate folder
+    :param accession: Genbank record object for a given accession
+    :param data: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
+    :param unique_ids: Set containing unique Virtool ids for all sequences in a reference
+    :return: The newly generated unique id
+    """
     sequences = await get_sequences(path)
 
     # check if accession doesn't already exist
@@ -186,7 +234,17 @@ async def store_sequence(path, accession, data, unique_ids):
     return new_id
 
 
-async def store_isolate(path, source_name, source_type, unique_ids):
+async def store_isolate(path, source_name, source_type, unique_ids) -> str:
+    """
+    Creates a new isolate folder for an OTU
+
+    :param path: Path to an OTU
+    :param source_name: Assigned source name for an accession
+    :param source_type: Assigned source type for an accession
+    :param unique_ids: Set containing unique Virtool ids for all isolates in a reference
+    :return: A newly generated unique id
+    """
+
     new_id = random_alphanumeric(8, False, unique_ids)
     os.mkdir(os.path.join(path, new_id))
 
@@ -203,7 +261,12 @@ async def store_isolate(path, source_name, source_type, unique_ids):
     return new_id
 
 
-def check_accessions_cache():
+def get_cache() -> dict:
+    """
+    Fetches the local cache containing taxon ids mapped to their accessions
+
+    :return: A dictionary that maps taxon ids to found accessions
+    """
     if not os.path.isdir(".cli"):
         return {}
 
@@ -249,4 +312,9 @@ def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Uni
 
 
 def run(src):
+    """
+    Runs the asynchronous routines to find new isolates for all OTU in a reference
+
+    :param src: Path to a reference directory
+    """
     asyncio.run(isolate(src))
