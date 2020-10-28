@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -140,18 +141,30 @@ def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, None]
 
     if accessions is None:
         accessions = []
-        record = Entrez.read(Entrez.elink(dbfrom="taxonomy", db="nucleotide",
-                                          id=taxid, idtype="acc"))
+
+        while True:
+            try:
+                record = Entrez.read(Entrez.elink(dbfrom="taxonomy", db="nucleotide",
+                                                  id=taxid, idtype="acc"))
+                break
+            except HTTPError as e:
+                if e.code == 429:
+                    time.sleep(2)
 
         for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
             accessions.append(linksetdb["Id"])
 
-    try:
-        records = fetch_records(accessions)
-        console.print(f"Found isolate data for {taxid}", style="green")
-    except HTTPError:
-        console.print(f"Could not find isolate data for {taxid}", style="red")
-        return None, None
+    while True:
+        try:
+            records = fetch_records(accessions)
+            console.print(f"Found isolate data for {taxid}", style="green")
+            break
+        except HTTPError as e:
+            if e.code == 429:
+                time.sleep(2)
+            elif e.code == 500:
+                console.print(f"Could not find isolate data for {taxid}", style="red")
+                return None, None
 
     return records, accessions
 
