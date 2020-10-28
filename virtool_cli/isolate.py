@@ -47,8 +47,11 @@ async def isolate(src):
             continue
 
         accessions = existing_accessions.get(taxid)
-
-        await scheduler.spawn(fetch_otu_isolates(taxid, path, accessions, paths, q))
+        try:
+            await scheduler.spawn(fetch_otu_isolates(taxid, path, accessions, paths, q))
+        except KeyboardInterrupt:
+            await scheduler.close()
+            break
 
         await asyncio.sleep(REQUEST_INTERVAL)
 
@@ -135,7 +138,8 @@ def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, None]
 
     :param accessions: A list of accession ids if found in cache, else None
     :param taxid: Taxon id for a given OTU
-    :return: A dictionary with all the accession records and a list containing all accession ids, or None if records aren't found
+    :return: A dictionary with all the accession records and a list containing all accession ids, or None if records
+    aren't found
     """
     console = Console()
 
