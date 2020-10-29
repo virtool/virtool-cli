@@ -40,7 +40,7 @@ async def get_taxid_map(paths) -> dict:
     for otu_path in paths:
         async with aiofiles.open(os.path.join(otu_path, "otu.json"), "r") as f:
             otu = json.loads(await f.read())
-            taxids[otu_path] = otu["taxid"]
+            taxids[otu_path] = otu.get("taxid")
 
     return taxids
 
