@@ -132,7 +132,7 @@ def update_cache(existing_cache, results) -> dict:
     return existing_cache
 
 
-def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, None]]:
+def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, list]]:
     """
     Search the NCBI database for accession ids if not found in cache, then fetches all accession records
 
@@ -141,7 +141,6 @@ def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, None]
     :return: A dictionary with all the accession records and a list containing all accession ids, or None if records
     aren't found
     """
-    console = Console()
 
     if accessions is None:
         accessions = []
@@ -158,30 +157,28 @@ def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, None]
         for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
             accessions.append(linksetdb["Id"])
 
-    while True:
-        try:
-            records = fetch_records(accessions)
-            console.print(f"Found isolate data for {taxid}", style="green")
-            break
-        except HTTPError as e:
-            if e.code == 429:
-                time.sleep(2)
-            elif e.code == 500:
-                console.print(f"Could not find isolate data for {taxid}", style="red")
-                return None, None
+    records = fetch_records(accessions)
 
     return records, accessions
 
 
-def fetch_records(accessions) -> dict:
+def fetch_records(accessions) -> Union[dict, None]:
     """
     Fetch all accession ids given by a list, then converts the records to a SeqIO dictionary object
 
     :param accessions: List of accession ids
     :return: A SeqIO dictionary object
     """
-    handle = Entrez.efetch(db="nucleotide", id=accessions,
-                           rettype="gb", retmode="text")
+    while True:
+        try:
+            handle = Entrez.efetch(db="nucleotide", id=accessions,
+                                   rettype="gb", retmode="text")
+            break
+        except HTTPError as e:
+            if e.code == 429:
+                time.sleep(2)
+            elif e.code == 500:
+                return None
 
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
