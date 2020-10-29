@@ -41,12 +41,12 @@ async def isolate(src):
     taxid_otu_path_map = await get_taxid_map(paths)
 
     for path in paths:
-        taxid = str(taxid_otu_path_map[path])
+        taxid = taxid_otu_path_map[path]
 
         if taxid is None:
             continue
 
-        accessions = existing_accessions.get(taxid)
+        accessions = existing_accessions.get(str(taxid))
         try:
             await scheduler.spawn(fetch_otu_isolates(taxid, path, accessions, paths, q))
         except KeyboardInterrupt:
