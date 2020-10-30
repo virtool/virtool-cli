@@ -30,6 +30,8 @@ async def isolate(src):
     scheduler = await aiojobs.create_scheduler(limit=10)
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
+    console = Console()
+
     q = asyncio.Queue()
 
     existing_accessions = get_cache()
@@ -45,6 +47,8 @@ async def isolate(src):
         name = otu_path_map[path].get("name")
 
         if taxid is None:
+            console.print(f"✘ [red]{name}\n"
+                          f"  [red]No taxid assigned to OTU")
             continue
 
         accessions = existing_accessions.get(str(taxid))
@@ -94,10 +98,11 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
     console = Console()
 
     if records is None:
-        console.print(f"[red]{name}\n",
-                      f" [red]Found 0 isolates, could not link taxid to nucleotide records")
+        console.print(f"✘ [red]{name} ({taxid})\n",
+                      f"  [red]Found 0 isolates, could not link taxid to nucleotide records")
         return
 
+    new_isolates = []
     for accession in [accession for accession in records.values() if accession.seq]:
         accession_data = await get_qualifiers(accession.features)
 
@@ -111,6 +116,8 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
 
         # see if isolate directory already exists and create it if needed
         if isolate_name not in isolates:
+            new_isolates.append(f"    - {isolate_type} {isolate_name}")
+
             new_id = await store_isolate(path, isolate_name, isolate_type, isolate_ids)
             isolate_ids.add(new_id)
             isolates[isolate_name] = new_id
@@ -121,6 +128,18 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
         sequence_ids.add(new_id)
 
         await queue.put((taxid, new_accessions))
+
+    new_isolate_count = len(new_isolates)
+    new_isolates_output = "\n".join(new_isolates)
+    log_output = f"{name} ({taxid})\n" + f"  Found {new_isolate_count} new isolates"
+
+    if new_isolate_count != 0:
+        log_output += ":\n" + f"{new_isolates_output}"
+        log_output = "[green]✔ " + log_output
+    else:
+        log_output = "[red]✘ " + log_output
+
+    console.print(log_output + "\n")
 
 
 def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, list]]:
@@ -218,15 +237,18 @@ async def store_sequence(path, accession, data, unique_ids) -> Union[str, None]:
     """
     sequences = await get_sequences(path)
 
+    # strip accession version
+    accession_id = accession.id.split(".")[0]
+
     # check if accession doesn't already exist
-    if accession.id in sequences:
+    if accession_id in sequences:
         return
 
     # generate new sequence id
     new_id = random_alphanumeric(8, False, unique_ids)
 
     seq_file = {"_id": new_id,
-                "accession": accession.id,
+                "accession": accession_id,
                 "definition": accession.description,
                 "host": data.get("host")[0] if data.get("host") is not None else None,
                 "sequence": str(accession.seq)
