@@ -70,6 +70,5 @@ def test_indent(command, output, indent):
 
     expected_size = os.path.getsize(expected_path)
     output_size = os.path.getsize(output)
-    print(expected_size, output_size)
 
     assert abs(expected_size - output_size) < 10
