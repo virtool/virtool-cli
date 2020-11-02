@@ -1,11 +1,10 @@
 import asyncio
 import json
 import os
-import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Union, Iterable, Tuple
+from typing import Union, Iterable, Tuple, Optional
 from urllib.error import HTTPError
 
 import aiofiles
@@ -48,12 +47,12 @@ async def isolate(src):
 
         if taxid is None:
             console.print(f"✘ [red]{name}\n"
-                          f"  [red]No taxid assigned to OTU")
+                          f"  [red]No taxid assigned to OTU\n")
             continue
 
         accessions = existing_accessions.get(str(taxid))
         try:
-            await scheduler.spawn(fetch_otu_isolates(taxid, name, path, accessions, paths, q))
+            await scheduler.spawn(fetch_otu_isolates(str(taxid), name, path, accessions, paths, q))
         except KeyboardInterrupt:
             await scheduler.close()
             break
@@ -79,7 +78,7 @@ async def isolate(src):
 
 async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
     """
-    Routine to fetch new isolates for a given OTU, creating a directory for each
+    Fetch new isolates for a given OTU, creating a directory for each
 
     :param taxid: The taxon id for a given OTU
     :param name: Name of a given OTU
@@ -98,11 +97,12 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
     console = Console()
 
     if records is None:
-        console.print(f"✘ [red]{name} ({taxid})\n",
-                      "  [red]Found 0 isolates, could not link taxid to nucleotide records")
+        console.print(f"[red]✘ {name} ({taxid})")
+        console.print("  [red]Found 0 isolates, could not link taxid to nucleotide records\n")
         return
 
-    new_isolates = []
+    new_isolates = dict()
+
     for accession in [accession for accession in records.values() if accession.seq]:
         accession_data = await get_qualifiers(accession.features)
 
@@ -116,7 +116,7 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
 
         # see if isolate directory already exists and create it if needed
         if isolate_name not in isolates:
-            new_isolates.append(f"    - {isolate_type} {isolate_name}")
+            new_isolates[isolate_name] = isolate_type
 
             new_id = await store_isolate(path, isolate_name, isolate_type, isolate_ids)
             isolate_ids.add(new_id)
@@ -129,68 +129,79 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
 
         await queue.put((taxid, new_accessions))
 
-    new_isolate_count = len(new_isolates)
-    new_isolates_output = "\n".join(new_isolates)
-    log_output = f"{name} ({taxid})\n" + f"  Found {new_isolate_count} new isolates"
-
-    if new_isolate_count != 0:
-        log_output += ":\n" + f"{new_isolates_output}"
-        log_output = "[green]✔ " + log_output
-    else:
-        log_output = "[red]✘ " + log_output
-
-    console.print(log_output + "\n")
+    await log_results(name, taxid, new_isolates, console)
 
 
-def get_records(accessions, taxid) -> Union[Tuple[dict, list], Tuple[None, list]]:
+def get_records(accessions, taxid) -> Tuple[Optional[dict], list]:
     """
-    Search the NCBI database for accession ids if not found in cache, then fetches all accession records
+    Uses an OTU's taxid to find accessions numbers if needed, then fetches Genbank records for each accession number
 
-    :param accessions: A list of accession ids if found in cache, else None
-    :param taxid: Taxon id for a given OTU
-    :return: A dictionary with all the accession records and a list containing all accession ids, or None if records
-    aren't found
+    :param accessions: A list of accession ids to retrieve or None to retrieve accession numbers for the given taxid
+    :param taxid: The taxid to find accessions for
+    :return: A dictionary with all the accession records and a list containing all accession ids for caching purposes
     """
 
     if accessions is None:
-        accessions = []
-
-        while True:
-            try:
-                record = Entrez.read(Entrez.elink(dbfrom="taxonomy", db="nucleotide",
-                                                  id=taxid, idtype="acc"))
-                break
-            except HTTPError as e:
-                if e.code == 429:
-                    time.sleep(2)
-
-        for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
-            accessions.append(linksetdb["Id"])
+        accessions = get_accession_numbers(taxid)
 
     records = fetch_records(accessions)
 
     return records, accessions
 
 
-def fetch_records(accessions) -> Union[dict, None]:
+def get_accession_numbers(taxid) -> list:
     """
-    Fetch all accession ids given by a list, then converts the records to a SeqIO dictionary object
+    Links an OTU's taxid to all associated accession numbers in the Nucleotide database
 
-    :param accessions: List of accession ids
+    :param taxid: The taxid to find accessions for
+    :return: List containing accession numbers to fetch records for
+    """
+    accessions = []
+
+    record = Entrez.read(Entrez.elink(dbfrom="taxonomy", db="nucleotide",
+                                      id=taxid, idtype="acc"))
+
+    for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
+        accessions.append(linksetdb["Id"])
+
+    return accessions
+
+
+def fetch_records(accessions) -> Optional[dict]:
+    """
+    Fetches a Genbank record for each accession number in a given list, then parses all of the records into a
+    SeqIO dictionary that can be used to access specific fields in each record
+
+    :param accessions: List of accession numbers to be fetched
     :return: A SeqIO dictionary object
     """
-    while True:
-        try:
-            handle = Entrez.efetch(db="nucleotide", id=accessions,
-                                   rettype="gb", retmode="text")
-            break
-        except HTTPError as e:
-            if e.code == 429:
-                time.sleep(2)
-            elif e.code == 500:
-                return None
+    try:
+        handle = Entrez.efetch(db="nucleotide", id=accessions,
+                               rettype="gb", retmode="text")
+    except HTTPError:
+        return None
 
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
+
+
+async def log_results(name, taxid, new_isolates, console):
+    """
+    Log isolate discovery results to console
+
+    :param name: Name of the OTU to log
+    :param taxid: Taxid of the OTU to log
+    :param new_isolates: Dictionary containing newly found isolates mapped to their type
+    :param console: Rich console object used to log results
+    """
+    new_isolate_count = len(new_isolates)
+
+    if new_isolate_count == 0:
+        console.print(f"[red]✘ {name} ({taxid})\n  Found {new_isolate_count} new isolates\n")
+    else:
+        console.print(f"[green]✔ {name} ({taxid})\n  Found {new_isolate_count} new isolates:")
+        for isolate_name, isolate_type in new_isolates.items():
+            console.print(f"[green]    - {isolate_type} {isolate_name}")
+        console.print()
 
 
 async def get_qualifiers(seq) -> dict:
@@ -310,13 +321,12 @@ def update_cache(existing_cache, results) -> dict:
     :param existing_cache: The existing cache from the .cli folder
     :param results: List of tuples pulled out of the asyncio Queue containing each taxid and their accessions
     """
-    new_accessions = dict()
-    for taxid, accessions in results:
-        new_accessions[taxid] = accessions
+    cache_update = dict(results)
 
-    existing_cache.update(new_accessions)
-
-    return existing_cache
+    return {
+        **existing_cache,
+        **cache_update
+    }
 
 
 def write_cache(accessions):
