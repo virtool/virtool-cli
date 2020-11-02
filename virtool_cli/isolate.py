@@ -99,7 +99,7 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
 
     if records is None:
         console.print(f"✘ [red]{name} ({taxid})\n",
-                      f"  [red]Found 0 isolates, could not link taxid to nucleotide records")
+                      "  [red]Found 0 isolates, could not link taxid to nucleotide records")
         return
 
     new_isolates = []
