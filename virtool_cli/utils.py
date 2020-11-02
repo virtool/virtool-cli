@@ -83,10 +83,10 @@ async def get_sequences(path) -> dict:
 
 async def get_unique_ids(paths) -> Tuple[set, set]:
     """
-    Returns a set of all unique random alphanumeric ids in a reference
+    Returns sets containing unique random alphanumeric ids for both the isolates and the sequences
 
     :param paths: List of paths to all OTU in a reference
-    :return: A set containing all unique Virtool ids
+    :return: Sets containing unique ids for both isolates and sequences
     """
     isolate_ids = set()
     sequence_ids = set()
