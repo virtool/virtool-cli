@@ -328,8 +328,10 @@ def write_cache(accessions):
 
     :param accessions: Dictionary containing an updated mapping of taxids to their accessions
     """
-    if not os.path.isdir(".cli"):
+    try:
         os.mkdir(".cli")
+    except FileExistsError:
+        pass
 
     with open(".cli/accessions_cache.json", "w") as f:
         json.dump(accessions, f, indent=4)
