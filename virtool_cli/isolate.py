@@ -4,7 +4,7 @@ import os
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Union, Iterable, Tuple, Optional
+from typing import Iterable, Tuple, Optional
 from urllib.error import HTTPError
 
 import aiofiles
@@ -20,7 +20,7 @@ Entrez.api_key = os.environ.get("NCBI_API_KEY")
 REQUEST_INTERVAL = 0.4 if Entrez.email and Entrez.api_key else 0.6
 
 
-async def isolate(src):
+async def isolate(src: str):
     """
     Runs routines to find new isolates for OTU in a reference directory and writes newfound accessions to local cache
 
@@ -76,7 +76,7 @@ async def isolate(src):
     write_cache(updated_cache)
 
 
-async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
+async def fetch_otu_isolates(taxid: str, name: str, path: str, accessions: list, paths: list, queue: asyncio.Queue):
     """
     Fetch new isolates for a given OTU, creating a directory for each
 
@@ -132,7 +132,7 @@ async def fetch_otu_isolates(taxid, name, path, accessions, paths, queue):
     await log_results(name, taxid, new_isolates, console)
 
 
-def get_records(accessions, taxid) -> Tuple[Optional[dict], list]:
+def get_records(accessions: list, taxid: str) -> Tuple[Optional[dict], list]:
     """
     Uses an OTU's taxid to find accessions numbers if needed, then fetches Genbank records for each accession number
 
@@ -147,7 +147,7 @@ def get_records(accessions, taxid) -> Tuple[Optional[dict], list]:
     return fetch_records(accessions), accessions
 
 
-def get_accession_numbers(taxid) -> list:
+def get_accession_numbers(taxid: str) -> list:
     """
     Links an OTU's taxid to all associated accession numbers in the Nucleotide database
 
@@ -165,7 +165,7 @@ def get_accession_numbers(taxid) -> list:
     return accessions
 
 
-def fetch_records(accessions) -> Optional[dict]:
+def fetch_records(accessions: list) -> Optional[dict]:
     """
     Fetches a Genbank record for each accession number in a given list, then parses all of the records into a
     SeqIO dictionary that can be used to access specific fields in each record
@@ -182,7 +182,7 @@ def fetch_records(accessions) -> Optional[dict]:
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
-async def log_results(name, taxid, new_isolates, console):
+async def log_results(name: str, taxid: str, new_isolates: dict, console: Console):
     """
     Log isolate discovery results to console
 
@@ -202,7 +202,7 @@ async def log_results(name, taxid, new_isolates, console):
         console.print()
 
 
-async def get_qualifiers(seq) -> dict:
+async def get_qualifiers(seq: list) -> dict:
     """
     Get relevant qualifiers in a Genbank record
 
@@ -218,7 +218,7 @@ async def get_qualifiers(seq) -> dict:
     return isolate_data
 
 
-async def find_isolate(isolate_data) -> str:
+async def find_isolate(isolate_data: dict) -> Optional[str]:
     """
     Determine the source type in a Genbank record
 
@@ -232,7 +232,7 @@ async def find_isolate(isolate_data) -> str:
     return None
 
 
-async def store_sequence(path, accession, data, unique_ids) -> Union[str, None]:
+async def store_sequence(path: str, accession: SeqIO.SeqRecord, data: dict, unique_ids: set) -> Optional[str]:
     """
     Creates a new sequence file for a given isolate
 
@@ -267,7 +267,7 @@ async def store_sequence(path, accession, data, unique_ids) -> Union[str, None]:
     return new_id
 
 
-async def store_isolate(path, source_name, source_type, unique_ids) -> str:
+async def store_isolate(path: str, source_name: str, source_type: str, unique_ids: set) -> str:
     """
     Creates a new isolate folder for an OTU
 
@@ -307,7 +307,7 @@ def get_cache() -> dict:
         return json.load(f)
 
 
-def update_cache(existing_cache, results) -> dict:
+def update_cache(existing_cache: dict, results: list) -> dict:
     """
     Updates the existing accessions cache with fetch results
 
@@ -322,7 +322,7 @@ def update_cache(existing_cache, results) -> dict:
     }
 
 
-def write_cache(accessions):
+def write_cache(accessions: dict):
     """
     Cache a mapping of taxon ids to all accessions found.
 
@@ -337,7 +337,7 @@ def write_cache(accessions):
         json.dump(accessions, f, indent=4)
 
 
-def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Union[None, Iterable[str]] = None) -> str:
+def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Optional[Iterable[str]] = None) -> str:
     """
     Generates a random string composed of letters and numbers.
 
@@ -358,7 +358,7 @@ def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Uni
     return random_alphanumeric(length=length, excluded=excluded)
 
 
-def run(src):
+def run(src: str):
     """
     Runs the asynchronous routines to find new isolates for all OTU in a reference
 
