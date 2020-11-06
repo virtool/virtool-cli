@@ -7,12 +7,9 @@ from concurrent.futures.thread import ThreadPoolExecutor
 import aiofiles
 import aiojobs
 from Bio import Entrez
-from virtool_cli.utils import get_otu_paths
+from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn, TaskID
-
-Entrez.email = os.environ.get("NCBI_EMAIL")
-Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
 missed_otus = {"otus": []}
 
@@ -60,10 +57,8 @@ async def taxid(src_path: str, force_update: bool):
             progress.update(task, description=f"Retrieving {name}")
 
             await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
-            if Entrez.email is None or Entrez.api_key is None:
-                await asyncio.sleep(0.5)
-            else:
-                await asyncio.sleep(0.15)
+
+            await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
         # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
         while True:

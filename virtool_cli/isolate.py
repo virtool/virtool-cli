@@ -12,12 +12,8 @@ import aiojobs
 from Bio import Entrez, SeqIO
 from rich.console import Console
 
-from virtool_cli.utils import get_otu_paths, get_otus, get_isolates, get_sequences, get_unique_ids
-
-Entrez.email = os.environ.get("NCBI_EMAIL")
-Entrez.api_key = os.environ.get("NCBI_API_KEY")
-
-REQUEST_INTERVAL = 0.4 if Entrez.email and Entrez.api_key else 0.6
+from virtool_cli.utils import get_otu_paths, get_otus, get_isolates, get_sequences, \
+    get_unique_ids, NCBI_REQUEST_INTERVAL
 
 
 async def isolate(src: str):
@@ -57,7 +53,7 @@ async def isolate(src: str):
             await scheduler.close()
             break
 
-        await asyncio.sleep(REQUEST_INTERVAL)
+        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
     results_to_cache = list()
     while True:
