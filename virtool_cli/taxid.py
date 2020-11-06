@@ -9,7 +9,7 @@ import aiojobs
 from Bio import Entrez
 from virtool_cli.utils import get_otu_paths
 from rich.console import Console
-from rich.progress import BarColumn, Progress, TimeRemainingColumn
+from rich.progress import BarColumn, Progress, TimeRemainingColumn, TaskID
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -116,7 +116,7 @@ def fetch_taxid(name: str) -> (str, str):
     return taxid
 
 
-async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queue, task: int):
+async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queue, task: TaskID):
     """
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
