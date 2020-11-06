@@ -144,9 +144,7 @@ def get_records(accessions, taxid) -> Tuple[Optional[dict], list]:
     if accessions is None:
         accessions = get_accession_numbers(taxid)
 
-    records = fetch_records(accessions)
-
-    return records, accessions
+    return fetch_records(accessions), accessions
 
 
 def get_accession_numbers(taxid) -> list:
@@ -211,10 +209,10 @@ async def get_qualifiers(seq) -> dict:
     :param seq: SeqIO features object for a particular accession
     :return: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
     """
-    f = [feature for feature in seq if feature.type == "source"]
+    features = [feature for feature in seq if feature.type == "source"]
     isolate_data = {}
 
-    for feature in f:
+    for feature in features:
         for qualifier in feature.qualifiers:
             isolate_data[qualifier] = feature.qualifiers.get(qualifier)
     return isolate_data
@@ -227,13 +225,11 @@ async def find_isolate(isolate_data) -> str:
     :param isolate_data: Dictionary containing qualifiers in a features section of a Genbank record
     :return:
     """
-    isolate_type = None
     for qualifier in ["isolate", "strain"]:
         if qualifier in isolate_data:
-            isolate_type = qualifier
-            break
+            return qualifier
 
-    return isolate_type
+    return None
 
 
 async def store_sequence(path, accession, data, unique_ids) -> Union[str, None]:
@@ -267,7 +263,6 @@ async def store_sequence(path, accession, data, unique_ids) -> Union[str, None]:
 
     async with aiofiles.open(os.path.join(path, new_id + ".json"), "w") as f:
         await f.write(json.dumps(seq_file, indent=4))
-        await f.seek(0)
 
     return new_id
 
@@ -309,9 +304,7 @@ def get_cache() -> dict:
         return {}
 
     with open(".cli/accessions_cache.json", "r") as f:
-        cache = json.load(f)
-
-        return cache
+        return json.load(f)
 
 
 def update_cache(existing_cache, results) -> dict:
@@ -339,7 +332,6 @@ def write_cache(accessions):
         os.mkdir(".cli")
 
     with open(".cli/accessions_cache.json", "w") as f:
-        f.seek(0)
         json.dump(accessions, f, indent=4)
 
 
