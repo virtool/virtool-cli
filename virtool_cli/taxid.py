@@ -1,15 +1,16 @@
 import asyncio
 import json
 import os
-from typing import Union
 from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Union
 
 import aiofiles
 import aiojobs
 from Bio import Entrez
-from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn, TaskID
+
+from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
 
 
 async def taxid(src_path: str, force_update: bool):
@@ -24,18 +25,18 @@ async def taxid(src_path: str, force_update: bool):
 
 
     """
-    scheduler = await aiojobs.create_scheduler(limit=5)
-    asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor(max_workers=5))
+    scheduler = await aiojobs.create_scheduler()
+    asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
     paths = get_otu_paths(src_path)
-    checked_names = []
+    coros = []
     otu_paths = {}
 
     for path in paths:
         name = await get_name_from_path(path, force_update)
         if name is not None:
             otu_paths[name] = path
-            checked_names.append(name)
+            coros.append(name)
 
     console = Console()
     results = list()
@@ -50,13 +51,17 @@ async def taxid(src_path: str, force_update: bool):
     )
 
     with progress:
-        task = progress.add_task("Retrieving...", total=len(checked_names))
-        for name in checked_names:
-            progress.update(task, description=f"Retrieving {name}")
+        task = progress.add_task("Retrieving...", total=len(coros))
 
-            await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
+        # Put coroutines into the scheduler as long as its active number of jobs doesn't exceed the concurrency limit
+        while len(coros) != 0:
+            if scheduler.active_count < scheduler.limit:
+                name = coros.pop()
+                progress.update(task, description=f"Retrieving {name}")
 
-            await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+                await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
+
+                await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
         # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
         while True:
