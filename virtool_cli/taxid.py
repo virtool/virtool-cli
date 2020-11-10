@@ -11,8 +11,6 @@ from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeRemainingColumn, TaskID
 
-missed_otus = {"otus": []}
-
 
 async def taxid(src_path: str, force_update: bool):
     """
@@ -82,10 +80,6 @@ async def taxid(src_path: str, force_update: bool):
         update_otu(taxid, otu_paths[name])
 
     console.print(f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
-    if len(missed_otus["otus"]):
-        console.print(f"OTUs that could not be retrieved have been logged to missed_otus.json", style="green")
-        with open("missed_otus.json", 'w') as f:
-            json.dump(missed_otus, f, indent=4)
 
 
 def fetch_taxid(name: str) -> (str, str):
@@ -106,7 +100,6 @@ def fetch_taxid(name: str) -> (str, str):
         taxid = record["IdList"][0]
     except IndexError:
         taxid = None
-        missed_otus["otus"].append(name)
 
     return taxid
 
