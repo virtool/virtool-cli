@@ -22,11 +22,12 @@ async def isolate(src: str):
 
     :param src: Path to a given reference directory
     """
-    scheduler = await aiojobs.create_scheduler(limit=10)
+    scheduler = await aiojobs.create_scheduler()
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
     console = Console()
 
+    coros = []
     q = asyncio.Queue()
 
     existing_accessions = get_cache()
@@ -47,13 +48,17 @@ async def isolate(src: str):
             continue
 
         accessions = existing_accessions.get(str(taxid))
+
+        coros.append(fetch_otu_isolates(str(taxid), name, path, accessions, paths, q))
+
+    while len(coros) != 0:
         try:
-            await scheduler.spawn(fetch_otu_isolates(str(taxid), name, path, accessions, paths, q))
+            if scheduler.active_count < scheduler.limit:
+                await scheduler.spawn(coros.pop())
+                await asyncio.sleep(NCBI_REQUEST_INTERVAL)
         except KeyboardInterrupt:
             await scheduler.close()
             break
-
-        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
     results_to_cache = list()
     while True:
