@@ -301,11 +301,11 @@ def get_cache() -> dict:
 
     :return: A dictionary that maps taxon ids to found accessions
     """
-    if not os.path.isdir(".cli"):
+    try:
+        with open(".cli/accessions.json", "r") as f:
+            return json.load(f)
+    except (NotADirectoryError, FileNotFoundError):
         return {}
-
-    with open(".cli/accessions_cache.json", "r") as f:
-        return json.load(f)
 
 
 def update_cache(existing_cache: dict, results: list) -> dict:
@@ -334,7 +334,7 @@ def write_cache(accessions: dict):
     except FileExistsError:
         pass
 
-    with open(".cli/accessions_cache.json", "w") as f:
+    with open(".cli/accessions.json", "w") as f:
         json.dump(accessions, f, indent=4)
 
 
