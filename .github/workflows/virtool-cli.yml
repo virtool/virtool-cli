@@ -1,8 +1,6 @@
 name: virtool_cli
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
