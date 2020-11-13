@@ -43,13 +43,12 @@ async def taxid(src_path: str, force_update: bool):
 
     q = asyncio.Queue()
 
-
     # Put coroutines into the scheduler as long as its active number of jobs doesn't exceed the concurrency limit
     while len(coros) != 0:
         if scheduler.active_count < scheduler.limit:
             name = coros.pop()
 
-            await scheduler.spawn(fetch_taxid_call(name, q))
+            await scheduler.spawn(fetch_taxid_call(name, q, console))
 
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
@@ -77,7 +76,7 @@ async def taxid(src_path: str, force_update: bool):
     console.print(f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
 
 
-def fetch_taxid(name: str) -> (str, str):
+def fetch_taxid(name: str) -> str:
     """
     Searches the NCBI taxonomy database for a given OTU name and fetches and returns
     its taxon id. If a taxon id was not found the function should return None.
@@ -99,7 +98,7 @@ def fetch_taxid(name: str) -> (str, str):
     return taxid
 
 
-async def fetch_taxid_call(name: str, q: asyncio.queues.Queue):
+async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console):
     """
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
@@ -113,14 +112,20 @@ async def fetch_taxid_call(name: str, q: asyncio.queues.Queue):
     """
     taxid = await asyncio.get_event_loop().run_in_executor(None, fetch_taxid, name)
 
-    if taxid is None:
-        description = f"[red]Could not retrieve taxon ID for {name}"
-        result = f"[red]:x: Not found"
-    else:
-        description = f"[green]Retrieved taxon ID for {name}"
-        result = f"[green]:heavy_check_mark: {taxid}"
+    await log_results(name, taxid, console)
 
     await q.put((name, taxid))
+
+
+async def log_results(name: str, taxid: str, console: Console):
+    if taxid:
+        console.print(f"[green]✔ {name}")
+        console.print(f"[green]  Found taxid {taxid}")
+    else:
+        console.print(f"[red]✘ {name}")
+        console.print(f"[red]  Could not find taxid")
+
+    console.print()
 
 
 def update_otu(taxid: str, path: str):
