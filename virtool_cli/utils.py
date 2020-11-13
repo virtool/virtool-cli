@@ -34,7 +34,7 @@ def get_otu_paths(src_path: str) -> list:
     return paths
 
 
-async def get_otus(paths) -> dict:
+def get_otus(paths) -> dict:
     """
     Returns a mapping of every OTU path to their deserialized OTU dictionary.
 
@@ -44,8 +44,8 @@ async def get_otus(paths) -> dict:
     taxids = dict()
 
     for otu_path in paths:
-        async with aiofiles.open(os.path.join(otu_path, "otu.json"), "r") as f:
-            otu = json.loads(await f.read())
+        with open(os.path.join(otu_path, "otu.json"), "r") as f:
+            otu = json.load(f)
             taxids[otu_path] = otu
 
     return taxids
