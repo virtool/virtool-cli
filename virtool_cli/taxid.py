@@ -43,33 +43,23 @@ async def taxid(src_path: str, force_update: bool):
 
     q = asyncio.Queue()
 
-    progress = Progress(
-        "[progress.description]{task.description}",
-        BarColumn(),
-        "[magenta]{task.completed} of {task.total} ids searched",
-        TimeRemainingColumn()
-    )
 
-    with progress:
-        task = progress.add_task("Retrieving...", total=len(coros))
+    # Put coroutines into the scheduler as long as its active number of jobs doesn't exceed the concurrency limit
+    while len(coros) != 0:
+        if scheduler.active_count < scheduler.limit:
+            name = coros.pop()
 
-        # Put coroutines into the scheduler as long as its active number of jobs doesn't exceed the concurrency limit
-        while len(coros) != 0:
-            if scheduler.active_count < scheduler.limit:
-                name = coros.pop()
-                progress.update(task, description=f"Retrieving {name}")
+            await scheduler.spawn(fetch_taxid_call(name, q))
 
-                await scheduler.spawn(fetch_taxid_call(name, progress, q, task))
+            await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
-                await asyncio.sleep(NCBI_REQUEST_INTERVAL)
-
-        # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
-        while True:
-            try:
-                results.append(q.get_nowait())
-            except asyncio.QueueEmpty:
-                if not scheduler.active_count:
-                    break
+    # Pulling results from queue. Don't stop checking until the queue is empty and the scheduler has no active jobs.
+    while True:
+        try:
+            results.append(q.get_nowait())
+        except asyncio.QueueEmpty:
+            if not scheduler.active_count:
+                break
 
             await asyncio.sleep(0.01)
 
@@ -109,7 +99,7 @@ def fetch_taxid(name: str) -> (str, str):
     return taxid
 
 
-async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queue, task: TaskID):
+async def fetch_taxid_call(name: str, q: asyncio.queues.Queue):
     """
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
@@ -130,8 +120,6 @@ async def fetch_taxid_call(name: str, progress: Progress, q: asyncio.queues.Queu
         description = f"[green]Retrieved taxon ID for {name}"
         result = f"[green]:heavy_check_mark: {taxid}"
 
-    progress.print(description, result)
-    progress.update(task, advance=1)
     await q.put((name, taxid))
 
 
