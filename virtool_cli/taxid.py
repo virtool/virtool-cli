@@ -2,33 +2,28 @@ import asyncio
 import json
 import os
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Union
+from typing import Optional
 
 import aiofiles
 import aiojobs
 from Bio import Entrez
 from rich.console import Console
-from rich.progress import BarColumn, Progress, TimeRemainingColumn, TaskID
 
 from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
 
 
-async def taxid(src_path: str, force_update: bool):
+async def taxid(src: str, force_update: bool):
     """
     Asynchronously finds taxon ids for all OTU in a given src directory and
     writes them to each respective otu.json file.
 
-    Parameters:
-        src_path (str): Path to database src directory
-        force_update (bool): Flag to indicate whether all OTUs should be searched for regardless
-                             if they already have a taxon id
-
-
+    :param src: Path to a given reference directory
+    :param force_update: Flag to force update all of the OTU's taxids in a reference
     """
     scheduler = await aiojobs.create_scheduler()
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
-    paths = get_otu_paths(src_path)
+    paths = get_otu_paths(src)
     coros = []
     otu_paths = {}
 
@@ -81,11 +76,8 @@ def fetch_taxid(name: str) -> str:
     Searches the NCBI taxonomy database for a given OTU name and fetches and returns
     its taxon id. If a taxon id was not found the function should return None.
 
-    Parameters:
-        name (str): Name of a OTU
-
-    Returns:
-        Taxon id for a given OTU
+    :param name: Name of a given OTU
+    :return: Taxonomy id for the given OTU
     """
     handle = Entrez.esearch(db="taxonomy", term=name)
     record = Entrez.read(handle)
@@ -103,12 +95,9 @@ async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console)
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
 
-    Parameters:
-        name (str): name of a OTU
-        progress (Progress): Progress object for current tasks that can be updated
-        q (asyncio.queues.Queue): Queue containing current results of tasks
-        task (int): ID for a given progress task
-
+    :param name: Name of a given OTU
+    :param q: asyncio Queue used to put results into
+    :param console: Rich console object used for logging
     """
     taxid = await asyncio.get_event_loop().run_in_executor(None, fetch_taxid, name)
 
@@ -118,6 +107,13 @@ async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console)
 
 
 async def log_results(name: str, taxid: str, console: Console):
+    """
+    Logs results of the taxid fetch from the NCBI taxonomy database
+
+    :param name: Name of a given OTU
+    :param taxid: Taxid for a given OTU if found, else None
+    :param console: Rich console object used for logging
+    """
     if taxid:
         console.print(f"[green]✔ {name}")
         console.print(f"[green]  Found taxid {taxid}")
@@ -133,10 +129,8 @@ def update_otu(taxid: str, path: str):
     Updates a otu.json's taxid key with either a taxon id or None
     depending on whether an id was able to be retrieved.
 
-    Parameters:
-        taxid (str): A taxon id for a given OTU if found, else None
-        path (str): Path to a given OTU
-
+    :param taxid: Taxid for a given OTU if found, else None
+    :param path: Path to a given OTU in the reference directory
     """
     with open(os.path.join(path, "otu.json"), 'r+') as f:
         otu = json.load(f)
@@ -145,20 +139,15 @@ def update_otu(taxid: str, path: str):
         json.dump(otu, f, indent=4)
 
 
-async def get_name_from_path(path: str, force_update: bool) -> Union[str, None]:
+async def get_name_from_path(path: str, force_update: bool) -> Optional[str]:
     """
     Given a path to an OTU, returns the name of the OTU. If a taxon id already exists
     for the OTU then it returns None.
 
-    Parameters:
-        path (str): Path to a src database directory
-        force_update (bool): Flag to indicate whether an OTU should be searched for regardless
-                             if they already have a taxon id
-
-    Returns:
-        The name of an OTU if a taxon id doesn't already exist in its JSON file, else None
-        If the force_update flag is used the function will always return the OTU name
-
+    :param path: Path to a given OTU
+    :param force_update: Boolean flag used to determine if the function should return the name of the OTU even if it
+    already has a taxid
+    :return: The OTU's name if it doesn't have a taxid assigned or force_update is True, else None
     """
     async with aiofiles.open(os.path.join(path, "otu.json"), "r") as f:
         otu = json.loads(await f.read())
@@ -176,9 +165,8 @@ def run(src_path: str, force_update: bool):
     """
     Creates and runs the event loop to asynchronously find taxon ids for all OTU in a src directory
 
-    Parameters:
-        src_path (str): Path to a database src directory
-        force_update (bool): Flag to indicate whether all OTUs should be searched for regardless
-                             if they already have a taxon id
+    :param src_path: Path to a given reference directory
+    :param force_update: Flag to force update all of the OTU's taxids in a reference
+    :return:
     """
     asyncio.run(taxid(src_path, force_update))
