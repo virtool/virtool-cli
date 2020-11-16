@@ -119,7 +119,7 @@ async def log_results(name: str, taxid: str, console: Console):
         console.print(f"[green]  Found taxid {taxid}")
     else:
         console.print(f"[red]✘ {name}")
-        console.print(f"[red]  Could not find taxid")
+        console.print("[red]  Could not find taxid")
 
     console.print()
 
