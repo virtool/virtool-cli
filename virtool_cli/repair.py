@@ -54,7 +54,7 @@ def fix_taxid(otu: dict) -> Optional[dict]:
     """
     try:
         taxid = otu.get("taxid")
-        if type(taxid) is not int and not None:
+        if not isinstance(taxid, int):
             otu["taxid"] = int(taxid)
             return otu
     except TypeError:
