@@ -16,6 +16,7 @@ def repair(src):
         # if a new otu is returned then it should be updated
         if otu:
             otus_to_update[path] = otu
+
     write_otus(otus_to_update)
 
 
@@ -53,6 +54,3 @@ def write_otus(otus):
 
 def run(src):
     repair(src)
-
-
-run("tests/files/src")
