@@ -19,7 +19,7 @@ def command():
                                   "t/tobacco_mosaic_virus", "t/totivirus_tf1_(not_a_plant_virus)"])
 def test_taxid(path, command):
     path = os.path.join(TEST_PATH, path)
-    print(path)
+
     with open(os.path.join(path, "otu.json"), 'r') as f:
         otu = json.load(f)
 
