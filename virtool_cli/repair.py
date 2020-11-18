@@ -2,7 +2,7 @@ import json
 import os
 from typing import Optional
 
-from virtool_cli.utils import get_otu_paths, get_otus
+from virtool_cli.utils import get_otu_paths, get_otus, create_otu_path
 
 
 def run(src: str):
@@ -35,7 +35,7 @@ def fix_folder_name(path: str, otu: dict):
     """
     try:
         folder_name = path.rsplit("/", 1)[1]
-        new_folder_name = otu.get("name").replace(" ", "_").replace("/", "_").lower()
+        new_folder_name = create_otu_path(otu.get("name"))
 
         if folder_name != new_folder_name:
             new_path = path.replace(folder_name, new_folder_name)

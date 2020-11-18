@@ -51,6 +51,19 @@ def get_otus(paths) -> dict:
     return taxids
 
 
+def create_otu_path(otu_name: str, reference_path: str = "", first_letter: str = ""):
+    """
+    Generates a new path in a reference for an OTU directory
+
+    :param otu_name: Lowercase name of an OTU to be appended on the end of the path
+    :param reference_path: Path to a reference directory
+    :param first_letter: First letter of an OTU name
+    :return: Path in a reference to generate an OTU directory
+    """
+
+    return os.path.join(reference_path, first_letter, otu_name.replace(" ", "_").replace("/", "_"))
+
+
 async def get_isolates(path) -> dict:
     """
     Returns a mapping to every isolate and their folder name.
