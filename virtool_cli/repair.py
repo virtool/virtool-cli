@@ -2,6 +2,8 @@ import json
 import os
 from typing import Optional
 
+from rich.console import Console
+
 from virtool_cli.utils import get_otu_paths, get_otus, create_otu_path
 
 
@@ -14,19 +16,31 @@ def run(src: str):
     paths = get_otu_paths(src)
     otus = get_otus(paths)
     otus_to_update = {}
+    console = Console()
 
     for path in paths:
-        fix_folder_name(path, otus[path])
-        otu = fix_taxid(otus[path])
+        results = []
 
+        new_path = fix_folder_name(path, otus[path])
+        # if a folder name has been changed then a new path will return
+        if new_path:
+            results.append("    - Fixed folder name")
+            # making sure to update the dictionary that maps paths to OTUs
+            otus[new_path] = otus[path]
+            path = new_path
+
+        otu = fix_taxid(otus[path])
         # if a new otu is returned then it should be updated
         if otu:
             otus_to_update[path] = otu
+            results.append("    - Fixed taxid field")
+
+        log_results(results, otus[path]["name"], console)
 
     write_otus(otus_to_update)
 
 
-def fix_folder_name(path: str, otu: dict):
+def fix_folder_name(path: str, otu: dict) -> Optional[str]:
     """
     Fixes each OTU folder name by ensuring that it's the same as the "name" field in its otu.json file
 
@@ -39,6 +53,7 @@ def fix_folder_name(path: str, otu: dict):
     if folder_name != new_folder_name:
         new_path = path.replace(folder_name, new_folder_name)
         os.rename(path, new_path)
+        return new_path
 
 
 def fix_taxid(otu: dict) -> Optional[dict]:
@@ -63,6 +78,17 @@ def fix_taxid(otu: dict) -> Optional[dict]:
         }
 
     return None
+
+
+def log_results(results: list, name: str, console: Console):
+    if not results:
+        return
+
+    console.print(f"[green]✔ {name}")
+
+    for result in results:
+        console.print(f"[green]{result}")
+    console.print()
 
 
 def write_otus(otus: dict):
