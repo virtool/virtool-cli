@@ -51,7 +51,7 @@ def get_otus(paths) -> dict:
     return taxids
 
 
-def create_otu_path(otu_name: str, reference_path: str = "", first_letter: str = ""):
+def create_otu_path(otu_name: str, reference_path: str = "", first_letter: str = "") -> str:
     """
     Generates a new path in a reference for an OTU directory
 

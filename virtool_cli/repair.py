@@ -33,16 +33,12 @@ def fix_folder_name(path: str, otu: dict):
     :param path: Path to a given reference directory
     :param otu: A deserialized otu.json
     """
-    try:
-        folder_name = path.rsplit("/", 1)[1]
-        new_folder_name = create_otu_path(otu.get("name"))
+    folder_name = path.rsplit("/", 1)[1]
+    new_folder_name = create_otu_path(otu.get("name"))
 
-        if folder_name != new_folder_name:
-            new_path = path.replace(folder_name, new_folder_name)
-            os.rename(path, new_path)
-    except AttributeError:
-        # OTU must not have name
-        pass
+    if folder_name != new_folder_name:
+        new_path = path.replace(folder_name, new_folder_name)
+        os.rename(path, new_path)
 
 
 def fix_taxid(otu: dict) -> Optional[dict]:
