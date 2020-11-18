@@ -53,13 +53,18 @@ def fix_taxid(otu: dict) -> Optional[dict]:
     :return: The modified otu parameter if it needs to be updated, else None
     """
     try:
-        taxid = otu.get("taxid")
-        if not isinstance(taxid, int):
-            otu["taxid"] = int(taxid)
-            return otu
-    except TypeError:
-        # OTU must not have a taxid
-        return None
+        taxid = otu["taxid"]
+        if isinstance(taxid, str):
+            return {
+                **otu,
+                "taxid": int(taxid)
+            }
+    except KeyError:
+        # assure that taxid field is set to None
+        return {
+            **otu,
+            "taxid": None
+        }
 
     return None
 
