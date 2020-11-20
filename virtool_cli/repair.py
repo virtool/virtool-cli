@@ -81,6 +81,14 @@ def fix_taxid(otu: dict) -> Optional[dict]:
 
 
 def log_results(results: list, name: str, console: Console):
+    """
+    Log repair results to console
+
+    :param name: Name of OTU to log results for
+    :param results: List of successful operations performed for a given OTU
+    :param console: Rich console object used to log results
+    :return:
+    """
     if not results:
         return
 
