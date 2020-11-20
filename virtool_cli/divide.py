@@ -2,6 +2,8 @@ import json
 import os
 import shutil
 
+from virtool_cli.utils import create_otu_path
+
 OTU_KEYS = [
     "_id",
     "name",
@@ -86,7 +88,7 @@ def build_otu(output: str, otu: dict) -> str:
     except FileExistsError:
         pass
 
-    otu_path = os.path.join(output, first_letter, lower_name.replace(" ", "_").replace("/", "_"))
+    otu_path = create_otu_path(lower_name, output, first_letter)
     os.mkdir(otu_path)
 
     with open(os.path.join(otu_path, "otu.json"), "w") as f:

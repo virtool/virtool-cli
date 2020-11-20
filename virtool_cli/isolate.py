@@ -36,7 +36,7 @@ async def isolate(src: str):
     paths = get_otu_paths(src)
 
     # get mapping of all OTU paths to its OTU JSON file
-    otu_path_map = await get_otus(paths)
+    otu_path_map = get_otus(paths)
 
     for path in paths:
         taxid = otu_path_map[path].get("taxid")

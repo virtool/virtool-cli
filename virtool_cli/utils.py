@@ -34,7 +34,7 @@ def get_otu_paths(src_path: str) -> list:
     return paths
 
 
-async def get_otus(paths) -> dict:
+def get_otus(paths) -> dict:
     """
     Returns a mapping of every OTU path to their deserialized OTU dictionary.
 
@@ -44,11 +44,24 @@ async def get_otus(paths) -> dict:
     taxids = dict()
 
     for otu_path in paths:
-        async with aiofiles.open(os.path.join(otu_path, "otu.json"), "r") as f:
-            otu = json.loads(await f.read())
+        with open(os.path.join(otu_path, "otu.json"), "r") as f:
+            otu = json.load(f)
             taxids[otu_path] = otu
 
     return taxids
+
+
+def create_otu_path(otu_name: str, reference_path: str = "", first_letter: str = "") -> str:
+    """
+    Generates a new path in a reference for an OTU directory
+
+    :param otu_name: Lowercase name of an OTU to be appended on the end of the path
+    :param reference_path: Path to a reference directory
+    :param first_letter: First letter of an OTU name
+    :return: Path in a reference to generate an OTU directory
+    """
+
+    return os.path.join(reference_path, first_letter, otu_name.replace(" ", "_").replace("/", "_"))
 
 
 async def get_isolates(path) -> dict:
