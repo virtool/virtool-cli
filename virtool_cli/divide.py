@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import pathlib
 
 from virtool_cli.utils import create_otu_path
 
@@ -28,7 +29,7 @@ SEQUENCE_KEYS = [
 ]
 
 
-def run(src_path: str, output: str):
+def run(src_path: pathlib.Path, output: pathlib.Path):
     """
     Divide a reference.json file from Virtool into a src tree.
 
@@ -39,7 +40,7 @@ def run(src_path: str, output: str):
     """
 
     shutil.rmtree(output, ignore_errors=True)
-    os.mkdir(output)
+    output.mkdir()
 
     with open(src_path, "r") as export_handle:
         data = json.load(export_handle)
@@ -59,14 +60,14 @@ def run(src_path: str, output: str):
                 for sequence in sequences:
                     build_sequence(isolate_path, sequence)
 
-        with open(os.path.join(output, "meta.json"), "w") as f:
+        with open(output / "meta.json", "w") as f:
             json.dump({
                 "data_type": data["data_type"],
                 "organism": data["organism"]
             }, f)
 
 
-def build_otu(output: str, otu: dict) -> str:
+def build_otu(output: pathlib.Path, otu: dict) -> str:
     """
     Creates a directory for all OTUs that begin with a particular
     letter if it doesn't already exist. Generates a directory for a
@@ -84,14 +85,14 @@ def build_otu(output: str, otu: dict) -> str:
     first_letter = lower_name[0]
 
     try:
-        os.mkdir(os.path.join(output, first_letter))
+        (output / first_letter).mkdir()
     except FileExistsError:
         pass
 
     otu_path = create_otu_path(lower_name, output, first_letter)
-    os.mkdir(otu_path)
+    otu_path.mkdir()
 
-    with open(os.path.join(otu_path, "otu.json"), "w") as f:
+    with open(otu_path / "otu.json", "w") as f:
         if "schema" not in otu:
             otu["schema"] = list()
 
@@ -100,7 +101,7 @@ def build_otu(output: str, otu: dict) -> str:
     return otu_path
 
 
-def build_isolate(otu_path: str, isolate: dict) -> str:
+def build_isolate(otu_path: pathlib.Path, isolate: dict) -> str:
     """
     Creates a directory for a given isolate and generates
     a isolate.json with key information about it.
@@ -114,16 +115,16 @@ def build_isolate(otu_path: str, isolate: dict) -> str:
         isolate_path: A path to a newly generated isolate directory
 
     """
-    isolate_path = os.path.join(otu_path, isolate["id"])
-    os.mkdir(isolate_path)
+    isolate_path = otu_path / isolate["id"]
+    isolate_path.mkdir()
 
-    with open(os.path.join(isolate_path, "isolate.json"), "w") as f:
+    with open(isolate_path / "isolate.json", "w") as f:
         json.dump({key: isolate[key] for key in ISOLATE_KEYS}, f, indent=4)
 
     return isolate_path
 
 
-def build_sequence(isolate_path: str, sequence: dict):
+def build_sequence(isolate_path: pathlib.Path, sequence: dict):
     """
     Generates a JSON file for one of the isolate's sequences
 
@@ -133,5 +134,5 @@ def build_sequence(isolate_path: str, sequence: dict):
                          isolates' sequences
     
     """
-    with open(os.path.join(isolate_path, "{}.json".format(sequence["_id"])), "w") as f:
+    with open(isolate_path / "{}.json".format(sequence["_id"]), "w") as f:
         json.dump({key: sequence[key] for key in SEQUENCE_KEYS}, f, indent=4)
