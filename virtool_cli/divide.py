@@ -1,7 +1,6 @@
 import json
-import os
-import shutil
 import pathlib
+import shutil
 
 from virtool_cli.utils import create_otu_path
 
@@ -33,10 +32,8 @@ def run(src_path: pathlib.Path, output: pathlib.Path):
     """
     Divide a reference.json file from Virtool into a src tree.
 
-    Parameters:
-        src_path (str): Path to a reference.json file
-        output (str): Path to the where the src tree should be generated
-
+    :param src_path: Path to a reference.json file
+    :param output: Path to the where the src tree should be generated
     """
 
     shutil.rmtree(output, ignore_errors=True)
@@ -73,13 +70,9 @@ def build_otu(output: pathlib.Path, otu: dict) -> str:
     letter if it doesn't already exist. Generates a directory for a
     given OTU and copies key information about it to a otu.json file.
 
-    Parameters:
-        output (str): Path to the where the src tree should be generated
-        otu (dict): Dictionary of a OTU
-
-    Returns:
-        otu_path (str): Path to a newly generated OTU directory
-
+    :param output: Path to the where the src tree should be generated
+    :param otu: Dictionary of an OTU
+    :return: Path to a newly generated OTU directory
     """
     lower_name = otu["name"].lower()
     first_letter = lower_name[0]
@@ -106,14 +99,9 @@ def build_isolate(otu_path: pathlib.Path, isolate: dict) -> str:
     Creates a directory for a given isolate and generates
     a isolate.json with key information about it.
 
-    Parameters:
-        otu_path (str): A path to a specified OTU
-        isolate (dict): A dictionary with information on one of the
-                        OTU's isolates
-
-    Returns:
-        isolate_path: A path to a newly generated isolate directory
-
+    :param otu_path: A path to a specified OTU
+    :param isolate: A dictionary containing isolate information
+    :return: A path to a newly generated isolate directory
     """
     isolate_path = otu_path / isolate["id"]
     isolate_path.mkdir()
@@ -128,11 +116,8 @@ def build_sequence(isolate_path: pathlib.Path, sequence: dict):
     """
     Generates a JSON file for one of the isolate's sequences
 
-    Parameters:
-        isolate_path (str): A path to a specified isolate
-        sequence (dict): A dictionary containing information on one of the 
-                         isolates' sequences
-    
+    :param isolate_path: A path to a specified isolate
+    :param sequence: A dictionary containing information on one of the isolates' sequences
     """
     with open(isolate_path / "{}.json".format(sequence["_id"]), "w") as f:
         json.dump({key: sequence[key] for key in SEQUENCE_KEYS}, f, indent=4)
