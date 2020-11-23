@@ -1,6 +1,6 @@
 import asyncio
 import json
-import os
+import pathlib
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Optional
 
@@ -12,18 +12,18 @@ from rich.console import Console
 from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
 
 
-async def taxid(src: str, force_update: bool):
+async def taxid(src_path: pathlib.Path, force_update: bool):
     """
     Asynchronously finds taxon ids for all OTU in a given src directory and
     writes them to each respective otu.json file.
 
-    :param src: Path to a given reference directory
+    :param src_path: Path to a given reference directory
     :param force_update: Flag to force update all of the OTU's taxids in a reference
     """
     scheduler = await aiojobs.create_scheduler()
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
-    paths = get_otu_paths(src)
+    paths = get_otu_paths(src_path)
     coros = []
     otu_paths = {}
 
@@ -124,7 +124,7 @@ async def log_results(name: str, taxid: str, console: Console):
     console.print()
 
 
-def update_otu(taxid: str, path: str):
+def update_otu(taxid: str, path: pathlib.Path):
     """
     Updates a otu.json's taxid key with either a taxon id or None
     depending on whether an id was able to be retrieved.
@@ -132,14 +132,14 @@ def update_otu(taxid: str, path: str):
     :param taxid: Taxid for a given OTU if found, else None
     :param path: Path to a given OTU in the reference directory
     """
-    with open(os.path.join(path, "otu.json"), 'r+') as f:
+    with open(path / "otu.json", 'r+') as f:
         otu = json.load(f)
         otu["taxid"] = int(taxid) if taxid else taxid
         f.seek(0)
         json.dump(otu, f, indent=4)
 
 
-async def get_name_from_path(path: str, force_update: bool) -> Optional[str]:
+async def get_name_from_path(path: pathlib.Path, force_update: bool) -> Optional[str]:
     """
     Given a path to an OTU, returns the name of the OTU. If a taxon id already exists
     for the OTU then it returns None.
@@ -149,7 +149,7 @@ async def get_name_from_path(path: str, force_update: bool) -> Optional[str]:
     already has a taxid
     :return: The OTU's name if it doesn't have a taxid assigned or force_update is True, else None
     """
-    async with aiofiles.open(os.path.join(path, "otu.json"), "r") as f:
+    async with aiofiles.open(path / "otu.json", "r") as f:
         otu = json.loads(await f.read())
 
         try:
@@ -161,7 +161,7 @@ async def get_name_from_path(path: str, force_update: bool) -> Optional[str]:
             return otu["name"]
 
 
-def run(src_path: str, force_update: bool):
+def run(src_path: pathlib.Path, force_update: bool):
     """
     Creates and runs the event loop to asynchronously find taxon ids for all OTU in a src directory
 
