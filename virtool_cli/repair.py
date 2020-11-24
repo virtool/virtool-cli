@@ -1,19 +1,19 @@
 import json
-import os
 from typing import Optional
+import pathlib
 
 from rich.console import Console
 
 from virtool_cli.utils import get_otu_paths, get_otus, create_otu_path
 
 
-def run(src: str):
+def run(src_path: pathlib.Path):
     """
     Fixes any folder-JSON name mismatches and incorrect taxid types
 
-    :param src: Path to a given reference directory
+    :param src_path: Path to a given reference directory
     """
-    paths = get_otu_paths(src)
+    paths = get_otu_paths(src_path)
     otus = get_otus(paths)
     otus_to_update = {}
     console = Console()
@@ -40,19 +40,18 @@ def run(src: str):
     write_otus(otus_to_update)
 
 
-def fix_folder_name(path: str, otu: dict) -> Optional[str]:
+def fix_folder_name(path: pathlib.Path, otu: dict) -> Optional[str]:
     """
     Fixes each OTU folder name by ensuring that it's the same as the "name" field in its otu.json file
 
     :param path: Path to a given reference directory
     :param otu: A deserialized otu.json
     """
-    folder_name = path.rsplit("/", 1)[1]
     new_folder_name = create_otu_path(otu.get("name"))
 
-    if folder_name != new_folder_name:
-        new_path = path.replace(folder_name, new_folder_name)
-        os.rename(path, new_path)
+    if path.name != new_folder_name:
+        new_path = path.with_name(new_folder_name)
+        path.rename(new_path)
         return new_path
 
 
@@ -106,5 +105,5 @@ def write_otus(otus: dict):
     :param otus: A dictionary that maps file paths to each updated deserialized otu.json
     """
     for path in otus.keys():
-        with open(os.path.join(path, "otu.json"), "w") as f:
+        with open(path / "otu.json", "w") as f:
             json.dump(otus[path], f, indent=4)

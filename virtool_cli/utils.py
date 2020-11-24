@@ -37,7 +37,7 @@ def get_otus(paths: list) -> dict:
     Returns a mapping of every OTU path to their deserialized OTU dictionary.
 
     :param paths: List of paths to all OTU in a reference
-    :return: A mapping of every OTU path to their taxid
+    :return: A mapping of every OTU path to its OTU dictionary
     """
     path_taxid_map = dict()
 
@@ -49,18 +49,20 @@ def get_otus(paths: list) -> dict:
     return path_taxid_map
 
 
-def create_otu_path(otu_name: str, reference_path: pathlib.Path = "", first_letter: str = "") -> pathlib.Path:
+def create_otu_path(otu_name: str, reference_path: pathlib.Path = None, first_letter: str = None) -> pathlib.Path:
     """
-    Generates a new path in a reference for an OTU directory
+    Generates a new path in a reference for an OTU directory if the full path is provided, else it just returns
+    the formatted name of an OTU directory
 
     :param otu_name: Lowercase name of an OTU to be appended on the end of the path
     :param reference_path: Path to a reference directory
     :param first_letter: First letter of an OTU name
     :return: Path in a reference to generate an OTU directory
     """
+    if reference_path and first_letter:
+        return reference_path / first_letter / otu_name.replace(" ", "_").replace("/", "_").lower()
 
-    return reference_path / first_letter / otu_name.replace(" ", "_").replace("/", "_")
-
+    return otu_name.replace(" ", "_").replace("/", "_").lower()
 
 async def get_isolates(path: pathlib.Path) -> dict:
     """
