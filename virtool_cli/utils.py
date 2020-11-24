@@ -5,7 +5,6 @@ import pathlib
 
 import aiofiles
 from Bio import Entrez
-from rich.console import Console
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -44,7 +43,7 @@ def get_otus(paths: list) -> dict:
 
     for path in paths:
         with open(path / "otu.json", "r") as f:
-            otu = json.load(f.read)
+            otu = json.load(f)
             path_taxid_map[path] = otu
 
     return path_taxid_map
@@ -77,7 +76,7 @@ async def get_isolates(path: pathlib.Path) -> dict:
         if folder.name != "otu.json" and folder / "isolate.json" in folder.iterdir():
             async with aiofiles.open(folder / "isolate.json", "r") as f:
                 isolate = json.loads(await f.read())
-                isolates[isolate["source_name"]] = folder
+                isolates[isolate["source_name"]] = folder.name
 
     return isolates
 
@@ -95,7 +94,7 @@ async def get_sequences(path: pathlib.Path) -> dict:
         if sequence_id.name != "isolate.json":
             async with aiofiles.open(sequence_id, "r") as f:
                 sequence = json.loads(await f.read())
-                sequences[sequence["accession"]] = sequence_id
+                sequences[sequence["accession"]] = sequence_id.name
 
     return sequences
 
@@ -116,6 +115,6 @@ async def get_unique_ids(paths: list) -> Tuple[set, set]:
                 isolate_ids.add(isolate_id)
                 for seq_id in isolate_id.iterdir():
                     if seq_id.name != "isolate.json":
-                        sequence_ids.add(seq_id.rstrip(".json"))
+                        sequence_ids.add(seq_id.name.rstrip(".json"))
 
     return isolate_ids, sequence_ids
