@@ -1,5 +1,4 @@
 import json
-import os
 import pathlib
 
 import arrow
@@ -50,7 +49,7 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
 
     for alpha in alpha_paths:
 
-        otu_paths = parse_alpha(src_path, alpha)
+        otu_paths = parse_alpha(alpha)
 
         for otu_path in otu_paths:
 
@@ -88,7 +87,7 @@ def parse_meta(src_path: pathlib.Path) -> dict:
     :return: The deserialized meta.json object or an empty dictionary
     """
     try:
-        with open(os.path.join(src_path, "meta.json"), "r") as f:
+        with open(src_path / "meta.json", "r") as f:
             return json.load(f)
     except FileNotFoundError:
         return dict()
