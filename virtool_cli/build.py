@@ -1,5 +1,7 @@
-import os
 import json
+import os
+import pathlib
+
 import arrow
 
 OTU_KEYS = [
@@ -26,7 +28,7 @@ SEQUENCE_KEYS = [
 ]
 
 
-def run(src_path: str, output: str, indent: bool, version: str):
+def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str):
     """
     Build a Virtool reference JSON file from a data directory.
 
@@ -46,25 +48,21 @@ def run(src_path: str, output: str, indent: bool, version: str):
 
     otus = list()
 
-    alpha_paths = os.listdir(src_path)
-
-    try:
-        alpha_paths.remove("meta.json")
-    except ValueError:
-        pass
+    alpha_paths = [path for path in src_path.iterdir() if path.name != "meta.json"]
 
     for alpha in alpha_paths:
+
         otu_paths = parse_alpha(src_path, alpha)
 
         for otu_path in otu_paths:
 
             otu, isolate_ids = parse_otu(otu_path)
 
-            for isolate_path in [os.path.join(otu_path, i) for i in isolate_ids]:
+            for isolate_path in isolate_ids:
 
                 isolate, sequence_ids = parse_isolate(isolate_path)
 
-                for sequence_path in [os.path.join(isolate_path, i) for i in sequence_ids]:
+                for sequence_path in sequence_ids:
                     with open(sequence_path, "r") as f:
                         sequence = json.load(f)
 
@@ -84,7 +82,7 @@ def run(src_path: str, output: str, indent: bool, version: str):
         json.dump(data, f, indent=4 if indent else None, sort_keys=True)
 
 
-def parse_meta(src_path: str) -> dict:
+def parse_meta(src_path: pathlib.Path) -> dict:
     """
     Deserializes and returns meta.json if found, else returns an empty dictionary.
 
@@ -102,22 +100,21 @@ def parse_meta(src_path: str) -> dict:
         return dict()
 
 
-def parse_alpha(src_path: str, alpha: str) -> list:
+def parse_alpha(alpha: pathlib.Path) -> list:
     """
     Generates and returns a list with every OTU in the directory of the given alpha
 
     Parameters:
-        src_path (str): Path to database src directory
-        alpha (str): Alphabetical character that denotes the name of the directory to search
+        alpha (str): Path to a given alpha directory in a reference
 
     Returns:
         A list containing all the OTU in the given directory
 
     """
-    return [os.path.join(src_path, alpha, otu) for otu in os.listdir(os.path.join(src_path, alpha))]
+    return [otu for otu in alpha.iterdir()]
 
 
-def parse_otu(otu_path: str) -> (dict, list):
+def parse_otu(otu_path: pathlib.Path) -> (dict, list):
     """
     Creates an list of isolate IDs for a given OTU
 
@@ -129,17 +126,17 @@ def parse_otu(otu_path: str) -> (dict, list):
         isolate_ids (list): List of all isolate IDs for a given OTU
 
     """
-    with open(os.path.join(otu_path, "otu.json"), "r") as f:
+    with open(otu_path / "otu.json", "r") as f:
         otu = json.load(f)
 
     otu["isolates"] = list()
 
-    isolate_ids = [i for i in os.listdir(otu_path) if i != "otu.json" and i[0] != "."]
+    isolate_ids = [i for i in otu_path.iterdir() if i.name != "otu.json" and i.name[0] != "."]
 
     return otu, isolate_ids
 
 
-def parse_isolate(isolate_path: str) -> (dict, list):
+def parse_isolate(isolate_path: pathlib.Path) -> (dict, list):
     """
     Creates a list of sequence IDs for a given sequence
 
@@ -151,11 +148,11 @@ def parse_isolate(isolate_path: str) -> (dict, list):
         sequence_ids (list): List of all sequence IDs for a given isolate
 
     """
-    with open(os.path.join(isolate_path, "isolate.json"), "r") as f:
+    with open(isolate_path / "isolate.json", "r") as f:
         isolate = json.load(f)
 
     isolate["sequences"] = list()
 
-    sequence_ids = [i for i in os.listdir(isolate_path) if i != "isolate.json" and i[0] != "."]
+    sequence_ids = [i for i in isolate_path.iterdir() if i.name != "isolate.json" and i.name[0] != "."]
 
     return isolate, sequence_ids
