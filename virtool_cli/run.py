@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 
 import virtool_cli.build
@@ -21,7 +23,7 @@ def cli():
 def build(src_path, output, indent, version):
     """Build a Virtool reference JSON file from a reference directory."""
     try:
-        virtool_cli.build.run(src_path, output, indent, version)
+        virtool_cli.build.run(Path(src_path), Path(output), indent, version)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 
@@ -34,10 +36,9 @@ def divide(src_path, output):
     try:
         if not src_path.endswith(".json"):
             raise TypeError
-        virtool_cli.divide.run(src_path, output)
+        virtool_cli.divide.run(Path(src_path), Path(output))
     except (TypeError, FileNotFoundError):
-        click.echo(
-            "Specified reference file either does not exist or is not a proper JSON file")
+        click.echo("Specified reference file either does not exist or is not a proper JSON file")
 
 
 @cli.command()
@@ -46,7 +47,7 @@ def divide(src_path, output):
 def taxid(src_path, force_update):
     """Fetch taxid for all OTU in given reference directory."""
     try:
-        virtool_cli.taxid.run(src_path, force_update)
+        virtool_cli.taxid.run(Path(src_path), force_update)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 
@@ -56,7 +57,7 @@ def taxid(src_path, force_update):
 def isolate(src_path):
     """Fetch new isolates for all OTU in a given reference directory."""
     try:
-        virtool_cli.isolate.run(src_path)
+        virtool_cli.isolate.run(Path(src_path))
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 
@@ -66,7 +67,7 @@ def isolate(src_path):
 def repair(src_path):
     """Fix every OTU in a given reference directory."""
     try:
-        virtool_cli.repair.run(src_path)
+        virtool_cli.repair.run(Path(src_path))
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 

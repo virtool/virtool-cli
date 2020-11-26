@@ -1,6 +1,6 @@
 import asyncio
 import json
-import os
+import pathlib
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -16,7 +16,7 @@ from virtool_cli.utils import get_otu_paths, get_otus, get_isolates, get_sequenc
     get_unique_ids, NCBI_REQUEST_INTERVAL
 
 
-async def isolate(src: str):
+async def isolate(src: pathlib.Path):
     """
     Runs routines to find new isolates for OTU in a reference directory and writes newfound accessions to local cache
 
@@ -77,7 +77,8 @@ async def isolate(src: str):
     write_cache(updated_cache)
 
 
-async def fetch_otu_isolates(taxid: str, name: str, path: str, accessions: list, paths: list, queue: asyncio.Queue):
+async def fetch_otu_isolates(taxid: str, name: str, path: pathlib.Path, accessions: list, paths: list,
+                             queue: asyncio.Queue):
     """
     Fetch new isolates for a given OTU, creating a directory for each
 
@@ -124,7 +125,9 @@ async def fetch_otu_isolates(taxid: str, name: str, path: str, accessions: list,
             isolates[isolate_name] = new_id
 
         # create new sequence file
-        isolate_path = os.path.join(path, isolates.get(isolate_name))
+
+        isolate_path = path / isolates.get(isolate_name)
+
         new_id = await store_sequence(isolate_path, accession, accession_data, sequence_ids)
         sequence_ids.add(new_id)
 
@@ -233,7 +236,7 @@ async def find_isolate(isolate_data: dict) -> Optional[str]:
     return None
 
 
-async def store_sequence(path: str, accession: SeqIO.SeqRecord, data: dict, unique_ids: set) -> Optional[str]:
+async def store_sequence(path: pathlib.Path, accession: SeqIO.SeqRecord, data: dict, unique_ids: set) -> Optional[str]:
     """
     Creates a new sequence file for a given isolate
 
@@ -262,13 +265,13 @@ async def store_sequence(path: str, accession: SeqIO.SeqRecord, data: dict, uniq
                 "sequence": str(accession.seq)
                 }
 
-    async with aiofiles.open(os.path.join(path, new_id + ".json"), "w") as f:
+    async with aiofiles.open(path / (new_id + ".json"), "w") as f:
         await f.write(json.dumps(seq_file, indent=4))
 
     return new_id
 
 
-async def store_isolate(path: str, source_name: str, source_type: str, unique_ids: set) -> str:
+async def store_isolate(path: pathlib.Path, source_name: str, source_type: str, unique_ids: set) -> str:
     """
     Creates a new isolate folder for an OTU
 
@@ -280,7 +283,7 @@ async def store_isolate(path: str, source_name: str, source_type: str, unique_id
     """
 
     new_id = random_alphanumeric(8, False, unique_ids)
-    os.mkdir(os.path.join(path, new_id))
+    (path / new_id).mkdir()
 
     new_isolate = {
         "id": new_id,
@@ -289,7 +292,7 @@ async def store_isolate(path: str, source_name: str, source_type: str, unique_id
         "default": False
     }
 
-    async with aiofiles.open(os.path.join(path, new_id, "isolate.json"), "w") as f:
+    async with aiofiles.open(path / new_id / "isolate.json", "w") as f:
         await f.write(json.dumps(new_isolate, indent=4))
 
     return new_id
@@ -330,7 +333,7 @@ def write_cache(accessions: dict):
     :param accessions: Dictionary containing an updated mapping of taxids to their accessions
     """
     try:
-        os.mkdir(".cli")
+        (pathlib.Path.cwd() / ".cli").mkdir()
     except FileExistsError:
         pass
 
