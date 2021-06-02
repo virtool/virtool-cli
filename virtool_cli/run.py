@@ -2,6 +2,7 @@ from pathlib import Path
 
 import click
 
+import virtool_cli.vfam
 import virtool_cli.build
 import virtool_cli.divide
 import virtool_cli.isolate
@@ -12,6 +13,18 @@ import virtool_cli.taxid
 @click.group()
 def cli():
     pass
+
+
+@cli.command()
+@click.option("-src", "--src_path", required=True, type=str, help="the path to input database reference directory")
+@click.option("-o", "--output", default="src", help="The path to output directory for profile HMMs and intermediate "
+                                                    "files")
+def vfam(src_path, output):
+    """Build profile HMMS from fasta"""
+    try:
+        virtool_cli.vfam.run(Path(src_path), output)
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo("Not a valid reference directory")
 
 
 @cli.command()
