@@ -17,12 +17,13 @@ def cli():
 
 @cli.command()
 @click.option("-src", "--src_path", required=True, type=str, help="the path to input database reference directory")
-@click.option("-o", "--output", default="src", help="The path to output directory for profile HMMs and intermediate "
-                                                    "files")
-def vfam(src_path, output):
+@click.option("-o", "--output", required=True, help="Path to output directory for profile HMMs and intermediate files")
+@click.option("-fract_cov", "--fraction_coverage", default=None, help="Fraction coverage for cd-hit step")
+@click.option("-fract_id", "--fraction_id", default=1.0, help="Fraction ID for cd-hit step")
+def vfam(src_path, output, fraction_coverage, fraction_id):
     """Build profile HMMS from fasta"""
     try:
-        virtool_cli.vfam.run(Path(src_path), output)
+        virtool_cli.vfam.run(Path(src_path), output, fraction_coverage, fraction_id)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 

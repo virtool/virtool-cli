@@ -29,7 +29,7 @@ def remove_phages(input_paths: list) -> list:
     """
     Parses through records in input files, appends records to filtered_sequences if keyword "phage" not found in record
 
-    :return: no_phages, list of filtered records
+    :return: no_phages, list of curated records with all phage records removed
     """
     no_phages = list()
 
@@ -51,7 +51,7 @@ def remove_dupes(no_phages: list, output: Path) -> Path:
 
     :param no_phages: list of records from all protein files without keyword "phage"
     :param output: Path to output directory for profile HMMs and intermediate files
-    :return: Path to filtered file
+    :return: Path to curated fasta file without repeats or phages
     """
     record_ids = []
     records_to_output = []
@@ -61,7 +61,8 @@ def remove_dupes(no_phages: list, output: Path) -> Path:
             records_to_output.append(record)
             record_ids.append(record.id)
 
-    SeqIO.write(records_to_output, output, "fasta")
+    output_path = output / Path("curated_records.faa")
+    SeqIO.write(records_to_output, output_path, "fasta")
 
-    return output
+    return output_path
 
