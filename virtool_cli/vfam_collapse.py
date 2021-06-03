@@ -2,10 +2,7 @@ import subprocess
 from pathlib import Path
 
 
-NUM_CORES = 8
-
-
-def generate_clusters(curated_fasta: Path, output: Path, fraction_cov: float, fraction_id: float) -> Path:
+def generate_clusters(curated_fasta: Path, output: Path, fraction_cov, fraction_id: float) -> Path:
     """
     Takes in a fasta file, minimum fraction coverage, minimum fraction identity, calls cd-hit to cluster data
 
@@ -28,27 +25,27 @@ def generate_clusters(curated_fasta: Path, output: Path, fraction_cov: float, fr
         curated_fasta, output_path, coverage_args, fraction_id)
     subprocess.run(cd_hit_cmd.split())
 
-    cluster_file = str(output_path) + ".clstr"
-
-    return Path(cluster_file)
+    return output_path
 
 
-def all_by_all_blast(clustered_fasta_file) -> Path:
+def all_by_all_blast(clustered_fasta: Path, output: Path, num_cores) -> Path:
     """
     Takes a clustered fasta file as input, and formats file to be a BLAST protein database
 
     runs BLAST on the file to itself as the BLAST-formatted database
 
-    :param clustered_fasta_file:
+    :param clustered_fasta: fasta file from previous cd-hit step
+    :param output: output directory for project
+    :param num_cores: number of cores to use at all_by_all blast step
     :return: tab-delimited formatted BLAST results file
     """
+    format_db_cmd = "makeblastdb -in %s -dbtype prot" % clustered_fasta
+    subprocess.run(format_db_cmd.split())
 
-    format_database_cmd = "makeblastdb -in %s -dbtype prot" % clustered_fasta_file
-    subprocess.run(format_database_cmd.split())
+    blast_results_file = output / Path("all_by_all.br")
 
-    blast_results_file = Path(clustered_fasta_file).parent / "all_by_all_blast_results.br"
     all_by_all_blast_cmd = "blastp -query %s -out %s -db %s -outfmt 6 -num_threads %s" % (
-        clustered_fasta_file, blast_results_file, clustered_fasta_file, NUM_CORES)
+        clustered_fasta, blast_results_file, clustered_fasta, num_cores)
     subprocess.run(all_by_all_blast_cmd.split())
 
     return blast_results_file
