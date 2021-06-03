@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-
+from Bio import SeqIO
 
 def generate_clusters(curated_fasta: Path, output: Path, fraction_cov, fraction_id: float) -> Path:
     """
@@ -26,6 +26,20 @@ def generate_clusters(curated_fasta: Path, output: Path, fraction_cov, fraction_
     subprocess.run(cd_hit_cmd.split())
 
     return output_path
+
+
+def polyprotein_name_check(clustered_records, output):
+    no_polyproteins = []
+    polyproteins_removed = output / Path("polyp_names_removed")
+
+    with clustered_records as handle:
+        for record in SeqIO.parse(handle, "fasta"):
+            if "polyprotein" not in record.description:
+                no_polyproteins.append(record)
+    with polyproteins_removed as filtered_records:
+        SeqIO.write(no_polyproteins, filtered_records, "fasta")
+
+    return polyproteins_removed
 
 
 def all_by_all_blast(clustered_fasta: Path, output: Path, num_cores) -> Path:

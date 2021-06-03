@@ -2,7 +2,7 @@ from virtool_cli.vfam_curate import *
 from virtool_cli.vfam_collapse import *
 
 
-def run(src_path, output, fraction_coverage, fraction_id, num_cores):
+def run(src_path, output, fraction_coverage, fraction_id, num_cores,polyp_name_check):
     """
     Dictates workflow for vfam pipeline
     """
@@ -13,6 +13,10 @@ def run(src_path, output, fraction_coverage, fraction_id, num_cores):
 
     # steps found in vfam_collapse module
     cd_hit_result = generate_clusters(no_dupes, output, fraction_coverage, fraction_id)
+
+    if polyp_name_check:
+        cd_hit_result = polyprotein_name_check(cd_hit_result, output)
+
     blast_results_file = all_by_all_blast(cd_hit_result, output, num_cores)
 
 

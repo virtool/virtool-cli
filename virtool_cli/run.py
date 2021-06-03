@@ -21,10 +21,12 @@ def cli():
 @click.option("-fract_cov", "--fraction_coverage", default=None, help="Fraction coverage for cd-hit step")
 @click.option("-fract_id", "--fraction_id", default=1.0, help="Fraction ID for cd-hit step")
 @click.option("-cores", "--num_cores", default=8, help="Number of cores to be used in all by all blast step")
-def vfam(src_path, output, fraction_coverage, fraction_id, num_cores):
+@click.option("-polynm", "--polyp_name_check", default=True, help="Filter out polyprotein sequences based on "
+                                                                  "polyprotein record description")
+def vfam(src_path, output, fraction_coverage, fraction_id, num_cores, polyp_name_check):
     """Build profile HMMS from fasta"""
     try:
-        virtool_cli.vfam.run(Path(src_path), output, fraction_coverage, fraction_id, num_cores)
+        virtool_cli.vfam.run(Path(src_path), output, fraction_coverage, fraction_id, num_cores, polyp_name_check)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 
