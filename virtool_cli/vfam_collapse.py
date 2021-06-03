@@ -3,19 +3,18 @@ from pathlib import Path
 from Bio import SeqIO
 
 
-def generate_clusters(curated_fasta: Path, output: Path, fraction_cov, fraction_id: float) -> Path:
+def generate_clusters(curated_fasta: Path, fraction_cov, fraction_id: float) -> Path:
     """
     Takes in a fasta file, minimum fraction coverage, minimum fraction identity, calls cd-hit to cluster data
 
     cd-hit collapses the input sequences into non-redundant representatives at the specified levels
 
     :param curated_fasta: fasta file from vfam_curate step, to have cd-hit performed on it
-    :param output: Path to output directory
     :param fraction_cov: Fraction coverage for cd-hit step
     :param fraction_id: Fraction ID for cd-hit step
     :return: cluster_file, a file containing cluster information created at cd-hit step
     """
-    output_path = output / Path("clustered_records")
+    output_path = Path(curated_fasta).parent / Path("clustered_records")
 
     if not fraction_cov:
         coverage_args = ""
@@ -29,9 +28,9 @@ def generate_clusters(curated_fasta: Path, output: Path, fraction_cov, fraction_
     return output_path
 
 
-def polyprotein_name_check(clustered_records, output):
+def polyprotein_name_check(clustered_records):
     no_polyproteins = []
-    polyproteins_removed = output / Path("polyp_names_removed")
+    polyproteins_removed = Path(clustered_records).parent / Path("polyp_names_removed")
 
     with clustered_records as handle:
         for record in SeqIO.parse(handle, "fasta"):
@@ -43,21 +42,20 @@ def polyprotein_name_check(clustered_records, output):
     return polyproteins_removed
 
 
-def all_by_all_blast(clustered_fasta: Path, output: Path, num_cores) -> Path:
+def all_by_all_blast(clustered_fasta: Path, num_cores) -> Path:
     """
     Takes a clustered fasta file as input, and formats file to be a BLAST protein database
 
     runs BLAST on the file to itself as the BLAST-formatted database
 
     :param clustered_fasta: fasta file from previous cd-hit step
-    :param output: output directory for project
     :param num_cores: number of cores to use at all_by_all blast step
     :return: tab-delimited formatted BLAST results file
     """
     format_db_cmd = "makeblastdb -in %s -dbtype prot" % clustered_fasta
     subprocess.run(format_db_cmd.split())
 
-    blast_results_file = output / Path("all_by_all.br")
+    blast_results_file = Path(clustered_fasta).parent / Path("all_by_all.br")
 
     all_by_all_blast_cmd = "blastp -query %s -out %s -db %s -outfmt 6 -num_threads %s" % (
         clustered_fasta, blast_results_file, clustered_fasta, num_cores)

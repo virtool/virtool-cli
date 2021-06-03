@@ -61,8 +61,14 @@ def remove_dupes(no_phages: list, output: Path) -> Path:
             records_to_output.append(record)
             record_ids.append(record.id)
 
-    output_path = output / Path("curated_records.faa")
-    SeqIO.write(records_to_output, output_path, "fasta")
+    output_dir = output / Path("cluster_files")
+
+    if not output_dir:
+        os.mkdir(output_dir)
+
+    output_path = output_dir / Path("curated_records.faa")
+
+    SeqIO.write(records_to_output, Path(output_path), "fasta")
 
     return output_path
 
