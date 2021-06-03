@@ -1,98 +1,105 @@
-def get_sequence_lengths(all_by_all_blast_results_file) -> dict:
+from Bio import Blast
+
+
+def sequence_lengths(blast_results) -> dict:
     """
     Takes blast results file and parses through lines
 
     If alignment record found where subject is the same as query, sequence length is given by alignment length
 
-    :param all_by_all_blast_results_file: blast file produced in all_by_all blast step
+    :param blast_results: blast file produced in all_by_all blast step
     :return: sequence_lengths, a dictionary containing each sequence and its sequence length
     """
-    blast_file = open(all_by_all_blast_results_file)
-    sequence_lengths = {}
+    seq_lengths = {}
+    blast_file = open(blast_results)
 
     for line in blast_file:
-        blast_data = line.split("\t")
+        alignment = Alignment(line)
+        if alignment.query == alignment.subject:
+            seq_lengths[alignment.query] = alignment.length
 
-        query = blast_data[0]
-        subject = blast_data[1]
-        sequence_alignment_length = int(blast_data[3])
-
-        if query == subject:
-            sequence_lengths[query] = sequence_alignment_length
-
-    return sequence_lengths
+    return seq_lengths
 
 
-def get_alignment_records(all_by_all_blast_results_file) -> dict:
+def get_alignment_records(blast_results) -> dict:
     """
     Takes blast file and parses through lines
 
     If alignment record found where subject does not equal query, alignment is added to query key in alignment_records
 
-    :param all_by_all_blast_results_file: blast file produced in all_by_all blast step
+    :param blast_results: blast file produced in all_by_all blast step
     :return: alignment_records, a dictionary containing all alignment records for each query
     """
-    blast_file = open(all_by_all_blast_results_file)
+    blast_file = open(blast_results)
     alignment_records = {}
 
     for line in blast_file:
-        blast_data = line.split("\t")
+        alignment = Alignment(line)
 
-        query = blast_data[0]
-        subject = blast_data[1]
-        start_of_query_alignment = int(blast_data[6])
-        end_of_query_alignment = int(blast_data[7])
-
-        if query != subject:
-            if query not in alignment_records:
-                alignment_records[query] = [(subject, start_of_query_alignment, end_of_query_alignment)]
+        if alignment.query != alignment.subject:
+            if alignment.query not in alignment_records:
+                alignment_records[alignment.query] = [alignment]
             else:
-                alignment_records[query].append((subject, start_of_query_alignment, end_of_query_alignment))
+                alignment_records[alignment.query].append(alignment)
 
     return alignment_records
 
 
-def get_polyproteins(all_by_all_blast_results_file) -> list:
+def find_polyproteins(blast_results):
     """
     Sequences longer than 400 amino acids in length were identified as polyprotein or polyprotein-like if
 
     - at least 70% of the sequence length was covered by two or more other proteins in the sequence set
     - these two or more other proteins were covered at least 80% by the longer sequence.
 
-    :param all_by_all_blast_results_file:blast file produced in all_by_all blast step
+    :param blast_results:blast file produced in all_by_all blast step
     :return: polyprotein_sequences, a list of sequences to not include in output
     """
-    sequence_lengths = get_sequence_lengths(all_by_all_blast_results_file)
-    alignment_records = get_alignment_records(all_by_all_blast_results_file)
+    seq_lengths = sequence_lengths(blast_results)
+    alignment_records = get_alignment_records(blast_results)
+    polyproteins = []
 
-    polyprotein_sequences = []
-    for query in sequence_lengths:
-        if int(sequence_lengths[query]) > 400 and query in alignment_records:
+    for query in seq_lengths:
+        if seq_lengths[query] > 400 and query in alignment_records:
 
-            if len(alignment_records[query]) > 1:
-                alignment_ranges = []
+            alignment_ranges = []
 
-                for alignment in alignment_records[query]:
-                    subject = alignment[0]
-                    start_of_query_alignment = alignment[1]
-                    end_of_query_alignment = alignment[2]
+            for alignment in alignment_records[query]:
+                if alignment.subject in seq_lengths:
+                    if seq_lengths[alignment.subject] < 0.7*seq_lengths[alignment.query]:
+                        subject_cvg = float(abs((alignment.qstart - alignment.qend)))/(seq_lengths[alignment.subject])
+                        if subject_cvg >= 0.7:
+                            alignment_ranges.append((alignment.qstart, alignment.qend))
 
-                    if subject in sequence_lengths:
-                        if float(sequence_lengths[subject]) < 0.7 * float(sequence_lengths[query]):
-                            subject_coverage = float(abs(start_of_query_alignment - end_of_query_alignment)) / \
-                                               float(sequence_lengths[subject])
+            query_cvg = {}
+            for rng in alignment_ranges:
+                for position in range(rng[0], rng[1]):
+                    query_cvg[position] = None
 
-                            if subject_coverage >= 0.7:
-                                alignment_ranges.append((start_of_query_alignment, end_of_query_alignment))
+            if len(query_cvg) > 0.8*(seq_lengths[query]):
+                polyproteins.append(query)
+            query_cvg.clear()
 
-                query_coverage = {}
-                for query_range in alignment_ranges:
-                    for amino_acid_position in range(query_range[0], query_range[1]):
-                        query_coverage[amino_acid_position] = None
+    return polyproteins
 
-                if len(query_coverage) > 0.8 * float(sequence_lengths[query]):
-                    polyprotein_sequences.append(query)
 
-                query_coverage.clear()
+class Alignment:
+    """
+    Class to facilitate parsing blast tabular output format 6
 
-    return polyprotein_sequences
+    Naming conventions and descriptions from https://www.metagenomics.wiki/tools/blast/blastn-output-format-6
+    """
+    def __init__(self, blast_data):
+        blast_data = blast_data.split("\t")
+        self.query = blast_data[0]
+        self.subject = blast_data[1]
+        self.pident = float(blast_data[2])
+        self.length = float(blast_data[3])
+        self.mismatch = float(blast_data[4])
+        self.gapopen = float(blast_data[5])
+        self.qstart = int(blast_data[6])
+        self.qend = int(blast_data[7])
+        self.sstart = int(blast_data[8])
+        self.send = int(blast_data[9])
+        self.evalue = float(blast_data[10])
+        self.bitscore = float(blast_data[11])

@@ -20,25 +20,31 @@ def output(tmp_path):
     output_path.mkdir()
     return output_path
 
+
 @pytest.fixture()
 def cluster_results(output):
-    input_paths = get_input_paths(Path(LARGE_INPUT_PATH))
+    input_paths = get_input_paths(Path(TEST_PATH))
     no_phages = remove_phages(input_paths)
     no_dupes = remove_dupes(no_phages, output)
 
     return generate_clusters(no_dupes, output, None, 1.0)
 
 
-def test_cluster_sequences(output):
-    """Test that cluster output file from cluster sequences matches desired output from original vfam"""
+@pytest.fixture()
+def blast_results(output):
     input_paths = get_input_paths(Path(TEST_PATH))
     no_phages = remove_phages(input_paths)
     no_dupes = remove_dupes(no_phages, output)
 
+    # doesn't do filter by name step
     cdhit_result = generate_clusters(no_dupes, output, None, 1.0)
+    return all_by_all_blast(cdhit_result, output, 8)
 
-    assert filecmp.cmp(cdhit_result, Path(CLUSTER_FASTA_PATH))
-    cluster_file = str(cdhit_result) + ".clstr"
+
+def test_cluster_sequences(output, cluster_results):
+    """Test that cluster output file from cluster sequences matches desired output from original vfam"""
+    assert filecmp.cmp(cluster_results, Path(CLUSTER_FASTA_PATH))
+    cluster_file = str(cluster_results) + ".clstr"
     assert filecmp.cmp(Path(cluster_file), Path(CLUSTER_FILE_PATH), shallow=True)
 
 
@@ -64,17 +70,9 @@ def test_polyprotein_list(output, cluster_results):
         assert record not in polyproteins
 
 
-def test_all_by_all_blast(output):
+def test_all_by_all_blast(output, blast_results):
     """Test that cluster output file from cluster sequences matches desired output from original vfam"""
-
-    input_paths = get_input_paths(Path(TEST_PATH))
-    no_phages = remove_phages(input_paths)
-    no_dupes = remove_dupes(no_phages, output)
-
-    cdhit_result = generate_clusters(no_dupes, output, None, 1.0)
-    blast_results_file = all_by_all_blast(cdhit_result, output, 8)
-
-    assert filecmp.cmp(blast_results_file, Path(BLAST_FILE_PATH))
+    assert filecmp.cmp(blast_results, Path(BLAST_FILE_PATH))
 
 
 if __name__ == "__main__":

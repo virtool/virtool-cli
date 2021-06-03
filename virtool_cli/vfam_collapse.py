@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 from Bio import SeqIO
 
+
 def generate_clusters(curated_fasta: Path, output: Path, fraction_cov, fraction_id: float) -> Path:
     """
     Takes in a fasta file, minimum fraction coverage, minimum fraction identity, calls cd-hit to cluster data
