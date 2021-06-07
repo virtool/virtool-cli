@@ -61,10 +61,10 @@ def test_curated_file(input_dir, output):
             assert len(record.seq) > 1
 
 
-@pytest.mark.parametrize("input_dir, filtered_file", [(DUPES_INPUT, FILTERED_DUPES), (GENERIC_INPUT, FILTERED_GENERIC), (LARGE_INPUT, FILTERED_LARGE)])
+@pytest.mark.parametrize("input_dir, filtered_file", [(DUPES_INPUT, FILTERED_DUPES), (GENERIC_INPUT, FILTERED_GENERIC),
+                                                      (LARGE_INPUT, FILTERED_LARGE)])
 def test_remove_dupes(input_dir, filtered_file, output):
     """
-    TODO: figure out why filecmp fails for dupes file
     Test that remove_dupes step of program produces desired output
     """
     input_paths = get_input_paths(Path(input_dir))
@@ -91,7 +91,12 @@ def test_remove_dupes(input_dir, filtered_file, output):
 
     assert result_phage_count == expected_phage_count
     assert result_record_count == expected_record_count
-    assert filecmp.cmp(result, expected)
+
+    with open(result, "r") as f_result:
+        with open(expected, "r") as f_expected:
+            assert f_result.readlines() == f_expected.readlines()
+
+    assert filecmp.cmp(result, expected, shallow=True)
 
 
 if __name__ == "__main__":

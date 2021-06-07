@@ -37,6 +37,8 @@ def blast_to_mcl(blast_results, polyproteins):
 
     calls mcl on .tab file to generate newline-separated clusters
 
+    TODO: ADD INFLATION_NUM OPTION
+
     :param blast_results:blast file produced in all_by_all blast step
     :param polyproteins: list of polyprotein like sequences to not be included in output
     :return: mcl_file_path to file containing newline-separated clusters
@@ -47,17 +49,15 @@ def blast_to_mcl(blast_results, polyproteins):
     tab_path = Path(blast_results).parent / "all_by_all.tab"
     mcl_path = Path(blast_results).parent / "all_by_all.mcl"
 
-    mcxload_cmd = "mcxload --stream-mirror -abc %s -o %s -write-tab %s" \
-                  % (abc_file, mci_path, tab_path)
-    subprocess.run(mcxload_cmd.split())
+    mcxload_cmd = ["mcxload", "--stream-mirror", "-abc", abc_file, "-o", mci_path, "-write-tab", tab_path]
+    subprocess.run(mcxload_cmd)
 
     if not INFLATION_NUM:
-        inflation_args = ""
+        mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
     else:
-        inflation_args = "-I %s " % INFLATION_NUM
+        mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-I", INFLATION_NUM, "-o", mcl_path]
 
-    mcl_cmd = "mcl %s -use-tab %s %s -o %s" % (mci_path, tab_path, inflation_args, mcl_path)
-    subprocess.run(mcl_cmd.split())
+    subprocess.run(mcl_cmd)
 
     return mcl_path
 
