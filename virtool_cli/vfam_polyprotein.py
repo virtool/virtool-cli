@@ -1,11 +1,12 @@
 from Bio import Blast
+from pathlib import Path
 
 
-def sequence_lengths(blast_results) -> dict:
+def sequence_lengths(blast_results: Path) -> dict:
     """
-    Takes blast results file and parses through lines
+    Takes blast results file and parses through lines, creating an alignment object from each line
 
-    If alignment record found where subject is the same as query, sequence length is given by alignment length
+    If alignment query matches the alignment subject, sequence length is stored as the length of that query
 
     :param blast_results: blast file produced in all_by_all blast step
     :return: sequence_lengths, a dictionary containing each sequence and its sequence length
@@ -21,14 +22,14 @@ def sequence_lengths(blast_results) -> dict:
     return seq_lengths
 
 
-def get_alignment_records(blast_results) -> dict:
+def get_alignment_records(blast_results: Path) -> dict:
     """
-    Takes blast file and parses through lines
+    Takes blast file and parses through lines, producing an alignment object from each line
 
-    If alignment record found where subject does not equal query, alignment is added to query key in alignment_records
+    If alignment query does not match subject, alignment is added to list of alignments for each query
 
     :param blast_results: blast file produced in all_by_all blast step
-    :return: alignment_records, a dictionary containing all alignment records for each query
+    :return: alignment_records, a dictionary containing all alignment objects for each query
     """
     blast_file = open(blast_results)
     alignment_records = {}
@@ -45,15 +46,17 @@ def get_alignment_records(blast_results) -> dict:
     return alignment_records
 
 
-def find_polyproteins(blast_results):
+def find_polyproteins(blast_results: Path) -> list:
     """
+    Sequences are filtered by sequence length and coverage to determine if they are polyproteins/polyprotein-like
+
     Sequences longer than 400 amino acids in length were identified as polyprotein or polyprotein-like if
 
     - at least 70% of the sequence length was covered by two or more other proteins in the sequence set
     - these two or more other proteins were covered at least 80% by the longer sequence.
 
     :param blast_results:blast file produced in all_by_all blast step
-    :return: polyprotein_sequences, a list of sequences to not include in output
+    :return: polyproteins, a list of sequences to not include in output
     """
     seq_lengths = sequence_lengths(blast_results)
     alignment_records = get_alignment_records(blast_results)
@@ -101,5 +104,5 @@ class Alignment:
         self.qend = int(blast_data[7])
         self.sstart = int(blast_data[8])
         self.send = int(blast_data[9])
-        self.evalue = float(blast_data[10])
+        self.evalue = str(blast_data[10])
         self.bitscore = float(blast_data[11])

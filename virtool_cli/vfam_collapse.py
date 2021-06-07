@@ -12,23 +12,30 @@ def generate_clusters(curated_fasta: Path, fraction_cov, fraction_id: float) -> 
     :param curated_fasta: fasta file from vfam_curate step, to have cd-hit performed on it
     :param fraction_cov: Fraction coverage for cd-hit step
     :param fraction_id: Fraction ID for cd-hit step
-    :return: cluster_file, a file containing cluster information created at cd-hit step
+    :return: Path to a file containing cluster information created at cd-hit step
     """
     output_path = Path(curated_fasta).parent / Path("clustered_records")
 
     if not fraction_cov:
         coverage_args = ""
+
     else:
         coverage_args = "-c %s" % fraction_cov
 
     cd_hit_cmd = "cd-hit -i %s -o %s %s -s %s" % (
         curated_fasta, output_path, coverage_args, fraction_id)
-    subprocess.run(cd_hit_cmd.split())
+    subprocess.call(cd_hit_cmd.split())
 
     return output_path
 
 
-def polyprotein_name_check(clustered_records):
+def polyprotein_name_check(clustered_records: Path) -> Path:
+    """
+    Removes any record with "polyprotein" found in its description
+
+    :param clustered_records: file containing clustered fasta information from generate clusters step
+    :return: polyproteins_removed, a file containing all clustered fasta records with polyproteins removed
+    """
     no_polyproteins = []
     polyproteins_removed = Path(clustered_records).parent / Path("polyp_names_removed")
 
@@ -42,7 +49,7 @@ def polyprotein_name_check(clustered_records):
     return polyproteins_removed
 
 
-def all_by_all_blast(clustered_fasta: Path, num_cores) -> Path:
+def all_by_all_blast(clustered_fasta: Path, num_cores: int) -> Path:
     """
     Takes a clustered fasta file as input, and formats file to be a BLAST protein database
 
@@ -59,6 +66,6 @@ def all_by_all_blast(clustered_fasta: Path, num_cores) -> Path:
 
     all_by_all_blast_cmd = "blastp -query %s -out %s -db %s -outfmt 6 -num_threads %s" % (
         clustered_fasta, blast_results_file, clustered_fasta, num_cores)
-    subprocess.run(all_by_all_blast_cmd.split())
+    subprocess.call(all_by_all_blast_cmd.split())
 
     return blast_results_file

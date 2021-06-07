@@ -1,17 +1,23 @@
 from virtool_cli.vfam_curate import *
 from virtool_cli.vfam_collapse import *
 from virtool_cli.vfam_polyprotein import *
+from virtool_cli.vfam_markov import *
 
-def run(src_path, output, fraction_coverage, fraction_id, num_cores,polyp_name_check):
+
+def run(src_path, output, fraction_coverage, fraction_id, num_cores, polyp_name_check, phage_name_check,
+        sequence_min_length):
     """
     Dictates workflow for vfam pipeline
     """
     # steps in vfam_curate module
     input_paths = get_input_paths(Path(src_path))
 
-    no_phages = remove_phages(input_paths)
+    if phage_name_check:
+        no_phages = remove_phages(input_paths)
+    else:
+        no_phages = group_input_paths(input_paths)
 
-    no_dupes = remove_dupes(no_phages, output)
+    no_dupes = remove_dupes(no_phages, output, sequence_min_length)
 
     # steps found in vfam_collapse module
     cd_hit_result = generate_clusters(no_dupes, fraction_coverage, fraction_id)
@@ -25,6 +31,7 @@ def run(src_path, output, fraction_coverage, fraction_id, num_cores,polyp_name_c
     polyproteins = find_polyproteins(blast_results)
 
     # steps found in vfam_markov module
+    mcl_results = blast_to_mcl(blast_results, polyproteins)
 
 
 

@@ -1,6 +1,6 @@
 import subprocess
 
-
+from virtool_cli.vfam_polyprotein import Alignment
 from Bio import SeqIO
 from pathlib import Path
 
@@ -8,7 +8,28 @@ from pathlib import Path
 INFLATION_NUM = None
 
 
-def blast_to_mcl(all_by_all_blast_results_file, polyprotein_sequences, output):
+def write_abc(blast_results: Path, polyproteins: list) -> Path:
+    """
+    Takes in blast results file and list of polyproteins to not include, writes a .abc file with desired alignments
+
+    :param blast_results: blast file produced in all_by_all blast step
+    :param polyproteins: list of polyprotein like sequences to not be included in output
+    """
+    abc_path = Path(blast_results).parent / "all_by_all.abc"
+
+    with blast_results.open('r') as blast_file:
+        with abc_path.open('w') as abc_file:
+            for line in blast_file:
+
+                alignment = Alignment(line)
+                if alignment.query not in polyproteins and alignment.subject not in polyproteins:
+                    abc_line = '\t'.join([alignment.query, alignment.subject, alignment.evalue]) + "\n"
+                    abc_file.write(abc_line)
+
+    return abc_path
+
+
+def blast_to_mcl(blast_results, polyproteins):
     """
     Converts sequences not included in polyprotein_sequences to a .abc file
 
@@ -16,32 +37,18 @@ def blast_to_mcl(all_by_all_blast_results_file, polyprotein_sequences, output):
 
     calls mcl on .tab file to generate newline-separated clusters
 
-    :param all_by_all_blast_results_file:blast file produced in all_by_all blast step
-    :param polyprotein_sequences: list of polyprotein like sequences to not be included in output
+    :param blast_results:blast file produced in all_by_all blast step
+    :param polyproteins: list of polyprotein like sequences to not be included in output
     :return: mcl_file_path to file containing newline-separated clusters
     """
-    abc_file_path = Path(all_by_all_blast_results_file).parent / "abc_file.abc"
-    mci_file_path = Path(all_by_all_blast_results_file).parent / "mci_file.mci"
-    tab_file_path = Path(all_by_all_blast_results_file).parent / "tab_file.tab"
-    mcl_file_path = Path(all_by_all_blast_results_file).parent / "mcl_file.mcl"
+    abc_file = write_abc(blast_results, polyproteins)
 
-    blast_file = open(all_by_all_blast_results_file)
-    abc_file = open(abc_file_path, 'w')
-
-    for line in blast_file:
-        data = line.rstrip().split()
-        query = data[0]
-        subject = data[1]
-        expected_value = data[10]
-
-        if query not in polyprotein_sequences and subject not in polyprotein_sequences:
-            abc_line = '\t'.join([query, subject, expected_value]) + "\n"
-            abc_file.write(abc_line)
-
-    abc_file.close()
+    mci_path = Path(blast_results).parent / "all_by_all.mci"
+    tab_path = Path(blast_results).parent / "all_by_all.tab"
+    mcl_path = Path(blast_results).parent / "all_by_all.mcl"
 
     mcxload_cmd = "mcxload --stream-mirror -abc %s -o %s -write-tab %s" \
-                  % (abc_file_path, mci_file_path, tab_file_path)
+                  % (abc_file, mci_path, tab_path)
     subprocess.run(mcxload_cmd.split())
 
     if not INFLATION_NUM:
@@ -49,10 +56,10 @@ def blast_to_mcl(all_by_all_blast_results_file, polyprotein_sequences, output):
     else:
         inflation_args = "-I %s " % INFLATION_NUM
 
-    mcl_cmd = "mcl %s -use-tab %s %s -o %s" % (mci_file_path, tab_file_path, inflation_args, mcl_file_path)
+    mcl_cmd = "mcl %s -use-tab %s %s -o %s" % (mci_path, tab_path, inflation_args, mcl_path)
     subprocess.run(mcl_cmd.split())
 
-    return mcl_file_path
+    return mcl_path
 
 
 def mcl_to_fasta(mcl_file_path, collapsed_fasta):

@@ -7,11 +7,17 @@ from virtool_cli.vfam_curate import *
 from pathlib import Path
 
 
-TEST_PATH = "vfam_input"
-LARGE_INPUT_PATH = "vfam_large_input"
-CLUSTER_FILE_PATH = "vfam_intermediates/generic_input.clstr"
-CLUSTER_FASTA_PATH = "vfam_intermediates/clustered_file.faa"
-BLAST_FILE_PATH = "vfam_intermediates/generic_input_all_by_all_blast.br"
+DUPES_INPUT = "vfam_input/Dupes"
+GENERIC_INPUT = "vfam_input/Generic"
+LARGE_INPUT = "vfam_input/Large"
+
+COLLAPSED_DUPES = "vfam_og_intermediates/Dupes/collapsed_fasta"
+COLLAPSED_GENERIC = "vfam_og_intermediates/Generic/collapsed_fasta"
+COLLAPSED_LARGE = "vfam_og_intermediates/Large/collapsed_fasta"
+
+BLAST_DUPES = "vfam_og_intermediates/Dupes/blast.br"
+BLAST_GENERIC = "vfam_og_intermediates/Generic/blast.br"
+BLAST_LARGE = "vfam_og_intermediates/Large/blast.br"
 
 
 @pytest.fixture()
@@ -21,58 +27,33 @@ def output(tmp_path):
     return output_path
 
 
-@pytest.fixture()
-def cluster_results(output):
-    input_paths = get_input_paths(Path(TEST_PATH))
-    no_phages = remove_phages(input_paths)
-    no_dupes = remove_dupes(no_phages, output)
-
-    return generate_clusters(no_dupes, output, None, 1.0)
-
-
-@pytest.fixture()
-def blast_results(output):
-    input_paths = get_input_paths(Path(TEST_PATH))
-    no_phages = remove_phages(input_paths)
-    no_dupes = remove_dupes(no_phages, output)
-
-    # doesn't do filter by name step
-    cdhit_result = generate_clusters(no_dupes, output, None, 1.0)
-    return all_by_all_blast(cdhit_result, output, 8)
-
-
-def test_cluster_sequences(output, cluster_results):
+@pytest.mark.parametrize("input_dir, clustered_file", [(DUPES_INPUT, COLLAPSED_DUPES), (GENERIC_INPUT, COLLAPSED_GENERIC), (LARGE_INPUT, COLLAPSED_LARGE)])
+def test_cluster_sequences(input_dir, clustered_file, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam"""
-    assert filecmp.cmp(cluster_results, Path(CLUSTER_FASTA_PATH))
-    cluster_file = str(cluster_results) + ".clstr"
-    assert filecmp.cmp(Path(cluster_file), Path(CLUSTER_FILE_PATH), shallow=True)
+    input_paths = get_input_paths(Path(input_dir))
+    no_phages = group_input_paths(input_paths)
+    no_dupes = remove_dupes(no_phages, output, 1)
+
+    result = generate_clusters(no_dupes, None, 1.0)
+
+    assert filecmp.cmp(result, Path(clustered_file))
+
+    result = str(result) + ".clstr"
+    clustered_file = str(clustered_file) + ".clstr"
+    assert filecmp.cmp(result, clustered_file)
 
 
-def test_polyprotein_list(output, cluster_results):
-    no_polyproteins = []
-    filtered_by_name = polyprotein_name_check(cluster_results, output)
-    recs_in_filtered = 0
-    with Path(filtered_by_name) as handle:
-        for record in SeqIO.parse(filtered_by_name, "fasta"):
-            recs_in_filtered += 1
-            no_polyproteins.append(record.id)
-
-    polyproteins = []
-    recs_in_unfiltered = 0
-    with Path(cluster_results) as handle:
-        for record in SeqIO.parse(cluster_results, "fasta"):
-            recs_in_unfiltered += 1
-            if "polyprotein" in record.description:
-                polyproteins.append(record.id)
-
-    assert recs_in_filtered == recs_in_unfiltered - len(polyproteins)
-    for record in no_polyproteins:
-        assert record not in polyproteins
-
-
-def test_all_by_all_blast(output, blast_results):
+@pytest.mark.parametrize("input_dir, blast_file", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC), (LARGE_INPUT, BLAST_LARGE)])
+def test_all_by_all_blast(input_dir, blast_file, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam"""
-    assert filecmp.cmp(blast_results, Path(BLAST_FILE_PATH))
+
+    input_paths = get_input_paths(Path(input_dir))
+    no_phages = group_input_paths(input_paths)
+    no_dupes = remove_dupes(no_phages, output, 1)
+
+    clustered_file = generate_clusters(no_dupes, None, 1.0)
+    result = all_by_all_blast(clustered_file, 8)
+    assert filecmp.cmp(result, Path(blast_file))
 
 
 if __name__ == "__main__":
