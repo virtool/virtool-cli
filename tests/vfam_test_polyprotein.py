@@ -23,18 +23,23 @@ def output(tmp_path):
     return output_path
 
 
-@pytest.mark.parametrize("input_dir, polyproteins", [(DUPES_INPUT, POLYP_DUPES), (GENERIC_INPUT, POLYP_GENERIC),
-                                                     (LARGE_INPUT, POLYP_LARGE)])
-def test_polyprotein_list(input_dir, polyproteins, output):
+@pytest.fixture()
+def polyproteins(input_dir, output):
     input_paths = get_input_paths(Path(input_dir))
     no_phages = group_input_paths(input_paths)
     no_dupes = remove_dupes(no_phages, output, 1)
 
     clustered_file = generate_clusters(no_dupes, None, 1.0)
     blast_file = all_by_all_blast(clustered_file, 8)
-    result = find_polyproteins(blast_file)
+    return find_polyproteins(blast_file)
 
-    with Path(polyproteins).open('r') as handle:
+
+@pytest.mark.parametrize("input_dir, expected_polyproteins", [(DUPES_INPUT, POLYP_DUPES), (GENERIC_INPUT, POLYP_GENERIC),
+                                                     (LARGE_INPUT, POLYP_LARGE)])
+def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output):
+    result = polyproteins
+
+    with Path(expected_polyproteins).open('r') as handle:
         expected = [line.split()[0] for line in handle]
 
     assert len(expected) == len(result)

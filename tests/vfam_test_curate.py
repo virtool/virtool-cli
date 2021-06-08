@@ -24,13 +24,27 @@ def output(tmp_path):
     return output_path
 
 
+@pytest.fixture()
+def input_paths(input_dir):
+    return get_input_paths(Path(input_dir))
+
+
+@pytest.fixture()
+def no_phages(input_paths):
+    return remove_phages(input_paths)
+
+
+@pytest.fixture()
+def no_dupes(no_phages, output):
+    return remove_dupes(no_phages, output, 1)
+
+
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
-def test_get_input_paths(input_dir):
+def test_get_input_paths(input_dir, input_paths):
     """
     Test that same number of files and correct file names are found in input_paths after calling get_input_paths
     """
     listdir = os.listdir(input_dir)
-    input_paths = get_input_paths(Path(input_dir))
     assert len(listdir) == len(input_paths)
 
     for path in input_paths:
@@ -38,26 +52,19 @@ def test_get_input_paths(input_dir):
 
 
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
-def test_remove_phages(input_dir):
+def test_remove_phages(input_dir, no_phages):
     """
     Test that "phage" is not found in record descriptions for any records in no_phages list
     """
-    input_paths = get_input_paths(Path(input_dir))
-    no_phages = remove_phages(input_paths)
-
     for record in no_phages:
         assert "phage" not in record.description
 
 
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
-def test_curated_file(input_dir, output):
+def test_curated_file(input_dir, output, no_dupes):
     """
     Test that all sequences are longer than min_length and that no record descriptions contain "phage" in output
     """
-    input_paths = get_input_paths(Path(input_dir))
-    no_phages = remove_phages(input_paths)
-    no_dupes = remove_dupes(no_phages, output, 1)
-
     with Path(no_dupes) as handle:
         for record in SeqIO.parse(handle, "fasta"):
             assert "phage" not in record.description
@@ -74,30 +81,6 @@ def test_remove_dupes(input_dir, filtered_file, output):
     records = group_input_paths(input_paths)
     result = remove_dupes(records, output, 1)
     expected = Path(filtered_file)
-
-    result_phage_count = 0
-    result_record_count = 0
-
-    with result as handle:
-        for record in SeqIO.parse(handle, "fasta"):
-            result_record_count += 1
-            if "phage" in record.description:
-                result_phage_count += 1
-
-    expected_phage_count = 0
-    expected_record_count = 0
-    with expected as handle:
-        for record in SeqIO.parse(handle, "fasta"):
-            expected_record_count += 1
-            if "phage" in record.description:
-                expected_phage_count += 1
-
-    assert result_phage_count == expected_phage_count
-    assert result_record_count == expected_record_count
-
-    with open(result, "r") as f_result:
-        with open(expected, "r") as f_expected:
-            assert f_result.readlines() == f_expected.readlines()
 
     assert filecmp.cmp(result, expected, shallow=True)
 

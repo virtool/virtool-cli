@@ -30,18 +30,34 @@ def output(tmp_path):
     return output_path
 
 
-@pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC),
-                                                   (LARGE_INPUT, BLAST_LARGE)])
-def test_abc(input_dir, blast_path, output):
+@pytest.fixture()
+def clustered_file(input_dir, output):
     input_paths = get_input_paths(Path(input_dir))
     no_phages = group_input_paths(input_paths)
     no_dupes = remove_dupes(no_phages, output, 1)
 
-    clustered_file = generate_clusters(no_dupes, None, 1.0)
-    blast_file = all_by_all_blast(clustered_file, 8)
-    polyproteins = find_polyproteins(blast_file)
+    return generate_clusters(no_dupes, None, 1.0)
 
-    result = write_abc(blast_file, polyproteins)
+
+@pytest.fixture()
+def blast_results(output, clustered_file):
+    return all_by_all_blast(clustered_file, 8)
+
+
+@pytest.fixture()
+def polyproteins(output, blast_results):
+    return find_polyproteins(blast_results)
+
+
+@pytest.fixture()
+def mcl_results(output, blast_results, polyproteins):
+    return blast_to_mcl(blast_results, polyproteins, None)
+
+
+@pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC),
+                                                   (LARGE_INPUT, BLAST_LARGE)])
+def test_abc(input_dir, blast_path, output, blast_results, polyproteins):
+    result = write_abc(blast_results, polyproteins)
     expected = Path(str(blast_path) + '.abc')
 
     assert filecmp.cmp(result, expected)
@@ -49,38 +65,26 @@ def test_abc(input_dir, blast_path, output):
 
 @pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC),
                                                    (LARGE_INPUT, BLAST_LARGE)])
-def test_blast_to_mcl(input_dir, blast_path, output):
-    input_paths = get_input_paths(Path(input_dir))
-    no_phages = group_input_paths(input_paths)
-    no_dupes = remove_dupes(no_phages, output, 1)
-
-    clustered_file = generate_clusters(no_dupes, None, 1.0)
-    blast_file = all_by_all_blast(clustered_file, 8)
-    polyproteins = find_polyproteins(blast_file)
-
-    result = blast_to_mcl(blast_file, polyproteins, None)
-    expected = str()
+def test_blast_to_mcl(input_dir, blast_path, output, blast_results, polyproteins):
+    result = blast_to_mcl(blast_results, polyproteins, None)
+    expected = str(blast_path) + ".mcl"
+    assert filecmp.cmp(result, expected, shallow=True)
 
 
-@pytest.mark.parametrize("input_dir, cluster_dir", [(DUPES_INPUT, DUPES_CLUSTERS), (GENERIC_INPUT, GENERIC_CLUSTERS),
-                                                   (LARGE_INPUT, LARGE_CLUSTERS)])
-def test_mcl_to_fasta(input_dir, cluster_dir, output):
+@pytest.mark.parametrize("input_dir, cluster_dir", [(DUPES_INPUT, DUPES_CLUSTERS), (GENERIC_INPUT, GENERIC_CLUSTERS)])
+def test_mcl_to_fasta(input_dir, cluster_dir, output, clustered_file, mcl_results):
+    result_files = mcl_to_fasta(mcl_results, clustered_file)
+    result_files.sort()
 
-    input_paths = get_input_paths(Path(input_dir))
-    no_phages = group_input_paths(input_paths)
-    no_dupes = remove_dupes(no_phages, output, 1)
-
-    clustered_file = generate_clusters(no_dupes, None, 1.0)
-    blast_file = all_by_all_blast(clustered_file, 8)
-    polyproteins = find_polyproteins(blast_file)
-
-    mcl_file = blast_to_mcl(blast_file, polyproteins, None)
-
-    result_files = mcl_to_fasta(mcl_file, clustered_file)
-    expected_files = os.listdir(cluster_dir)
+    expected_files = []
+    for file in os.listdir(cluster_dir):
+        expected_files.append(cluster_dir / Path(file))
+    expected_files.sort()
 
     for x in range(len(result_files)):
-        assert filecmp.cmp(result_files[x], expected_files[x], shallow=True)
+        assert filecmp.cmp(result_files[x], expected_files[x])
+
+    assert len(result_files) == len(expected_files)
 
 
 if __name__ == "__main__":
