@@ -1,4 +1,6 @@
 import subprocess
+
+
 from pathlib import Path
 from Bio import SeqIO
 
@@ -17,15 +19,12 @@ def generate_clusters(curated_fasta: Path, fraction_cov, fraction_id: float) -> 
     output_path = Path(curated_fasta).parent / Path("clustered_records")
 
     if not fraction_cov:
-        coverage_args = ""
-
+        cd_hit_cmd = ["cd-hit", "-i", curated_fasta, "-o", output_path, "-s", str(fraction_id)]
     else:
-        coverage_args = "-c %s" % fraction_cov
+        cd_hit_cmd = ["cd-hit", "-i", curated_fasta, "-o", output_path, "-c", str(fraction_cov), "-s",
+                      str(fraction_id)]
 
-    cd_hit_cmd = "cd-hit -i %s -o %s %s -s %s" % (
-        curated_fasta, output_path, coverage_args, fraction_id)
-    subprocess.call(cd_hit_cmd.split())
-
+    subprocess.call(cd_hit_cmd)
     return output_path
 
 
@@ -59,13 +58,15 @@ def all_by_all_blast(clustered_fasta: Path, num_cores: int) -> Path:
     :param num_cores: number of cores to use at all_by_all blast step
     :return: tab-delimited formatted BLAST results file
     """
-    format_db_cmd = "makeblastdb -in %s -dbtype prot" % clustered_fasta
-    subprocess.run(format_db_cmd.split())
+    format_db_cmd = ["makeblastdb", "-in", clustered_fasta, "-dbtype", "prot"]
+    subprocess.run(format_db_cmd)
 
-    blast_results_file = Path(clustered_fasta).parent / Path("all_by_all.br")
+    blast_results = Path(clustered_fasta).parent / Path("all_by_all.br")
+    if not blast_results.exists():
+        blast_results.touch()
 
-    all_by_all_blast_cmd = "blastp -query %s -out %s -db %s -outfmt 6 -num_threads %s" % (
-        clustered_fasta, blast_results_file, clustered_fasta, num_cores)
-    subprocess.call(all_by_all_blast_cmd.split())
+    blast_cmd = ["blastp", "-query", clustered_fasta, "-out", blast_results, "-db", clustered_fasta,
+                 "-outfmt", "6", "-num_threads", str(num_cores)]
+    subprocess.call(blast_cmd)
 
-    return blast_results_file
+    return blast_results

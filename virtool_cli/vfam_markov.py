@@ -1,11 +1,10 @@
+import os
 import subprocess
 
-from virtool_cli.vfam_polyprotein import Alignment
+
 from Bio import SeqIO
 from pathlib import Path
-
-
-INFLATION_NUM = None
+from virtool_cli.vfam_polyprotein import Alignment
 
 
 def write_abc(blast_results: Path, polyproteins: list) -> Path:
@@ -29,7 +28,7 @@ def write_abc(blast_results: Path, polyproteins: list) -> Path:
     return abc_path
 
 
-def blast_to_mcl(blast_results, polyproteins):
+def blast_to_mcl(blast_results, polyproteins, inflation_num):
     """
     Converts sequences not included in polyprotein_sequences to a .abc file
 
@@ -37,11 +36,10 @@ def blast_to_mcl(blast_results, polyproteins):
 
     calls mcl on .tab file to generate newline-separated clusters
 
-    TODO: ADD INFLATION_NUM OPTION
-
     :param blast_results:blast file produced in all_by_all blast step
     :param polyproteins: list of polyprotein like sequences to not be included in output
-    :return: mcl_file_path to file containing newline-separated clusters
+    :param inflation_num: Inflation number to be used in mcl call
+    :return: mcl_path to file containing newline-separated clusters
     """
     abc_file = write_abc(blast_results, polyproteins)
 
@@ -52,34 +50,43 @@ def blast_to_mcl(blast_results, polyproteins):
     mcxload_cmd = ["mcxload", "--stream-mirror", "-abc", abc_file, "-o", mci_path, "-write-tab", tab_path]
     subprocess.run(mcxload_cmd)
 
-    if not INFLATION_NUM:
+    if not inflation_num:
         mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
     else:
-        mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-I", INFLATION_NUM, "-o", mcl_path]
+        mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-I", inflation_num, "-o", mcl_path]
 
     subprocess.run(mcl_cmd)
 
     return mcl_path
 
 
-def mcl_to_fasta(mcl_file_path, collapsed_fasta):
+def mcl_to_fasta(mcl_path, collapsed_fasta):
     """
     Takes mcl clusters and fasta file, outputs a list of numbered fasta files to be used later
-
     """
-    mcl_file = open(mcl_file_path)
     mcl_dict = {}
     line_num = 0
+    fasta_path = Path(collapsed_fasta).parent .parent / "fasta_files"
 
-    for line in mcl_file:
-        line_num += 1
-        fasta_file_name = "fasta_file_cluster_" + str(line_num)
-        fasta_file_path = Path(collapsed_fasta).parent / fasta_file_name
+    if not fasta_path.exists():
+        fasta_path.mkdir()
 
-        for record_id in line.rstrip().split("\t"):
-            mcl_dict[record_id] = fasta_file_path
+
+    with mcl_path.open('r') as handle:
+        for line in handle:
+            line_num += 1
+            fasta_name = f"cluster_{line_num}"
+
+            for record_id in line.rstrip().split("\t"):
+                mcl_dict[record_id] = fasta_path / fasta_name
 
     for record in SeqIO.parse(collapsed_fasta, "fasta"):
         if record.id in mcl_dict:
-            pass
+            with mcl_dict[record.id].open('a') as fasta_path:
+                SeqIO.write(record, fasta_path, "fasta")
+
+    return list(mcl_dict.values())
+
+
+
 

@@ -18,20 +18,22 @@ def cli():
 @cli.command()
 @click.option("-src", "--src_path", required=True, type=str, help="the path to input database reference directory")
 @click.option("-o", "--output", required=True, help="Path to output directory for profile HMMs and intermediate files")
+@click.option("-seq_min_lngth", "--sequence_min_length", default=1, help="Minimum sequence length to be included in "
+                                                                         "input")
+@click.option("-phagenm", "phage_name_check", default=False,
+              help="Filter out phage sequences based on record description")
 @click.option("-fract_cov", "--fraction_coverage", default=None, help="Fraction coverage for cd-hit step")
 @click.option("-fract_id", "--fraction_id", default=1.0, help="Fraction ID for cd-hit step")
 @click.option("-cores", "--num_cores", default=8, help="Number of cores to be used in all by all blast step")
 @click.option("-polynm", "--polyp_name_check", default=False, help="Filter out polyprotein sequences based on "
                                                                    "record description")
-@click.option("-phagenm", "phage_name_check", default=False,
-              help="Filter out phage sequences based on record description")
-@click.option("-seq_min_lngth", "--sequence_min_length", default=1, help="Minimum sequence length to be included in "
-                                                                         "input")
-def vfam(src_path, output, fraction_coverage, fraction_id, num_cores, polyp_name_check, phage_name_check, sequence_min_length):
+@click.option("-infl_num", "--inflation_num", default=None, help="Inflation number to be used in mcl call")
+def vfam(src_path, output, sequence_min_length, phage_name_check, fraction_coverage, fraction_id, num_cores,
+         polyp_name_check, inflation_num):
     """Build profile HMMS from fasta"""
     try:
-        virtool_cli.vfam.run(Path(src_path), Path(output), fraction_coverage, fraction_id, num_cores, polyp_name_check,
-                             phage_name_check, sequence_min_length)
+        virtool_cli.vfam.run(Path(src_path), Path(output), sequence_min_length, phage_name_check, fraction_coverage,
+                             fraction_id, num_cores, polyp_name_check, inflation_num)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 

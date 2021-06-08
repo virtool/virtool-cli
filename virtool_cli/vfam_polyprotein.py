@@ -1,4 +1,3 @@
-from Bio import Blast
 from pathlib import Path
 
 

@@ -1,7 +1,10 @@
 import pytest
 import filecmp
+import os
 
-from virtool_cli.vfam_curate import *
+
+from Bio import SeqIO
+from virtool_cli.vfam_curate import get_input_paths, remove_phages, group_input_paths, remove_dupes
 from pathlib import Path
 
 

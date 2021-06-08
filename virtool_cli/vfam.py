@@ -4,8 +4,7 @@ from virtool_cli.vfam_polyprotein import *
 from virtool_cli.vfam_markov import *
 
 
-def run(src_path, output, fraction_coverage, fraction_id, num_cores, polyp_name_check, phage_name_check,
-        sequence_min_length):
+def run(src_path, output, sequence_min_length, phage_name_check, fraction_coverage, fraction_id, num_cores, polyp_name_check, inflation_num):
     """
     Dictates workflow for vfam pipeline
     """
@@ -31,7 +30,8 @@ def run(src_path, output, fraction_coverage, fraction_id, num_cores, polyp_name_
     polyproteins = find_polyproteins(blast_results)
 
     # steps found in vfam_markov module
-    mcl_results = blast_to_mcl(blast_results, polyproteins)
+    mcl_results = blast_to_mcl(blast_results, polyproteins, inflation_num)
 
+    cluster_files = mcl_to_fasta(mcl_results, cd_hit_result)
 
 

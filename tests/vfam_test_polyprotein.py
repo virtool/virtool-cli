@@ -1,8 +1,9 @@
 import pytest
 
-from virtool_cli.vfam_collapse import *
-from virtool_cli.vfam_curate import *
-from virtool_cli.vfam_polyprotein import *
+
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
+from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
+from virtool_cli.vfam_polyprotein import find_polyproteins
 from pathlib import Path
 
 
