@@ -4,8 +4,8 @@ import os
 
 
 from Bio import SeqIO
-from virtool_cli.vfam_curate import get_input_paths, remove_phages, group_input_paths, remove_dupes
 from pathlib import Path
+from virtool_cli.vfam_curate import get_input_paths, remove_phages, group_input_paths, remove_dupes
 
 
 DUPES_INPUT = "vfam_input/Dupes"
@@ -84,6 +84,3 @@ def test_remove_dupes(input_dir, filtered_file, output):
 
     assert filecmp.cmp(result, expected, shallow=True)
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-k", "test", "-v", "-s"])

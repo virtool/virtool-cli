@@ -1,10 +1,10 @@
 import pytest
 
 
+from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
 from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 from virtool_cli.vfam_polyprotein import find_polyproteins
-from pathlib import Path
 
 
 DUPES_INPUT = "vfam_input/Dupes"
@@ -34,9 +34,11 @@ def polyproteins(input_dir, output):
     return find_polyproteins(blast_file)
 
 
-@pytest.mark.parametrize("input_dir, expected_polyproteins", [(DUPES_INPUT, POLYP_DUPES), (GENERIC_INPUT, POLYP_GENERIC),
-                                                     (LARGE_INPUT, POLYP_LARGE)])
+@pytest.mark.parametrize("input_dir, expected_polyproteins", [(DUPES_INPUT, POLYP_DUPES),
+                                                              (GENERIC_INPUT, POLYP_GENERIC),
+                                                              (LARGE_INPUT, POLYP_LARGE)])
 def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output):
+    """Test that find_polyproteins catches same polyprotein sequences as original vfam"""
     result = polyproteins
 
     with Path(expected_polyproteins).open('r') as handle:
@@ -45,6 +47,3 @@ def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output
     assert len(expected) == len(result)
     assert sorted(expected) == sorted(result)
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-k", "test", "-v", "-s"])

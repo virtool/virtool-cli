@@ -25,7 +25,6 @@ def command(output):
 def test_version(version, command, output):
     """
     Test that the version field is correctly set in the reference.json file.
-
     """
 
     if version:

@@ -2,9 +2,9 @@ import filecmp
 import pytest
 
 
+from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
 from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
-from pathlib import Path
 
 
 DUPES_INPUT = "vfam_input/Dupes"
@@ -60,6 +60,3 @@ def test_all_by_all_blast(input_dir, blast_file, blast_result, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam"""
     assert filecmp.cmp(blast_result, Path(blast_file))
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-k", "test", "-v", "-s"])
