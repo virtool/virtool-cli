@@ -27,10 +27,10 @@ def output(tmp_path):
 def polyproteins(input_dir, output):
     input_paths = get_input_paths(Path(input_dir))
     no_phages = group_input_paths(input_paths)
-    no_dupes = remove_dupes(no_phages, output, 1)
+    no_dupes = remove_dupes(no_phages, output, None, 1)
 
-    clustered_file = generate_clusters(no_dupes, None, 1.0)
-    blast_file = all_by_all_blast(clustered_file, 8)
+    clustered_file = generate_clusters(no_dupes, None, None, 1.0)
+    blast_file = all_by_all_blast(clustered_file, None, 8)
     return find_polyproteins(blast_file)
 
 

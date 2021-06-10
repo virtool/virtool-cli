@@ -28,21 +28,19 @@ def remove_phages(input_paths: list) -> list:
     Parses through records in input files, appends records to filtered_sequences if keyword "phage" not found in record
 
     :param input_paths: list of paths to input fasta files
-    :return: no_phages, list of curated records with all phage records removed
+    :return: records, list of curated records with all phage records removed
     """
     no_phages = list()
 
     for input_path in input_paths:
-        with open(input_path) as handle:
-
-            for record in SeqIO.parse(handle, "fasta"):
-                if "phage" not in record.description:
-                    no_phages.append(record)
+        for record in SeqIO.parse(input_path, "fasta"):
+            if "phage" not in record.description:
+                no_phages.append(record)
 
     return no_phages
 
 
-def group_input_paths(input_paths):
+def group_input_paths(input_paths: list):
     """
     Takes input paths as input and created list of all records found in each path
 
@@ -52,44 +50,44 @@ def group_input_paths(input_paths):
     records = []
 
     for input_path in input_paths:
-        with open(input_path) as handle:
-
-            for record in SeqIO.parse(handle, "fasta"):
-                records.append(record)
+        for record in SeqIO.parse(input_path, "fasta"):
+            records.append(record)
 
     return records
 
 
-def remove_dupes(no_phages: list, output: Path, sequence_min_length: int) -> Path:
+def remove_dupes(records: list, output: Path, prefix, sequence_min_length: int) -> Path:
     """
     Removes duplicates in no_phages list, writes all records in list to output
 
     verifies length of each sequence is longer than SEQUENCE_MIN_LENGTH
 
-    :param no_phages: list of records from all protein files without keyword "phage"
+    :param records: list of records from all protein files without keyword "phage"
     :param output: Path to output directory for profile HMMs and intermediate files
+    :param prefix: Prefix for intermediate and result files
     :param sequence_min_length: Minimum sequence length for a record to be included in the input
     :return: Path to curated fasta file without repeats or phages
     """
     record_seqs = []
-    record_ids = []
-
     records_to_output = []
 
-    for record in no_phages:
+    for record in records:
         if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
             if record.description:
                 records_to_output.append(record)
                 record_seqs.append(record.seq)
-                record_ids.append(record.id)
 
-    output_dir = output / Path("cluster_files")
+    output_dir = output / Path("intermediate_files")
 
     if not output_dir.exists():
         output_dir.mkdir()
 
-    output_path = output_dir / Path("curated_records.faa")
+    if prefix:
+        output_name = f"{prefix}_curated_records.faa"
+    else:
+        output_name = "curated_records.faa"
 
+    output_path = output_dir / Path(output_name)
     SeqIO.write(records_to_output, Path(output_path), "fasta")
 
     return output_path

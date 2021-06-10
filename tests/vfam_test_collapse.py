@@ -31,14 +31,14 @@ def output(tmp_path):
 def clustered_result(input_dir, output):
     input_paths = get_input_paths(Path(input_dir))
     no_phages = group_input_paths(input_paths)
-    no_dupes = remove_dupes(no_phages, output, 1)
+    no_dupes = remove_dupes(no_phages, output, None, 1)
 
-    return generate_clusters(no_dupes, None, 1.0)
+    return generate_clusters(no_dupes, None, None, 1.0)
 
 
 @pytest.fixture()
 def blast_result(clustered_result):
-    return all_by_all_blast(clustered_result, 8)
+    return all_by_all_blast(clustered_result, None, 8)
 
 
 @pytest.mark.parametrize("input_dir, clustered_file", [(DUPES_INPUT, COLLAPSED_DUPES), (GENERIC_INPUT, COLLAPSED_GENERIC), (LARGE_INPUT, COLLAPSED_LARGE)])

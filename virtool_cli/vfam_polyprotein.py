@@ -11,12 +11,12 @@ def sequence_lengths(blast_results: Path) -> dict:
     :return: sequence_lengths, a dictionary containing each sequence and its sequence length
     """
     seq_lengths = {}
-    blast_file = open(blast_results)
 
-    for line in blast_file:
-        alignment = Alignment(line)
-        if alignment.query == alignment.subject:
-            seq_lengths[alignment.query] = alignment.length
+    with blast_results.open('r') as handle:
+        for line in handle:
+            alignment = Alignment(line)
+            if alignment.query == alignment.subject:
+                seq_lengths[alignment.query] = alignment.length
 
     return seq_lengths
 
@@ -30,17 +30,17 @@ def get_alignment_records(blast_results: Path) -> dict:
     :param blast_results: blast file produced in all_by_all blast step
     :return: alignment_records, a dictionary containing all alignment objects for each query
     """
-    blast_file = open(blast_results)
     alignment_records = {}
+    with blast_results.open('r') as handle:
 
-    for line in blast_file:
-        alignment = Alignment(line)
+        for line in handle:
+            alignment = Alignment(line)
 
-        if alignment.query != alignment.subject:
-            if alignment.query not in alignment_records:
-                alignment_records[alignment.query] = [alignment]
-            else:
-                alignment_records[alignment.query].append(alignment)
+            if alignment.query != alignment.subject:
+                if alignment.query not in alignment_records:
+                    alignment_records[alignment.query] = [alignment]
+                else:
+                    alignment_records[alignment.query].append(alignment)
 
     return alignment_records
 
@@ -68,8 +68,8 @@ def find_polyproteins(blast_results: Path) -> list:
 
             for alignment in alignment_records[query]:
                 if alignment.subject in seq_lengths:
-                    if seq_lengths[alignment.subject] < 0.7*seq_lengths[alignment.query]:
-                        subject_cvg = float(abs((alignment.qstart - alignment.qend)))/(seq_lengths[alignment.subject])
+                    if seq_lengths[alignment.subject] < 0.7 * seq_lengths[alignment.query]:
+                        subject_cvg = float(abs(alignment.qstart - alignment.qend))/seq_lengths[alignment.subject]
                         if subject_cvg >= 0.7:
                             alignment_ranges.append((alignment.qstart, alignment.qend))
 
@@ -78,7 +78,7 @@ def find_polyproteins(blast_results: Path) -> list:
                 for position in range(rng[0], rng[1]):
                     query_cvg[position] = None
 
-            if len(query_cvg) > 0.8*(seq_lengths[query]):
+            if len(query_cvg) > 0.8 * (seq_lengths[query]):
                 polyproteins.append(query)
             query_cvg.clear()
 

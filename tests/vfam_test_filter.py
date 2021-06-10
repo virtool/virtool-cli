@@ -39,14 +39,14 @@ def output(tmp_path):
 def fasta_files(input_dir, output):
     input_paths = get_input_paths(Path(input_dir))
     no_phages = group_input_paths(input_paths)
-    no_dupes = remove_dupes(no_phages, output, 1)
+    no_dupes = remove_dupes(no_phages, output, None, 1)
 
-    clustered_file = generate_clusters(no_dupes, None, 1.0)
-    blast_results = all_by_all_blast(clustered_file, 8)
+    clustered_file = generate_clusters(no_dupes, None, None, 1.0)
+    blast_results = all_by_all_blast(clustered_file, None, 8)
     polyproteins = find_polyproteins(blast_results)
-    mcl_file = blast_to_mcl(blast_results, polyproteins, None)
+    mcl_file = blast_to_mcl(blast_results, polyproteins, None, None)
 
-    return mcl_to_fasta(mcl_file, clustered_file)
+    return mcl_to_fasta(mcl_file, clustered_file, None)
 
 
 @pytest.mark.parametrize("input_dir, filtered_files", [(DUPES_INPUT, DUPES_COVERAGE), (GENERIC_INPUT, GENERIC_COVERAGE),

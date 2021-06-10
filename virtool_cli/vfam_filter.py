@@ -44,9 +44,10 @@ def filter_file_on_coverage(fasta_file):
     elif len(record_lengths) == len(lengths):
         return fasta_file
     else:
-        output_path = Path(str(fasta_file) + "_filtered")
+        output_path = Path(f"{fasta_file}_filtered")
         to_write = [record for record in SeqIO.parse(fasta_file, "fasta") if record.id in record_lengths]
         SeqIO.write(to_write, output_path, "fasta")
+
         return output_path
 
 
@@ -81,6 +82,7 @@ def filter_on_number(fasta_files, min_sequences):
             count += 1
             if count >= min_sequences:
                 filtered_files.append(fasta_file)
+
                 break
 
     return filtered_files

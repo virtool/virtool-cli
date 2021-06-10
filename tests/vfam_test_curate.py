@@ -36,7 +36,7 @@ def no_phages(input_paths):
 
 @pytest.fixture()
 def no_dupes(no_phages, output):
-    return remove_dupes(no_phages, output, 1)
+    return remove_dupes(no_phages, output, None, 1)
 
 
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
@@ -54,7 +54,7 @@ def test_get_input_paths(input_dir, input_paths):
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
 def test_remove_phages(input_dir, no_phages):
     """
-    Test that "phage" is not found in record descriptions for any records in no_phages list
+    Test that "phage" is not found in record descriptions for any records in records list
     """
     for record in no_phages:
         assert "phage" not in record.description
@@ -79,7 +79,7 @@ def test_remove_dupes(input_dir, filtered_file, output):
     """
     input_paths = get_input_paths(Path(input_dir))
     records = group_input_paths(input_paths)
-    result = remove_dupes(records, output, 1)
+    result = remove_dupes(records, output, None, 1)
     expected = Path(filtered_file)
 
     assert filecmp.cmp(result, expected, shallow=True)
