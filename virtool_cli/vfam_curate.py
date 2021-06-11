@@ -7,7 +7,8 @@ from pathlib import Path
 
 
 def get_input_paths(src_path: Path) -> list:
-    """Takes in a path to directory containing input fasta files, returns a list of paths to the fasta files
+    """
+    Takes in a path to directory containing input fasta files, returns a list of paths to the fasta files
 
     :param src_path: Path to input source directory containing unfiltered fasta files
     :return: input_paths, list of paths to input protein files if any files are found
@@ -23,7 +24,8 @@ def get_input_paths(src_path: Path) -> list:
 
 
 def remove_phages(input_paths: list) -> list:
-    """Parses through records in input files, appends records to filtered_sequences if keyword "phage" not found in record
+    """
+    Parses through records in input files, appends records to filtered_sequences if keyword "phage" not found in record
 
     :param input_paths: list of paths to input fasta files
     :return: records, list of curated records with all phage records removed
@@ -55,7 +57,8 @@ def group_input_paths(input_paths: list):
 
 
 def remove_dupes(records: list, output: Path, prefix, sequence_min_length: int) -> Path:
-    """Removes duplicates in no_phages list, writes all records in list to output
+    """
+    Removes duplicates in no_phages list, writes all records in list to output
 
     verifies length of each sequence is longer than SEQUENCE_MIN_LENGTH
 

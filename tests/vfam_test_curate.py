@@ -41,7 +41,7 @@ def no_dupes(no_phages, output):
 
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
 def test_get_input_paths(input_dir, input_paths):
-    """Test that correct file names are found after calling get_input_paths"""
+    """Test that correct file names are found after calling get_input_paths."""
     listdir = os.listdir(input_dir)
     assert len(listdir) == len(input_paths)
 
@@ -51,7 +51,7 @@ def test_get_input_paths(input_dir, input_paths):
 
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
 def test_remove_phages(input_dir, no_phages):
-    """Test that "phage" is not found in record descriptions for any records in records list"""
+    """Test that "phage" is not found in record descriptions for any records in records list."""
     for record in no_phages:
         assert "phage" not in record.description
 
@@ -72,7 +72,7 @@ def test_curated_file(input_dir, output, no_dupes):
 @pytest.mark.parametrize("input_dir, filtered_file", [(DUPES_INPUT, FILTERED_DUPES), (GENERIC_INPUT, FILTERED_GENERIC),
                                                       (LARGE_INPUT, FILTERED_LARGE)])
 def test_remove_dupes(input_dir, filtered_file, output):
-    """Test that remove_dupes step of program produces desired output to match filtere og vfam file"""
+    """Test that remove_dupes step of program produces desired output to match filtered og vfam file."""
     input_paths = get_input_paths(Path(input_dir))
     records = group_input_paths(input_paths)
     result = remove_dupes(records, output, None, 1)

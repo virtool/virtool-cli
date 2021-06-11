@@ -6,7 +6,8 @@ COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
 
 
 def filter_file_on_coverage(fasta_file: Path):
-    """Takes a fasta file and a dictionary containing coverage heuristics information
+    """
+    Takes a fasta file and a dictionary containing coverage heuristics information
 
     any sequences that don't subscribe to these heuristics are removed
 
@@ -54,7 +55,8 @@ def filter_file_on_coverage(fasta_file: Path):
 
 
 def filter_on_coverage(fasta_files: list) -> list:
-    """Takes in list of fasta files, and calls filter_file_on_coverage to filter them by coverage
+    """
+    Takes in list of fasta files, and calls filter_file_on_coverage to filter them by coverage
 
     :param fasta_files: list of fasta_files from mcl_to_fasta step to be filtered
     :return: filtered_by_coverage, a list filtered fasta files
@@ -69,7 +71,8 @@ def filter_on_coverage(fasta_files: list) -> list:
 
 
 def filter_on_number(fasta_files, min_sequences):
-    """Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
+    """
+    Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
 
     :param fasta_files: list of fasta files to be filtered
     :param min_sequences: Filter out clusters with fewer records than min_sequences
