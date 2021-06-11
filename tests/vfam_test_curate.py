@@ -63,7 +63,9 @@ def test_remove_phages(input_dir, no_phages):
 @pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
 def test_curated_file(input_dir, output, no_dupes):
     """
-    Test that all sequences are longer than min_length and that no record descriptions contain "phage" in output
+    Assert all sequences are longer than min_length
+
+    Assert that no record descriptions contain "phage" when remove_phages is called
     """
     with Path(no_dupes) as handle:
         for record in SeqIO.parse(handle, "fasta"):
@@ -75,7 +77,7 @@ def test_curated_file(input_dir, output, no_dupes):
                                                       (LARGE_INPUT, FILTERED_LARGE)])
 def test_remove_dupes(input_dir, filtered_file, output):
     """
-    Test that remove_dupes step of program produces desired output
+    Test that remove_dupes step of program produces desired output to match filtere og vfam file
     """
     input_paths = get_input_paths(Path(input_dir))
     records = group_input_paths(input_paths)

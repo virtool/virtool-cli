@@ -6,7 +6,7 @@ from pathlib import Path
 NUM_CORES = 16
 
 
-def batch_muscle_call(fasta_files):
+def batch_muscle_call(fasta_files: list) -> list:
     """
     This function takes in a list of fasta files and makes msas using MUSCLE
 
@@ -26,7 +26,7 @@ def batch_muscle_call(fasta_files):
     return msa_files
 
 
-def batch_hmm_call(msa_files):
+def batch_hmm_call(msa_files: list) -> list:
     """
     Takes in a  list of fasta msa files, and builds HMMs for each of the using HMMer
 
@@ -46,8 +46,15 @@ def batch_hmm_call(msa_files):
     return hmm_files
 
 
-def concatenate_hmms(hmm_files, output, prefix):
-    if prefix:
+def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
+    """
+    Takes in a list of HMM files containing individual profiles and writes them all to a master results file
+
+    :param hmm_files: list of individual HMM files
+    :param output: Path to output directory
+    :param prefix: Prefix for intermediate and result files
+    """
+    if prefix is not None:
         output_name = f"{prefix}_master.hmm"
     else:
         output_name = "master.hmm"
@@ -60,3 +67,60 @@ def concatenate_hmms(hmm_files, output, prefix):
                     o_handle.write(line)
 
     return output_file
+
+
+def organize_intermediates(output: Path):
+    """
+    Organizes intermediate files by type and sorts them into different folders in the output directory
+
+    :param output: Path to output directory containing intermediate and master file
+    """
+    intermediate_path = output / "intermediate_files"
+    file_names = os.listdir(intermediate_path)
+
+    hmm_files = output / "hmm_files"
+    if not hmm_files.exists():
+        hmm_files.mkdir()
+
+    blast_files = output / "blast_files"
+    if not blast_files.exists():
+        blast_files.mkdir()
+
+    fasta_files = output / "fasta_files"
+    if not fasta_files.exists():
+        fasta_files.mkdir()
+
+    log_files = output / "log_files"
+    if not log_files.exists():
+        log_files.mkdir()
+
+    msa_files = output / "msa_files"
+    if not msa_files.exists():
+        msa_files.mkdir()
+
+    for file_name in file_names:
+        current_path = output / "intermediate_files" / file_name
+
+        if ".hmm" in file_name:
+            new_path = hmm_files / file_name
+            os.rename(current_path, new_path)
+
+        elif "blast" in file_name:
+            new_path = blast_files / file_name
+            os.rename(current_path, new_path)
+
+        elif ".msa" in file_name:
+            new_path = msa_files / file_name
+            os.rename(current_path, new_path)
+
+        elif ".log" in file_name:
+            new_path = log_files / file_name
+            os.rename(current_path, new_path)
+
+        else:
+            new_path = fasta_files / file_name
+            os.rename(current_path, new_path)
+
+    os.rmdir(intermediate_path)
+
+

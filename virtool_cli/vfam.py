@@ -3,7 +3,7 @@ from virtool_cli.vfam_collapse import generate_clusters, polyprotein_name_check,
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
-from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_hmms
+from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_hmms, organize_intermediates
 from pathlib import Path
 
 
@@ -60,9 +60,13 @@ def run(src_path, output, prefix, sequence_min_length, phage_name_check, fractio
     hmm_files = batch_hmm_call(aligned_files)
 
     print("Building master HMM file")
-    hmm_file = concatenate_hmms(hmm_files, output)
+    hmm_file = concatenate_hmms(hmm_files, output, prefix)
 
     print(f"{hmm_file} contains profile-HMMS from all input clusters")
+
+    print("Organising intermediate files")
+    organize_intermediates(output)
+
     print("Done!")
 
 

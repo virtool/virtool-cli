@@ -35,7 +35,7 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
     return abc_path
 
 
-def blast_to_mcl(blast_results, polyproteins, inflation_num, prefix):
+def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix) -> Path:
     """
     Converts sequences not included in polyprotein_sequences to a .abc file
 
@@ -77,7 +77,7 @@ def blast_to_mcl(blast_results, polyproteins, inflation_num, prefix):
     return mcl_path
 
 
-def mcl_to_fasta(mcl_path, clustered_fasta, prefix):
+def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> list:
     """
     Takes mcl clusters and a clustered fasta file, creates numbered fasta files for each mcl cluster 
     
@@ -93,7 +93,7 @@ def mcl_to_fasta(mcl_path, clustered_fasta, prefix):
         for line in handle:
             line_num += 1
             if prefix:
-                fasta_name = f"{prefix}cluster_{line_num}"
+                fasta_name = f"{prefix}_cluster_{line_num}"
             else:
                 fasta_name = f"cluster_{line_num}"
 

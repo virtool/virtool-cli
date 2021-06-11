@@ -5,7 +5,7 @@ from pathlib import Path
 COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
 
 
-def filter_file_on_coverage(fasta_file):
+def filter_file_on_coverage(fasta_file: Path):
     """
     Takes a fasta file and a dictionary containing coverage heuristics information
 
@@ -51,7 +51,7 @@ def filter_file_on_coverage(fasta_file):
         return output_path
 
 
-def filter_on_coverage(fasta_files):
+def filter_on_coverage(fasta_files: list) -> list:
     """
     Takes in list of fasta files, and calls filter_file_on_coverage to filter them by coverage
 
