@@ -1,17 +1,15 @@
+from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, remove_phages, group_input_paths, remove_dupes
 from virtool_cli.vfam_collapse import generate_clusters, polyprotein_name_check, all_by_all_blast
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_hmms, organize_intermediates
-from pathlib import Path
 
 
 def run(src_path, output, prefix, sequence_min_length, phage_name_check, fraction_coverage, fraction_id, num_cores,
         polyp_name_check, inflation_num, filter_on_cvg, min_sequences):
-    """
-    Dictates workflow for vfam pipeline
-    """
+    """Dictates workflow for vfam pipeline."""
     # steps in vfam_curate module
     print("Gathering input")
     input_paths = get_input_paths(Path(src_path))
@@ -59,7 +57,7 @@ def run(src_path, output, prefix, sequence_min_length, phage_name_check, fractio
     print("Running hmmbuild on all alignment files")
     hmm_files = batch_hmm_call(aligned_files)
 
-    print("Building master HMM file")
+    print("Building master hmm file")
     hmm_file = concatenate_hmms(hmm_files, output, prefix)
 
     print(f"{hmm_file} contains profile-HMMS from all input clusters")

@@ -38,7 +38,7 @@ def polyproteins(input_dir, output):
                                                               (GENERIC_INPUT, POLYP_GENERIC),
                                                               (LARGE_INPUT, POLYP_LARGE)])
 def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output):
-    """Test that find_polyproteins catches same polyprotein sequences as original vfam"""
+    """Test that find_polyproteins catches same polyprotein sequences as original vfam."""
     result = polyproteins
 
     with Path(expected_polyproteins).open('r') as handle:
@@ -46,4 +46,3 @@ def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output
 
     assert len(expected) == len(result)
     assert sorted(expected) == sorted(result)
-

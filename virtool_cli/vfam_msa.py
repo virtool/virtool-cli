@@ -3,12 +3,13 @@ import subprocess
 
 
 from pathlib import Path
+
+
 NUM_CORES = 16
 
 
 def batch_muscle_call(fasta_files: list) -> list:
-    """
-    This function takes in a list of fasta files and makes msas using MUSCLE
+    """This function takes in a list of fasta files and makes msas using MUSCLE
 
     :param fasta_files: list of fasta files to pruduce msas
     :return: list of alignment files generated in fasta format
@@ -21,14 +22,13 @@ def batch_muscle_call(fasta_files: list) -> list:
         msa_files.append(msa_file)
 
         muscle_cmd = ["muscle", "-in", fasta_file, "-out", msa_file, "-log", log_file, "-quiet"]
-        subprocess.call(muscle_cmd)
+        subprocess.run(muscle_cmd, check=True)
 
     return msa_files
 
 
 def batch_hmm_call(msa_files: list) -> list:
-    """
-    Takes in a  list of fasta msa files, and builds HMMs for each of the using HMMer
+    """Takes in a  list of fasta msa files, and builds HMMs for each of the using HMMer
 
     :param msa_files: list of msa files from batch_muscle_call step
     :return: hmm_files, a list of hmm files produced
@@ -41,16 +41,15 @@ def batch_hmm_call(msa_files: list) -> list:
         hmm_files.append(hmm_file)
 
         hmm_build_cmd = ["hmmbuild", "--informat", "afa", "-o", log_file, "--cpu", str(NUM_CORES), hmm_file, msa_file]
-        subprocess.call(hmm_build_cmd)
+        subprocess.run(hmm_build_cmd, check=True)
 
     return hmm_files
 
 
 def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
-    """
-    Takes in a list of HMM files containing individual profiles and writes them all to a master results file
+    """Takes in a list of hmm files containing individual profiles and writes them all to a master results file
 
-    :param hmm_files: list of individual HMM files
+    :param hmm_files: list of individual hmm files
     :param output: Path to output directory
     :param prefix: Prefix for intermediate and result files
     """
@@ -70,8 +69,7 @@ def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
 
 
 def organize_intermediates(output: Path):
-    """
-    Organizes intermediate files by type and sorts them into different folders in the output directory
+    """Organizes intermediate files by type and sorts them into different folders in the output directory
 
     :param output: Path to output directory containing intermediate and master file
     """
@@ -122,5 +120,3 @@ def organize_intermediates(output: Path):
             os.rename(current_path, new_path)
 
     os.rmdir(intermediate_path)
-
-

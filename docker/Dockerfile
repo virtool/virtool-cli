@@ -1,5 +1,4 @@
-# get base image
-FROM continuumio/miniconda3
+FROM continuumio/miniconda3:4.9.2
 
 WORKDIR /app
 

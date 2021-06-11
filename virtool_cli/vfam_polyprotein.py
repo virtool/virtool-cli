@@ -2,8 +2,7 @@ from pathlib import Path
 
 
 def sequence_lengths(blast_results: Path) -> dict:
-    """
-    Takes blast results file and parses through lines, creating an alignment object from each line
+    """Takes blast results file and parses through lines, creating an alignment object from each line
 
     If alignment query matches the alignment subject, sequence length is stored as the length of that query
 
@@ -22,8 +21,7 @@ def sequence_lengths(blast_results: Path) -> dict:
 
 
 def get_alignment_records(blast_results: Path) -> dict:
-    """
-    Takes blast file and parses through lines, producing an alignment object from each line
+    """Takes blast file and parses through lines, producing an alignment object from each line
 
     If alignment query does not match subject, alignment is added to list of alignments for each query
 
@@ -46,8 +44,7 @@ def get_alignment_records(blast_results: Path) -> dict:
 
 
 def find_polyproteins(blast_results: Path) -> list:
-    """
-    Sequences are filtered by sequence length and coverage to determine if they are polyproteins/polyprotein-like
+    """Sequences are filtered by sequence length and coverage to determine if they are polyproteins/polyprotein-like
 
     Sequences longer than 400 amino acids in length were identified as polyprotein or polyprotein-like if
 
@@ -92,6 +89,7 @@ class Alignment:
     Naming conventions and descriptions from https://www.metagenomics.wiki/tools/blast/blastn-output-format-6
     """
     def __init__(self, blast_data):
+        """Assigns field names to data gathered from lines in tab-delimited format."""
         blast_data = blast_data.split("\t")
         self.query = blast_data[0]
         self.subject = blast_data[1]

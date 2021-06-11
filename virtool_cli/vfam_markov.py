@@ -1,4 +1,3 @@
-import os
 import subprocess
 
 
@@ -8,8 +7,7 @@ from virtool_cli.vfam_polyprotein import Alignment
 
 
 def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
-    """
-    Takes in blast results file and list of polyproteins to not include, writes a .abc file with desired alignments
+    """Takes in blast results file and list of polyproteins to not include, writes a .abc file with desired alignments
 
     :param blast_results: blast file produced in all_by_all blast step
     :param polyproteins: list of polyprotein like sequences to not be included in output
@@ -36,8 +34,7 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
 
 
 def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix) -> Path:
-    """
-    Converts sequences not included in polyprotein_sequences to a .abc file
+    """Converts sequences not included in polyprotein_sequences to a .abc file
 
     calls mcxload on .abc file to generate a .mci and .tab file
 
@@ -66,20 +63,19 @@ def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix)
 
     mcxload_cmd = ["mcxload", "-abc", abc_path, "--stream-mirror", "--stream-neg-log10", "-stream-tf", ""'ceil(200)'"",
                    "-o", mci_path, "-write-tab", tab_path]
-    subprocess.call(mcxload_cmd)
+    subprocess.run(mcxload_cmd, check=True)
 
     if inflation_num is None:
         mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
     else:
         mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-I", inflation_num, "-o", mcl_path]
-    subprocess.run(mcl_cmd)
+    subprocess.run(mcl_cmd, check=True)
 
     return mcl_path
 
 
 def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> list:
-    """
-    Takes mcl clusters and a clustered fasta file, creates numbered fasta files for each mcl cluster 
+    """Takes mcl clusters and a clustered fasta file, creates numbered fasta files for each mcl cluster
     
     :param mcl_path: path to mcl results file from blast_to_mcl step
     :param clustered_fasta: path to clustered fasta file from cd-hit step
@@ -106,9 +102,3 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> list:
                 SeqIO.write(record, fasta_path, "fasta")
 
     return list(set(mcl_dict.values()))
-
-
-
-
-
-

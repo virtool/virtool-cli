@@ -57,7 +57,7 @@ def mcl_results(output, blast_results, polyproteins):
 @pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC),
                                                    (LARGE_INPUT, BLAST_LARGE)])
 def test_abc(input_dir, blast_path, output, blast_results, polyproteins):
-    """test that write_abc produces an abc files to match original vfam output"""
+    """test that write_abc produces an abc files to match original vfam output."""
     result = write_abc(blast_results, polyproteins, None)
     expected = Path(str(blast_path) + '.abc')
 
@@ -67,7 +67,7 @@ def test_abc(input_dir, blast_path, output, blast_results, polyproteins):
 @pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC),
                                                    (LARGE_INPUT, BLAST_LARGE)])
 def test_blast_to_mcl(input_dir, blast_path, output, blast_results, polyproteins):
-    """test that blast_to_mcl produces .mcl files that match original vfam output"""
+    """test that blast_to_mcl produces .mcl files that match original vfam output."""
     result = blast_to_mcl(blast_results, polyproteins, None, None)
     expected = str(blast_path) + ".mcl"
     assert filecmp.cmp(result, expected, shallow=True)
@@ -76,7 +76,7 @@ def test_blast_to_mcl(input_dir, blast_path, output, blast_results, polyproteins
 @pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC),
                                                    (LARGE_INPUT, BLAST_LARGE)])
 def test_mci(input_dir, blast_path, output, blast_results, polyproteins):
-    """test that blast_to_mcl produces .mci files that match original vfam output"""
+    """test that blast_to_mcl produces .mci files that match original vfam output."""
     result = blast_to_mcl(blast_results, polyproteins, None, None).parent / "blast.mci"
     expected = str(blast_path) + ".mci"
     assert filecmp.cmp(result, expected, shallow=True)
@@ -84,7 +84,7 @@ def test_mci(input_dir, blast_path, output, blast_results, polyproteins):
 
 @pytest.mark.parametrize("input_dir, cluster_dir", [(DUPES_INPUT, DUPES_CLUSTERS), (GENERIC_INPUT, GENERIC_CLUSTERS)])
 def test_mcl_to_fasta(input_dir, cluster_dir, output, clustered_file, mcl_results):
-    """test that mcl_to_fasta produces fasta files that match original vfam output"""
+    """test that mcl_to_fasta produces fasta files that match original vfam output."""
     result_files = mcl_to_fasta(mcl_results, clustered_file, None)
     result_files.sort()
 
@@ -93,10 +93,6 @@ def test_mcl_to_fasta(input_dir, cluster_dir, output, clustered_file, mcl_result
         expected_files.append(cluster_dir / Path(file))
     expected_files.sort()
 
-    for x in range(len(expected_files)):
-        assert filecmp.cmp(expected_files[x], result_files[x])
-
-
-
-
-
+    assert len(expected_files) == len(result_files)
+    for r_file, e_file in zip(result_files, expected_files):
+        assert filecmp.cmp(r_file, e_file)

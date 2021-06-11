@@ -6,8 +6,7 @@ from Bio import SeqIO
 
 
 def generate_clusters(curated_fasta: Path, prefix, fraction_cov, fraction_id: float) -> Path:
-    """
-    Takes in a fasta file, minimum fraction coverage, minimum fraction identity, calls cd-hit to cluster data
+    """Takes in a fasta file, minimum fraction coverage, minimum fraction identity, calls cd-hit to cluster data
 
     cd-hit collapses the input sequences into non-redundant representatives at the specified levels
 
@@ -29,14 +28,13 @@ def generate_clusters(curated_fasta: Path, prefix, fraction_cov, fraction_id: fl
     else:
         cd_hit_cmd = ["cd-hit", "-i", curated_fasta, "-o", output_path, "-c", str(fraction_cov), "-s",
                       str(fraction_id)]
-    subprocess.call(cd_hit_cmd)
+    subprocess.run(cd_hit_cmd, check=True)
 
     return output_path
 
 
 def polyprotein_name_check(clustered_records: Path, prefix) -> Path:
-    """
-    Removes any record with "polyprotein" found in its description
+    """Removes any record with "polyprotein" found in its description
 
     :param clustered_records: file containing clustered fasta information from generate clusters step
     :param prefix: Prefix for intermediate and result files
@@ -71,7 +69,7 @@ def all_by_all_blast(clustered_fasta: Path, prefix, num_cores: int) -> Path:
     :return: tab-delimited formatted BLAST results file
     """
     format_db_cmd = ["makeblastdb", "-in", clustered_fasta, "-dbtype", "prot"]
-    subprocess.run(format_db_cmd)
+    subprocess.run(format_db_cmd, check=True)
 
     if prefix:
         blast_name = f"{prefix}_blast.br"
@@ -82,6 +80,6 @@ def all_by_all_blast(clustered_fasta: Path, prefix, num_cores: int) -> Path:
 
     blast_cmd = ["blastp", "-query", clustered_fasta, "-out", blast_results, "-db", clustered_fasta,
                  "-outfmt", "6", "-num_threads", str(num_cores)]
-    subprocess.call(blast_cmd)
+    subprocess.run(blast_cmd, check=True)
 
     return blast_results

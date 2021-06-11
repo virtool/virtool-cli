@@ -41,10 +41,11 @@ def blast_result(clustered_result):
     return all_by_all_blast(clustered_result, None, 8)
 
 
-@pytest.mark.parametrize("input_dir, clustered_file", [(DUPES_INPUT, COLLAPSED_DUPES), (GENERIC_INPUT, COLLAPSED_GENERIC), (LARGE_INPUT, COLLAPSED_LARGE)])
+@pytest.mark.parametrize("input_dir, clustered_file", [(DUPES_INPUT, COLLAPSED_DUPES),
+                                                       (GENERIC_INPUT, COLLAPSED_GENERIC),
+                                                       (LARGE_INPUT, COLLAPSED_LARGE)])
 def test_cluster_sequences(input_dir, clustered_file, clustered_result, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam"""
-
     result = clustered_result
 
     assert filecmp.cmp(result, Path(clustered_file))
@@ -59,4 +60,3 @@ def test_cluster_sequences(input_dir, clustered_file, clustered_result, output):
 def test_all_by_all_blast(input_dir, blast_file, blast_result, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam"""
     assert filecmp.cmp(blast_result, Path(blast_file))
-
