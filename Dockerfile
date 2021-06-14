@@ -18,4 +18,4 @@ COPY . .
 
 RUN pip install .
 
-ENTRYPOINT ["virtool", "vfam"]
+ENTRYPOINT ["virtool"]
