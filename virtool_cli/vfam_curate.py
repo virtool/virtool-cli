@@ -57,8 +57,7 @@ def group_input_paths(input_paths: list):
 
 
 def remove_dupes(records: list, output: Path, prefix, sequence_min_length: int) -> Path:
-    """
-    Removes duplicates in no_phages list, writes all records in list to output
+    """Removes duplicates in no_phages list, writes all records in list to output
 
     verifies length of each sequence is longer than SEQUENCE_MIN_LENGTH
 

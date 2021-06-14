@@ -23,7 +23,7 @@ def batch_muscle_call(fasta_files: list) -> list:
         msa_files.append(msa_file)
 
         muscle_cmd = ["muscle", "-in", fasta_file, "-out", msa_file, "-log", log_file, "-quiet"]
-        subprocess.run(muscle_cmd, check=True)
+        subprocess.run(muscle_cmd, check=True, shell=False)
 
     return msa_files
 
@@ -43,7 +43,7 @@ def batch_hmm_call(msa_files: list) -> list:
         hmm_files.append(hmm_file)
 
         hmm_build_cmd = ["hmmbuild", "--informat", "afa", "-o", log_file, "--cpu", str(NUM_CORES), hmm_file, msa_file]
-        subprocess.run(hmm_build_cmd, check=True)
+        subprocess.run(hmm_build_cmd, check=True, shell=False)
 
     return hmm_files
 
@@ -72,8 +72,7 @@ def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
 
 
 def organize_intermediates(output: Path):
-    """
-    Organizes intermediate files by type and sorts them into different folders in the output directory
+    """Organizes intermediate files by type and sorts them into different folders in the output directory
 
     :param output: Path to output directory containing intermediate and master file
     """

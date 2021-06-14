@@ -52,7 +52,7 @@ def fasta_files(input_dir, output):
 @pytest.mark.parametrize("input_dir, filtered_files", [(DUPES_INPUT, DUPES_COVERAGE), (GENERIC_INPUT, GENERIC_COVERAGE),
                                                        (LARGE_INPUT, LARGE_COVERAGE)])
 def test_on_cvg_files(fasta_files, input_dir, filtered_files):
-    """test that filter_on_coverage filters the same files as original vfam."""
+    """Test that filter_on_coverage filters the same files as original vfam."""
     with Path(filtered_files).open('r') as handle:
         expected = [line.split()[0] for line in handle]
     expected.sort()
@@ -64,7 +64,7 @@ def test_on_cvg_files(fasta_files, input_dir, filtered_files):
                                                      (GENERIC_INPUT, GENERIC_REMOVED_CVG),
                                                      (LARGE_INPUT, LARGE_REMOVED_CVG)])
 def test_on_cvg_recs(input_dir, removed_recs, fasta_files):
-    """test that filter_on_coverage removes the same records as original vfam."""
+    """Test that filter_on_coverage removes the same records as original vfam."""
     with Path(removed_recs).open('r') as handle:
         removed_records = [line.split()[0] for line in handle]
 
@@ -77,7 +77,7 @@ def test_on_cvg_recs(input_dir, removed_recs, fasta_files):
 @pytest.mark.parametrize("input_dir, filtered_files", [(DUPES_INPUT, DUPES_FILTERED_BY_NUM),
                                                        (GENERIC_INPUT, GENERIC_FILTERED_BY_NUM)])
 def test_on_number(input_dir, filtered_files, fasta_files):
-    """test that filter_on_number filters the same files as original vfam."""
+    """Test that filter_on_number filters the same files as original vfam."""
     filtered_on_coverage = filter_on_coverage(fasta_files)
     result = filter_on_number(filtered_on_coverage, 2)
     result.sort()

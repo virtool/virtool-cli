@@ -35,8 +35,7 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
 
 
 def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix) -> Path:
-    """
-    Converts sequences not included in polyprotein_sequences to a .abc file
+    """Converts sequences not included in polyprotein_sequences to a .abc file
 
     calls mcxload on .abc file to generate a .mci and .tab file
 
@@ -65,13 +64,13 @@ def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix)
 
     mcxload_cmd = ["mcxload", "-abc", abc_path, "--stream-mirror", "--stream-neg-log10", "-stream-tf", ""'ceil(200)'"",
                    "-o", mci_path, "-write-tab", tab_path]
-    subprocess.run(mcxload_cmd, check=True)
+    subprocess.run(mcxload_cmd, check=True, shell=False)
 
     if inflation_num is None:
         mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
     else:
         mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-I", inflation_num, "-o", mcl_path]
-    subprocess.run(mcl_cmd, check=True)
+    subprocess.run(mcl_cmd, check=True, shell=False)
 
     return mcl_path
 
