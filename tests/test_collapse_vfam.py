@@ -7,17 +7,17 @@ from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_d
 from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 
 
-DUPES_INPUT = "vfam_input/Dupes"
-GENERIC_INPUT = "vfam_input/Generic"
-LARGE_INPUT = "vfam_input/Large"
+DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
+GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
+LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
 
-COLLAPSED_DUPES = "vfam_og_intermediates/Dupes/collapsed_fasta"
-COLLAPSED_GENERIC = "vfam_og_intermediates/Generic/collapsed_fasta"
-COLLAPSED_LARGE = "vfam_og_intermediates/Large/collapsed_fasta"
+COLLAPSED_DUPES = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "collapsed_fasta"
+COLLAPSED_GENERIC = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "collapsed_fasta"
+COLLAPSED_LARGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "collapsed_fasta"
 
-BLAST_DUPES = "vfam_og_intermediates/Dupes/blast.br"
-BLAST_GENERIC = "vfam_og_intermediates/Generic/blast.br"
-BLAST_LARGE = "vfam_og_intermediates/Large/blast.br"
+BLAST_DUPES = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "blast.br"
+BLAST_GENERIC = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "blast.br"
+BLAST_LARGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "blast.br"
 
 
 @pytest.fixture()
@@ -48,6 +48,13 @@ def test_cluster_sequences(input_dir, clustered_file, clustered_result, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam."""
     result = clustered_result
     assert filecmp.cmp(result, Path(clustered_file))
+    count = 0
+    with result.open('r') as r_file:
+        with Path(clustered_file).open('r') as e_file:
+            for r_line, e_line in zip(r_file.readlines(), e_file.readlines()):
+                assert r_line == e_line
+                count += 1
+            assert count > 0
 
     result = str(result) + ".clstr"
     clustered_file = str(clustered_file) + ".clstr"

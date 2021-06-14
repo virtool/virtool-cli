@@ -12,17 +12,17 @@ from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call
 
 
-DUPES_INPUT = "vfam_input/Dupes"
-GENERIC_INPUT = "vfam_input/Generic"
-LARGE_INPUT = "vfam_input/Large"
+DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
+GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
+LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
 
 
-DUPES_MSA = "vfam_og_intermediates/Dupes/msa_files"
-GENERIC_MSA = "vfam_og_intermediates/Generic/msa_files"
+DUPES_MSA = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "msa_files"
+GENERIC_MSA = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "msa_files"
 
 
-DUPES_HMM = "vfam_og_intermediates/Dupes/hmm_files"
-GENERIC_HMM = "vfam_og_intermediates/Generic/hmm_files"
+DUPES_HMM = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "hmm_files"
+GENERIC_HMM = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "hmm_files"
 
 
 @pytest.fixture()

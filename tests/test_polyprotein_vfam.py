@@ -7,13 +7,13 @@ from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 from virtool_cli.vfam_polyprotein import find_polyproteins
 
 
-DUPES_INPUT = "vfam_input/Dupes"
-GENERIC_INPUT = "vfam_input/Generic"
-LARGE_INPUT = "vfam_input/Large"
+DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
+GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
+LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
 
-POLYP_DUPES = "vfam_og_intermediates/Dupes/polyproteins"
-POLYP_GENERIC = "vfam_og_intermediates/Generic/polyproteins"
-POLYP_LARGE = "vfam_og_intermediates/Large/polyproteins"
+POLYP_DUPES = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "polyproteins"
+POLYP_GENERIC = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "polyproteins"
+POLYP_LARGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "polyproteins"
 
 
 @pytest.fixture()

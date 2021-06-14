@@ -10,17 +10,17 @@ from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import write_abc, blast_to_mcl, mcl_to_fasta
 
 
-DUPES_INPUT = "vfam_input/Dupes"
-GENERIC_INPUT = "vfam_input/Generic"
-LARGE_INPUT = "vfam_input/Large"
+DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
+GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
+LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
 
-BLAST_DUPES = "vfam_og_intermediates/Dupes/blast"
-BLAST_GENERIC = "vfam_og_intermediates/Generic/blast"
-BLAST_LARGE = "vfam_og_intermediates/Large/blast"
+BLAST_DUPES = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "blast"
+BLAST_GENERIC = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "blast"
+BLAST_LARGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "blast"
 
-DUPES_CLUSTERS = "vfam_og_intermediates/Dupes/fasta_files"
-GENERIC_CLUSTERS = "vfam_og_intermediates/Generic/fasta_files"
-LARGE_CLUSTERS = "vfam_og_intermediates/Large/fasta_files"
+DUPES_CLUSTERS = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "fasta_files"
+GENERIC_CLUSTERS = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "fasta_files"
+LARGE_CLUSTERS = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "fasta_files"
 
 
 @pytest.fixture()

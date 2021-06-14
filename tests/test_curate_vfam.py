@@ -8,13 +8,13 @@ from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, remove_phages, group_input_paths, remove_dupes
 
 
-DUPES_INPUT = "vfam_input/Dupes"
-GENERIC_INPUT = "vfam_input/Generic"
-LARGE_INPUT = "vfam_input/Large"
+DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
+GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
+LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
 
-FILTERED_DUPES = "vfam_og_intermediates/Dupes/filtered_fasta"
-FILTERED_GENERIC = "vfam_og_intermediates/Generic/filtered_fasta"
-FILTERED_LARGE = "vfam_og_intermediates/Large/filtered_fasta"
+FILTERED_DUPES = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "filtered_fasta"
+FILTERED_GENERIC = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "filtered_fasta"
+FILTERED_LARGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "filtered_fasta"
 
 
 @pytest.fixture()
