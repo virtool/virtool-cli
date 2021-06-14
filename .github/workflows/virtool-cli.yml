@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ master ]
   push:
-    branches: "*"
+    branches: [ master ]
 
 jobs:
   test:
@@ -12,12 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Build
+        run: docker build -t virtool/cli .
+
       - name: Run CI
-        run: docker-compose up --build --abort-on-container-exit --exit-code-from pytest
+        run: |
+          cd tests
+          docker-compose up --build --abort-on-container-exit --exit-code-from pytest
 
       - name: Run codacy-coverage-reporter
         if: ${{ github.event_name == 'push' }}
         uses: codacy/codacy-coverage-reporter-action@master
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: $GITHUB_WORKSPACE/coverage.xml
+          coverage-reports: $GITHUB_WORKSPACE/coverage/coverage.xml
