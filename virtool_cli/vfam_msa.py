@@ -9,7 +9,8 @@ NUM_CORES = 16
 
 
 def batch_muscle_call(fasta_files: list) -> list:
-    """This function takes in a list of fasta files and makes msas using MUSCLE
+    """
+    This function takes in a list of fasta files and makes msas using MUSCLE
 
     :param fasta_files: list of fasta files to pruduce msas
     :return: list of alignment files generated in fasta format
@@ -28,8 +29,7 @@ def batch_muscle_call(fasta_files: list) -> list:
 
 
 def batch_hmm_call(msa_files: list) -> list:
-    """
-    Takes in a  list of fasta msa files, and builds HMMs for each of the using HMMer
+    """Takes in a  list of fasta msa files, and builds HMMs for each of the using HMMer
 
     :param msa_files: list of msa files from batch_muscle_call step
     :return: hmm_files, a list of hmm files produced

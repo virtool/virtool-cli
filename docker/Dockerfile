@@ -14,3 +14,8 @@ RUN conda install -c bioconda hmmer
 RUN conda install -c bioconda blast
 RUN conda install -c bioconda mcl
 
+COPY . .
+
+RUN pip install .
+
+ENTRYPOINT ["virtool", "vfam"]

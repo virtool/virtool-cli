@@ -48,13 +48,6 @@ def test_cluster_sequences(input_dir, clustered_file, clustered_result, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam."""
     result = clustered_result
     assert filecmp.cmp(result, Path(clustered_file))
-    count = 0
-    with result.open('r') as r_file:
-        with Path(clustered_file).open('r') as e_file:
-            for r_line, e_line in zip(r_file.readlines(), e_file.readlines()):
-                assert r_line == e_line
-                count += 1
-            assert count > 0
 
     result = str(result) + ".clstr"
     clustered_file = str(clustered_file) + ".clstr"

@@ -9,18 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: python:3.8-buster
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
 
-      - name: Test with pytest
-        run: |
-          pytest -x --cov --cov-report xml
+      - name: Run CI
+        run: docker-compose up --build --abort-on-container-exit --exit-code-from pytest
 
       - name: Run codacy-coverage-reporter
         if: ${{ github.event_name == 'push' }}
