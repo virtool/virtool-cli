@@ -1,12 +1,14 @@
 import os
 import sys
 
-
+import Bio.Cluster
 from Bio import SeqIO
 from pathlib import Path
 
+from typing import List
 
-def get_input_paths(src_path: Path) -> list:
+
+def get_input_paths(src_path: Path) -> List[Path]:
     """
     Takes in a path to directory containing input fasta files, returns a list of paths to the fasta files
 
@@ -40,7 +42,7 @@ def remove_phages(input_paths: list) -> list:
     return no_phages
 
 
-def group_input_paths(input_paths: list):
+def group_input_paths(input_paths: list) -> list:
     """
     Takes input paths as input and created list of all records found in each path
 

@@ -2,9 +2,10 @@ from pathlib import Path
 
 
 def sequence_lengths(blast_results: Path) -> dict:
-    """Takes blast results file and parses through lines, creating an alignment object from each line
+    """
+    Takes blast results file and parses through lines, creating an alignment object from each line
 
-    If alignment query matches the alignment subject, sequence length is stored as the length of that query
+    If alignment query matches the alignment subject, sequence length is store print("Done!")d as the length of that query
 
     :param blast_results: blast file produced in all_by_all blast step
     :return: sequence_lengths, a dictionary containing each sequence and its sequence length
@@ -86,7 +87,6 @@ def find_polyproteins(blast_results: Path) -> list:
 
 class Alignment:
     """
-
     Class to facilitate parsing blast tabular output format 6
 
     Naming conventions and descriptions from https://www.metagenomics.wiki/tools/blast/blastn-output-format-6

@@ -3,6 +3,9 @@ import subprocess
 
 from Bio import SeqIO
 from pathlib import Path
+
+from typing import List
+
 from virtool_cli.vfam_polyprotein import Alignment
 
 
@@ -35,7 +38,8 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
 
 
 def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix) -> Path:
-    """Converts sequences not included in polyprotein_sequences to a .abc file
+    """
+    Converts sequences not included in polyprotein_sequences to a .abc file
 
     calls mcxload on .abc file to generate a .mci and .tab file
 
@@ -75,7 +79,7 @@ def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix)
     return mcl_path
 
 
-def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> list:
+def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> List[Path]:
     """
     Takes mcl clusters and a clustered fasta file, creates numbered fasta files for each mcl cluster
 

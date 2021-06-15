@@ -4,11 +4,12 @@ import subprocess
 
 from pathlib import Path
 
+from typing import List
 
 NUM_CORES = 16
 
 
-def batch_muscle_call(fasta_files: list) -> list:
+def batch_muscle_call(fasta_files: list) -> List[Path]:
     """
     This function takes in a list of fasta files and makes msas using MUSCLE
 
@@ -18,8 +19,8 @@ def batch_muscle_call(fasta_files: list) -> list:
     msa_files = []
     for fasta_file in fasta_files:
 
-        msa_file = f"{fasta_file}.msa"
-        log_file = f"{fasta_file}.log"
+        msa_file = Path(f"{fasta_file}.msa")
+        log_file = Path(f"{fasta_file}.log")
         msa_files.append(msa_file)
 
         muscle_cmd = ["muscle", "-in", fasta_file, "-out", msa_file, "-log", log_file, "-quiet"]
@@ -28,8 +29,9 @@ def batch_muscle_call(fasta_files: list) -> list:
     return msa_files
 
 
-def batch_hmm_call(msa_files: list) -> list:
-    """Takes in a  list of fasta msa files, and builds HMMs for each of the using HMMer
+def batch_hmm_call(msa_files: list) -> List[Path]:
+    """
+    Takes in a  list of fasta msa files, and builds HMMs for each of the using HMMer
 
     :param msa_files: list of msa files from batch_muscle_call step
     :return: hmm_files, a list of hmm files produced

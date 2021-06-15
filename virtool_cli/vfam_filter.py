@@ -2,11 +2,14 @@ from Bio import SeqIO
 from pathlib import Path
 
 
+from typing import Optional, List
+
 COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
 
 
-def filter_file_on_coverage(fasta_file: Path):
-    """Takes a fasta file and a dictionary containing coverage heuristics information
+def filter_file_on_coverage(fasta_file: Path) -> Optional[Path]:
+    """
+    Takes a fasta file and a dictionary containing coverage heuristics information
 
     any sequences that don't subscribe to these heuristics are removed
 
@@ -53,7 +56,7 @@ def filter_file_on_coverage(fasta_file: Path):
         return output_path
 
 
-def filter_on_coverage(fasta_files: list) -> list:
+def filter_on_coverage(fasta_files: list) -> List[Path]:
     """
     Takes in list of fasta files, and calls filter_file_on_coverage to filter them by coverage
 
@@ -69,7 +72,7 @@ def filter_on_coverage(fasta_files: list) -> list:
     return filtered_by_coverage
 
 
-def filter_on_number(fasta_files, min_sequences):
+def filter_on_number(fasta_files, min_sequences) -> List[Path]:
     """
     Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
 
