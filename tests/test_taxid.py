@@ -3,7 +3,10 @@ import os
 import json
 import subprocess
 
-TEST_PATH = "tests/files/src_a"
+
+TEST_PATH = "files/src_a"
+REF_TEST_PATH = "tests/files/reference.json"
+REF_INDENT_TEST_PATH = "tests/files/reference_with_indent.json"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -27,3 +30,6 @@ def test_taxid(path, command):
             assert otu["taxid"] is None
         else:
             assert otu["taxid"] is not None
+            assert type(otu["taxid"]) == int
+
+

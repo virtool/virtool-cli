@@ -71,7 +71,7 @@ async def taxid(src_path: pathlib.Path, force_update: bool):
     console.print(f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
 
 
-def fetch_taxid(name: str) -> str:
+def fetch_taxid(name: str) -> int:
     """
     Searches the NCBI taxonomy database for a given OTU name and fetches and returns
     its taxon id. If a taxon id was not found the function should return None.
@@ -83,7 +83,7 @@ def fetch_taxid(name: str) -> str:
     record = Entrez.read(handle)
 
     try:
-        taxid = record["IdList"][0]
+        taxid = int(record["IdList"][0])
     except IndexError:
         taxid = None
 
@@ -106,7 +106,7 @@ async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console)
     await q.put((name, taxid))
 
 
-async def log_results(name: str, taxid: str, console: Console):
+async def log_results(name: str, taxid: int, console: Console):
     """
     Logs results of the taxid fetch from the NCBI taxonomy database
 
@@ -124,7 +124,7 @@ async def log_results(name: str, taxid: str, console: Console):
     console.print()
 
 
-def update_otu(taxid: str, path: pathlib.Path):
+def update_otu(taxid: int, path: pathlib.Path):
     """
     Updates a otu.json's taxid key with either a taxon id or None
     depending on whether an id was able to be retrieved.
@@ -134,7 +134,7 @@ def update_otu(taxid: str, path: pathlib.Path):
     """
     with open(path / "otu.json", 'r+') as f:
         otu = json.load(f)
-        otu["taxid"] = int(taxid) if taxid else taxid
+        otu["taxid"] = taxid if taxid else taxid
         f.seek(0)
         json.dump(otu, f, indent=4)
 
