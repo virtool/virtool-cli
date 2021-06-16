@@ -77,7 +77,7 @@ def filter_on_number(fasta_files, min_sequences) -> List[Path]:
     Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
 
     :param fasta_files: list of fasta files to be filtered
-    :param min_sequences: Filter out clusters with fewer records than min_sequences
+    :param min_sequences: Filter out clusters with fewer records than min_sequences_check
     :return: filtered_files, a list of filtered fasta files
     """
     filtered_files = []

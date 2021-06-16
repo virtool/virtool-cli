@@ -45,7 +45,7 @@ def polyprotein_name_check(clustered_records: Path, prefix) -> Path:
     if prefix:
         output_name = f"{prefix}_polyp_name_check.faa"
     else:
-        output_name = "polyp_name_check.faa"
+        output_name = "no_named_polyproteins.faa"
 
     output_path = clustered_records.parent / Path(output_name)
 

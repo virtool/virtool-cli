@@ -16,29 +16,46 @@ def cli():
 
 
 @cli.command()
-@click.option("-src", "--src_path", required=True, type=str, help="Path to input reference directory")
+@click.option("-src", "--src-path", required=True, type=str, help="Path to input reference directory")
 @click.option("-o", "--output", required=True, help="Path to output directory for profile HMMs and intermediate files")
 @click.option("-p", "--prefix", default=None, help="Prefix for intermediate and result files")
-@click.option("-seq_min", "--sequence_min_length", default=1, help="Minimum sequence length to be included in "
-                                                                   "input")
-@click.option("-phage", "phage_name_check", default=False,
-              help="Filter out phage sequences based on record description")
-@click.option("-f_cov", "--fraction_coverage", default=None, help="Fraction coverage for cd-hit step")
-@click.option("-f_id", "--fraction_id", default=1.0, help="Fraction ID for cd-hit step")
-@click.option("-cores", "--num_cores", default=8, help="Number of cores to be used in all by all blast step")
-@click.option("-polyp", "--polyp_name_check", default=False, help="Filter out polyprotein sequences based on "
-                                                                 "record description")
-@click.option("-i_num", "--inflation_num", default=None, help="Inflation number to be used in mcl step")
-@click.option("-cvg_check", "--filter_on_cvg", default=False, help="Filter clustered fasta files on coverage")
-@click.option("-min_seqs", "--min_sequences", default=2, help="Filter out clusters with fewer records than "
-                                                              "min_sequences")
-def vfam(src_path, output, prefix, sequence_min_length, phage_name_check, fraction_coverage, fraction_id, num_cores,
-         polyp_name_check, inflation_num, filter_on_cvg, min_sequences):
+@click.option("--sequence-min-length", default=1, help="Minimum sequence length to be included in input")
+@click.option("--no-named-phages", default=False, help="Filter out phage sequences based on record description")
+@click.option("--fraction-coverage", default=None, help="Fraction coverage for cd-hit step")
+@click.option("--fraction-id", default=1.0, help="Fraction ID for cd-hit step")
+@click.option("-n", "--num-cores", default=8, help="Number of cores to be used in all by all blast step")
+@click.option("--no-named-polyproteins", default=False, help="Filter out polyprotein sequences based on "
+                                                             "record description")
+@click.option("--inflation-num", default=None, help="Inflation number to be used in mcl step")
+@click.option("-cvg-check", "--coverage-check", default=False, help="Filter clustered fasta files on coverage")
+@click.option("-min-seqs-check", "--min-sequences-check", default=2, help="Filter out clusters with fewer records than "
+                                                                          "min_sequences_check")
+def vfam(src_path: str,
+         output: str,
+         prefix: str,
+         sequence_min_length: int,
+         no_named_phages: bool,
+         fraction_coverage: float,
+         fraction_id: float,
+         num_cores: int,
+         no_named_polyproteins: bool,
+         inflation_num: int,
+         coverage_check: bool,
+         min_sequences_check: bool):
     """Build profile HMMS from fasta."""
     try:
-        virtool_cli.vfam.run(Path(src_path), Path(output), prefix, sequence_min_length, phage_name_check,
-                             fraction_coverage, fraction_id, num_cores, polyp_name_check, inflation_num,
-                             filter_on_cvg, min_sequences)
+        virtool_cli.vfam.run(Path(src_path),
+                             Path(output),
+                             prefix,
+                             sequence_min_length,
+                             no_named_phages,
+                             fraction_coverage,
+                             fraction_id,
+                             num_cores,
+                             no_named_polyproteins,
+                             inflation_num,
+                             coverage_check,
+                             min_sequences_check)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 

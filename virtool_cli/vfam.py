@@ -7,12 +7,12 @@ from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_hmms, organize_intermediates
 
 
-def run(src_path, output, prefix, sequence_min_length, phage_name_check, fraction_coverage, fraction_id, num_cores,
-        polyp_name_check, inflation_num, filter_on_cvg, min_sequences):
+def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction_coverage, fraction_id, num_cores,
+        no_named_polyproteins, inflation_num, coverage_check, min_sequences_check):
     """Dictates workflow for vfam pipeline."""
     input_paths = get_input_paths(Path(src_path))
 
-    if phage_name_check:
+    if no_named_phages:
         records = remove_phages(input_paths)
     else:
         records = group_input_paths(input_paths)
@@ -21,7 +21,7 @@ def run(src_path, output, prefix, sequence_min_length, phage_name_check, fractio
 
     cd_hit_result = generate_clusters(no_dupes, prefix, fraction_coverage, fraction_id)
 
-    if polyp_name_check:
+    if no_named_polyproteins:
         cd_hit_result = polyprotein_name_check(cd_hit_result, prefix)
 
     blast_results = all_by_all_blast(cd_hit_result, prefix, num_cores)
@@ -32,10 +32,10 @@ def run(src_path, output, prefix, sequence_min_length, phage_name_check, fractio
 
     fasta_files = mcl_to_fasta(mcl_results, cd_hit_result, prefix)
 
-    if filter_on_cvg:
+    if coverage_check:
         fasta_files = filter_on_coverage(fasta_files)
 
-    fasta_files = filter_on_number(fasta_files, min_sequences)
+    fasta_files = filter_on_number(fasta_files, min_sequences_check)
 
     aligned_files = batch_muscle_call(fasta_files)
 
