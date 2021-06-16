@@ -6,7 +6,6 @@ from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
-
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
 LARGE_INPUT = VFAM_INPUT_PATH / "Large"

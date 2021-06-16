@@ -20,7 +20,8 @@ def command(output):
         "-src"]
 
 
-@pytest.mark.parametrize("src", [TEST_PATH, TEST_WITH_INDENT_PATH])
+@pytest.mark.parametrize("src", [TEST_PATH,
+                                 TEST_WITH_INDENT_PATH])
 def test_divide(command, src, output, tmpdir):
     """
     Tests the divide operation to see if it produces a valid directory

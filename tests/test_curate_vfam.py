@@ -7,7 +7,6 @@ from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, remove_phages, group_input_paths, remove_dupes
 from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
-
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
 LARGE_INPUT = VFAM_INPUT_PATH / "Large"
@@ -39,7 +38,9 @@ def no_dupes(no_phages, output):
     return remove_dupes(no_phages, output, None, 1)
 
 
-@pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
+@pytest.mark.parametrize("input_dir", [DUPES_INPUT,
+                                       GENERIC_INPUT,
+                                       LARGE_INPUT])
 def test_get_input_paths(input_dir, input_paths):
     """Test that correct file names are found after calling get_input_paths."""
     listdir = os.listdir(input_dir)
@@ -49,14 +50,18 @@ def test_get_input_paths(input_dir, input_paths):
         assert os.path.split(path)[1] in listdir
 
 
-@pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
+@pytest.mark.parametrize("input_dir", [DUPES_INPUT,
+                                       GENERIC_INPUT,
+                                       LARGE_INPUT])
 def test_remove_phages(input_dir, no_phages):
     """Test that "phage" is not found in record descriptions for any records in records list."""
     for record in no_phages:
         assert "phage" not in record.description
 
 
-@pytest.mark.parametrize("input_dir", [DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT])
+@pytest.mark.parametrize("input_dir", [DUPES_INPUT,
+                                       GENERIC_INPUT,
+                                       LARGE_INPUT])
 def test_curated_file(input_dir, output, no_dupes):
     """Assert all sequences are longer than min_length, no record descriptions contain 'phage'."""
     with Path(no_dupes) as handle:
@@ -65,7 +70,8 @@ def test_curated_file(input_dir, output, no_dupes):
             assert len(record.seq) > 1
 
 
-@pytest.mark.parametrize("input_dir, filtered_file", [(DUPES_INPUT, FILTERED_DUPES), (GENERIC_INPUT, FILTERED_GENERIC),
+@pytest.mark.parametrize("input_dir, filtered_file", [(DUPES_INPUT, FILTERED_DUPES),
+                                                      (GENERIC_INPUT, FILTERED_GENERIC),
                                                       (LARGE_INPUT, FILTERED_LARGE)])
 def test_remove_dupes(input_dir, filtered_file, output):
     """Test that remove_dupes step of program produces desired output to match filtered og vfam file."""

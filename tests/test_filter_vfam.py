@@ -11,7 +11,6 @@ from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
-
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
 LARGE_INPUT = VFAM_INPUT_PATH / "Large"
@@ -49,7 +48,8 @@ def fasta_files(input_dir, output):
     return mcl_to_fasta(mcl_file, clustered_file, None)
 
 
-@pytest.mark.parametrize("input_dir, filtered_files", [(DUPES_INPUT, DUPES_COVERAGE), (GENERIC_INPUT, GENERIC_COVERAGE),
+@pytest.mark.parametrize("input_dir, filtered_files", [(DUPES_INPUT, DUPES_COVERAGE),
+                                                       (GENERIC_INPUT, GENERIC_COVERAGE),
                                                        (LARGE_INPUT, LARGE_COVERAGE)])
 def test_on_cvg_files(fasta_files, input_dir, filtered_files):
     """Test that filter_on_coverage filters the same files as original vfam."""

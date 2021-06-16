@@ -15,8 +15,10 @@ def command():
     subprocess.call(command)
 
 
-@pytest.mark.parametrize("path", ["h/hop_stunt_viroid", "r/reovirus_tf1_(not_a_plant_virus)",
-                                  "t/tobacco_mosaic_virus", "t/totivirus_tf1_(not_a_plant_virus)"])
+@pytest.mark.parametrize("path", ["h/hop_stunt_viroid",
+                                  "r/reovirus_tf1_(not_a_plant_virus)",
+                                  "t/tobacco_mosaic_virus",
+                                  "t/totivirus_tf1_(not_a_plant_virus)"])
 def test_taxid(path, command):
     path = os.path.join(TEST_PATH, path)
 

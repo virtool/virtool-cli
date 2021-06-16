@@ -1,10 +1,7 @@
-import os
 import sys
 
-import Bio.Cluster
 from Bio import SeqIO
 from pathlib import Path
-
 from typing import List
 
 
@@ -15,8 +12,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
     :param src_path: Path to input source directory containing unfiltered fasta files
     :return: input_paths, list of paths to input protein files if any files are found
     """
-    input_files = os.listdir(src_path)
-    input_paths = [src_path / file for file in input_files]
+    input_paths = [src_path / file for file in src_path.iterdir()]
 
     if input_paths:
         return input_paths
@@ -84,10 +80,9 @@ def remove_dupes(records: list, output: Path, prefix, sequence_min_length: int) 
     if not output_dir.exists():
         output_dir.mkdir()
 
+    output_name = "curated_records.faa"
     if prefix:
-        output_name = f"{prefix}_curated_records.faa"
-    else:
-        output_name = "curated_records.faa"
+        output_name = f"{prefix}_{output_name}"
 
     output_path = output_dir / Path(output_name)
     SeqIO.write(records_to_output, Path(output_path), "fasta")

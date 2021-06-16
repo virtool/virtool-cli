@@ -1,7 +1,6 @@
 from Bio import SeqIO
 from pathlib import Path
 
-
 from typing import Optional, List
 
 COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
@@ -24,18 +23,19 @@ def filter_file_on_coverage(fasta_file: Path) -> Optional[Path]:
         lengths.append(len(record.seq))
     lengths.sort()
 
+    upper = lengths[int(len(lengths) / 2)]
+    lower = lengths[int((len(lengths) / 2) - 1)]
+    median = float(upper + lower) / 2
+
     if len(lengths) % 2 != 0:
         median = float(lengths[int(len(lengths) / 2)])
-    else:
-        upper = lengths[int(len(lengths) / 2)]
-        lower = lengths[int((len(lengths) / 2) - 1)]
-        median = float(upper + lower) / 2
 
     coverage_key = int(median / 100)
+
+    coverage_threshold = (1.0 + max(COVERAGE_HEUR_DICT.values()))/2
+
     if coverage_key in COVERAGE_HEUR_DICT:
         coverage_threshold = (1.0 + COVERAGE_HEUR_DICT[coverage_key])/2
-    else:
-        coverage_threshold = (1.0 + max(COVERAGE_HEUR_DICT.values()))/2
 
     to_remove = [ID for ID, length in record_lengths.items()
                  if length < coverage_threshold * median or length * coverage_threshold > median]

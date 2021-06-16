@@ -1,11 +1,8 @@
 import subprocess
 
-
 from Bio import SeqIO
 from pathlib import Path
-
 from typing import List
-
 from virtool_cli.vfam_polyprotein import Alignment
 
 
@@ -18,10 +15,9 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
     :param prefix: Prefix for intermediate and result files
     :return: path to abc file
     """
+    abc_name = "blast.abc"
     if prefix:
-        abc_name = f"{prefix}_blast.abc"
-    else:
-        abc_name = "blast.abc"
+        abc_name = f"{prefix}_{abc_name}"
 
     abc_path = blast_results.parent / Path(abc_name)
 
@@ -53,14 +49,14 @@ def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix)
     """
     abc_path = write_abc(blast_results, polyproteins, prefix)
 
+    mci_name = "blast.mci"
+    tab_name = "blast.tab"
+    mcl_name = "blast.mcl"
+
     if prefix:
-        mci_name = f"{prefix}_blast.mci"
-        tab_name = f"{prefix}_blast.tab"
-        mcl_name = f"{prefix}_blast.mcl"
-    else:
-        mci_name = "blast.mci"
-        tab_name = "blast.tab"
-        mcl_name = "blast.mcl"
+        mci_name = f"{prefix}_{mci_name}"
+        tab_name = f"{prefix}_{tab_name}"
+        mcl_name = f"{prefix}_{mcl_name}"
 
     mci_path = blast_results.parent / Path(mci_name)
     tab_path = blast_results.parent / Path(tab_name)
@@ -94,10 +90,10 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> List[Path]:
     with mcl_path.open('r') as handle:
         for line in handle:
             line_num += 1
+
+            fasta_name = f"cluster_{line_num}"
             if prefix:
-                fasta_name = f"{prefix}_cluster_{line_num}"
-            else:
-                fasta_name = f"cluster_{line_num}"
+                fasta_name = f"{prefix}_{fasta_name}"
 
             for record_id in line.strip().split("\t"):
                 mcl_dict[record_id] = fasta_path / Path(fasta_name)

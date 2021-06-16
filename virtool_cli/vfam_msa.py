@@ -1,9 +1,7 @@
 import os.path
 import subprocess
 
-
 from pathlib import Path
-
 from typing import List
 
 NUM_CORES = 16
@@ -57,10 +55,10 @@ def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
     :param output: Path to output directory
     :param prefix: Prefix for intermediate and result files
     """
-    if prefix is not None:
-        output_name = f"{prefix}_master.hmm"
-    else:
-        output_name = "master.hmm"
+    output_name = "master.hmm"
+    if prefix:
+        output_name = f"{prefix}_{output_name}"
+
     output_file = output / Path(output_name)
 
     with output_file.open('w') as o_handle:

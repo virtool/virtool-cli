@@ -11,7 +11,6 @@ from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call
 from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
-
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
 LARGE_INPUT = VFAM_INPUT_PATH / "Large"
@@ -46,7 +45,8 @@ def get_msa(input_dir, output):
     return batch_muscle_call(fasta_files)
 
 
-@pytest.mark.parametrize("input_dir, msa", [(DUPES_INPUT, DUPES_MSA), (GENERIC_INPUT, GENERIC_MSA)])
+@pytest.mark.parametrize("input_dir, msa", [(DUPES_INPUT, DUPES_MSA),
+                                            (GENERIC_INPUT, GENERIC_MSA)])
 def test_batch_muscle_call(get_msa, input_dir, msa):
     """Test msa files by comparing to og vfam msa data."""
     msa_names = os.listdir(msa)
@@ -63,7 +63,8 @@ def test_batch_muscle_call(get_msa, input_dir, msa):
         assert filecmp.cmp(r_file, e_file)
 
 
-@pytest.mark.parametrize("input_dir, hmm", [(DUPES_INPUT, DUPES_HMM), (GENERIC_INPUT, GENERIC_HMM)])
+@pytest.mark.parametrize("input_dir, hmm", [(DUPES_INPUT, DUPES_HMM),
+                                            (GENERIC_INPUT, GENERIC_HMM)])
 def test_batch_hmm_call(get_msa, input_dir, hmm):
     """Test profile HMMs by comparing lines 17 onward (part that contains hmm data) of output data and og vfam data."""
     hmm_names = os.listdir(hmm)

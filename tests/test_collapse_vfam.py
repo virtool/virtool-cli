@@ -1,12 +1,10 @@
 import filecmp
 import pytest
 
-
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
 from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
-
 
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
@@ -55,7 +53,8 @@ def test_cluster_sequences(input_dir, clustered_file, clustered_result, output):
     assert filecmp.cmp(result, clustered_file)
 
 
-@pytest.mark.parametrize("input_dir, blast_file", [(DUPES_INPUT, BLAST_DUPES), (GENERIC_INPUT, BLAST_GENERIC),
+@pytest.mark.parametrize("input_dir, blast_file", [(DUPES_INPUT, BLAST_DUPES),
+                                                   (GENERIC_INPUT, BLAST_GENERIC),
                                                    (LARGE_INPUT, BLAST_LARGE)])
 def test_all_by_all_blast(input_dir, blast_file, blast_result, output):
     """Test that cluster output file from cluster sequences matches desired output from original vfam."""
