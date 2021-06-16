@@ -1,9 +1,6 @@
 import pytest
 
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
-from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
-from virtool_cli.vfam_polyprotein import find_polyproteins
 from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
@@ -13,24 +10,6 @@ LARGE_INPUT = VFAM_INPUT_PATH / "Large"
 POLYP_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "polyproteins"
 POLYP_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "polyproteins"
 POLYP_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "polyproteins"
-
-
-@pytest.fixture()
-def output(tmp_path):
-    output_path = tmp_path / "dir"
-    output_path.mkdir()
-    return output_path
-
-
-@pytest.fixture()
-def polyproteins(input_dir, output):
-    input_paths = get_input_paths(Path(input_dir))
-    no_phages = group_input_paths(input_paths)
-    no_dupes = remove_dupes(no_phages, output, None, 1)
-
-    clustered_file = generate_clusters(no_dupes, None, None, 1.0)
-    blast_file = all_by_all_blast(clustered_file, None, 8)
-    return find_polyproteins(blast_file)
 
 
 @pytest.mark.parametrize("input_dir, expected_polyproteins", [(DUPES_INPUT, POLYP_DUPES),
