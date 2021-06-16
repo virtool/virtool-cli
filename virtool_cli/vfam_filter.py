@@ -21,6 +21,7 @@ def filter_file_on_coverage(fasta_file: Path) -> Optional[Path]:
     for record in SeqIO.parse(fasta_file, "fasta"):
         record_lengths[record.id] = len(record.seq)
         lengths.append(len(record.seq))
+
     lengths.sort()
 
     upper = lengths[int(len(lengths) / 2)]

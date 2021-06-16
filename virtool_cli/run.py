@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import click
-
 import virtool_cli.vfam
 import virtool_cli.build
 import virtool_cli.divide
@@ -16,8 +15,9 @@ def cli():
 
 
 @cli.command()
-@click.option("-src", "--src-path", required=True, type=str, help="Path to input reference directory")
-@click.option("-o", "--output", required=True, help="Path to output directory for profile HMMs and intermediate files")
+@click.option("-src", "--src-path", required=True, help="Path to input reference directory")
+@click.option("-o", "--output", required=True, help="Path to output directory for profile HMMs and "
+                                                    "intermediate files")
 @click.option("-p", "--prefix", default=None, help="Prefix for intermediate and result files")
 @click.option("--sequence-min-length", default=1, help="Minimum sequence length to be included in input")
 @click.option("--no-named-phages", default=False, help="Filter out phage sequences based on record description")
@@ -28,8 +28,8 @@ def cli():
                                                              "record description")
 @click.option("--inflation-num", default=None, help="Inflation number to be used in mcl step")
 @click.option("-cvg-check", "--coverage-check", default=False, help="Filter clustered fasta files on coverage")
-@click.option("-min-seqs-check", "--min-sequences-check", default=2, help="Filter out clusters with fewer records than "
-                                                                          "min_sequences_check")
+@click.option("-min-seqs", "--min-sequences", default=2, help="Filter out clusters with fewer records than "
+                                                              "min_sequences")
 def vfam(src_path: str,
          output: str,
          prefix: str,
@@ -41,7 +41,7 @@ def vfam(src_path: str,
          no_named_polyproteins: bool,
          inflation_num: int,
          coverage_check: bool,
-         min_sequences_check: bool):
+         min_sequences: int):
     """Build profile HMMS from fasta."""
     try:
         virtool_cli.vfam.run(Path(src_path),
@@ -55,8 +55,10 @@ def vfam(src_path: str,
                              no_named_polyproteins,
                              inflation_num,
                              coverage_check,
-                             min_sequences_check)
-    except (FileNotFoundError, NotADirectoryError):
+                             min_sequences)
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo(src_path)
+        click.echo(e)
         click.echo("Not a valid reference directory")
 
 

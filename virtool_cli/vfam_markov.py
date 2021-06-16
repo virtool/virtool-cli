@@ -66,10 +66,10 @@ def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix)
                    "-o", mci_path, "-write-tab", tab_path]
     subprocess.run(mcxload_cmd, check=True, shell=False)
 
-    if inflation_num is None:
-        mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
-    else:
-        mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-I", inflation_num, "-o", mcl_path]
+    mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
+    if inflation_num:
+        mcl_cmd += ["-I", inflation_num]
+
     subprocess.run(mcl_cmd, check=True, shell=False)
 
     return mcl_path

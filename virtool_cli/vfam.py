@@ -8,7 +8,7 @@ from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_
 
 
 def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction_coverage, fraction_id, num_cores,
-        no_named_polyproteins, inflation_num, coverage_check, min_sequences_check):
+        no_named_polyproteins, inflation_num, coverage_check, min_sequences):
     """Dictates workflow for vfam pipeline."""
     input_paths = get_input_paths(Path(src_path))
 
@@ -35,7 +35,7 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
     if coverage_check:
         fasta_files = filter_on_coverage(fasta_files)
 
-    fasta_files = filter_on_number(fasta_files, min_sequences_check)
+    fasta_files = filter_on_number(fasta_files, min_sequences)
 
     aligned_files = batch_muscle_call(fasta_files)
 

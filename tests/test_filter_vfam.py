@@ -4,6 +4,7 @@ import filecmp
 
 from Bio import SeqIO
 from pathlib import Path
+
 from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"

@@ -76,7 +76,7 @@ def organize_intermediates(output: Path):
 
     :param output: Path to output directory containing intermediate and master file
     """
-    intermediate_path = output / "intermediate_files"
+    intermediate_path = output / Path("intermediate_files")
     file_names = os.listdir(intermediate_path)
 
     hmm_files = output / "hmm_files"
