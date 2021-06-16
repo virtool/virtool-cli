@@ -29,6 +29,6 @@ def test_taxid(path, command):
             assert otu["taxid"] is None
         else:
             assert otu["taxid"] is not None
-            assert type(otu["taxid"]) == int
+            assert isinstance(otu["taxid"], int)
 
 
