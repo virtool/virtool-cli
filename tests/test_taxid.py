@@ -3,9 +3,9 @@ import os
 import json
 import subprocess
 
-from test_build import TEST_FILES
+from paths import TEST_FILES_PATH
 
-TEST_PATH = TEST_FILES / "src_a"
+TEST_PATH = TEST_FILES_PATH / "src_a"
 
 
 @pytest.fixture(scope="session", autouse=True)
