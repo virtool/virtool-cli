@@ -2,9 +2,10 @@ import pytest
 import subprocess
 import filecmp
 
-TEST_PATH = "tests/files/reference.json"
-TEST_WITH_INDENT_PATH = "tests/files/reference_with_indent.json"
-TEST_DIRECTORY_PATH = "tests/files/src"
+from test_build import TEST_FILES
+TEST_PATH = TEST_FILES / "reference.json"
+TEST_WITH_INDENT_PATH = TEST_FILES / "reference_with_indent.json"
+TEST_DIRECTORY_PATH = TEST_FILES / "src"
 
 
 @pytest.fixture()
@@ -14,10 +15,7 @@ def output(tmpdir):
 
 @pytest.fixture()
 def command(output):
-    return [
-        "python", "virtool_cli/run.py",
-        "divide", "-o", str(output),
-        "-src"]
+    return ["virtool", "divide", "-o", str(output), "-src"]
 
 
 @pytest.mark.parametrize("src", [TEST_PATH, TEST_WITH_INDENT_PATH])

@@ -3,10 +3,9 @@ import os
 import json
 import subprocess
 
+from test_build import TEST_FILES
 
-TEST_PATH = "files/src_a"
-REF_TEST_PATH = "tests/files/reference.json"
-REF_INDENT_TEST_PATH = "tests/files/reference_with_indent.json"
+TEST_PATH = TEST_FILES / "src_a"
 
 
 @pytest.fixture(scope="session", autouse=True)
