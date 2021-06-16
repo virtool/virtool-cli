@@ -64,6 +64,7 @@ def create_otu_path(otu_name: str, reference_path: pathlib.Path = None, first_le
 
     return otu_name.replace(" ", "_").replace("/", "_").lower()
 
+
 async def get_isolates(path: pathlib.Path) -> dict:
     """
     Returns a mapping to every isolate and their folder name.

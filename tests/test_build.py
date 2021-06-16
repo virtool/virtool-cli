@@ -4,8 +4,10 @@ import arrow
 import pytest
 import subprocess
 
-TEST_PATH = "tests/files/reference.json"
-TEST_WITH_INDENT_PATH = "tests/files/reference_with_indent.json"
+from paths import TEST_FILES_PATH
+
+TEST_PATH = TEST_FILES_PATH / "reference.json"
+TEST_WITH_INDENT_PATH = TEST_FILES_PATH / "reference_with_indent.json"
 
 
 @pytest.fixture()
@@ -16,9 +18,9 @@ def output(tmpdir):
 @pytest.fixture()
 def command(output):
     return [
-        "python", "virtool_cli/run.py",
+        "virtool",
         "build", "-o", str(output),
-        "-src", "tests/files/src"]
+        "-src", TEST_FILES_PATH / "src"]
 
 
 @pytest.mark.parametrize("version", [None, "v1.0.0", "v0.9.3"])

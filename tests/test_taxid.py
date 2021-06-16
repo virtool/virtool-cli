@@ -3,7 +3,9 @@ import os
 import json
 import subprocess
 
-TEST_PATH = "tests/files/src_a"
+from paths import TEST_FILES_PATH
+
+TEST_PATH = TEST_FILES_PATH / "src_a"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -27,3 +29,6 @@ def test_taxid(path, command):
             assert otu["taxid"] is None
         else:
             assert otu["taxid"] is not None
+            assert isinstance(otu["taxid"], int)
+
+
