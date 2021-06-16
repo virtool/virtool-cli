@@ -2,7 +2,6 @@ import os
 import pytest
 import filecmp
 
-
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
 from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
@@ -10,19 +9,18 @@ from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call
+from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
 
-DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
-GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
-LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
+DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
+GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
+LARGE_INPUT = VFAM_INPUT_PATH / "Large"
 
+DUPES_MSA = VFAM_INTERMEDIATES_PATH / "Dupes" / "msa_files"
+GENERIC_MSA = VFAM_INTERMEDIATES_PATH / "Generic" / "msa_files"
 
-DUPES_MSA = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "msa_files"
-GENERIC_MSA = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "msa_files"
-
-
-DUPES_HMM = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "hmm_files"
-GENERIC_HMM = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "hmm_files"
+DUPES_HMM = VFAM_INTERMEDIATES_PATH / "Dupes" / "hmm_files"
+GENERIC_HMM = VFAM_INTERMEDIATES_PATH / "Generic" / "hmm_files"
 
 
 @pytest.fixture()

@@ -2,7 +2,6 @@ import os
 import pytest
 import filecmp
 
-
 from Bio import SeqIO
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
@@ -10,25 +9,23 @@ from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
+from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
 
-DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
-GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
-LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
+DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
+GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
+LARGE_INPUT = VFAM_INPUT_PATH / "Large"
 
-DUPES_COVERAGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "filtered_on_coverage"
-GENERIC_COVERAGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "filtered_on_coverage"
-LARGE_COVERAGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "filtered_on_coverage"
+DUPES_COVERAGE = VFAM_INTERMEDIATES_PATH / "Dupes" / "filtered_on_coverage"
+GENERIC_COVERAGE = VFAM_INTERMEDIATES_PATH / "Generic" / "filtered_on_coverage"
+LARGE_COVERAGE = VFAM_INTERMEDIATES_PATH / "Large" / "filtered_on_coverage"
 
-DUPES_REMOVED_CVG = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "removed_on_coverage"
-GENERIC_REMOVED_CVG = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / \
-                      "removed_on_coverage"
-LARGE_REMOVED_CVG = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "removed_on_coverage"
+DUPES_REMOVED_CVG = VFAM_INTERMEDIATES_PATH / "Dupes" / "removed_on_coverage"
+GENERIC_REMOVED_CVG = VFAM_INTERMEDIATES_PATH / "Generic" / "removed_on_coverage"
+LARGE_REMOVED_CVG = VFAM_INTERMEDIATES_PATH / "Large" / "removed_on_coverage"
 
-DUPES_FILTERED_BY_NUM = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / \
-                        "filtered_by_number"
-GENERIC_FILTERED_BY_NUM = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / \
-                          "filtered_by_number"
+DUPES_FILTERED_BY_NUM = VFAM_INTERMEDIATES_PATH / "Dupes" / "filtered_by_number"
+GENERIC_FILTERED_BY_NUM = VFAM_INTERMEDIATES_PATH / "Generic" / "filtered_by_number"
 
 
 @pytest.fixture()

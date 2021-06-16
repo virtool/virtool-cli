@@ -1,19 +1,19 @@
 import pytest
 
-
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
 from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 from virtool_cli.vfam_polyprotein import find_polyproteins
+from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
 
-DUPES_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Dupes"
-GENERIC_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Generic"
-LARGE_INPUT = Path(__file__).parent.parent / "tests" / "vfam_input" / "Large"
+DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
+GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
+LARGE_INPUT = VFAM_INPUT_PATH / "Large"
 
-POLYP_DUPES = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Dupes" / "polyproteins"
-POLYP_GENERIC = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Generic" / "polyproteins"
-POLYP_LARGE = Path(__file__).parent.parent / "tests" / "vfam_og_intermediates" / "Large" / "polyproteins"
+POLYP_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "polyproteins"
+POLYP_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "polyproteins"
+POLYP_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "polyproteins"
 
 
 @pytest.fixture()
