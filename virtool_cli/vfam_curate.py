@@ -1,3 +1,4 @@
+import os
 import sys
 
 from Bio import SeqIO
@@ -12,7 +13,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
     :param src_path: Path to input source directory containing unfiltered fasta files
     :return: input_paths, list of paths to input protein files if any files are found
     """
-    input_paths = [src_path / file for file in src_path.iterdir()]
+    input_paths = list(src_path.iterdir())
 
     if input_paths:
         return input_paths

@@ -29,7 +29,7 @@ def cli():
 @click.option("--inflation-num", default=None, help="Inflation number to be used in mcl step")
 @click.option("-cvg-check", "--coverage-check", default=False, help="Filter clustered fasta files on coverage")
 @click.option("-min-seqs", "--min-sequences", default=2, help="Filter out clusters with fewer records than "
-                                                              "min_sequences")
+                                                              "min-sequences")
 def vfam(src_path: str,
          output: str,
          prefix: str,
@@ -57,8 +57,6 @@ def vfam(src_path: str,
                              coverage_check,
                              min_sequences)
     except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(src_path)
-        click.echo(e)
         click.echo("Not a valid reference directory")
 
 
