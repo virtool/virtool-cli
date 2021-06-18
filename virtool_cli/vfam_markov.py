@@ -21,15 +21,17 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
 
     abc_path = blast_results.parent / Path(abc_name)
 
-    with blast_results.open('r') as blast_file:
-        with abc_path.open('w') as abc_file:
-            for line in blast_file:
-
-                alignment = Alignment(line)
-                if alignment.query not in polyproteins and alignment.subject not in polyproteins:
-                    abc_line = '\t'.join([alignment.query, alignment.subject, alignment.evalue]) + "\n"
-                    abc_file.write(abc_line)
-
+    with blast_results.open("r") as blast_file:
+        with abc_path.open("w") as abc_file:
+            alignments = (Alignment(line) for line in blast_file)
+            while True:
+                try:
+                    alignment = next(alignments)
+                    if alignment.query not in polyproteins and alignment.subject not in polyproteins:
+                        abc_line = "\t".join([alignment.query, alignment.subject, alignment.evalue]) + "\n"
+                        abc_file.write(abc_line)
+                except StopIteration:
+                    break
     return abc_path
 
 
@@ -87,16 +89,23 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> List[Path]:
     fasta_path = clustered_fasta.parent
     mcl_dict = {}
     line_num = 0
+
     with mcl_path.open('r') as handle:
-        for line in handle:
-            line_num += 1
+        lines = (line for line in handle)
+        while True:
+            try:
+                line = next(lines)
+                line_num += 1
 
-            fasta_name = f"cluster_{line_num}"
-            if prefix:
-                fasta_name = f"{prefix}_{fasta_name}"
+                fasta_name = f"cluster_{line_num}"
+                if prefix:
+                    fasta_name = f"{prefix}_{fasta_name}"
 
-            for record_id in line.strip().split("\t"):
-                mcl_dict[record_id] = fasta_path / Path(fasta_name)
+                for record_id in line.strip().split("\t"):
+                    mcl_dict[record_id] = fasta_path / Path(fasta_name)
+
+            except StopIteration:
+                break
 
     for record in SeqIO.parse(clustered_fasta, "fasta"):
         if record.id in mcl_dict:

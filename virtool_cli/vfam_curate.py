@@ -11,7 +11,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
     Takes in a path to directory containing input fasta files, returns a list of paths to the fasta files
 
     :param src_path: Path to input source directory containing unfiltered fasta files
-    :return: input_paths, list of paths to input protein files if any files are found
+    :return: input_paths, list of paths to input files if any files are found
     """
     input_paths = list(src_path.iterdir())
 

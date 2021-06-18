@@ -11,12 +11,15 @@ def sequence_lengths(blast_results: Path) -> dict:
     :return: sequence_lengths, a dictionary containing each sequence and its sequence length
     """
     seq_lengths = {}
-
-    with blast_results.open('r') as handle:
-        for line in handle:
-            alignment = Alignment(line)
-            if alignment.query == alignment.subject:
-                seq_lengths[alignment.query] = alignment.length
+    with open(blast_results) as handle:
+        alignments = (Alignment(line) for line in handle)
+        while True:
+            try:
+                alignment = next(alignments)
+                if alignment.query == alignment.subject:
+                    seq_lengths[alignment.query] = alignment.length
+            except StopIteration:
+                break
 
     return seq_lengths
 
@@ -31,18 +34,21 @@ def get_alignment_records(blast_results: Path) -> dict:
     :return: alignment_records, a dictionary containing all alignment objects for each query
     """
     alignment_records = {}
-    with blast_results.open('r') as handle:
 
-        for line in handle:
-            alignment = Alignment(line)
+    with open(blast_results) as handle:
+        alignments = (Alignment(line) for line in handle)
+        while True:
+            try:
+                alignment = next(alignments)
+                if alignment.query != alignment.subject:
+                    if alignment.query not in alignment_records:
+                        alignment_records[alignment.query] = [alignment]
+                    else:
+                        alignment_records[alignment.query].append(alignment)
+            except StopIteration:
+                break
 
-            if alignment.query != alignment.subject:
-                if alignment.query not in alignment_records:
-                    alignment_records[alignment.query] = [alignment]
-                else:
-                    alignment_records[alignment.query].append(alignment)
-
-    return alignment_records
+        return alignment_records
 
 
 def find_polyproteins(blast_results: Path) -> list:

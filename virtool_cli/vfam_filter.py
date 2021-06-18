@@ -53,7 +53,6 @@ def filter_file_on_coverage(fasta_file: Path) -> Optional[Path]:
         output_path = Path(f"{fasta_file}_filtered")
         to_write = [record for record in SeqIO.parse(fasta_file, "fasta") if record.id in record_lengths]
         SeqIO.write(to_write, output_path, "fasta")
-
         return output_path
 
 
