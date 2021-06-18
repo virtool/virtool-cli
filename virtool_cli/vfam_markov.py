@@ -89,21 +89,15 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix: Optional[str]) -
     line_num = 0
 
     with mcl_path.open('r') as handle:
-        lines = (line for line in handle)
-        while True:
-            try:
-                line = next(lines)
-                line_num += 1
+        for line in handle:
+            line_num += 1
 
-                fasta_name = f"cluster_{line_num}"
-                if prefix:
-                    fasta_name = f"{prefix}_{fasta_name}"
+            fasta_name = f"cluster_{line_num}"
+            if prefix:
+                fasta_name = f"{prefix}_{fasta_name}"
 
-                for record_id in line.strip().split("\t"):
-                    mcl_dict[record_id] = fasta_path / Path(fasta_name)
-
-            except StopIteration:
-                break
+            for record_id in line.strip().split("\t"):
+                mcl_dict[record_id] = fasta_path / Path(fasta_name)
 
     for record in SeqIO.parse(clustered_fasta, "fasta"):
         if record.id in mcl_dict:

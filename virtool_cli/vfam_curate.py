@@ -67,15 +67,6 @@ def write_curated_recs(records: iter, output: Path, prefix: Optional[str], seque
     :param sequence_min_length: Minimum sequence length for a record to be included in the input
     :return: Path to curated fasta file without repeats or phages
     """
-    record_seqs = []
-    records_to_output = []
-
-    for record in records:
-        if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
-            if record.description:
-                records_to_output.append(record)
-                record_seqs.append(record.seq)
-
     output_dir = output / Path("intermediate_files")
 
     if not output_dir.exists():
@@ -86,6 +77,6 @@ def write_curated_recs(records: iter, output: Path, prefix: Optional[str], seque
         output_name = f"{prefix}_{output_name}"
 
     output_path = output_dir / Path(output_name)
-    SeqIO.write(records_to_output, Path(output_path), "fasta")
+    SeqIO.write(remove_dupes(records, sequence_min_length), Path(output_path), "fasta")
 
     return output_path
