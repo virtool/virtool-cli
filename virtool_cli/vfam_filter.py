@@ -72,7 +72,7 @@ def filter_on_coverage(fasta_files: list) -> List[Path]:
     return filtered_by_coverage
 
 
-def filter_on_number(fasta_files, min_sequences) -> List[Path]:
+def filter_on_number(fasta_files: List[Path], min_sequences: int) -> List[Path]:
     """
     Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
 

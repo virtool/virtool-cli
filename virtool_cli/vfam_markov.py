@@ -2,11 +2,11 @@ import subprocess
 
 from Bio import SeqIO
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from virtool_cli.vfam_polyprotein import Alignment
 
 
-def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
+def write_abc(blast_results: Path, polyproteins: list, prefix: Optional[str]) -> Path:
     """
     Takes in blast results file and list of polyproteins to not include, writes a .abc file with desired alignments
 
@@ -21,21 +21,19 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
 
     abc_path = blast_results.parent / Path(abc_name)
 
-    with blast_results.open("r") as blast_file:
-        with abc_path.open("w") as abc_file:
-            alignments = (Alignment(line) for line in blast_file)
-            while True:
-                try:
-                    alignment = next(alignments)
-                    if alignment.query not in polyproteins and alignment.subject not in polyproteins:
-                        abc_line = "\t".join([alignment.query, alignment.subject, alignment.evalue]) + "\n"
-                        abc_file.write(abc_line)
-                except StopIteration:
-                    break
+    with blast_results.open('r') as blast_file:
+        with abc_path.open('w') as abc_file:
+            for line in blast_file:
+
+                alignment = Alignment(line)
+                if alignment.query not in polyproteins and alignment.subject not in polyproteins:
+                    abc_line = '\t'.join([alignment.query, alignment.subject, alignment.evalue]) + "\n"
+                    abc_file.write(abc_line)
+
     return abc_path
 
 
-def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix) -> Path:
+def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix: Optional[str]) -> Path:
     """
     Converts sequences not included in polyprotein_sequences to a .abc file
 
@@ -77,7 +75,7 @@ def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix)
     return mcl_path
 
 
-def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> List[Path]:
+def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix: Optional[str]) -> List[Path]:
     """
     Takes mcl clusters and a clustered fasta file, creates numbered fasta files for each mcl cluster
 

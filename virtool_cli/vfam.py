@@ -1,6 +1,6 @@
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, remove_phages, group_input_paths, remove_dupes
-from virtool_cli.vfam_collapse import generate_clusters, polyprotein_name_check, all_by_all_blast
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
+from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, all_by_all_blast
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
@@ -12,17 +12,14 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
     """Dictates workflow for vfam pipeline."""
     input_paths = get_input_paths(Path(src_path))
 
-    if no_named_phages:
-        records = remove_phages(input_paths)
-    else:
-        records = group_input_paths(input_paths)
+    records = group_input_paths(input_paths, no_named_phages)
 
-    no_dupes = remove_dupes(records, output, prefix, sequence_min_length)
+    no_dupes = write_curated_recs(records, output, prefix, sequence_min_length)
 
     cd_hit_result = generate_clusters(no_dupes, prefix, fraction_coverage, fraction_id)
 
     if no_named_polyproteins:
-        cd_hit_result = polyprotein_name_check(cd_hit_result, prefix)
+        cd_hit_result = write_rmv_polyproteins(cd_hit_result, prefix)
 
     blast_results = all_by_all_blast(cd_hit_result, prefix, num_cores)
 

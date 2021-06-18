@@ -2,7 +2,7 @@ import os.path
 import subprocess
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 NUM_CORES = 16
 
@@ -47,7 +47,7 @@ def batch_hmm_call(msa_files: list) -> List[Path]:
     return hmm_files
 
 
-def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
+def concatenate_hmms(hmm_files: list, output: Path, prefix: Optional[str]) -> Path:
     """
     Takes in a list of hmm files containing individual profiles and writes them all to a master results file
 
@@ -61,15 +61,12 @@ def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
 
     output_file = output / Path(output_name)
 
-    with output_file.open("w") as o_handle:
+    with output_file.open('w') as o_handle:
         for hmm_file in hmm_files:
-            with open(hmm_file) as h_handle:
-                lines = (line for line in h_handle)
-                while True:
-                    try:
-                        o_handle.write(next(lines))
-                    except StopIteration:
-                        break
+            with hmm_file.open('r') as h_handle:
+                for line in h_handle:
+                    o_handle.write(line)
+
     return output_file
 
 
