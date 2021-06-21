@@ -2,7 +2,7 @@ import os.path
 import subprocess
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 NUM_CORES = 16
 
@@ -11,7 +11,7 @@ def batch_muscle_call(fasta_files: list) -> List[Path]:
     """
     This function takes in a list of fasta files and makes msas using MUSCLE
 
-    :param fasta_files: list of fasta files to pruduce msas
+    :param fasta_files: list of fasta files to produce MSAs
     :return: list of alignment files generated in fasta format
     """
     msa_files = []
@@ -47,7 +47,7 @@ def batch_hmm_call(msa_files: list) -> List[Path]:
     return hmm_files
 
 
-def concatenate_hmms(hmm_files: list, output: Path, prefix) -> Path:
+def concatenate_hmms(hmm_files: list, output: Path, prefix: Optional[str]) -> Path:
     """
     Takes in a list of hmm files containing individual profiles and writes them all to a master results file
 

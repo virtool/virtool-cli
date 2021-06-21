@@ -11,8 +11,8 @@ def sequence_lengths(blast_results: Path) -> dict:
     :return: sequence_lengths, a dictionary containing each sequence and its sequence length
     """
     seq_lengths = {}
-
     with blast_results.open('r') as handle:
+
         for line in handle:
             alignment = Alignment(line)
             if alignment.query == alignment.subject:
