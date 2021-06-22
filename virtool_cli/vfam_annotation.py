@@ -1,4 +1,6 @@
-import csv
+import collections
+import json
+import operator
 import os.path
 import subprocess
 from pathlib import Path
@@ -15,7 +17,6 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[str, str]:
     :param seq_ids: list of sequence IDs
     :return: string representations of family and genus dictionaries containing occurrences of each
     """
-    Entrez.email = "eroberts9789@gmail.com"
     families = {}
     genera = {}
 
@@ -47,24 +48,18 @@ def parse_log(cluster_name: str, output: Path) -> dict:
     :return: log_data, dictionary containing log log_data
     """
     log_path = output / "intermediate_files" / Path(f"{cluster_name}.log")
-
-    log_data = {
-        "nseqs": int,
-        "alen": int,
-        "mlen": int,
-        "eff_nseq": float,
-        "relent": float,
-    }
+    log_data = {}
 
     with log_path.open("r") as handle:
         for line in handle:
             line_data = line.strip().split()
             if len(line_data) > 0 and "#" not in line_data[0]:
-                log_data["nseq"] = line_data[2]
-                log_data["alen"] = line_data[3]
-                log_data["mlen"] = line_data[4]
-                log_data["eff_nseq"] = line_data[5]
-                log_data["relent"] = line_data[6]
+                log_data["count"] = int(line_data[2])
+                log_data["alen"] = int(line_data[3])
+                log_data["length"] = int(line_data[4])
+                log_data["eff_nseq"] = float(line_data[5])
+                log_data["mean_entropy"] = float(line_data[6])
+                log_data["total_entropy"] = log_data["mean_entropy"] * float(log_data["count"])
                 break
 
     return log_data
@@ -94,86 +89,63 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     return prelE, compKL
 
 
+def get_gi():
+    pass
+
+
+def get_names(annotation):
+    names = [entry["name"] for entry in annotation["entries"]]
+    top_three = collections.Counter(names).most_common(3)
+    return [entry[0] for entry in top_three]
+
+
 def parse_clusters(cluster_files: List[Path], output: Path):
     """
     parses all filtered fasta cluster files and creates annotation dictionaries
 
-    makes calls to get_taxononmy(), parse_log(), and parse_stat() to gather all info to write in write_annotation()
+    makes calls to get_taxononmy(), parse_log(), and parse_stat() to gather all info for each individual annotation
+
+    all data from each annotation is written to master.json file
 
     :param cluster_files: clustered, filtered fasta files from vfam pipeline
     :param output: Path to output directory containing intermediate files from vfam pipeline
     """
+    annotations = []
+    output_path = output / "master.json"
+
     for cluster_file in cluster_files:
-        annotation = {
-            "cluster_name": os.path.basename(cluster_file),
-            "nseq": int,
-            "alen": int,
-            "mlen": int,
-            "eff_nseq": float,
-            "relent": float,
-            "prelE": float,
-            "compKL": float,
-            "families": str,
-            "genera": str,
-            "headers": []
-        }
-        log_data = parse_log(annotation["cluster_name"], output)
+        annotation = {"cluster": os.path.basename(cluster_file).split("_")[1]}
+
+        log_data = parse_log(os.path.basename(cluster_file), output)
         for key in log_data:
             annotation[key] = log_data[key]
 
-        stat_data = parse_stat(annotation["cluster_name"], output)
+        stat_data = parse_stat(os.path.basename(cluster_file), output)
         annotation["prelE"] = stat_data[0]
         annotation["compKL"] = stat_data[1]
 
+        annotation["entries"] = list()
         with cluster_file.open("r") as handle:
             seq_ids = []
             for record in SeqIO.parse(handle, "fasta"):
                 seq_ids.append(record.id)
-                annotation["headers"].append(record.description)
+                annotation["entries"].append({
+                    "gi": "",
+                    "accession": record.id,
+                    "name": record.description.split("[")[0].strip,
+                    "organism": record.description.split("[")[1].replace("]", "").strip()
+                })
 
             taxonomy = get_taxonomy(seq_ids)
-            annotation["families"] = taxonomy[0]
-            annotation["genera"] = taxonomy[1]
+            annotation["families"] = json.loads(taxonomy[0].replace("'", '"'))
+            annotation["genera"] = json.loads(taxonomy[1].replace("'", '"'))
 
-        write_annotation(annotation, output)
+        annotation["names"] = get_names(annotation)
+        annotation["entries"] = sorted(annotation["entries"], key=operator.itemgetter("accession"))
 
+        annotations.append(annotation)
 
-def write_annotation(annotation: dict, output: Path):
-    """
-    Writes annotation files using csv
+    annotations = sorted(annotations, key=operator.itemgetter("cluster"))
+    with open(output_path, "wt") as f:
+        json.dump(annotations, f, indent=4)
 
-    :param annotation: dictionary containing all annotation information to be output
-    :param output: path to output directory where annotation file will be written
-    """
-    output_name = str(annotation["cluster_name"]) + ".annotation"
-    output_path = output / "intermediate_files" / output_name
-
-    with open(output_path, "w") as handle:
-        writer = csv.writer(handle, delimiter="\t", escapechar=" ", quoting=csv.QUOTE_NONE)
-
-        writer.writerow(["CLUSTER",
-                         annotation["cluster_name"].split("_")[1]])
-        writer.writerow(["NUM_SEQ",
-                         annotation["nseq"]])
-        writer.writerow(["EFFECTIVE_NUM_SEQS",
-                         annotation["eff_nseq"]])
-        writer.writerow(["LENGTH",
-                         annotation["mlen"]])
-        writer.writerow(["RELATIVE_ENTROPY_PER_POSITION",
-                         annotation["relent"]])
-        writer.writerow(["TOTAL_RELATIVE_ENTROPY",
-                         "{:.2f}".format((float(annotation["relent"]) * float(annotation["mlen"])))])
-        writer.writerow(["ALIGNED_COLUMNS",
-                         annotation["alen"]])
-        writer.writerow(["MEAN_RELATIVE_ENTROPY_PER_POSITION",
-                         annotation["prelE"]])
-        writer.writerow(["KULLBACK_LEIBLER_DIVERGENCE",
-                         annotation["compKL"]])
-        writer.writerow(["FAMILIES",
-                         annotation["families"]])
-        writer.writerow(["GENERA",
-                         annotation["genera"]])
-
-        writer.writerow(["FASTA SEQUENCE TITLES:"])
-        writer = csv.writer(handle, delimiter="\n", escapechar=" ", quoting=csv.QUOTE_NONE)
-        writer.writerow(annotation["headers"])
