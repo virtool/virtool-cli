@@ -12,7 +12,7 @@ def sequence_lengths(blast_results: Path) -> dict:
     """
     seq_lengths = {}
 
-    with blast_results.open('r') as handle:
+    with blast_results.open("r") as handle:
         for line in handle:
             alignment = Alignment(line)
             if alignment.query == alignment.subject:
@@ -31,7 +31,7 @@ def get_alignment_records(blast_results: Path) -> dict:
     :return: alignment_records, a dictionary containing all alignment objects for each query
     """
     alignment_records = {}
-    with blast_results.open('r') as handle:
+    with blast_results.open("r") as handle:
 
         for line in handle:
             alignment = Alignment(line)
