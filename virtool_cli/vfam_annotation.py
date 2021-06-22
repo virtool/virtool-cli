@@ -48,7 +48,14 @@ def parse_log(cluster_name: str, output: Path) -> dict:
     :return: log_data, dictionary containing log log_data
     """
     log_path = output / "intermediate_files" / Path(f"{cluster_name}.log")
-    log_data = {}
+    log_data = {
+        "count": int,
+        "alen": int,
+        "length": int,
+        "eff_nseq": float,
+        "mean_entropy": float,
+        "total_entropy": float
+    }
 
     with log_path.open("r") as handle:
         for line in handle:
@@ -86,7 +93,7 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
             compKL = float(line[-1])
             break
 
-    return prelE, compKL
+    return float(prelE), float(compKL)
 
 
 def get_gi():
@@ -99,7 +106,7 @@ def get_names(annotation):
     return [entry[0] for entry in top_three]
 
 
-def parse_clusters(cluster_files: List[Path], output: Path):
+def clusters_to_json(cluster_files: List[Path], output: Path):
     """
     parses all filtered fasta cluster files and creates annotation dictionaries
 
@@ -110,11 +117,18 @@ def parse_clusters(cluster_files: List[Path], output: Path):
     :param cluster_files: clustered, filtered fasta files from vfam pipeline
     :param output: Path to output directory containing intermediate files from vfam pipeline
     """
-    annotations = []
     output_path = output / "master.json"
+    annotations = list()
 
     for cluster_file in cluster_files:
-        annotation = {"cluster": os.path.basename(cluster_file).split("_")[1]}
+        annotation = {"cluster": os.path.basename(cluster_file).split("_")[1],
+                      "prelE": float,
+                      "compKL": float,
+                      "families": str,
+                      "genera": str,
+                      "names": list(),
+                      "entries": list()
+                      }
 
         log_data = parse_log(os.path.basename(cluster_file), output)
         for key in log_data:
@@ -129,10 +143,12 @@ def parse_clusters(cluster_files: List[Path], output: Path):
             seq_ids = []
             for record in SeqIO.parse(handle, "fasta"):
                 seq_ids.append(record.id)
+                name = record.description.split("[")[0].split()
+                name = " ".join(name[1:])
                 annotation["entries"].append({
                     "gi": "",
                     "accession": record.id,
-                    "name": record.description.split("[")[0].strip,
+                    "name": name,
                     "organism": record.description.split("[")[1].replace("]", "").strip()
                 })
 

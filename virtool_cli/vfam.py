@@ -5,7 +5,7 @@ from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_hmms, organize_intermediates
-from virtool_cli.vfam_annotation import parse_clusters
+from virtool_cli.vfam_annotation import clusters_to_json
 
 
 def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction_coverage, fraction_id, num_cores,
@@ -44,7 +44,7 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
 
     concatenate_hmms(hmm_files, output, prefix)
 
-    parse_clusters(fasta_files, output)
+    clusters_to_json(fasta_files, output)
 
     organize_intermediates(output)
 
