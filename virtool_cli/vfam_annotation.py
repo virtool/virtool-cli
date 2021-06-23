@@ -41,21 +41,14 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[str, str]:
 
 def parse_log(cluster_name: str, output: Path) -> dict:
     """
-    Parses log files and gathers nseqs, alen, mlen, eff_nseqs and relent information
+    Parses log files and gathers count, alen, length, eff_nseqs, mean entropy and total_entropy
 
-    :param cluster_name: cluster name to gather log file for
+    :param cluster_name: cluster name from which to gather log file
     :param output: path to output folder where .log files are stored
-    :return: log_data, dictionary containing log log_data
+    :return: log_data, dictionary containing log_data
     """
     log_path = output / "intermediate_files" / Path(f"{cluster_name}.log")
-    log_data = {
-        "count": int,
-        "alen": int,
-        "length": int,
-        "eff_nseq": float,
-        "mean_entropy": float,
-        "total_entropy": float
-    }
+    log_data = {}
 
     with log_path.open("r") as handle:
         for line in handle:
@@ -96,11 +89,28 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     return float(prelE), float(compKL)
 
 
-def get_gi():
-    pass
+def get_gi(seq_id):
+    """
+    Makes calls to NCBI database to gather gi information for each sequence
+
+    TODO: figure out why these calls aren't returning anything
+    :param seq_id: sequence id for sequence, used to access correct .bgk file
+    :return: record.gi, GenInfo identifier
+    """
+    handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
+    for record in GenBank.parse(handle):
+        if record.gi:
+            return record.gi
+    return None
 
 
 def get_names(annotation):
+    """
+    Returns three most common names in "entries" list and returns them to be output in json file
+
+    :param annotation: dictionary containing all information to be output to json file for one cluster
+    :return: top three names
+    """
     names = [entry["name"] for entry in annotation["entries"]]
     top_three = collections.Counter(names).most_common(3)
     return [entry[0] for entry in top_three]
@@ -109,8 +119,6 @@ def get_names(annotation):
 def clusters_to_json(cluster_files: List[Path], output: Path):
     """
     parses all filtered fasta cluster files and creates annotation dictionaries
-
-    makes calls to get_taxononmy(), parse_log(), and parse_stat() to gather all info for each individual annotation
 
     all data from each annotation is written to master.json file
 
@@ -122,10 +130,6 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
 
     for cluster_file in cluster_files:
         annotation = {"cluster": os.path.basename(cluster_file).split("_")[1],
-                      "prelE": float,
-                      "compKL": float,
-                      "families": str,
-                      "genera": str,
                       "names": list(),
                       "entries": list()
                       }
@@ -138,15 +142,15 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
         annotation["prelE"] = stat_data[0]
         annotation["compKL"] = stat_data[1]
 
-        annotation["entries"] = list()
         with cluster_file.open("r") as handle:
             seq_ids = []
             for record in SeqIO.parse(handle, "fasta"):
                 seq_ids.append(record.id)
                 name = record.description.split("[")[0].split()
                 name = " ".join(name[1:])
+
                 annotation["entries"].append({
-                    "gi": "",
+                    "gi": get_gi(record.id),
                     "accession": record.id,
                     "name": name,
                     "organism": record.description.split("[")[1].replace("]", "").strip()
