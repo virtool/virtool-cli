@@ -22,25 +22,27 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
     families = defaultdict(int)
     genera = defaultdict(int)
 
-    try:
-        for seq_id in seq_ids:
+    for seq_id in seq_ids:
+        try:
             handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
-
             for record in GenBank.parse(handle):
+
                 family = record.taxonomy[-2]
-                if family.lower == "viruses":
+                if family.lower() == "viruses":
                     family = "None"
+
                 families[family] += 1
 
                 genus = record.taxonomy[-1]
-                if genus == "unclassified viruses":
+                if genus.lower() == "unclassified viruses":
                     genus = "None"
 
                 genera[genus] += 1
 
-        return dict(families), dict(genera)
-    except (HTTPError, AttributeError):
-        pass
+        except (HTTPError, AttributeError):
+            continue
+
+    return dict(families), dict(genera)
 
 
 def parse_log(cluster_name: str, output: Path) -> dict:
@@ -58,12 +60,14 @@ def parse_log(cluster_name: str, output: Path) -> dict:
         for line in handle:
             line_data = line.strip().split()
             if len(line_data) > 0 and "#" not in line_data[0]:
+
                 log_data["count"] = int(line_data[2])
                 log_data["alen"] = int(line_data[3])
                 log_data["length"] = int(line_data[4])
                 log_data["eff_nseq"] = float(line_data[5])
                 log_data["mean_entropy"] = float(line_data[6])
                 log_data["total_entropy"] = round(log_data["mean_entropy"] * float(log_data["count"]), 2)
+
                 break
 
     return log_data
@@ -83,11 +87,14 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
 
     prelE = str
     compKL = str
+
     for line in stat_data:
         if not line.startswith("#") and not line.startswith("CompletedProcess"):
+
             line = line.strip().split()
             prelE = float(line[-2])
             compKL = float(line[-1])
+
             break
 
     return float(prelE), float(compKL)
@@ -102,6 +109,7 @@ def get_names(annotation):
     """
     names = [entry["name"] for entry in annotation["entries"]]
     top_three = collections.Counter(names).most_common(3)
+
     return [entry[0] for entry in top_three]
 
 
@@ -156,6 +164,7 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
         annotations.append(annotation)
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
+
     with open(output_path, "wt") as f:
         json.dump(annotations, f, indent=4)
 
