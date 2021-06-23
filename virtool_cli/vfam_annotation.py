@@ -6,20 +6,21 @@ import subprocess
 from pathlib import Path
 from urllib.error import HTTPError
 
+from collections import defaultdict
 from Bio import GenBank, SeqIO
 from Bio import Entrez
 from typing import Tuple, List
 
 
-def get_taxonomy(seq_ids: List[str]) -> Tuple[str, str]:
+def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
     """
     Takes in list of sequence IDs and makes calls to NCBI database to gather family and genus information for each ID
 
     :param seq_ids: list of sequence IDs
     :return: string representations of family and genus dictionaries containing occurrences of each
     """
-    families = {}
-    genera = {}
+    families = defaultdict(int)
+    genera = defaultdict(int)
 
     try:
         for seq_id in seq_ids:
@@ -27,27 +28,18 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[str, str]:
 
             for record in GenBank.parse(handle):
                 family = record.taxonomy[-2]
-
-                if family.lower() == "viruses":
+                if family.lower == "viruses":
                     family = "None"
-
-                if family in families:
-                    families[family] += 1
-                else:
-                    families[family] = 1
+                families[family] += 1
 
                 genus = record.taxonomy[-1]
-
-                if genus.lower() == "unclassified viruses":
+                if genus == "unclassified viruses":
                     genus = "None"
 
-                if genus in genera:
-                    genera[genus] += 1
-                else:
-                    genera[genus] = 1
+                genera[genus] += 1
 
-        return str(families), str(genera)
-    except HTTPError:
+        return dict(families), dict(genera)
+    except (HTTPError, AttributeError):
         pass
 
 
@@ -130,7 +122,7 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
             "cluster": os.path.basename(cluster_file).split("_")[1],
             "names": list(),
             "entries": list()
-            }
+        }
 
         log_data = parse_log(os.path.basename(cluster_file), output)
         for key in log_data:
@@ -155,8 +147,8 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
 
             taxonomy = get_taxonomy(seq_ids)
             if taxonomy:
-                annotation["families"] = json.loads(taxonomy[0].replace("'", '"'))
-                annotation["genera"] = json.loads(taxonomy[1].replace("'", '"'))
+                annotation["families"] = json.loads(str(taxonomy[0]).replace("'", '"'))
+                annotation["genera"] = json.loads(str(taxonomy[1]).replace("'", '"'))
 
         annotation["names"] = get_names(annotation)
         annotation["entries"] = sorted(annotation["entries"], key=operator.itemgetter("accession"))
@@ -166,3 +158,4 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
     with open(output_path, "wt") as f:
         json.dump(annotations, f, indent=4)
+

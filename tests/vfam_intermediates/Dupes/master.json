@@ -1,0 +1,694 @@
+[
+    {
+        "cluster": "1",
+        "names": [
+            "polyprotein",
+            "RNA-dependent RNA polymerase, partial",
+            "DNA polymerase catalytic subunit"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009207083.1",
+                "name": "thymidine kinase, partial",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009207091.1",
+                "name": "DNA polymerase catalytic subunit",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009209481.1",
+                "name": "ORF1",
+                "organism": "Thelephora terrestris virus 1"
+            },
+            {
+                "accession": "YP_009214667.1",
+                "name": "polyprotein",
+                "organism": "Gallivirus Pf-CHK1/GV"
+            },
+            {
+                "accession": "YP_009215118.1",
+                "name": "polyprotein",
+                "organism": "Avisivirus Pf-CHK1/AsV"
+            },
+            {
+                "accession": "YP_009215302.1",
+                "name": "NP1",
+                "organism": "Lagomorph bocaparvovirus 1"
+            },
+            {
+                "accession": "YP_009216582.1",
+                "name": "AV2",
+                "organism": "Pepper yellow leaf curl Thailand virus"
+            },
+            {
+                "accession": "YP_009220464.1",
+                "name": "3D",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009220465.1",
+                "name": "2C",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009220466.1",
+                "name": "VP1",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009220467.1",
+                "name": "VP3",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009220468.1",
+                "name": "VP2",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009220469.1",
+                "name": "3C",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009227122.1",
+                "name": "RNA-dependent RNA polymerase, partial",
+                "organism": "Tofla virus"
+            }
+        ],
+        "count": 14,
+        "alen": 3567,
+        "length": 1616,
+        "eff_nseq": 6.16,
+        "mean_entropy": 0.59,
+        "total_entropy": 8.26,
+        "prelE": 0.5,
+        "compKL": 0.01,
+        "families": {
+            "Orthonairovirus": 1,
+            "Alphaherpesvirinae": 2,
+            "Geminiviridae": 1,
+            "Ghabrivirales": 1,
+            "Parvovirinae": 1,
+            "Hepatovirus": 6,
+            "Avisivirus": 1,
+            "Gallivirus": 1
+        },
+        "genera": {
+            "unclassified Nairovirus": 1,
+            "Scutavirus": 2,
+            "Begomovirus": 1,
+            "Totiviridae": 1,
+            "Bocaparvovirus": 1,
+            "unclassified Hepatovirus": 6,
+            "unclassified Avisivirus": 1,
+            "unclassified Gallivirus": 1
+        }
+    },
+    {
+        "cluster": "10",
+        "names": [
+            "virion membrane glycoprotein B",
+            "replicase polyprotein 1b, partial"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009199241.1",
+                "name": "replicase polyprotein 1b, partial",
+                "organism": "Swine enteric coronavirus"
+            },
+            {
+                "accession": "YP_009207088.1",
+                "name": "virion membrane glycoprotein B",
+                "organism": "Hawaiian green turtle herpesvirus"
+            }
+        ],
+        "count": 2,
+        "alen": 2684,
+        "length": 2684,
+        "eff_nseq": 0.7,
+        "mean_entropy": 0.587,
+        "total_entropy": 1.17,
+        "prelE": 0.5,
+        "compKL": 0.01,
+        "families": {
+            "Alphaherpesvirinae": 1,
+            "Alphacoronavirus": 1
+        },
+        "genera": {
+            "Scutavirus": 1,
+            "Tegacovirus": 1
+        }
+    },
+    {
+        "cluster": "11",
+        "names": [
+            "triple gene block protein 1"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009204562.1",
+                "name": "triple gene block protein 1",
+                "organism": "Asian prunus virus 2"
+            },
+            {
+                "accession": "YP_009215375.1",
+                "name": "triple gene block protein 1",
+                "organism": "Asian prunus virus 3"
+            }
+        ],
+        "count": 2,
+        "alen": 239,
+        "length": 239,
+        "eff_nseq": 0.39,
+        "mean_entropy": 0.588,
+        "total_entropy": 1.18,
+        "prelE": 0.52,
+        "compKL": 0.02,
+        "families": {
+            "Foveavirus": 1,
+            "Quinvirinae": 1
+        },
+        "genera": {
+            "unclassified Foveavirus": 1,
+            "Foveavirus": 1
+        }
+    },
+    {
+        "cluster": "12",
+        "names": [
+            "capsid maturation protease",
+            "virion scaffolding protein"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009207086.1",
+                "name": "capsid maturation protease",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009207087.1",
+                "name": "virion scaffolding protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            }
+        ],
+        "count": 2,
+        "alen": 549,
+        "length": 549,
+        "eff_nseq": 0.51,
+        "mean_entropy": 0.592,
+        "total_entropy": 1.18,
+        "prelE": 0.52,
+        "compKL": 0.01,
+        "families": {
+            "Alphaherpesvirinae": 2
+        },
+        "genera": {
+            "Scutavirus": 2
+        }
+    },
+    {
+        "cluster": "13",
+        "names": [
+            "triple gene block protein 3"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009204564.1",
+                "name": "triple gene block protein 3",
+                "organism": "Asian prunus virus 2"
+            },
+            {
+                "accession": "YP_009215377.1",
+                "name": "triple gene block protein 3",
+                "organism": "Asian prunus virus 3"
+            }
+        ],
+        "count": 2,
+        "alen": 65,
+        "length": 65,
+        "eff_nseq": 0.64,
+        "mean_entropy": 0.864,
+        "total_entropy": 1.73,
+        "prelE": 0.8,
+        "compKL": 0.06,
+        "families": {
+            "Foveavirus": 1,
+            "Quinvirinae": 1
+        },
+        "genera": {
+            "unclassified Foveavirus": 1,
+            "Foveavirus": 1
+        }
+    },
+    {
+        "cluster": "2",
+        "names": [
+            "DNA cleavage/packaging protein",
+            "replicase",
+            "ORF4"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009194640.1",
+                "name": "ORF4",
+                "organism": "Camel alphacoronavirus"
+            },
+            {
+                "accession": "YP_009204561.1",
+                "name": "replicase",
+                "organism": "Asian prunus virus 2"
+            },
+            {
+                "accession": "YP_009207089.1",
+                "name": "DNA cleavage/packaging protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009207093.1",
+                "name": "DNA cleavage/packaging protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009207096.1",
+                "name": "basic phosphorylated capsid protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009207097.1",
+                "name": "very large tegument protein, partial",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009212849.1",
+                "name": "polyprotein",
+                "organism": "Hordeum vulgare alphaendornavirus"
+            },
+            {
+                "accession": "YP_009215374.1",
+                "name": "replicase",
+                "organism": "Asian prunus virus 3"
+            },
+            {
+                "accession": "YP_009216584.1",
+                "name": "AC3",
+                "organism": "Pepper yellow leaf curl Thailand virus"
+            },
+            {
+                "accession": "YP_009216586.1",
+                "name": "AC1",
+                "organism": "Pepper yellow leaf curl Thailand virus"
+            },
+            {
+                "accession": "YP_009216587.1",
+                "name": "AC4",
+                "organism": "Pepper yellow leaf curl Thailand virus"
+            },
+            {
+                "accession": "YP_009220473.1",
+                "name": "3B",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009220474.1",
+                "name": "VP4",
+                "organism": "Tupaia hepatovirus A"
+            }
+        ],
+        "count": 13,
+        "alen": 4669,
+        "length": 603,
+        "eff_nseq": 5.56,
+        "mean_entropy": 0.59,
+        "total_entropy": 7.67,
+        "prelE": 0.44,
+        "compKL": 0.02,
+        "families": {
+            "Alphacoronavirus": 1,
+            "Alphaherpesvirinae": 4,
+            "Foveavirus": 1,
+            "Quinvirinae": 1,
+            "Endornaviridae": 1,
+            "Geminiviridae": 3,
+            "Hepatovirus": 2
+        },
+        "genera": {
+            "Duvinacovirus": 1,
+            "Scutavirus": 4,
+            "unclassified Foveavirus": 1,
+            "Foveavirus": 1,
+            "Alphaendornavirus": 1,
+            "Begomovirus": 3,
+            "unclassified Hepatovirus": 2
+        }
+    },
+    {
+        "cluster": "3",
+        "names": [
+            "polyprotein ORF1a",
+            "spike protein",
+            "membrane protein"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009194638.1",
+                "name": "polyprotein ORF1a",
+                "organism": "Camel alphacoronavirus"
+            },
+            {
+                "accession": "YP_009194639.1",
+                "name": "spike protein",
+                "organism": "Camel alphacoronavirus"
+            },
+            {
+                "accession": "YP_009194642.1",
+                "name": "membrane protein",
+                "organism": "Camel alphacoronavirus"
+            },
+            {
+                "accession": "YP_009199240.1",
+                "name": "replicase polyprotein 1a",
+                "organism": "Swine enteric coronavirus"
+            },
+            {
+                "accession": "YP_009207090.1",
+                "name": "single-stranded DNA-binding protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009208145.1",
+                "name": "A-protein",
+                "organism": "Escherichia virus FI"
+            },
+            {
+                "accession": "YP_009208148.1",
+                "name": "replicase",
+                "organism": "Escherichia virus FI"
+            },
+            {
+                "accession": "YP_009216583.1",
+                "name": "AV1",
+                "organism": "Pepper yellow leaf curl Thailand virus"
+            },
+            {
+                "accession": "YP_009220471.1",
+                "name": "2B",
+                "organism": "Tupaia hepatovirus A"
+            },
+            {
+                "accession": "YP_009227120.1",
+                "name": "nucleocapsid protein",
+                "organism": "Tofla virus"
+            }
+        ],
+        "count": 10,
+        "alen": 4260,
+        "length": 1196,
+        "eff_nseq": 3.29,
+        "mean_entropy": 0.591,
+        "total_entropy": 5.91,
+        "prelE": 0.46,
+        "compKL": 0.01,
+        "families": {
+            "Alphacoronavirus": 4,
+            "Orthonairovirus": 1,
+            "Alphaherpesvirinae": 1,
+            "Leviviridae": 2,
+            "Geminiviridae": 1,
+            "Hepatovirus": 1
+        },
+        "genera": {
+            "Duvinacovirus": 3,
+            "unclassified Nairovirus": 1,
+            "Scutavirus": 1,
+            "Allolevivirus": 2,
+            "Begomovirus": 1,
+            "unclassified Hepatovirus": 1,
+            "Tegacovirus": 1
+        }
+    },
+    {
+        "cluster": "4",
+        "names": [
+            "envelope protein",
+            "VP1",
+            "VP2"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009186841.1",
+                "name": "VP1",
+                "organism": "Rat bufavirus SY-2015"
+            },
+            {
+                "accession": "YP_009186842.1",
+                "name": "VP2",
+                "organism": "Rat bufavirus SY-2015"
+            },
+            {
+                "accession": "YP_009194641.1",
+                "name": "envelope protein",
+                "organism": "Camel alphacoronavirus"
+            },
+            {
+                "accession": "YP_009215303.1",
+                "name": "capsid protein",
+                "organism": "Lagomorph bocaparvovirus 1"
+            }
+        ],
+        "count": 4,
+        "alen": 798,
+        "length": 667,
+        "eff_nseq": 0.85,
+        "mean_entropy": 0.589,
+        "total_entropy": 2.36,
+        "prelE": 0.49,
+        "compKL": 0.01,
+        "families": {
+            "Alphacoronavirus": 1,
+            "Parvovirinae": 3
+        },
+        "genera": {
+            "Duvinacovirus": 1,
+            "Protoparvovirus": 2,
+            "Bocaparvovirus": 1
+        }
+    },
+    {
+        "cluster": "5",
+        "names": [
+            "nucleocapsid protein",
+            "NS1",
+            "AC2"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009186840.1",
+                "name": "NS1",
+                "organism": "Rat bufavirus SY-2015"
+            },
+            {
+                "accession": "YP_009194643.1",
+                "name": "nucleocapsid protein",
+                "organism": "Camel alphacoronavirus"
+            },
+            {
+                "accession": "YP_009215301.1",
+                "name": "nonstructural protein 1",
+                "organism": "Lagomorph bocaparvovirus 1"
+            },
+            {
+                "accession": "YP_009216585.1",
+                "name": "AC2",
+                "organism": "Pepper yellow leaf curl Thailand virus"
+            }
+        ],
+        "count": 4,
+        "alen": 799,
+        "length": 596,
+        "eff_nseq": 1.46,
+        "mean_entropy": 0.591,
+        "total_entropy": 2.36,
+        "prelE": 0.5,
+        "compKL": 0.02,
+        "families": {
+            "Alphacoronavirus": 1,
+            "Parvovirinae": 2,
+            "Geminiviridae": 1
+        },
+        "genera": {
+            "Duvinacovirus": 1,
+            "Protoparvovirus": 1,
+            "Begomovirus": 1,
+            "Bocaparvovirus": 1
+        }
+    },
+    {
+        "cluster": "6",
+        "names": [
+            "glycoprotein precursor",
+            "A1-protein",
+            "major coat protein"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009208146.1",
+                "name": "A1-protein",
+                "organism": "Escherichia virus FI"
+            },
+            {
+                "accession": "YP_009208147.1",
+                "name": "major coat protein",
+                "organism": "Escherichia virus FI"
+            },
+            {
+                "accession": "YP_009227121.1",
+                "name": "glycoprotein precursor",
+                "organism": "Tofla virus"
+            }
+        ],
+        "count": 3,
+        "alen": 1436,
+        "length": 740,
+        "eff_nseq": 0.85,
+        "mean_entropy": 0.589,
+        "total_entropy": 1.77,
+        "prelE": 0.49,
+        "compKL": 0.01,
+        "families": {
+            "Orthonairovirus": 1,
+            "Leviviridae": 2
+        },
+        "genera": {
+            "unclassified Nairovirus": 1,
+            "Allolevivirus": 2
+        }
+    },
+    {
+        "cluster": "7",
+        "names": [
+            "nuclear phosphoprotein",
+            "DNA cleavage/packaging protein",
+            "polyprotein"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009207092.1",
+                "name": "nuclear phosphoprotein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009207094.1",
+                "name": "DNA cleavage/packaging protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009209482.1",
+                "name": "polyprotein",
+                "organism": "Thelephora terrestris virus 1"
+            }
+        ],
+        "count": 3,
+        "alen": 1548,
+        "length": 424,
+        "eff_nseq": 0.86,
+        "mean_entropy": 0.59,
+        "total_entropy": 1.77,
+        "prelE": 0.42,
+        "compKL": 0.01,
+        "families": {
+            "Alphaherpesvirinae": 2,
+            "Ghabrivirales": 1
+        },
+        "genera": {
+            "Scutavirus": 2,
+            "Totiviridae": 1
+        }
+    },
+    {
+        "cluster": "8",
+        "names": [
+            "coat protein",
+            "minor capsid protein"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009204565.1",
+                "name": "coat protein",
+                "organism": "Asian prunus virus 2"
+            },
+            {
+                "accession": "YP_009207085.1",
+                "name": "minor capsid protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009215378.1",
+                "name": "coat protein",
+                "organism": "Asian prunus virus 3"
+            }
+        ],
+        "count": 3,
+        "alen": 580,
+        "length": 409,
+        "eff_nseq": 0.85,
+        "mean_entropy": 0.589,
+        "total_entropy": 1.77,
+        "prelE": 0.5,
+        "compKL": 0.02,
+        "families": {
+            "Alphaherpesvirinae": 1,
+            "Foveavirus": 1,
+            "Quinvirinae": 1
+        },
+        "genera": {
+            "Scutavirus": 1,
+            "unclassified Foveavirus": 1,
+            "Foveavirus": 1
+        }
+    },
+    {
+        "cluster": "9",
+        "names": [
+            "triple gene block protein 2",
+            "membrane-associated protein"
+        ],
+        "entries": [
+            {
+                "accession": "YP_009204563.1",
+                "name": "triple gene block protein 2",
+                "organism": "Asian prunus virus 2"
+            },
+            {
+                "accession": "YP_009207084.1",
+                "name": "membrane-associated protein",
+                "organism": "Hawaiian green turtle herpesvirus"
+            },
+            {
+                "accession": "YP_009215376.1",
+                "name": "triple gene block protein 2",
+                "organism": "Asian prunus virus 3"
+            }
+        ],
+        "count": 3,
+        "alen": 313,
+        "length": 156,
+        "eff_nseq": 0.72,
+        "mean_entropy": 0.592,
+        "total_entropy": 1.78,
+        "prelE": 0.48,
+        "compKL": 0.02,
+        "families": {
+            "Alphaherpesvirinae": 1,
+            "Foveavirus": 1,
+            "Quinvirinae": 1
+        },
+        "genera": {
+            "Scutavirus": 1,
+            "unclassified Foveavirus": 1,
+            "Foveavirus": 1
+        }
+    }
+]

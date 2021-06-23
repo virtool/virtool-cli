@@ -99,10 +99,6 @@ def organize_intermediates(output: Path):
     if not msa_files.exists():
         msa_files.mkdir()
 
-    annotation_files = output / "annotation_files"
-    if not annotation_files.exists():
-        annotation_files.mkdir()
-
     for file_name in file_names:
         current_path = output / "intermediate_files" / file_name
 
@@ -120,10 +116,6 @@ def organize_intermediates(output: Path):
 
         elif ".log" in file_name:
             new_path = log_files / file_name
-            os.rename(current_path, new_path)
-
-        elif ".annotation" in file_name:
-            new_path = annotation_files / file_name
             os.rename(current_path, new_path)
 
         else:

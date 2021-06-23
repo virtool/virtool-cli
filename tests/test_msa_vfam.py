@@ -3,7 +3,7 @@ import pytest
 import filecmp
 
 from pathlib import Path
-from vfam_paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
+from paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
