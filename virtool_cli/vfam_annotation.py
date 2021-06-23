@@ -4,6 +4,7 @@ import operator
 import os.path
 import subprocess
 from pathlib import Path
+from urllib.error import HTTPError
 
 from Bio import GenBank, SeqIO
 from Bio import Entrez
@@ -20,23 +21,34 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[str, str]:
     families = {}
     genera = {}
 
-    for seq_id in seq_ids:
-        handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
+    try:
+        for seq_id in seq_ids:
+            handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
 
-        for record in GenBank.parse(handle):
-            family = record.taxonomy[-2]
-            if family in families:
-                families[family] += 1
-            else:
-                families[family] = 1
+            for record in GenBank.parse(handle):
+                family = record.taxonomy[-2]
 
-            genus = record.taxonomy[-1]
-            if genus in genera:
-                genera[genus] += 1
-            else:
-                genera[genus] = 1
+                if family.lower() == "viruses":
+                    family = "None"
 
-    return str(families), str(genera)
+                if family in families:
+                    families[family] += 1
+                else:
+                    families[family] = 1
+
+                genus = record.taxonomy[-1]
+
+                if genus.lower() == "unclassified viruses":
+                    genus = "None"
+
+                if genus in genera:
+                    genera[genus] += 1
+                else:
+                    genera[genus] = 1
+
+        return str(families), str(genera)
+    except HTTPError:
+        pass
 
 
 def parse_log(cluster_name: str, output: Path) -> dict:
@@ -59,7 +71,7 @@ def parse_log(cluster_name: str, output: Path) -> dict:
                 log_data["length"] = int(line_data[4])
                 log_data["eff_nseq"] = float(line_data[5])
                 log_data["mean_entropy"] = float(line_data[6])
-                log_data["total_entropy"] = log_data["mean_entropy"] * float(log_data["count"])
+                log_data["total_entropy"] = round(log_data["mean_entropy"] * float(log_data["count"]), 2)
                 break
 
     return log_data
@@ -89,21 +101,6 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     return float(prelE), float(compKL)
 
 
-def get_gi(seq_id):
-    """
-    Makes calls to NCBI database to gather gi information for each sequence
-
-    TODO: figure out why these calls aren't returning anything
-    :param seq_id: sequence id for sequence, used to access correct .bgk file
-    :return: record.gi, GenInfo identifier
-    """
-    handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
-    for record in GenBank.parse(handle):
-        if record.gi:
-            return record.gi
-    return None
-
-
 def get_names(annotation):
     """
     Returns three most common names in "entries" list and returns them to be output in json file
@@ -129,10 +126,11 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
     annotations = list()
 
     for cluster_file in cluster_files:
-        annotation = {"cluster": os.path.basename(cluster_file).split("_")[1],
-                      "names": list(),
-                      "entries": list()
-                      }
+        annotation = {
+            "cluster": os.path.basename(cluster_file).split("_")[1],
+            "names": list(),
+            "entries": list()
+            }
 
         log_data = parse_log(os.path.basename(cluster_file), output)
         for key in log_data:
@@ -150,15 +148,15 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
                 name = " ".join(name[1:])
 
                 annotation["entries"].append({
-                    "gi": get_gi(record.id),
                     "accession": record.id,
                     "name": name,
                     "organism": record.description.split("[")[1].replace("]", "").strip()
                 })
 
             taxonomy = get_taxonomy(seq_ids)
-            annotation["families"] = json.loads(taxonomy[0].replace("'", '"'))
-            annotation["genera"] = json.loads(taxonomy[1].replace("'", '"'))
+            if taxonomy:
+                annotation["families"] = json.loads(taxonomy[0].replace("'", '"'))
+                annotation["genera"] = json.loads(taxonomy[1].replace("'", '"'))
 
         annotation["names"] = get_names(annotation)
         annotation["entries"] = sorted(annotation["entries"], key=operator.itemgetter("accession"))
@@ -168,4 +166,3 @@ def clusters_to_json(cluster_files: List[Path], output: Path):
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
     with open(output_path, "wt") as f:
         json.dump(annotations, f, indent=4)
-
