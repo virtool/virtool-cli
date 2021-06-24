@@ -1,11 +1,12 @@
-import pytest
 import filecmp
 import os
-
-from Bio import SeqIO
 from pathlib import Path
+
+import pytest
+from Bio import SeqIO
+
 from paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
-from virtool_cli.vfam_curate import group_input_paths, remove_dupes, write_curated_recs
+from virtool_cli.vfam_curate import group_input_paths, write_curated_recs
 
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"

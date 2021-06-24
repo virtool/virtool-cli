@@ -3,21 +3,22 @@ import json
 import operator
 import os.path
 import subprocess
+from collections import defaultdict
 from pathlib import Path
+from typing import Tuple, List
 from urllib.error import HTTPError
 
-from collections import defaultdict
-from Bio import GenBank, SeqIO
 from Bio import Entrez
-from typing import Tuple, List
+from Bio import GenBank, SeqIO
 
 
 def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
     """
-    Takes in list of sequence IDs and makes calls to NCBI database to gather family and genus information for each ID
+    Takes in list of sequence IDs and makes calls to NCBI database to gather family and genus information for each ID.
 
     :param seq_ids: list of sequence IDs
     :return: string representations of family and genus dictionaries containing occurrences of each
+    
     """
     families = defaultdict(int)
     genera = defaultdict(int)
