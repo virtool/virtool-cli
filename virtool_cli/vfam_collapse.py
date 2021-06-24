@@ -1,10 +1,11 @@
 import subprocess
 
 from pathlib import Path
+from typing import Optional
 from Bio import SeqIO
 
 
-def generate_clusters(curated_fasta: Path, prefix, fraction_cov, fraction_id: float) -> Path:
+def generate_clusters(curated_fasta: Path, prefix: Optional[str], fraction_cov, fraction_id: float) -> Path:
     """
     Takes in a fasta file, minimum fraction coverage, minimum fraction identity, calls cd-hit to cluster data
 
@@ -32,7 +33,18 @@ def generate_clusters(curated_fasta: Path, prefix, fraction_cov, fraction_id: fl
     return output_path
 
 
-def polyprotein_name_check(clustered_records: Path, prefix) -> Path:
+def rmv_polyproteins(clustered_records):
+    """
+    Parses through clustered_records file and yields records if "polyprotein" not found in record description
+
+    :param clustered_records: clustered fasta file from generate_clusters()
+    """
+    for record in SeqIO.parse(clustered_records, "fasta"):
+        if "polyprotein" not in record.description:
+            yield record
+
+
+def write_rmv_polyproteins(clustered_records: Path, prefix: Optional[str]) -> Path:
     """
     Removes any record with "polyprotein" found in its description
 
@@ -41,23 +53,18 @@ def polyprotein_name_check(clustered_records: Path, prefix) -> Path:
     :return: output_path, a file containing all clustered fasta records with polyproteins removed
     """
     output_name = "no_named_polyproteins.faa"
+
     if prefix:
         output_name = f"{prefix}_{output_name}"
 
     output_path = clustered_records.parent / Path(output_name)
 
-    filtered_records = []
-
-    for record in SeqIO.parse(clustered_records, "fasta"):
-        if "polyprotein" not in record.description:
-            filtered_records.append(record)
-
-    SeqIO.write(filtered_records, output_path, "fasta")
+    SeqIO.write(rmv_polyproteins(clustered_records), output_path, "fasta")
 
     return output_path
 
 
-def all_by_all_blast(clustered_fasta: Path, prefix, num_cores: int) -> Path:
+def all_by_all_blast(clustered_fasta: Path, prefix: Optional[str], num_cores: int) -> Path:
     """
     Takes a clustered fasta file as input, and formats file to be a BLAST protein database
 

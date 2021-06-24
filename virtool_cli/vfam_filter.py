@@ -53,7 +53,6 @@ def filter_file_on_coverage(fasta_file: Path) -> Optional[Path]:
         output_path = Path(f"{fasta_file}_filtered")
         to_write = [record for record in SeqIO.parse(fasta_file, "fasta") if record.id in record_lengths]
         SeqIO.write(to_write, output_path, "fasta")
-
         return output_path
 
 
@@ -73,7 +72,7 @@ def filter_on_coverage(fasta_files: list) -> List[Path]:
     return filtered_by_coverage
 
 
-def filter_on_number(fasta_files, min_sequences) -> List[Path]:
+def filter_on_number(fasta_files: List[Path], min_sequences: int) -> List[Path]:
     """
     Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
 

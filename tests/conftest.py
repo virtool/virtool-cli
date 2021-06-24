@@ -1,7 +1,7 @@
 import pytest
 
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes, remove_phages
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
 from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_markov import blast_to_mcl, write_abc, mcl_to_fasta
@@ -22,18 +22,13 @@ def input_paths(input_dir):
 
 
 @pytest.fixture()
-def no_phages(input_paths):
-    return remove_phages(input_paths)
-
-
-@pytest.fixture()
 def group_records(input_paths):
-    return group_input_paths(input_paths)
+    return group_input_paths(input_paths, False)
 
 
 @pytest.fixture()
 def no_dupes(group_records, output):
-    return remove_dupes(group_records, output, None, 1)
+    return write_curated_recs(group_records, output, None, 1)
 
 
 @pytest.fixture()

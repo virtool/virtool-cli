@@ -2,11 +2,11 @@ import subprocess
 
 from Bio import SeqIO
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from virtool_cli.vfam_polyprotein import Alignment
 
 
-def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
+def write_abc(blast_results: Path, polyproteins: list, prefix: Optional[str]) -> Path:
     """
     Takes in blast results file and list of polyproteins to not include, writes a .abc file with desired alignments
 
@@ -33,7 +33,7 @@ def write_abc(blast_results: Path, polyproteins: list, prefix) -> Path:
     return abc_path
 
 
-def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix) -> Path:
+def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix: Optional[str]) -> Path:
     """
     Converts sequences not included in polyprotein_sequences to a .abc file
 
@@ -75,7 +75,7 @@ def blast_to_mcl(blast_results: Path, polyproteins: list, inflation_num, prefix)
     return mcl_path
 
 
-def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> List[Path]:
+def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix: Optional[str]) -> List[Path]:
     """
     Takes mcl clusters and a clustered fasta file, creates numbered fasta files for each mcl cluster
 
@@ -87,6 +87,7 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta: Path, prefix) -> List[Path]:
     fasta_path = clustered_fasta.parent
     mcl_dict = {}
     line_num = 0
+
     with mcl_path.open('r') as handle:
         for line in handle:
             line_num += 1
