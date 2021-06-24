@@ -2,7 +2,7 @@ import pytest
 
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
-from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
+from virtool_cli.vfam_collapse import generate_clusters, blast_all_by_all
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_markov import blast_to_mcl, write_abc, mcl_to_fasta
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call
@@ -33,12 +33,12 @@ def no_dupes(group_records, output):
 
 @pytest.fixture()
 def clustered_result(output, no_dupes):
-    return generate_clusters(no_dupes, None, None, 1.0)
+    return generate_clusters(no_dupes, 1.0)
 
 
 @pytest.fixture()
 def blast_result(clustered_result):
-    return all_by_all_blast(clustered_result, None, 8)
+    return blast_all_by_all(clustered_result, 8)
 
 
 @pytest.fixture()

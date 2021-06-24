@@ -9,11 +9,11 @@ DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
 LARGE_INPUT = VFAM_INPUT_PATH / "Large"
 
-DUPES_MSA = VFAM_INTERMEDIATES_PATH / "Dupes" / "msa_files"
-GENERIC_MSA = VFAM_INTERMEDIATES_PATH / "Generic" / "msa_files"
+DUPES_MSA = VFAM_INTERMEDIATES_PATH / "Dupes" / "msa_paths"
+GENERIC_MSA = VFAM_INTERMEDIATES_PATH / "Generic" / "msa_paths"
 
-DUPES_HMM = VFAM_INTERMEDIATES_PATH / "Dupes" / "hmm_files"
-GENERIC_HMM = VFAM_INTERMEDIATES_PATH / "Generic" / "hmm_files"
+DUPES_HMM = VFAM_INTERMEDIATES_PATH / "Dupes" / "hmm_paths"
+GENERIC_HMM = VFAM_INTERMEDIATES_PATH / "Generic" / "hmm_paths"
 
 
 @pytest.mark.parametrize("input_dir, msa", [(DUPES_INPUT, DUPES_MSA),

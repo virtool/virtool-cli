@@ -13,9 +13,9 @@ BLAST_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "blast"
 BLAST_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "blast"
 BLAST_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "blast"
 
-DUPES_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Dupes" / "fasta_files"
-GENERIC_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Generic" / "fasta_files"
-LARGE_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Large" / "fasta_files"
+DUPES_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Dupes" / "fasta_paths"
+GENERIC_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Generic" / "fasta_paths"
+LARGE_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Large" / "fasta_paths"
 
 
 @pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES),
