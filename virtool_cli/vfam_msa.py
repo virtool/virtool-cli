@@ -46,8 +46,16 @@ def batch_hmm_call(msa_paths: list) -> List[Path]:
         log_path = Path(f"{os.path.splitext(msa_path)[0]}.log")
         hmm_paths.append(hmm_path)
 
-        hmm_build_cmd = ["hmmbuild", "--informat", "afa", "-o", log_file, "--cpu", str(NUM_CORES), hmm_file, msa_file]
-        subprocess.run(hmm_build_cmd, check=True, shell=False)
+        hmmer_command = [
+            "hmmbuild",
+            "--informat", "afa",
+            "-o", log_path,
+            "--cpu", str(NUM_CORES),
+            hmm_path,
+            msa_path
+        ]
+
+        subprocess.run(hmmer_command, check=True, shell=False)
 
     return hmm_paths
 

@@ -32,8 +32,9 @@ def get_alignment_records(blast_results_path: Path) -> dict:
     :param blast_results_path: path to blast file produced in all_by_all blast step
     :return: alignment_records, a dictionary containing all alignment objects for each query
     """
-    alignment_records = {}
-    with blast_results.open("r") as handle:
+    alignment_records = defaultdict(list)
+
+    with blast_results_path.open("r") as handle:
 
         for line in handle:
             alignment = Alignment(line)

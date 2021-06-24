@@ -16,12 +16,12 @@ def get_input_paths(src_path: Path) -> List[Path]:
 
     if input_paths:
         return input_paths
-    else:
-        print("Error: no files found in input directory")
-        sys.exit(1)
+
+    print("No files found in input directory")
+    sys.exit(1)
 
 
-def group_input_paths(input_paths: list, no_named_phages: bool) -> list:
+def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     """
     Takes input_paths as input and yields records.
 
@@ -47,7 +47,7 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
     :param records: iterable of records gathered in group_input_paths()
     :param sequence_min_length: minimum length of sequence to be included in output
     """
-    record_seqs = []
+    record_seqs = list()
 
     for record in records:
         if record.seq not in record_seqs and len(record.seq) > sequence_min_length:

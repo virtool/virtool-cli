@@ -99,11 +99,9 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
     fasta_path = clustered_fasta_path.parent
     mcl_path_dict = {}
 
-    with mcl_path.open('r') as handle:
-        for line in handle:
-            line_num += 1
-
-            fasta_name = f"cluster_{line_num}"
+    with mcl_path.open("r") as handle:
+        for line_num, line in enumerate(handle):
+            fasta_name = f"cluster_{line_num + 1}"
             if prefix:
                 fasta_name = f"{prefix}_{fasta_name}"
 
