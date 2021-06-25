@@ -65,11 +65,11 @@ def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
     return output_path
 
 
-def filter_on_coverage(fasta_paths: list) -> List[Path]:
+def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
     """
-    Takes in list of FASTA paths, and calls filter_file_on_coverage to filter them by coverage.
+    Takes in list of FASTA paths, and calls filter_file_on_coverage to filter each file by coverage.
 
-    :param fasta_paths: list of fasta_paths from mcl_to_fasta step to be filtered
+    :param fasta_paths: list of paths to FASTA files from mcl_to_fasta step to be filtered
     :return: filtered_by_coverage, a list of paths to filtered FASTA files
     """
     filtered_by_coverage = []

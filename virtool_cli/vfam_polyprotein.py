@@ -5,11 +5,11 @@ from typing import List
 
 def sequence_lengths(blast_results_path: Path) -> dict:
     """
-    Takes path to blast results file and parses through lines, creating an alignment object from each line.
+    Takes path to BLAST results file and parses through lines, creating an alignment object from each line.
 
     If alignment query matches the alignment subject, sequence length is stored as the length of that query.
 
-    :param blast_results_path: path to blast file produced in all_by_all blast step
+    :param blast_results_path: path to BLAST file produced in all_by_all blast step
     :return: sequence_lengths, a dictionary containing each sequence and its sequence length
     """
     seq_lengths = {}
@@ -25,11 +25,11 @@ def sequence_lengths(blast_results_path: Path) -> dict:
 
 def get_alignment_records(blast_results_path: Path) -> dict:
     """
-    Takes path to blast file and parses through lines, producing an alignment object from each line.
+    Takes path to BLAST file and parses through lines, producing an alignment object from each line.
 
     If alignment query does not match subject, alignment is added to list of alignments for each query.
 
-    :param blast_results_path: path to blast file produced in all_by_all blast step
+    :param blast_results_path: path to BLAST file produced in all_by_all blast step
     :return: alignment_records, a dictionary containing all alignment objects for each query
     """
     alignment_records = defaultdict(list)
@@ -54,7 +54,7 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
     - at least 70% of the sequence length was covered by two or more other proteins in the sequence set.
     - these two or more other proteins were covered at least 80% by the longer sequence.
 
-    :param blast_results_path: path to blast file produced in all_by_all blast step
+    :param blast_results_path: path to BLAST file produced in blast_all_by_all() step
     :return: polyprotein_ids, a list of sequences to not include in output
     """
     seq_lengths = sequence_lengths(blast_results_path)

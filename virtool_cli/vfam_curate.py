@@ -2,7 +2,7 @@ import sys
 
 from Bio import SeqIO
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 
 def get_input_paths(src_path: Path) -> List[Path]:
@@ -25,10 +25,10 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     """
     Takes input_paths as input and yields records.
 
-    Filters out records with "phage" in their description if id no_named_phages is True.
+    Filters out records with "phage" in their description if no_named_phages is True.
 
     :param input_paths: list of paths to input files
-    :param no_named_phages: bool that dictates whether phage records are filtered out or not
+    :param no_named_phages: bool that dictates whether phage records are filtered out by name or not
     :return: list of all records found in input paths
     """
     for input_path in input_paths:

@@ -6,14 +6,14 @@ from Bio import SeqIO
 
 def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None, fraction_cov=None) -> Path:
     """
-    Takes in a FASTA path, minimum fraction identity, minimum fraction coverage and calls cd-hit to cluster data.
+    Takes in path to a FASTA file, minimum fraction ID, minimum fraction coverage and calls CD-HIT to cluster data.
 
     CD-HIT collapses the input sequences into non-redundant representatives at the specified levels.
 
     :param curated_fasta_path: path to FASTA file from vfam_curate step, to have cd-hit performed on it
+    :param fraction_id: Fraction ID for cd-hit step
     :param prefix: Prefix for intermediate and result files
     :param fraction_cov: Fraction coverage for cd-hit step
-    :param fraction_id: Fraction ID for cd-hit step
     :return: output_path, path to a file containing cluster information created at cd-hit step
     """
     output_name = "clustered_fasta.faa"
@@ -50,7 +50,7 @@ def rmv_polyproteins(clustered_fasta_path: Path) -> list:
 
 def write_rmv_polyproteins(clustered_fasta_path: Path, prefix=None) -> Path:
     """
-    Removes any record with "polyprotein" found in its description.
+    Writes all records from rmw_polyproteins() step to output_path.
 
     :param clustered_fasta_path: path to file containing clustered FASTA information from generate clusters step
     :param prefix: Prefix for intermediate and result files
@@ -75,8 +75,8 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     Runs BLAST on the file to itself as the BLAST-formatted database.
 
     :param clustered_fasta_path: path to FASTA file from previous cd-hit step
-    :param prefix: Prefix for intermediate and result files
     :param num_cores: number of cores to use at all_by_all blast step
+    :param prefix: Prefix for intermediate and result files
     :return: path to tab-delimited formatted BLAST results file
     """
     format_db_cmd = [

@@ -33,7 +33,7 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
     return msa_paths
 
 
-def batch_hmm_call(msa_paths: list) -> List[Path]:
+def batch_hmm_call(msa_paths: List[Path]) -> List[Path]:
     """
     Takes in a list of FASTA MSA paths, and builds HMMs for each of the using HMMer.
 
@@ -60,9 +60,9 @@ def batch_hmm_call(msa_paths: list) -> List[Path]:
     return hmm_paths
 
 
-def concatenate_hmms(hmm_paths: list, output: Path, prefix: Optional[str]) -> Path:
+def concatenate_hmms(hmm_paths: List[Path], output: Path, prefix: Optional[str]) -> Path:
     """
-    Takes in a list of paths to hmm files containing individual profiles and writes them all to a master results file.
+    Takes in a list of paths to HMM files containing individual profiles and writes them all to a master results file.
 
     :param hmm_paths: list of paths to individual hmm files
     :param output: Path to output directory

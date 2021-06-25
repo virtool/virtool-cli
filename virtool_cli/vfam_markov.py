@@ -6,12 +6,12 @@ from typing import List
 from virtool_cli.vfam_polyprotein import Alignment
 
 
-def write_abc(blast_results_path: Path, polyprotein_ids: list, prefix=None) -> Path:
+def write_abc(blast_results_path: Path, polyprotein_ids: List[str], prefix=None) -> Path:
     """
-    Takes in blast results path and list of polyprotein_ids to not include, writes a .abc file with desired alignments.
+    Takes in BLAST results path and list of polyprotein_ids to not include, writes a .abc file with desired alignments.
 
     :param blast_results_path: path to blast file produced in all_by_all blast step
-    :param polyprotein_ids: list of polyprotein like ids to not be included in output
+    :param polyprotein_ids: list of sequence ids of polyprotein-like records to not be included in output
     :param prefix: Prefix for intermediate and result files
     :return: path to abc file
     """
@@ -33,21 +33,21 @@ def write_abc(blast_results_path: Path, polyprotein_ids: list, prefix=None) -> P
     return abc_path
 
 
-def blast_to_mcl(blast_results_path: Path, polyproteins: list, inflation_num=None, prefix=None) -> Path:
+def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation_num=None, prefix=None) -> Path:
     """
-    Converts sequences not included in polyprotein_sequences to a .abc file.
+    Converts sequences in blast_results_path to a .abc file.
 
     Calls mcxload on .abc file to generate a .mci and .tab file.
 
     Calls mcl on .tab file to generate newline-separated clusters.
 
     :param blast_results_path: path to blast file produced in all_by_all blast step
-    :param polyproteins: list of polyprotein like sequences to not be included in output
+    :param polyprotein_ids: list of sequence ids of polyprotein like sequences to not be included in output
     :param inflation_num: Inflation number to be used in mcl call
     :param prefix: Prefix for intermediate and result files
     :return: mcl_path to file containing newline-separated clusters
     """
-    abc_path = write_abc(blast_results_path, polyproteins, prefix)
+    abc_path = write_abc(blast_results_path, polyprotein_ids, prefix)
 
     mci_name = "blast.mci"
     tab_name = "blast.tab"
@@ -89,7 +89,7 @@ def blast_to_mcl(blast_results_path: Path, polyproteins: list, inflation_num=Non
 
 def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> List[Path]:
     """
-    Takes mcl clusters and a path to a clustered FASTA file, creates numbered FASTA files for each mcl cluster.
+    Takes MCL clusters and a path to a clustered FASTA file, creates numbered FASTA files for each MCL cluster.
 
     :param mcl_path: path to mcl results file from blast_to_mcl step
     :param clustered_fasta_path: path to clustered FASTA from cd-hit step
