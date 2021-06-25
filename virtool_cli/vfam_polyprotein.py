@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from typing import List, Optional
-from virtool_cli.vfam_polyprotein import Alignment
 
 
 def get_sequence_lengths(blast_results: Path) -> dict:
@@ -48,7 +47,7 @@ def get_alignment_records(blast_results: Path) -> dict:
     return alignment_records
 
 
-def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths: dict) -> List[Alignment]:
+def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths: dict) -> list:
     """
     Iterates through alignment records for seq_id, adds alignment record to checked_alignments if:
 
@@ -72,7 +71,7 @@ def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths
     return checked_alignments
 
 
-def check_alignments_by_position(seq_id: str, checked_by_length: List[Alignment], seq_lengths: dict) -> Optional[str]:
+def check_alignments_by_position(seq_id: str, checked_by_length: list, seq_lengths: dict) -> Optional[str]:
     """
     Iterates through alignment records for sequence ID to be further investigated from check_alignments_by_length().
 
