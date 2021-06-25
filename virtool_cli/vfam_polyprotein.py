@@ -1,7 +1,11 @@
 from pathlib import Path
 
+from typing import Dict, List, Optional
 
-def sequence_lengths(blast_results: Path) -> dict:
+from virtool_cli.vfam_polyprotein import Alignment
+
+
+def get_sequence_lengths(blast_results: Path) -> dict:
     """
     Takes blast results file and parses through lines, creating an alignment object from each line
 
@@ -45,44 +49,76 @@ def get_alignment_records(blast_results: Path) -> dict:
     return alignment_records
 
 
-def find_polyproteins(blast_results: Path) -> list:
+def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths: dict) -> List[Alignment]:
     """
-    Sequences are filtered by sequence length and coverage to determine if they are polyproteins/polyprotein-like
+    Adds alignment record to checked_alignments if:
 
-    Sequences longer than 400 amino acids in length were identified as polyprotein or polyprotein-like if
+     - The length of the subject is less than 70% the length of the query
+     - Alignment spans more than 70% of the alignment subject
 
-    - at least 70% of the sequence length was covered by two or more other proteins in the sequence set
-    - these two or more other proteins were covered at least 80% by the longer sequence.
-
-    :param blast_results:blast file produced in all_by_all blast step
-    :return: polyproteins, a list of sequences to not include in output
+    :param seq_id: sequence ID for which to filter alignment records
+    :param alignment_records: dictionary containing all alignment records for each seq_id
+    :param seq_lengths: dictionary containing sequence ID - sequence length pairs
+    :return: checked alignments, a list of alignment records to investigate further in check_alignments_by_position()
     """
-    seq_lengths = sequence_lengths(blast_results)
-    alignment_records = get_alignment_records(blast_results)
-    polyproteins = []
+    checked_alignments = []
 
-    for query in seq_lengths:
-        if seq_lengths[query] > 400 and query in alignment_records:
+    for alignment in alignment_records[seq_id]:
+        if seq_lengths[alignment.subject] < 0.7 * seq_lengths[alignment.query]:
+            subject_coverage = float(abs(alignment.qstart - alignment.qend)) / seq_lengths[alignment.subject]
 
-            alignment_ranges = []
+            if subject_coverage >= 0.7:
+                checked_alignments.append(alignment)
 
-            for alignment in alignment_records[query]:
-                if alignment.subject in seq_lengths:
-                    if seq_lengths[alignment.subject] < 0.7 * seq_lengths[alignment.query]:
-                        subject_cvg = float(abs(alignment.qstart - alignment.qend))/seq_lengths[alignment.subject]
-                        if subject_cvg >= 0.7:
-                            alignment_ranges.append((alignment.qstart, alignment.qend))
+    return checked_alignments
 
-            query_cvg = {}
-            for rng in alignment_ranges:
-                for position in range(rng[0], rng[1]):
-                    query_cvg[position] = None
 
-            if len(query_cvg) > 0.8 * (seq_lengths[query]):
-                polyproteins.append(query)
-            query_cvg.clear()
+def check_alignments_by_position(seq_id: str, checked_by_length: List[Alignment], seq_lengths: dict) -> Optional[str]:
+    """
+    Iterates through alignment records for sequence ID to be further investigated from check_alignments_by_length().
 
-    return polyproteins
+    If alignment queries collectively span more than 80% of sequence length, sequence is identified as polyprotein-like.
+
+    :param seq_id: sequence ID for sequence to be investigated
+    :param checked_by_length: alignments to be further investigated from check_alignment_records()
+    :param seq_lengths: dictionary containing sequence ID - sequence length pairs
+    :return: seq_id if found polyprotein-like
+    """
+    query_coverage = dict()
+
+    for alignment in checked_by_length:
+        for position in range(alignment.qstart, alignment.qend):
+            query_coverage[position] = None
+
+    if len(query_coverage) > 0.8 * (seq_lengths[seq_id]):
+        return seq_id
+
+    return None
+
+
+def find_polyproteins(blast_results_path: Path) -> List[str]:
+    """
+    Sequences longer than 400 amino acids are filtered by length and coverage to determine if they are polyprotein-like.
+
+    :param blast_results_path: path to BLAST file produced in all_by_all blast step
+    :return: polyprotein_ids, a list of sequence IDs for polyprotein-like records
+    """
+    seq_lengths = get_sequence_lengths(blast_results_path)
+    alignment_records = get_alignment_records(blast_results_path)
+    polyprotein_ids = []
+
+    for seq_id in seq_lengths:
+        if seq_lengths[seq_id] > 400 and seq_id in alignment_records:
+
+            checked_by_length = check_alignments_by_length(seq_id, alignment_records, seq_lengths)
+
+            if checked_by_length:
+                checked_by_position = check_alignments_by_position(seq_id, checked_by_length, seq_lengths)
+
+                if checked_by_position:
+                    polyprotein_ids.append(checked_by_position)
+
+    return polyprotein_ids
 
 
 class Alignment:
