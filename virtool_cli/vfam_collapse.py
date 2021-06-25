@@ -16,7 +16,7 @@ def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None,
     :param fraction_id: Fraction ID for cd-hit step
     :return: output_path, path to a file containing cluster information created at cd-hit step
     """
-    output_name = "clustered_fasta_path.faa"
+    output_name = "clustered_fasta.faa"
     if prefix:
         output_name = f"{prefix}_{output_name}"
 

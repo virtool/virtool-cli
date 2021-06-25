@@ -28,7 +28,7 @@ def group_records(input_paths):
 
 @pytest.fixture()
 def no_dupes(group_records, output):
-    return write_curated_recs(group_records, output, None, 1)
+    return write_curated_recs(group_records, output, 1)
 
 
 @pytest.fixture()
@@ -48,17 +48,17 @@ def polyproteins(output, blast_result):
 
 @pytest.fixture()
 def mcl_results(output, blast_result, polyproteins):
-    return blast_to_mcl(blast_result, polyproteins, None, None)
+    return blast_to_mcl(blast_result, polyproteins)
 
 
 @pytest.fixture()
 def abc_file(blast_result, polyproteins):
-    return write_abc(blast_result, polyproteins, None)
+    return write_abc(blast_result, polyproteins)
 
 
 @pytest.fixture()
 def fasta_files(output, mcl_results, clustered_result):
-    return mcl_to_fasta(mcl_results, clustered_result, None)
+    return mcl_to_fasta(mcl_results, clustered_result)
 
 
 @pytest.fixture()
