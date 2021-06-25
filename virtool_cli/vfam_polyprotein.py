@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from typing import Dict, List, Optional
-
+from typing import List, Optional
 from virtool_cli.vfam_polyprotein import Alignment
 
 
@@ -51,14 +50,14 @@ def get_alignment_records(blast_results: Path) -> dict:
 
 def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths: dict) -> List[Alignment]:
     """
-    Adds alignment record to checked_alignments if:
+    Iterates through alignment records for seq_id, adds alignment record to checked_alignments if:
 
      - The length of the subject is less than 70% the length of the query
      - Alignment spans more than 70% of the alignment subject
 
     :param seq_id: sequence ID for which to filter alignment records
     :param alignment_records: dictionary containing all alignment records for each seq_id
-    :param seq_lengths: dictionary containing sequence ID - sequence length pairs
+    :param seq_lengths: dictionary containing sequence ID: sequence length pairs
     :return: checked alignments, a list of alignment records to investigate further in check_alignments_by_position()
     """
     checked_alignments = []
@@ -81,7 +80,7 @@ def check_alignments_by_position(seq_id: str, checked_by_length: List[Alignment]
 
     :param seq_id: sequence ID for sequence to be investigated
     :param checked_by_length: alignments to be further investigated from check_alignment_records()
-    :param seq_lengths: dictionary containing sequence ID - sequence length pairs
+    :param seq_lengths: dictionary containing sequence ID: sequence length pairs
     :return: seq_id if found polyprotein-like
     """
     query_coverage = dict()
