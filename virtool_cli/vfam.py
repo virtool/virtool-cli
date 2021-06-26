@@ -1,11 +1,11 @@
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
-from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, all_by_all_blast
+from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, blast_all_by_all
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
-from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_hmms, organize_intermediates
-from virtool_cli.vfam_annotation import clusters_to_json
+from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_hmms
+from virtool_cli.vfam_annotation import get_json_from_clusters
 
 
 def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction_coverage, fraction_id, num_cores,
@@ -15,14 +15,14 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
 
     records = group_input_paths(input_paths, no_named_phages)
 
-    no_dupes = write_curated_recs(records, output, prefix, sequence_min_length)
+    no_dupes = write_curated_recs(records, output, sequence_min_length, prefix)
 
-    cd_hit_result = generate_clusters(no_dupes, prefix, fraction_coverage, fraction_id)
+    cd_hit_result = generate_clusters(no_dupes, fraction_id, prefix, fraction_coverage)
 
     if no_named_polyproteins:
         cd_hit_result = write_rmv_polyproteins(cd_hit_result, prefix)
 
-    blast_results = all_by_all_blast(cd_hit_result, prefix, num_cores)
+    blast_results = blast_all_by_all(cd_hit_result, num_cores, prefix)
 
     polyproteins = find_polyproteins(blast_results)
 
@@ -41,9 +41,7 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
 
     concatenate_hmms(hmm_files, output, prefix)
 
-    clusters_to_json(fasta_files, output)
-
-    organize_intermediates(output)
+    get_json_from_clusters(fasta_files, output)
 
 
 

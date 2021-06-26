@@ -7,9 +7,9 @@ DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
 GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
 LARGE_INPUT = VFAM_INPUT_PATH / "Large"
 
-POLYP_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "polyproteins"
-POLYP_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "polyproteins"
-POLYP_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "polyproteins"
+POLYP_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "polyprotein_ids"
+POLYP_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "polyprotein_ids"
+POLYP_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "polyprotein_ids"
 
 
 @pytest.mark.parametrize("input_dir, expected_polyproteins", [(DUPES_INPUT, POLYP_DUPES),
