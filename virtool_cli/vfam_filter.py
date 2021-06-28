@@ -3,7 +3,14 @@ from pathlib import Path
 
 from typing import Optional, List
 
-COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
+COVERAGE_HEUR_DICT = {
+    0: 0.6,
+    1: 0.65,
+    2: 0.7,
+    3: 0.75,
+    4: 0.8,
+    5: 0.85
+}
 
 
 def remove_on_coverage(record_lengths: dict, median: float, coverage_threshold: float) -> List[str]:
@@ -14,6 +21,7 @@ def remove_on_coverage(record_lengths: dict, median: float, coverage_threshold: 
     :param median: median sequence length from get_median()
     :param coverage_threshold: coverage threshold calculated in get_coverage_threshold()
     :return: list of record IDs for filtered records
+    
     """
     filtered_record_ids = list()
 
@@ -91,38 +99,43 @@ def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
     return None
 
 
-def filter_on_coverage(fasta_files: list) -> List[Path]:
-    """
-    Takes in list of fasta files, and calls filter_file_on_coverage to filter them by coverage
+    output_path = Path(f"{fasta_path}_filtered")
+    to_write = (record for record in SeqIO.parse(fasta_path, "fasta") if record.id in record_lengths)
+    SeqIO.write(to_write, output_path, "fasta")
 
-    :param fasta_files: list of fasta_files from mcl_to_fasta step to be filtered
-    :return: filtered_by_coverage, a list filtered fasta files
+    return output_path
+
+
+def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
+    """
+    Takes in list of FASTA paths, and calls filter_file_on_coverage to filter each file by coverage.
+
+    :param fasta_paths: list of paths to FASTA files from mcl_to_fasta step to be filtered
+    :return: filtered_by_coverage, a list of paths to filtered FASTA files
     """
     filtered_by_coverage = []
-    for fasta_file in fasta_files:
-        filtered_file = filter_file_on_coverage(fasta_file)
+    for fasta_path in fasta_paths:
+        filtered_file = filter_file_on_coverage(fasta_path)
         if filtered_file:
             filtered_by_coverage.append(filtered_file)
 
     return filtered_by_coverage
 
 
-def filter_on_number(fasta_files: List[Path], min_sequences: int) -> List[Path]:
+def filter_on_number(fasta_paths: List[Path], min_sequences: int) -> List[Path]:
     """
-    Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
+    Takes in a list of FASTA paths and filters out files if they contain less than MIN_SEQUENCES records.
 
-    :param fasta_files: list of fasta files to be filtered
+    :param fasta_paths: list of FASTA files to be filtered
     :param min_sequences: Filter out clusters with fewer records than min_sequences_check
-    :return: filtered_files, a list of filtered fasta files
+    :return: filtered_fasta_paths, a list of filtered FASTA files
     """
-    filtered_files = []
-    for fasta_file in fasta_files:
-        count = 0
-        for _ in SeqIO.parse(fasta_file, "fasta"):
-            count += 1
-            if count >= min_sequences:
-                filtered_files.append(fasta_file)
+    filtered_fasta_paths = []
+    for fasta_path in fasta_paths:
 
+        for index, _ in enumerate(SeqIO.parse(fasta_path, "fasta")):
+            if index + 1 >= min_sequences:
+                filtered_fasta_paths.append(fasta_path)
                 break
 
-    return filtered_files
+    return filtered_fasta_paths
