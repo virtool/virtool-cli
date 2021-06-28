@@ -2,7 +2,7 @@ import pytest
 
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
-from virtool_cli.vfam_collapse import generate_clusters, all_by_all_blast
+from virtool_cli.vfam_collapse import generate_clusters, blast_all_by_all
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_markov import blast_to_mcl, write_abc, mcl_to_fasta
 from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call
@@ -28,17 +28,17 @@ def group_records(input_paths):
 
 @pytest.fixture()
 def no_dupes(group_records, output):
-    return write_curated_recs(group_records, output, None, 1)
+    return write_curated_recs(group_records, output, 1)
 
 
 @pytest.fixture()
 def clustered_result(output, no_dupes):
-    return generate_clusters(no_dupes, None, None, 1.0)
+    return generate_clusters(no_dupes, 1.0)
 
 
 @pytest.fixture()
 def blast_result(clustered_result):
-    return all_by_all_blast(clustered_result, None, 8)
+    return blast_all_by_all(clustered_result, 8)
 
 
 @pytest.fixture()
@@ -48,17 +48,17 @@ def polyproteins(output, blast_result):
 
 @pytest.fixture()
 def mcl_results(output, blast_result, polyproteins):
-    return blast_to_mcl(blast_result, polyproteins, None, None)
+    return blast_to_mcl(blast_result, polyproteins)
 
 
 @pytest.fixture()
 def abc_file(blast_result, polyproteins):
-    return write_abc(blast_result, polyproteins, None)
+    return write_abc(blast_result, polyproteins)
 
 
 @pytest.fixture()
 def fasta_files(output, mcl_results, clustered_result):
-    return mcl_to_fasta(mcl_results, clustered_result, None)
+    return mcl_to_fasta(mcl_results, clustered_result)
 
 
 @pytest.fixture()

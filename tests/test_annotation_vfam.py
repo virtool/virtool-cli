@@ -8,10 +8,10 @@ GENERIC_JSON = VFAM_INTERMEDIATES_PATH / "Generic" / "master.json"
 LARGE_JSON = VFAM_INTERMEDIATES_PATH / "Large" / "master.json"
 
 
-@pytest.mark.parametrize("input_file", [DUPES_JSON, GENERIC_JSON, LARGE_JSON])
-def test_get_taxonomy(input_file):
+@pytest.mark.parametrize("input_path", [DUPES_JSON, GENERIC_JSON, LARGE_JSON])
+def test_get_taxonomy(input_path):
 
-    with input_file.open('r') as handle:
+    with input_path.open('r') as handle:
         json_decode = json.load(handle)
         for annotation in json_decode:
             family_count = 0

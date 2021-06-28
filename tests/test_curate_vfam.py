@@ -50,7 +50,7 @@ def test_remove_phages(input_paths, input_dir):
 ])
 def test_curated_file(input_dir, group_records, output):
     """Assert all sequences are longer than min_length, no record descriptions contain 'phage'."""
-    no_dupes = write_curated_recs(group_records, output, None, 1)
+    no_dupes = write_curated_recs(group_records, output, 1)
 
     with Path(no_dupes) as handle:
         for record in SeqIO.parse(handle, "fasta"):
@@ -65,7 +65,7 @@ def test_curated_file(input_dir, group_records, output):
 def test_remove_dupes(input_dir, input_paths, filtered_file, output):
     """Test that remove_dupes step of program produces desired output to match filtered og vfam file."""
     records = group_input_paths(input_paths, False)
-    result = write_curated_recs(records, output, None, 1)
+    result = write_curated_recs(records, output, 1)
     expected = Path(filtered_file)
 
     assert filecmp.cmp(result, expected, shallow=True)

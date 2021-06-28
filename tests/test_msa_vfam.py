@@ -58,7 +58,3 @@ def test_batch_hmm_call(get_hmm, input_dir, hmm):
 
                 assert r_lines == e_lines
 
-
-def test_concatenate_hmms():
-    """Not sure how to test this one without a profile hmm parser..."""
-    pass

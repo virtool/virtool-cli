@@ -3,25 +3,42 @@ from pathlib import Path
 
 from typing import Optional, List
 
-COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
+COVERAGE_HEUR_DICT = {
+    0: 0.6,
+    1: 0.65,
+    2: 0.7,
+    3: 0.75,
+    4: 0.8,
+    5: 0.85
+}
 
 
-def filter_file_on_coverage(fasta_file: Path) -> Optional[Path]:
+def remove_on_coverage(record_lengths: dict, median: float, coverage_threshold: float) -> List[str]:
     """
-    Takes a fasta file and a dictionary containing coverage heuristics information
+    Filters records based on coverage threshold, returns record IDs that subscribe to coverage heuristics.
 
-    any sequences that don't subscribe to these heuristics are removed
-
-    :param fasta_file: fasta file containing unfiltered protein sequence records
-    :return: filtered_fasta_file
+    :param record_lengths: dictionary of record ID, sequence length key-value pairs
+    :param median: median sequence length from get_median()
+    :param coverage_threshold: coverage threshold calculated in get_coverage_threshold()
+    :return: list of record IDs for filtered records
+    
     """
-    record_lengths = {}
-    lengths = []
+    filtered_record_ids = list()
 
-    for record in SeqIO.parse(fasta_file, "fasta"):
-        record_lengths[record.id] = len(record.seq)
-        lengths.append(len(record.seq))
+    for seq_id, length in record_lengths.items():
+        if length >= coverage_threshold * median and length * coverage_threshold <= median:
+            filtered_record_ids.append(seq_id)
 
+    return filtered_record_ids
+
+
+def get_median(lengths: List[int]) -> float:
+    """
+    Calculates median sequence length from sequence lengths in lengths.
+
+    :param lengths: list of sequence lengths
+    :return: median
+    """
     lengths.sort()
 
     upper = lengths[int(len(lengths) / 2)]
@@ -31,63 +48,94 @@ def filter_file_on_coverage(fasta_file: Path) -> Optional[Path]:
     if len(lengths) % 2 != 0:
         median = float(lengths[int(len(lengths) / 2)])
 
+    return median
+
+
+def get_coverage_threshold(median: float) -> float:
+    """
+    Calculates coverage threshold from median and coverage heuristics dictionary.
+
+    :param median:median sequence length calculated in get_median()
+    :return: coverage threshold
+    """
     coverage_key = int(median / 100)
 
-    coverage_threshold = (1.0 + max(COVERAGE_HEUR_DICT.values()))/2
+    coverage_threshold = (1.0 + max(COVERAGE_HEUR_DICT.values())) / 2
 
     if coverage_key in COVERAGE_HEUR_DICT:
-        coverage_threshold = (1.0 + COVERAGE_HEUR_DICT[coverage_key])/2
+        coverage_threshold = (1.0 + COVERAGE_HEUR_DICT[coverage_key]) / 2
 
-    to_remove = [ID for ID, length in record_lengths.items()
-                 if length < coverage_threshold * median or length * coverage_threshold > median]
+    return coverage_threshold
 
-    for ID in to_remove:
-        if ID in record_lengths:
-            record_lengths.pop(ID)
 
-    if len(record_lengths) == 0:
-        return None
-    elif len(record_lengths) == len(lengths):
-        return fasta_file
-    else:
-        output_path = Path(f"{fasta_file}_filtered")
-        to_write = [record for record in SeqIO.parse(fasta_file, "fasta") if record.id in record_lengths]
+def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
+    """
+    Takes a path to a FASTA file, records from file are filtered by median sequence length and coverage threshold.
+
+    Filtered records are written to output_path.
+
+    :param fasta_path: FASTA file containing unfiltered protein sequence records
+    :return: output_path, the path to the filtered FASTA file
+    """
+    record_lengths = {}
+
+    for record in SeqIO.parse(fasta_path, "fasta"):
+        record_lengths[record.id] = len(record.seq)
+
+    lengths = list(record_lengths.values())
+    median = get_median(lengths)
+
+    coverage_threshold = get_coverage_threshold(median)
+
+    filtered_record_ids = remove_on_coverage(record_lengths, median, coverage_threshold)
+
+    if filtered_record_ids:
+        output_path = Path(f"{fasta_path}_filtered")
+        to_write = (record for record in SeqIO.parse(fasta_path, "fasta") if record.id in filtered_record_ids)
         SeqIO.write(to_write, output_path, "fasta")
+
         return output_path
 
+    return None
 
-def filter_on_coverage(fasta_files: list) -> List[Path]:
+
+    output_path = Path(f"{fasta_path}_filtered")
+    to_write = (record for record in SeqIO.parse(fasta_path, "fasta") if record.id in record_lengths)
+    SeqIO.write(to_write, output_path, "fasta")
+
+    return output_path
+
+
+def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
     """
-    Takes in list of fasta files, and calls filter_file_on_coverage to filter them by coverage
+    Takes in list of FASTA paths, and calls filter_file_on_coverage to filter each file by coverage.
 
-    :param fasta_files: list of fasta_files from mcl_to_fasta step to be filtered
-    :return: filtered_by_coverage, a list filtered fasta files
+    :param fasta_paths: list of paths to FASTA files from mcl_to_fasta step to be filtered
+    :return: filtered_by_coverage, a list of paths to filtered FASTA files
     """
     filtered_by_coverage = []
-    for fasta_file in fasta_files:
-        filtered_file = filter_file_on_coverage(fasta_file)
+    for fasta_path in fasta_paths:
+        filtered_file = filter_file_on_coverage(fasta_path)
         if filtered_file:
             filtered_by_coverage.append(filtered_file)
 
     return filtered_by_coverage
 
 
-def filter_on_number(fasta_files: List[Path], min_sequences: int) -> List[Path]:
+def filter_on_number(fasta_paths: List[Path], min_sequences: int) -> List[Path]:
     """
-    Takes in a list of fasta files and filters out files if they contain less than MIN_SEQUENCES records
+    Takes in a list of FASTA paths and filters out files if they contain less than MIN_SEQUENCES records.
 
-    :param fasta_files: list of fasta files to be filtered
+    :param fasta_paths: list of FASTA files to be filtered
     :param min_sequences: Filter out clusters with fewer records than min_sequences_check
-    :return: filtered_files, a list of filtered fasta files
+    :return: filtered_fasta_paths, a list of filtered FASTA files
     """
-    filtered_files = []
-    for fasta_file in fasta_files:
-        count = 0
-        for _ in SeqIO.parse(fasta_file, "fasta"):
-            count += 1
-            if count >= min_sequences:
-                filtered_files.append(fasta_file)
+    filtered_fasta_paths = []
+    for fasta_path in fasta_paths:
 
+        for index, _ in enumerate(SeqIO.parse(fasta_path, "fasta")):
+            if index + 1 >= min_sequences:
+                filtered_fasta_paths.append(fasta_path)
                 break
 
-    return filtered_files
+    return filtered_fasta_paths
