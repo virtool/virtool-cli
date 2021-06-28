@@ -13,22 +13,32 @@ COVERAGE_HEUR_DICT = {
 }
 
 
-def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
+def remove_on_coverage(record_lengths: dict, median: float, coverage_threshold: float) -> List[str]:
     """
-    Takes a FASTA file and a dictionary containing coverage heuristics information.
+    Filters records based on coverage threshold, returns record IDs that subscribe to coverage heuristics.
 
-    Any sequences that don't subscribe to these heuristics are removed.
-
-    :param fasta_path: path to FASTA file containing unfiltered protein sequence records
-    :return: path to filtered FASTA file
+    :param record_lengths: dictionary of record ID, sequence length key-value pairs
+    :param median: median sequence length from get_median()
+    :param coverage_threshold: coverage threshold calculated in get_coverage_threshold()
+    :return: list of record IDs for filtered records
+    
     """
-    record_lengths = {}
-    lengths = []
+    filtered_record_ids = list()
 
-    for record in SeqIO.parse(fasta_path, "fasta"):
-        record_lengths[record.id] = len(record.seq)
-        lengths.append(len(record.seq))
+    for seq_id, length in record_lengths.items():
+        if length >= coverage_threshold * median and length * coverage_threshold <= median:
+            filtered_record_ids.append(seq_id)
 
+    return filtered_record_ids
+
+
+def get_median(lengths: List[int]) -> float:
+    """
+    Calculates median sequence length from sequence lengths in lengths.
+
+    :param lengths: list of sequence lengths
+    :return: median
+    """
     lengths.sort()
 
     upper = lengths[int(len(lengths) / 2)]
@@ -38,6 +48,16 @@ def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
     if len(lengths) % 2 != 0:
         median = float(lengths[int(len(lengths) / 2)])
 
+    return median
+
+
+def get_coverage_threshold(median: float) -> float:
+    """
+    Calculates coverage threshold from median and coverage heuristics dictionary.
+
+    :param median:median sequence length calculated in get_median()
+    :return: coverage threshold
+    """
     coverage_key = int(median / 100)
 
     coverage_threshold = (1.0 + max(COVERAGE_HEUR_DICT.values())) / 2
@@ -45,18 +65,39 @@ def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
     if coverage_key in COVERAGE_HEUR_DICT:
         coverage_threshold = (1.0 + COVERAGE_HEUR_DICT[coverage_key]) / 2
 
-    to_remove = [seq_id for seq_id, length in record_lengths.items()
-                 if length < coverage_threshold * median or length * coverage_threshold > median]
+    return coverage_threshold
 
-    for seq_id in to_remove:
-        if seq_id in record_lengths:
-            record_lengths.pop(seq_id)
 
-    if len(record_lengths) == 0:
-        return None
+def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
+    """
+    Takes a path to a FASTA file, records from file are filtered by median sequence length and coverage threshold.
 
-    if len(record_lengths) == len(lengths):
-        return fasta_path
+    Filtered records are written to output_path.
+
+    :param fasta_path: FASTA file containing unfiltered protein sequence records
+    :return: output_path, the path to the filtered FASTA file
+    """
+    record_lengths = {}
+
+    for record in SeqIO.parse(fasta_path, "fasta"):
+        record_lengths[record.id] = len(record.seq)
+
+    lengths = list(record_lengths.values())
+    median = get_median(lengths)
+
+    coverage_threshold = get_coverage_threshold(median)
+
+    filtered_record_ids = remove_on_coverage(record_lengths, median, coverage_threshold)
+
+    if filtered_record_ids:
+        output_path = Path(f"{fasta_path}_filtered")
+        to_write = (record for record in SeqIO.parse(fasta_path, "fasta") if record.id in filtered_record_ids)
+        SeqIO.write(to_write, output_path, "fasta")
+
+        return output_path
+
+    return None
+
 
     output_path = Path(f"{fasta_path}_filtered")
     to_write = (record for record in SeqIO.parse(fasta_path, "fasta") if record.id in record_lengths)
