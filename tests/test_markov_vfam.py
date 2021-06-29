@@ -23,10 +23,9 @@ LARGE_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Large" / "fasta_files"
                                                    (LARGE_INPUT, BLAST_LARGE)])
 def test_abc(input_dir, blast_path, output, abc_file):
     """Test that write_abc produces an abc files to match original vfam output."""
-    expected = abc_file
     result = Path(str(blast_path) + ".abc")
 
-    assert filecmp.cmp(result, expected)
+    assert filecmp.cmp(result, abc_file)
 
 
 @pytest.mark.parametrize("input_dir, blast_path", [(DUPES_INPUT, BLAST_DUPES),
