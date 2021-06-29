@@ -143,14 +143,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 27,
+        "count": 27.0,
         "alen": 10757,
         "length": 4387,
         "eff_nseq": 14.06,
         "mean_entropy": 0.59,
         "total_entropy": 15.93,
-        "prelE": 0.44,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.44,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "unclassified ssRNA viruses": 9,
             "Hepacivirus": 1,
@@ -233,14 +233,14 @@
                 "organism": "Fox fecal rhabdovirus"
             }
         ],
-        "count": 9,
+        "count": 9.0,
         "alen": 865,
         "length": 662,
         "eff_nseq": 2.29,
         "mean_entropy": 0.589,
         "total_entropy": 5.3,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Mivirus": 3,
             "Alpharhabdovirinae": 1,
@@ -285,14 +285,14 @@
                 "organism": "Pavonia yellow mosaic virus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 257,
         "length": 256,
         "eff_nseq": 0.46,
         "mean_entropy": 0.588,
         "total_entropy": 2.35,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Geminiviridae": 4
         },
@@ -328,14 +328,14 @@
                 "organism": "Parabacteroides phage YZ-2015b"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 623,
         "length": 548,
         "eff_nseq": 0.67,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Gokushovirinae": 2,
             "Microviridae": 2
@@ -374,14 +374,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 586,
         "length": 486,
         "eff_nseq": 1.23,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.49,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 2
@@ -420,14 +420,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 892,
         "length": 497,
         "eff_nseq": 1.23,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.48,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Sunrhavirus": 1,
             "Alphaflexiviridae": 1,
@@ -468,20 +468,20 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 626,
         "length": 121,
         "eff_nseq": 1.06,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.46,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.46,
+        "kullback_leibler_divergence": 0.04,
         "families": {
-            "Orthoparamyxovirinae": 1,
+            "Respirovirus": 1,
             "Baculoviridae": 3
         },
         "genera": {
-            "Respirovirus": 1,
+            "Caprine respirovirus 3": 1,
             "Betabaculovirus": 2,
             "Alphabaculovirus": 1
         }
@@ -515,14 +515,22 @@
                 "organism": "Parabacteroides phage YZ-2015a"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 318,
         "length": 275,
         "eff_nseq": 1.38,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.52,
-        "compKL": 0.03
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
+        "families": {
+            "Alpharhabdovirinae": 2,
+            "Microviridae": 1
+        },
+        "genera": {
+            "Ephemerovirus": 2,
+            "unclassified Microviridae": 1
+        }
     },
     {
         "cluster": "106",
@@ -553,14 +561,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 512,
         "length": 495,
         "eff_nseq": 0.7,
         "mean_entropy": 0.588,
         "total_entropy": 2.35,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4
         },
@@ -598,14 +606,14 @@
                 "organism": "Macropodid alphaherpesvirus 1"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 963,
         "length": 373,
         "eff_nseq": 1.32,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.45,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.45,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2,
             "Secoviridae": 1,
@@ -647,14 +655,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 288,
         "length": 269,
         "eff_nseq": 1.36,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 1,
             "Alphaherpesvirinae": 3
@@ -694,14 +702,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 335,
         "length": 301,
         "eff_nseq": 0.77,
         "mean_entropy": 0.592,
         "total_entropy": 2.37,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 4
         },
@@ -764,14 +772,14 @@
                 "organism": "Turnip leaf roll virus"
             }
         ],
-        "count": 9,
+        "count": 9.0,
         "alen": 302,
         "length": 251,
         "eff_nseq": 1.45,
         "mean_entropy": 0.59,
         "total_entropy": 5.31,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Geminiviridae": 7,
             "Sunrhavirus": 1,
@@ -813,14 +821,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 707,
         "length": 641,
         "eff_nseq": 0.77,
         "mean_entropy": 0.588,
         "total_entropy": 2.35,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 4
         },
@@ -858,14 +866,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 508,
         "length": 452,
         "eff_nseq": 0.89,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4
         },
@@ -903,14 +911,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 275,
         "length": 266,
         "eff_nseq": 0.85,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4
         },
@@ -948,14 +956,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 371,
         "length": 342,
         "eff_nseq": 1.37,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 3,
             "Polyomaviridae": 1
@@ -995,14 +1003,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 196,
         "length": 104,
         "eff_nseq": 0.67,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.48,
-        "compKL": 0.06,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.06,
         "families": {
             "Baculoviridae": 4
         },
@@ -1040,14 +1048,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 331,
         "length": 114,
         "eff_nseq": 0.99,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 4
         },
@@ -1085,14 +1093,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 196,
         "length": 143,
         "eff_nseq": 1.33,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 2
@@ -1131,14 +1139,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 168,
         "length": 157,
         "eff_nseq": 1.0,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 4
         },
@@ -1175,14 +1183,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 167,
         "length": 138,
         "eff_nseq": 1.0,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 4
         },
@@ -1220,14 +1228,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 841,
         "length": 196,
         "eff_nseq": 1.34,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.42,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.42,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Virgaviridae": 1,
             "Alphaherpesvirinae": 3
@@ -1291,14 +1299,14 @@
                 "organism": "Piscine myocarditis-like virus"
             }
         ],
-        "count": 9,
+        "count": 9.0,
         "alen": 827,
         "length": 382,
         "eff_nseq": 0.93,
         "mean_entropy": 0.592,
         "total_entropy": 5.33,
-        "prelE": 0.5,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Geminiviridae": 8,
             "Ghabrivirales": 1
@@ -1336,14 +1344,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 675,
         "length": 151,
         "eff_nseq": 1.35,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.47,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3,
             "Alphaherpesvirinae": 1
@@ -1377,14 +1385,14 @@
                 "organism": "Pleospora typhicola fusarivirus 1"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 1584,
         "length": 1523,
         "eff_nseq": 0.76,
         "mean_entropy": 0.588,
         "total_entropy": 1.76,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alpharhabdovirinae": 1,
             "unclassified ssRNA viruses": 2
@@ -1418,14 +1426,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 467,
         "length": 422,
         "eff_nseq": 0.86,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 1
@@ -1460,14 +1468,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 457,
         "length": 302,
         "eff_nseq": 0.86,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -1499,14 +1507,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 933,
         "length": 854,
         "eff_nseq": 0.5,
         "mean_entropy": 0.587,
         "total_entropy": 1.76,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -1538,14 +1546,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 399,
         "length": 266,
         "eff_nseq": 1.1,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 1
@@ -1579,14 +1587,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 572,
         "length": 489,
         "eff_nseq": 1.02,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "unclassified ssRNA viruses": 1,
             "Alphaherpesvirinae": 2
@@ -1620,14 +1628,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 1169,
         "length": 1029,
         "eff_nseq": 0.65,
         "mean_entropy": 0.592,
         "total_entropy": 1.78,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -1659,14 +1667,14 @@
                 "organism": "Adana virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 2107,
         "length": 2090,
         "eff_nseq": 0.65,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 1,
             "Phlebovirus": 2
@@ -1701,14 +1709,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 394,
         "length": 333,
         "eff_nseq": 0.99,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.49,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 1
@@ -1770,14 +1778,14 @@
                 "organism": "Elderberry carlavirus E"
             }
         ],
-        "count": 9,
+        "count": 9.0,
         "alen": 135,
         "length": 111,
         "eff_nseq": 1.11,
         "mean_entropy": 0.59,
         "total_entropy": 5.31,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaflexiviridae": 1,
             "Foveavirus": 1,
@@ -1817,14 +1825,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 118,
         "length": 95,
         "eff_nseq": 0.48,
         "mean_entropy": 0.602,
         "total_entropy": 1.81,
-        "prelE": 0.53,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -1856,14 +1864,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 338,
         "length": 290,
         "eff_nseq": 0.65,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 3
         },
@@ -1896,20 +1904,20 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 883,
         "length": 829,
         "eff_nseq": 0.78,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
-            "Orthoparamyxovirinae": 1,
+            "Respirovirus": 1,
             "Alphaherpesvirinae": 2
         },
         "genera": {
-            "Respirovirus": 1,
+            "Caprine respirovirus 3": 1,
             "Simplexvirus": 2
         }
     },
@@ -1936,14 +1944,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 418,
         "length": 391,
         "eff_nseq": 0.55,
         "mean_entropy": 0.588,
         "total_entropy": 1.76,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -1976,14 +1984,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 786,
         "length": 499,
         "eff_nseq": 0.88,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Potyviridae": 1,
             "Alphaherpesvirinae": 2
@@ -2016,14 +2024,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 470,
         "length": 407,
         "eff_nseq": 0.7,
         "mean_entropy": 0.588,
         "total_entropy": 1.76,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -2054,14 +2062,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 392,
         "length": 369,
         "eff_nseq": 0.81,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -2092,14 +2100,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 178,
         "length": 161,
         "eff_nseq": 0.62,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -2131,14 +2139,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 58,
         "length": 49,
         "eff_nseq": 1.39,
         "mean_entropy": 1.129,
         "total_entropy": 3.39,
-        "prelE": 1.06,
-        "compKL": 0.16,
+        "mean_positional_relative_entropy": 1.06,
+        "kullback_leibler_divergence": 0.16,
         "families": {
             "Baculoviridae": 3
         },
@@ -2171,14 +2179,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 269,
         "length": 217,
         "eff_nseq": 0.54,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -2236,14 +2244,14 @@
                 "organism": "Camponotus nipponicus virus"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 3554,
         "length": 769,
         "eff_nseq": 2.01,
         "mean_entropy": 0.589,
         "total_entropy": 4.71,
-        "prelE": 0.42,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.42,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Firstpapillomavirinae": 1,
             "Baculoviridae": 2,
@@ -2283,14 +2291,14 @@
                 "organism": "Rat bufavirus SY-2015"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 726,
         "length": 726,
         "eff_nseq": 0.58,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Sunrhavirus": 1,
             "Parvovirinae": 2
@@ -2324,14 +2332,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 403,
         "length": 335,
         "eff_nseq": 1.13,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -2364,14 +2372,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 944,
         "length": 870,
         "eff_nseq": 0.64,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -2404,14 +2412,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 665,
         "length": 547,
         "eff_nseq": 0.62,
         "mean_entropy": 0.592,
         "total_entropy": 1.78,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -2444,14 +2452,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 1114,
         "length": 708,
         "eff_nseq": 0.93,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.49,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Comovirinae": 1,
             "Alphaherpesvirinae": 2
@@ -2484,14 +2492,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 1239,
         "length": 1207,
         "eff_nseq": 0.58,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -2524,14 +2532,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 498,
         "length": 323,
         "eff_nseq": 0.93,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.48,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -2562,14 +2570,14 @@
                 "organism": "Adelaide River virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 641,
         "length": 581,
         "eff_nseq": 0.89,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Alpharhabdovirinae": 3
         },
@@ -2601,14 +2609,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 399,
         "length": 379,
         "eff_nseq": 0.87,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Rhabdoviridae": 1,
             "Alphaherpesvirinae": 2
@@ -2641,14 +2649,14 @@
                 "organism": "Arrabida virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 641,
         "length": 635,
         "eff_nseq": 0.73,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "unclassified ssRNA viruses": 1,
             "Mivirus": 1,
@@ -2709,14 +2717,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 3521,
         "length": 986,
         "eff_nseq": 3.22,
         "mean_entropy": 0.59,
         "total_entropy": 4.72,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Ghabrivirales": 1,
             "Rhabdoviridae": 2,
@@ -2758,14 +2766,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 451,
         "length": 418,
         "eff_nseq": 0.72,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Alpharhabdovirinae": 1,
             "Alphaherpesvirinae": 2
@@ -2798,14 +2806,14 @@
                 "organism": "Bat bocavirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 216,
         "length": 196,
         "eff_nseq": 0.67,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Parvovirinae": 1,
             "Bocaparvovirus": 2
@@ -2840,14 +2848,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 1195,
         "length": 674,
         "eff_nseq": 0.81,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.48,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Spinareovirinae": 1,
             "Alphaherpesvirinae": 2
@@ -2880,14 +2888,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 518,
         "length": 450,
         "eff_nseq": 0.64,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -2920,14 +2928,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 667,
         "length": 563,
         "eff_nseq": 0.68,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -2960,14 +2968,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 259,
         "length": 224,
         "eff_nseq": 0.95,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 3
         },
@@ -2998,14 +3006,14 @@
                 "organism": "Macropodid alphaherpesvirus 1"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 425,
         "length": 378,
         "eff_nseq": 0.99,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -3036,14 +3044,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 566,
         "length": 145,
         "eff_nseq": 0.88,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.45,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.45,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 3
         },
@@ -3076,14 +3084,14 @@
                 "organism": "Phocine morbillivirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 612,
         "length": 461,
         "eff_nseq": 1.16,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Betarhabdovirinae": 1,
             "Rhabdoviridae": 1,
@@ -3119,14 +3127,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 272,
         "length": 247,
         "eff_nseq": 1.06,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alpharhabdovirinae": 1,
             "Alphaherpesvirinae": 2
@@ -3185,14 +3193,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 596,
         "length": 326,
         "eff_nseq": 3.51,
         "mean_entropy": 0.59,
         "total_entropy": 4.72,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Mivirus": 1,
             "Alpharhabdovirinae": 1,
@@ -3231,14 +3239,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 976,
         "length": 285,
         "eff_nseq": 0.92,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.46,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.46,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Aquabirnavirus": 1,
             "Alphaherpesvirinae": 2
@@ -3272,14 +3280,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 313,
         "length": 292,
         "eff_nseq": 0.74,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -3312,14 +3320,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 725,
         "length": 501,
         "eff_nseq": 1.03,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 2,
             "Botoulivirus": 1
@@ -3352,14 +3360,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 369,
         "length": 336,
         "eff_nseq": 0.86,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Alpharhabdovirinae": 1,
             "Baculoviridae": 2
@@ -3392,14 +3400,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 238,
         "length": 203,
         "eff_nseq": 0.53,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -3432,14 +3440,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 455,
         "length": 364,
         "eff_nseq": 0.84,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -3470,14 +3478,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 249,
         "length": 248,
         "eff_nseq": 0.48,
         "mean_entropy": 0.588,
         "total_entropy": 1.76,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 3
         },
@@ -3509,14 +3517,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 208,
         "length": 196,
         "eff_nseq": 0.58,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -3549,14 +3557,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 291,
         "length": 250,
         "eff_nseq": 0.55,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -3588,21 +3596,22 @@
                 "organism": "Kafue kinda chacma baboon virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 369,
         "length": 338,
         "eff_nseq": 0.82,
         "mean_entropy": 0.592,
         "total_entropy": 1.78,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
-            "Orthoparamyxovirinae": 2,
+            "Orthoparamyxovirinae": 1,
+            "Respirovirus": 1,
             "Kaftartevirus": 1
         },
         "genera": {
             "Morbillivirus": 1,
-            "Respirovirus": 1,
+            "Caprine respirovirus 3": 1,
             "Thetaarterivirus kafuba": 1
         }
     },
@@ -3653,14 +3662,14 @@
                 "organism": "Elderberry carlavirus E"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 252,
         "length": 235,
         "eff_nseq": 0.97,
         "mean_entropy": 0.591,
         "total_entropy": 4.73,
-        "prelE": 0.53,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaflexiviridae": 1,
             "Foveavirus": 1,
@@ -3699,14 +3708,14 @@
                 "organism": "Turnip leaf roll virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 510,
         "length": 337,
         "eff_nseq": 0.71,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Orthoparamyxovirinae": 2,
             "Geminiviridae": 1
@@ -3740,14 +3749,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 139,
         "length": 128,
         "eff_nseq": 0.63,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -3779,14 +3788,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 339,
         "length": 180,
         "eff_nseq": 0.78,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.48,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 3
         },
@@ -3818,14 +3827,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 393,
         "length": 364,
         "eff_nseq": 0.57,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 3
         },
@@ -3857,14 +3866,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 376,
         "length": 330,
         "eff_nseq": 0.79,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -3897,14 +3906,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 161,
         "length": 128,
         "eff_nseq": 0.69,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -3936,14 +3945,14 @@
                 "organism": "Tofla virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 487,
         "length": 327,
         "eff_nseq": 1.03,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Firstpapillomavirinae": 2,
             "Orthonairovirus": 1
@@ -3977,14 +3986,14 @@
                 "organism": "Pepper yellow leaf curl Thailand virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 122,
         "length": 122,
         "eff_nseq": 0.5,
         "mean_entropy": 0.588,
         "total_entropy": 1.76,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Geminiviridae": 3
         },
@@ -4015,14 +4024,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 404,
         "length": 205,
         "eff_nseq": 0.78,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.48,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3
         },
@@ -4053,14 +4062,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 396,
         "length": 348,
         "eff_nseq": 0.59,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 3
         },
@@ -4118,14 +4127,14 @@
                 "organism": "Escherichia virus FI"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 855,
         "length": 706,
         "eff_nseq": 2.82,
         "mean_entropy": 0.59,
         "total_entropy": 4.72,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Mitovirus": 4,
             "Narnavirus": 1,
@@ -4164,14 +4173,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 399,
         "length": 332,
         "eff_nseq": 0.59,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 3
         },
@@ -4204,14 +4213,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 362,
         "length": 261,
         "eff_nseq": 0.88,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 2,
             "Kaftartevirus": 1
@@ -4245,14 +4254,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 573,
         "length": 536,
         "eff_nseq": 0.59,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 3
         },
@@ -4284,14 +4293,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 213,
         "length": 190,
         "eff_nseq": 0.88,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -4323,14 +4332,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 223,
         "length": 222,
         "eff_nseq": 0.83,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Rhabdoviridae": 1,
             "Alphaherpesvirinae": 2
@@ -4363,14 +4372,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 477,
         "length": 346,
         "eff_nseq": 0.94,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 2,
             "Hepatovirus": 1
@@ -4402,14 +4411,14 @@
                 "organism": "Diatraea saccharalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 525,
         "length": 361,
         "eff_nseq": 0.77,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.49,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 3
         },
@@ -4440,14 +4449,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 241,
         "length": 226,
         "eff_nseq": 0.62,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -4480,14 +4489,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 271,
         "length": 236,
         "eff_nseq": 0.61,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3
         },
@@ -4519,14 +4528,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 377,
         "length": 358,
         "eff_nseq": 0.89,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2,
             "Kaftartevirus": 1
@@ -4585,14 +4594,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 478,
         "length": 371,
         "eff_nseq": 1.54,
         "mean_entropy": 0.59,
         "total_entropy": 4.72,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2,
             "Alphacoronavirus": 2,
@@ -4633,14 +4642,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 104,
         "length": 99,
         "eff_nseq": 0.79,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 1
@@ -4674,14 +4683,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 317,
         "length": 258,
         "eff_nseq": 0.74,
         "mean_entropy": 0.592,
         "total_entropy": 1.78,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 3
         },
@@ -4714,14 +4723,14 @@
                 "organism": "Colombian potato soil-borne virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 862,
         "length": 862,
         "eff_nseq": 0.72,
         "mean_entropy": 0.591,
         "total_entropy": 1.77,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Virgaviridae": 2,
             "Microviridae": 1
@@ -4748,14 +4757,14 @@
                 "organism": "Eggplant mottled crinkle virus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 818,
         "length": 818,
         "eff_nseq": 0.5,
         "mean_entropy": 0.592,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Procedovirinae": 2
         },
@@ -4781,14 +4790,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 525,
         "length": 525,
         "eff_nseq": 0.57,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -4814,14 +4823,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 783,
         "length": 783,
         "eff_nseq": 0.61,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -4847,14 +4856,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 496,
         "length": 496,
         "eff_nseq": 0.62,
         "mean_entropy": 0.593,
         "total_entropy": 1.19,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -4880,14 +4889,14 @@
                 "organism": "Sucra jujuba nucleopolyhedrovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 631,
         "length": 631,
         "eff_nseq": 0.72,
         "mean_entropy": 0.593,
         "total_entropy": 1.19,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Rhabdoviridae": 1,
             "Baculoviridae": 1
@@ -4914,14 +4923,14 @@
                 "organism": "Ctenophore-associated circular virus 3"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 323,
         "length": 323,
         "eff_nseq": 0.51,
         "mean_entropy": 0.593,
         "total_entropy": 1.19,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "unclassified DNA viruses": 2
         },
@@ -4946,14 +4955,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 337,
         "length": 337,
         "eff_nseq": 0.64,
         "mean_entropy": 0.59,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2
         },
@@ -5035,14 +5044,14 @@
                 "organism": "Rosellinia necatrix megabirnavirus 2-W8"
             }
         ],
-        "count": 13,
+        "count": 13.0,
         "alen": 2178,
         "length": 961,
         "eff_nseq": 4.26,
         "mean_entropy": 0.59,
         "total_entropy": 7.67,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Ghabrivirales": 10,
             "Chrysoviridae": 1,
@@ -5105,14 +5114,14 @@
                 "organism": "Bhindi yellow vein alphasatellite"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 354,
         "length": 291,
         "eff_nseq": 2.25,
         "mean_entropy": 0.591,
         "total_entropy": 4.73,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 1,
             "Kaftartevirus": 1,
@@ -5146,14 +5155,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 528,
         "length": 528,
         "eff_nseq": 0.51,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5178,14 +5187,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 82,
         "length": 82,
         "eff_nseq": 0.64,
         "mean_entropy": 0.692,
         "total_entropy": 1.38,
-        "prelE": 0.62,
-        "compKL": 0.08,
+        "mean_positional_relative_entropy": 0.62,
+        "kullback_leibler_divergence": 0.08,
         "families": {
             "Baculoviridae": 2
         },
@@ -5211,14 +5220,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 465,
         "length": 465,
         "eff_nseq": 0.64,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5244,14 +5253,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 637,
         "length": 637,
         "eff_nseq": 0.67,
         "mean_entropy": 0.589,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 2
         },
@@ -5276,14 +5285,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 239,
         "length": 239,
         "eff_nseq": 0.6,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 2
         },
@@ -5309,14 +5318,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 758,
         "length": 758,
         "eff_nseq": 0.59,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5342,14 +5351,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 774,
         "length": 774,
         "eff_nseq": 0.46,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 2
         },
@@ -5375,14 +5384,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 543,
         "length": 543,
         "eff_nseq": 0.59,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5407,14 +5416,14 @@
                 "organism": "Rattus norvegicus papillomavirus 3"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 629,
         "length": 629,
         "eff_nseq": 0.51,
         "mean_entropy": 0.586,
         "total_entropy": 1.17,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Firstpapillomavirinae": 2
         },
@@ -5441,14 +5450,14 @@
                 "organism": "Ungulate tetraparvovirus 1"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 931,
         "length": 931,
         "eff_nseq": 0.47,
         "mean_entropy": 0.586,
         "total_entropy": 1.17,
-        "prelE": 0.51,
-        "compKL": 0.0,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.0,
         "families": {
             "Parvovirinae": 2
         },
@@ -5503,14 +5512,14 @@
                 "organism": "Elderberry carlavirus E"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 415,
         "length": 306,
         "eff_nseq": 1.07,
         "mean_entropy": 0.59,
         "total_entropy": 4.72,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaflexiviridae": 1,
             "Foveavirus": 1,
@@ -5542,14 +5551,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 735,
         "length": 735,
         "eff_nseq": 0.56,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5575,14 +5584,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 342,
         "length": 342,
         "eff_nseq": 0.55,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5607,14 +5616,14 @@
                 "organism": "Ctenophore-associated circular virus 3"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 240,
         "length": 240,
         "eff_nseq": 0.58,
         "mean_entropy": 0.588,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "unclassified DNA viruses": 2
         },
@@ -5640,14 +5649,14 @@
                 "organism": "Escherichia virus FI"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 332,
         "length": 332,
         "eff_nseq": 0.51,
         "mean_entropy": 0.588,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Leviviridae": 2
         },
@@ -5672,14 +5681,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 213,
         "length": 213,
         "eff_nseq": 0.57,
         "mean_entropy": 0.59,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 2
         },
@@ -5705,14 +5714,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 185,
         "length": 185,
         "eff_nseq": 0.58,
         "mean_entropy": 0.59,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5738,14 +5747,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 357,
         "length": 357,
         "eff_nseq": 0.52,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 2
         },
@@ -5770,14 +5779,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 135,
         "length": 135,
         "eff_nseq": 0.57,
         "mean_entropy": 0.59,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5803,14 +5812,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 318,
         "length": 318,
         "eff_nseq": 0.46,
         "mean_entropy": 0.59,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5836,14 +5845,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 501,
         "length": 501,
         "eff_nseq": 0.54,
         "mean_entropy": 0.592,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -5900,14 +5909,14 @@
                 "organism": "Turnip leaf roll virus"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 145,
         "length": 134,
         "eff_nseq": 0.73,
         "mean_entropy": 0.591,
         "total_entropy": 4.73,
-        "prelE": 0.52,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Geminiviridae": 8
         },
@@ -5933,14 +5942,14 @@
                 "organism": "Parabacteroides phage YZ-2015b"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 294,
         "length": 294,
         "eff_nseq": 0.51,
         "mean_entropy": 0.588,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Microviridae": 2
         },
@@ -5966,14 +5975,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 247,
         "length": 247,
         "eff_nseq": 0.68,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2
         },
@@ -6000,14 +6009,14 @@
                 "organism": "Sucra jujuba nucleopolyhedrovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 359,
         "length": 359,
         "eff_nseq": 0.61,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2
         },
@@ -6034,14 +6043,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 319,
         "length": 319,
         "eff_nseq": 0.5,
         "mean_entropy": 0.59,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -6067,14 +6076,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 413,
         "length": 413,
         "eff_nseq": 0.55,
         "mean_entropy": 0.592,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2
         },
@@ -6100,14 +6109,14 @@
                 "organism": "Rattus norvegicus papillomavirus 3"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 101,
         "length": 101,
         "eff_nseq": 0.58,
         "mean_entropy": 0.589,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Firstpapillomavirinae": 2
         },
@@ -6134,14 +6143,14 @@
                 "organism": "Hawaiian green turtle herpesvirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 549,
         "length": 549,
         "eff_nseq": 0.51,
         "mean_entropy": 0.592,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -6167,14 +6176,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 159,
         "length": 159,
         "eff_nseq": 0.67,
         "mean_entropy": 0.588,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 2
         },
@@ -6199,14 +6208,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 67,
         "length": 67,
         "eff_nseq": 0.9,
         "mean_entropy": 0.84,
         "total_entropy": 1.68,
-        "prelE": 0.78,
-        "compKL": 0.07,
+        "mean_positional_relative_entropy": 0.78,
+        "kullback_leibler_divergence": 0.07,
         "families": {
             "Baculoviridae": 2
         },
@@ -6231,14 +6240,14 @@
                 "organism": "Diatraea saccharalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 87,
         "length": 87,
         "eff_nseq": 0.71,
         "mean_entropy": 0.654,
         "total_entropy": 1.31,
-        "prelE": 0.58,
-        "compKL": 0.1,
+        "mean_positional_relative_entropy": 0.58,
+        "kullback_leibler_divergence": 0.1,
         "families": {
             "Baculoviridae": 2
         },
@@ -6293,14 +6302,14 @@
                 "organism": "Elderberry carlavirus E"
             }
         ],
-        "count": 8,
+        "count": 8.0,
         "alen": 94,
         "length": 71,
         "eff_nseq": 2.18,
         "mean_entropy": 0.794,
         "total_entropy": 6.35,
-        "prelE": 0.74,
-        "compKL": 0.07,
+        "mean_positional_relative_entropy": 0.74,
+        "kullback_leibler_divergence": 0.07,
         "families": {
             "Alphaflexiviridae": 1,
             "Foveavirus": 1,
@@ -6332,14 +6341,14 @@
                 "organism": "Penicillium aurantiogriseum totivirus 1"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 786,
         "length": 786,
         "eff_nseq": 0.61,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Victorivirus": 1,
             "Ghabrivirales": 1
@@ -6367,14 +6376,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 606,
         "length": 606,
         "eff_nseq": 0.56,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -6399,14 +6408,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 173,
         "length": 173,
         "eff_nseq": 0.57,
         "mean_entropy": 0.592,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.06,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.06,
         "families": {
             "Baculoviridae": 2
         },
@@ -6431,14 +6440,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 233,
         "length": 233,
         "eff_nseq": 0.72,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 2
         },
@@ -6463,14 +6472,14 @@
                 "organism": "Parabacteroides phage YZ-2015b"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 287,
         "length": 287,
         "eff_nseq": 0.42,
         "mean_entropy": 0.59,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Microviridae": 2
         },
@@ -6496,14 +6505,14 @@
                 "organism": "Blackberry virus F"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 869,
         "length": 869,
         "eff_nseq": 0.8,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 1,
             "Caulimoviridae": 1
@@ -6531,14 +6540,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 603,
         "length": 603,
         "eff_nseq": 0.56,
         "mean_entropy": 0.589,
         "total_entropy": 1.18,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -6564,14 +6573,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 329,
         "length": 329,
         "eff_nseq": 0.56,
         "mean_entropy": 0.594,
         "total_entropy": 1.19,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -6597,14 +6606,14 @@
                 "organism": "Arrabida virus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 256,
         "length": 256,
         "eff_nseq": 0.53,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Phlebovirus": 2
         },
@@ -6631,14 +6640,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 295,
         "length": 295,
         "eff_nseq": 0.52,
         "mean_entropy": 0.593,
         "total_entropy": 1.19,
-        "prelE": 0.53,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -6690,14 +6699,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 896,
         "length": 343,
         "eff_nseq": 2.46,
         "mean_entropy": 0.589,
         "total_entropy": 4.12,
-        "prelE": 0.45,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.45,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Sunrhavirus": 1,
             "Alpharhabdovirinae": 1,
@@ -6730,14 +6739,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 332,
         "length": 332,
         "eff_nseq": 0.48,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 2
         },
@@ -6763,14 +6772,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 126,
         "length": 126,
         "eff_nseq": 0.6,
         "mean_entropy": 0.588,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 2
         },
@@ -6796,14 +6805,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 170,
         "length": 170,
         "eff_nseq": 0.49,
         "mean_entropy": 0.591,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 2
         },
@@ -6830,14 +6839,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 192,
         "length": 192,
         "eff_nseq": 0.53,
         "mean_entropy": 0.592,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -6862,14 +6871,14 @@
                 "organism": "Parabacteroides phage YZ-2015b"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 119,
         "length": 119,
         "eff_nseq": 0.5,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Microviridae": 2
         },
@@ -6921,14 +6930,14 @@
                 "organism": "Swine enteric coronavirus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 4253,
         "length": 988,
         "eff_nseq": 1.64,
         "mean_entropy": 0.589,
         "total_entropy": 4.12,
-        "prelE": 0.46,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.46,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Betarhabdovirinae": 1,
             "Baculoviridae": 4,
@@ -6986,14 +6995,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 1005,
         "length": 797,
         "eff_nseq": 1.97,
         "mean_entropy": 0.589,
         "total_entropy": 4.12,
-        "prelE": 0.49,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 5,
             "Alphaherpesvirinae": 2
@@ -7048,14 +7057,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 1899,
         "length": 1585,
         "eff_nseq": 1.43,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alpharhabdovirinae": 2,
             "Virgaviridae": 4,
@@ -7113,14 +7122,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 820,
         "length": 579,
         "eff_nseq": 2.64,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.5,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Rhabdoviridae": 1,
             "Ghabrivirales": 4,
@@ -7175,14 +7184,14 @@
                 "organism": "Wuhan tick virus 2"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 565,
         "length": 430,
         "eff_nseq": 1.41,
         "mean_entropy": 0.589,
         "total_entropy": 4.12,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Mivirus": 3,
             "unclassified ssRNA viruses": 3,
@@ -7270,14 +7279,14 @@
                 "organism": "Currant virus A"
             }
         ],
-        "count": 13,
+        "count": 13.0,
         "alen": 3017,
         "length": 1718,
         "eff_nseq": 2.47,
         "mean_entropy": 0.59,
         "total_entropy": 7.67,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Betarhabdovirinae": 1,
             "Baculoviridae": 1,
@@ -7346,14 +7355,24 @@
                 "organism": "Cocal virus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 445,
         "length": 425,
         "eff_nseq": 1.06,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.54,
-        "compKL": 0.02
+        "mean_positional_relative_entropy": 0.54,
+        "kullback_leibler_divergence": 0.02,
+        "families": {
+            "Sunrhavirus": 1,
+            "Alpharhabdovirinae": 5
+        },
+        "genera": {
+            "Walkabout sunrhavirus": 1,
+            "Ephemerovirus": 3,
+            "Ledantevirus": 1,
+            "Vesiculovirus": 1
+        }
     },
     {
         "cluster": "31",
@@ -7399,14 +7418,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 1304,
         "length": 718,
         "eff_nseq": 1.79,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.49,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3,
             "Hepatovirus": 1,
@@ -7465,14 +7484,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 682,
         "length": 171,
         "eff_nseq": 1.32,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.48,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Alphacoronavirus": 2,
             "Rhinacovirus": 1,
@@ -7535,14 +7554,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 716,
         "length": 458,
         "eff_nseq": 2.94,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Betarhabdovirinae": 1,
             "Baculoviridae": 4,
@@ -7601,14 +7620,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 591,
         "length": 185,
         "eff_nseq": 2.67,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.43,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.43,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 5,
             "Kaftartevirus": 1,
@@ -7665,14 +7684,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 7,
+        "count": 7.0,
         "alen": 503,
         "length": 263,
         "eff_nseq": 3.11,
         "mean_entropy": 0.59,
         "total_entropy": 4.13,
-        "prelE": 0.46,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.46,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 7
         },
@@ -7719,14 +7738,14 @@
                 "organism": "Sucra jujuba nucleopolyhedrovirus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 831,
         "length": 809,
         "eff_nseq": 1.09,
         "mean_entropy": 0.591,
         "total_entropy": 3.55,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "unclassified ssRNA viruses": 5,
             "Baculoviridae": 1
@@ -7774,14 +7793,14 @@
                 "organism": "Kafue kinda chacma baboon virus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 951,
         "length": 904,
         "eff_nseq": 0.85,
         "mean_entropy": 0.592,
         "total_entropy": 3.55,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "unclassified ssRNA viruses": 5,
             "Kaftartevirus": 1
@@ -7830,14 +7849,14 @@
                 "organism": "Jasmine virus T"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 2296,
         "length": 691,
         "eff_nseq": 2.28,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.46,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.46,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Potyviridae": 6
         },
@@ -7884,14 +7903,14 @@
                 "organism": "BtNv-AlphaCoV/SC2013"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 1474,
         "length": 1362,
         "eff_nseq": 0.85,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphacoronavirus": 2,
             "Rhinacovirus": 1,
@@ -7977,14 +7996,14 @@
                 "organism": "Delisea pulchra RNA virus"
             }
         ],
-        "count": 12,
+        "count": 12.0,
         "alen": 3374,
         "length": 1926,
         "eff_nseq": 5.74,
         "mean_entropy": 0.59,
         "total_entropy": 7.08,
-        "prelE": 0.48,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Comovirinae": 1,
             "unclassified Picornavirales": 1,
@@ -8047,14 +8066,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 378,
         "length": 252,
         "eff_nseq": 1.19,
         "mean_entropy": 0.589,
         "total_entropy": 3.53,
-        "prelE": 0.5,
-        "compKL": 0.06,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.06,
         "families": {
             "Baculoviridae": 6
         },
@@ -8102,17 +8121,18 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 1470,
         "length": 733,
         "eff_nseq": 1.75,
         "mean_entropy": 0.589,
         "total_entropy": 3.53,
-        "prelE": 0.48,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Alpharhabdovirinae": 1,
-            "Orthoparamyxovirinae": 2,
+            "Orthoparamyxovirinae": 1,
+            "Respirovirus": 1,
             "Baculoviridae": 1,
             "Polyomaviridae": 1,
             "Spinareovirinae": 1
@@ -8120,7 +8140,7 @@
         "genera": {
             "Ephemerovirus": 1,
             "Morbillivirus": 1,
-            "Respirovirus": 1,
+            "Caprine respirovirus 3": 1,
             "Betabaculovirus": 1,
             "Betapolyomavirus": 1,
             "Fijivirus": 1
@@ -8164,14 +8184,14 @@
                 "organism": "Elderberry carlavirus E"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 256,
         "length": 129,
         "eff_nseq": 1.38,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 1,
             "Quinvirinae": 3,
@@ -8222,14 +8242,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 1241,
         "length": 821,
         "eff_nseq": 2.21,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Ghabrivirales": 3,
             "Baculoviridae": 1,
@@ -8282,14 +8302,14 @@
                 "organism": "Bat bocavirus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 869,
         "length": 752,
         "eff_nseq": 1.25,
         "mean_entropy": 0.591,
         "total_entropy": 3.55,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Parvovirinae": 3,
             "Bocaparvovirus": 3
@@ -8341,14 +8361,14 @@
                 "organism": "Macropodid alphaherpesvirus 1"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 1845,
         "length": 459,
         "eff_nseq": 2.39,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.41,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.41,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alpharhabdovirinae": 2,
             "Betarhabdovirinae": 1,
@@ -8403,14 +8423,14 @@
                 "organism": "Turnip leaf roll virus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 99,
         "length": 85,
         "eff_nseq": 1.4,
         "mean_entropy": 0.669,
         "total_entropy": 4.01,
-        "prelE": 0.63,
-        "compKL": 0.06,
+        "mean_positional_relative_entropy": 0.63,
+        "kullback_leibler_divergence": 0.06,
         "families": {
             "Geminiviridae": 6
         },
@@ -8458,14 +8478,14 @@
                 "organism": "BtNv-AlphaCoV/SC2013"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 249,
         "length": 229,
         "eff_nseq": 0.91,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.52,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Alphacoronavirus": 2,
             "Rhinacovirus": 1,
@@ -8520,14 +8540,14 @@
                 "organism": "BtNv-AlphaCoV/SC2013"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 263,
         "length": 228,
         "eff_nseq": 0.52,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.52,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Alphacoronavirus": 2,
             "Rhinacovirus": 1,
@@ -8583,14 +8603,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 511,
         "length": 240,
         "eff_nseq": 2.71,
         "mean_entropy": 0.59,
         "total_entropy": 3.54,
-        "prelE": 0.48,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 4,
             "Virgaviridae": 1,
@@ -8667,14 +8687,14 @@
                 "organism": "Currant virus A"
             }
         ],
-        "count": 11,
+        "count": 11.0,
         "alen": 584,
         "length": 154,
         "eff_nseq": 2.26,
         "mean_entropy": 0.59,
         "total_entropy": 6.49,
-        "prelE": 0.44,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.44,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Geminiviridae": 8,
             "Baculoviridae": 2,
@@ -8721,14 +8741,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 400,
         "length": 360,
         "eff_nseq": 1.2,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4,
             "unclassified DNA viruses": 1
@@ -8771,14 +8791,14 @@
                 "organism": "Wuhan cricket virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 468,
         "length": 374,
         "eff_nseq": 1.39,
         "mean_entropy": 0.589,
         "total_entropy": 2.94,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "unclassified ssRNA viruses": 5
         },
@@ -8820,14 +8840,14 @@
                 "organism": "Camponotus nipponicus virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 986,
         "length": 850,
         "eff_nseq": 1.78,
         "mean_entropy": 0.589,
         "total_entropy": 2.94,
-        "prelE": 0.5,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Victorivirus": 1,
             "Baculoviridae": 1,
@@ -8871,14 +8891,14 @@
                 "organism": "Wuhan cricket virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 608,
         "length": 530,
         "eff_nseq": 1.23,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "unclassified ssRNA viruses": 5
         },
@@ -8920,14 +8940,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 747,
         "length": 511,
         "eff_nseq": 1.67,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Betapartitivirus": 1,
             "Firstpapillomavirinae": 2,
@@ -8974,14 +8994,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 569,
         "length": 396,
         "eff_nseq": 2.05,
         "mean_entropy": 0.589,
         "total_entropy": 2.94,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "unclassified ssRNA viruses": 1,
             "Procedovirinae": 1,
@@ -9027,14 +9047,14 @@
                 "organism": "Wuhan cricket virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 277,
         "length": 260,
         "eff_nseq": 1.2,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.53,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "unclassified ssRNA viruses": 5
         },
@@ -9076,14 +9096,14 @@
                 "organism": "Blackberry virus F"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 2647,
         "length": 915,
         "eff_nseq": 1.48,
         "mean_entropy": 0.588,
         "total_entropy": 2.94,
-        "prelE": 0.45,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.45,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alpharhabdovirinae": 1,
             "Virgaviridae": 1,
@@ -9132,14 +9152,14 @@
                 "organism": "Macropodid alphaherpesvirus 1"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 332,
         "length": 286,
         "eff_nseq": 2.33,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 3,
             "Alphaherpesvirinae": 1,
@@ -9183,14 +9203,14 @@
                 "organism": "Wuhan cricket virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 139,
         "length": 133,
         "eff_nseq": 0.91,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.53,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "unclassified ssRNA viruses": 5
         },
@@ -9262,14 +9282,31 @@
                 "organism": "Fox fecal rhabdovirus"
             }
         ],
-        "count": 11,
+        "count": 11.0,
         "alen": 2408,
         "length": 2114,
         "eff_nseq": 2.07,
         "mean_entropy": 0.59,
         "total_entropy": 6.49,
-        "prelE": 0.52,
-        "compKL": 0.02
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
+        "families": {
+            "Sunrhavirus": 1,
+            "Alpharhabdovirinae": 5,
+            "Betarhabdovirinae": 1,
+            "Rhabdoviridae": 2,
+            "Baculoviridae": 1
+        },
+        "genera": {
+            "Walkabout sunrhavirus": 1,
+            "Ephemerovirus": 3,
+            "Ledantevirus": 1,
+            "Cytorhabdovirus": 1,
+            "Nucleorhabdovirus": 1,
+            "Vesiculovirus": 1,
+            "Betabaculovirus": 1,
+            "unclassified Rhabdoviridae": 1
+        }
     },
     {
         "cluster": "60",
@@ -9305,14 +9342,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 2897,
         "length": 1198,
         "eff_nseq": 1.52,
         "mean_entropy": 0.588,
         "total_entropy": 2.94,
-        "prelE": 0.46,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.46,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Riboviria": 1,
             "Baculoviridae": 1,
@@ -9359,22 +9396,23 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 535,
         "length": 318,
         "eff_nseq": 1.63,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.47,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.02,
         "families": {
-            "Orthoparamyxovirinae": 2,
+            "Orthoparamyxovirinae": 1,
+            "Respirovirus": 1,
             "Spinareovirinae": 1,
             "Alphaherpesvirinae": 2
         },
         "genera": {
             "Morbillivirus": 1,
-            "Respirovirus": 1,
+            "Caprine respirovirus 3": 1,
             "Fijivirus": 1,
             "Simplexvirus": 2
         }
@@ -9413,14 +9451,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 938,
         "length": 349,
         "eff_nseq": 1.71,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.47,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4,
             "Spinareovirinae": 1
@@ -9464,14 +9502,21 @@
                 "organism": "Adelaide River virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 231,
         "length": 217,
         "eff_nseq": 1.33,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.53,
-        "compKL": 0.02
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.02,
+        "families": {
+            "Alpharhabdovirinae": 4
+        },
+        "genera": {
+            "Ephemerovirus": 3,
+            "Ledantevirus": 1
+        }
     },
     {
         "cluster": "64",
@@ -9507,14 +9552,14 @@
                 "organism": "Bat bocavirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 734,
         "length": 707,
         "eff_nseq": 0.62,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Parvovirinae": 1,
             "Bocaparvovirus": 4
@@ -9559,14 +9604,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 942,
         "length": 332,
         "eff_nseq": 1.85,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.47,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Potyviridae": 3,
             "Baculoviridae": 2
@@ -9612,14 +9657,14 @@
                 "organism": "Arrabida virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 1381,
         "length": 1099,
         "eff_nseq": 1.25,
         "mean_entropy": 0.588,
         "total_entropy": 2.94,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Rhabdoviridae": 1,
             "Baculoviridae": 2,
@@ -9667,14 +9712,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 1047,
         "length": 767,
         "eff_nseq": 1.53,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 1,
             "Spinareovirinae": 1,
@@ -9722,14 +9767,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 956,
         "length": 346,
         "eff_nseq": 1.71,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.45,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.45,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 5
         },
@@ -9772,14 +9817,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 1328,
         "length": 1077,
         "eff_nseq": 1.13,
         "mean_entropy": 0.592,
         "total_entropy": 2.96,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 1,
             "Alphaherpesvirinae": 3,
@@ -9856,14 +9901,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 11,
+        "count": 11.0,
         "alen": 2303,
         "length": 2164,
         "eff_nseq": 1.55,
         "mean_entropy": 0.59,
         "total_entropy": 6.49,
-        "prelE": 0.53,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Mivirus": 4,
             "Betarhabdovirinae": 1,
@@ -9916,14 +9961,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 366,
         "length": 196,
         "eff_nseq": 1.49,
         "mean_entropy": 0.589,
         "total_entropy": 2.94,
-        "prelE": 0.47,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4,
             "Spinareovirinae": 1
@@ -9968,14 +10013,14 @@
                 "organism": "Maize rough dwarf virus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 690,
         "length": 440,
         "eff_nseq": 1.67,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.47,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Sunrhavirus": 1,
             "Baculoviridae": 3,
@@ -10022,14 +10067,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 503,
         "length": 372,
         "eff_nseq": 1.86,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Baculoviridae": 1,
             "Alphaherpesvirinae": 3,
@@ -10075,14 +10120,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 242,
         "length": 218,
         "eff_nseq": 1.2,
         "mean_entropy": 0.591,
         "total_entropy": 2.96,
-        "prelE": 0.51,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Alpharhabdovirinae": 1,
             "Baculoviridae": 4
@@ -10127,14 +10172,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 417,
         "length": 293,
         "eff_nseq": 1.24,
         "mean_entropy": 0.588,
         "total_entropy": 2.94,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Betarhabdovirinae": 1,
             "Baculoviridae": 4
@@ -10179,14 +10224,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 549,
         "length": 422,
         "eff_nseq": 1.52,
         "mean_entropy": 0.589,
         "total_entropy": 2.94,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 3
@@ -10231,14 +10276,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 405,
         "length": 361,
         "eff_nseq": 1.31,
         "mean_entropy": 0.589,
         "total_entropy": 2.94,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Orthoparamyxovirinae": 1,
             "Baculoviridae": 4
@@ -10283,14 +10328,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 394,
         "length": 308,
         "eff_nseq": 1.27,
         "mean_entropy": 0.588,
         "total_entropy": 2.94,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 3,
             "Potyviridae": 1,
@@ -10337,14 +10382,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 5,
+        "count": 5.0,
         "alen": 620,
         "length": 517,
         "eff_nseq": 1.18,
         "mean_entropy": 0.59,
         "total_entropy": 2.95,
-        "prelE": 0.48,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 2,
             "Alphaherpesvirinae": 3
@@ -10384,14 +10429,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 823,
         "length": 184,
         "eff_nseq": 0.93,
         "mean_entropy": 0.588,
         "total_entropy": 2.35,
-        "prelE": 0.41,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.41,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Chrysoviridae": 1,
             "Baculoviridae": 1,
@@ -10462,14 +10507,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 10,
+        "count": 10.0,
         "alen": 5157,
         "length": 1789,
         "eff_nseq": 3.85,
         "mean_entropy": 0.59,
         "total_entropy": 5.9,
-        "prelE": 0.48,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Chrysoviridae": 1,
             "Baculoviridae": 5,
@@ -10513,14 +10558,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 1387,
         "length": 1020,
         "eff_nseq": 1.33,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.48,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 3,
             "Baculoviridae": 1
@@ -10559,14 +10604,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 414,
         "length": 304,
         "eff_nseq": 1.19,
         "mean_entropy": 0.592,
         "total_entropy": 2.37,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Polyomaviridae": 2,
             "Rhabdoviridae": 1,
@@ -10607,14 +10652,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 238,
         "length": 167,
         "eff_nseq": 1.36,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 4
         },
@@ -10652,14 +10697,14 @@
                 "organism": "Penicillium aurantiogriseum partitivirus 1"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 782,
         "length": 618,
         "eff_nseq": 1.31,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Riboviria": 1,
             "Betapartitivirus": 1,
@@ -10702,14 +10747,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 945,
         "length": 580,
         "eff_nseq": 1.03,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4
         },
@@ -10747,14 +10792,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 285,
         "length": 251,
         "eff_nseq": 0.91,
         "mean_entropy": 0.588,
         "total_entropy": 2.35,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Alpharhabdovirinae": 1,
             "Baculoviridae": 3
@@ -10794,22 +10839,23 @@
                 "organism": "Macropodid alphaherpesvirus 1"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 2287,
         "length": 1448,
         "eff_nseq": 1.25,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.49,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.02,
         "families": {
-            "Orthoparamyxovirinae": 2,
+            "Orthoparamyxovirinae": 1,
+            "Respirovirus": 1,
             "Orthonairovirus": 1,
             "Alphaherpesvirinae": 1
         },
         "genera": {
             "Morbillivirus": 1,
-            "Respirovirus": 1,
+            "Caprine respirovirus 3": 1,
             "unclassified Nairovirus": 1,
             "Simplexvirus": 1
         }
@@ -10843,14 +10889,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 809,
         "length": 741,
         "eff_nseq": 0.97,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Partitiviridae": 1,
             "Alphaherpesvirinae": 3
@@ -10890,14 +10936,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 710,
         "length": 581,
         "eff_nseq": 0.96,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Baculoviridae": 3,
             "Caulimoviridae": 1
@@ -10937,14 +10983,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 507,
         "length": 243,
         "eff_nseq": 1.14,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.48,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Aquabirnavirus": 1,
             "Firstpapillomavirinae": 2,
@@ -11011,14 +11057,26 @@
                 "organism": "Fox fecal rhabdovirus"
             }
         ],
-        "count": 9,
+        "count": 9.0,
         "alen": 882,
         "length": 578,
         "eff_nseq": 2.98,
         "mean_entropy": 0.59,
         "total_entropy": 5.31,
-        "prelE": 0.48,
-        "compKL": 0.02
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.02,
+        "families": {
+            "Sunrhavirus": 1,
+            "Alpharhabdovirinae": 5,
+            "Rhabdoviridae": 1
+        },
+        "genera": {
+            "Walkabout sunrhavirus": 1,
+            "Ephemerovirus": 3,
+            "Ledantevirus": 1,
+            "Vesiculovirus": 1,
+            "unclassified Rhabdoviridae": 1
+        }
     },
     {
         "cluster": "90",
@@ -11048,14 +11106,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 1365,
         "length": 819,
         "eff_nseq": 0.88,
         "mean_entropy": 0.592,
         "total_entropy": 2.37,
-        "prelE": 0.52,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Alphaherpesvirinae": 4
         },
@@ -11092,14 +11150,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 1089,
         "length": 484,
         "eff_nseq": 1.26,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.47,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alpharhabdovirinae": 1,
             "Baculoviridae": 1,
@@ -11140,14 +11198,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 595,
         "length": 551,
         "eff_nseq": 1.04,
         "mean_entropy": 0.592,
         "total_entropy": 2.37,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 3,
             "Megabirnavirus": 1
@@ -11187,14 +11245,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 1128,
         "length": 882,
         "eff_nseq": 1.36,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Hepatovirus": 1,
             "Dicistroviridae": 1,
@@ -11237,14 +11295,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 125,
         "length": 99,
         "eff_nseq": 1.04,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.52,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Alpharhabdovirinae": 1,
             "Baculoviridae": 3
@@ -11284,14 +11342,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 267,
         "length": 157,
         "eff_nseq": 1.02,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.49,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Baculoviridae": 4
         },
@@ -11329,14 +11387,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 705,
         "length": 563,
         "eff_nseq": 1.38,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Baculoviridae": 2,
             "Polyomaviridae": 2
@@ -11374,14 +11432,14 @@
                 "organism": "Pavonia yellow mosaic virus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 293,
         "length": 293,
         "eff_nseq": 0.43,
         "mean_entropy": 0.592,
         "total_entropy": 2.37,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Geminiviridae": 4
         },
@@ -11418,14 +11476,14 @@
                 "organism": "Leporid alphaherpesvirus 4"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 896,
         "length": 859,
         "eff_nseq": 0.82,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alpharhabdovirinae": 1,
             "Baculoviridae": 1,
@@ -11466,14 +11524,14 @@
                 "organism": "Cnaphalocrocis medinalis granulovirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 175,
         "length": 125,
         "eff_nseq": 1.24,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.05,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.05,
         "families": {
             "Baculoviridae": 4
         },

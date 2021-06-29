@@ -78,14 +78,14 @@
                 "organism": "Tofla virus"
             }
         ],
-        "count": 14,
+        "count": 14.0,
         "alen": 3567,
         "length": 1616,
         "eff_nseq": 6.16,
         "mean_entropy": 0.59,
         "total_entropy": 8.26,
-        "prelE": 0.5,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Orthonairovirus": 1,
             "Alphaherpesvirinae": 2,
@@ -125,14 +125,14 @@
                 "organism": "Hawaiian green turtle herpesvirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 2684,
         "length": 2684,
         "eff_nseq": 0.7,
         "mean_entropy": 0.587,
         "total_entropy": 1.17,
-        "prelE": 0.5,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 1,
             "Alphacoronavirus": 1
@@ -159,14 +159,14 @@
                 "organism": "Asian prunus virus 3"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 239,
         "length": 239,
         "eff_nseq": 0.39,
         "mean_entropy": 0.588,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Foveavirus": 1,
             "Quinvirinae": 1
@@ -194,14 +194,14 @@
                 "organism": "Hawaiian green turtle herpesvirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 549,
         "length": 549,
         "eff_nseq": 0.51,
         "mean_entropy": 0.592,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2
         },
@@ -226,14 +226,14 @@
                 "organism": "Asian prunus virus 3"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 65,
         "length": 65,
         "eff_nseq": 0.64,
         "mean_entropy": 0.864,
         "total_entropy": 1.73,
-        "prelE": 0.8,
-        "compKL": 0.06,
+        "mean_positional_relative_entropy": 0.8,
+        "kullback_leibler_divergence": 0.06,
         "families": {
             "Foveavirus": 1,
             "Quinvirinae": 1
@@ -317,14 +317,14 @@
                 "organism": "Tupaia hepatovirus A"
             }
         ],
-        "count": 13,
+        "count": 13.0,
         "alen": 4669,
         "length": 603,
         "eff_nseq": 5.56,
         "mean_entropy": 0.59,
         "total_entropy": 7.67,
-        "prelE": 0.44,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.44,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphacoronavirus": 1,
             "Alphaherpesvirinae": 4,
@@ -403,14 +403,14 @@
                 "organism": "Tofla virus"
             }
         ],
-        "count": 10,
+        "count": 10.0,
         "alen": 4260,
         "length": 1196,
         "eff_nseq": 3.29,
         "mean_entropy": 0.591,
         "total_entropy": 5.91,
-        "prelE": 0.46,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.46,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphacoronavirus": 4,
             "Orthonairovirus": 1,
@@ -458,14 +458,14 @@
                 "organism": "Lagomorph bocaparvovirus 1"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 798,
         "length": 667,
         "eff_nseq": 0.85,
         "mean_entropy": 0.589,
         "total_entropy": 2.36,
-        "prelE": 0.49,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphacoronavirus": 1,
             "Parvovirinae": 3
@@ -505,14 +505,14 @@
                 "organism": "Pepper yellow leaf curl Thailand virus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 799,
         "length": 596,
         "eff_nseq": 1.46,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphacoronavirus": 1,
             "Parvovirinae": 2,
@@ -549,14 +549,14 @@
                 "organism": "Tofla virus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 1436,
         "length": 740,
         "eff_nseq": 0.85,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.49,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.49,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Orthonairovirus": 1,
             "Leviviridae": 2
@@ -590,14 +590,14 @@
                 "organism": "Thelephora terrestris virus 1"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 1548,
         "length": 424,
         "eff_nseq": 0.86,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.42,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.42,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Alphaherpesvirinae": 2,
             "Ghabrivirales": 1
@@ -630,14 +630,14 @@
                 "organism": "Asian prunus virus 3"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 580,
         "length": 409,
         "eff_nseq": 0.85,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.5,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.5,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 1,
             "Foveavirus": 1,
@@ -672,14 +672,14 @@
                 "organism": "Asian prunus virus 3"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 313,
         "length": 156,
         "eff_nseq": 0.72,
         "mean_entropy": 0.592,
         "total_entropy": 1.78,
-        "prelE": 0.48,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Alphaherpesvirinae": 1,
             "Foveavirus": 1,

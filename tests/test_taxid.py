@@ -24,7 +24,7 @@ def command():
 def test_taxid(path, command):
     path = os.path.join(TEST_PATH, path)
 
-    with open(os.path.join(path, "otu.json"), 'r') as f:
+    with open(os.path.join(path, "otu.json"), "r") as f:
         otu = json.load(f)
 
         if "not" in otu["name"]:

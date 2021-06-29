@@ -18,7 +18,6 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
 
     :param seq_ids: list of sequence IDs
     :return: family and genus dictionaries containing occurrences of each
-    
     """
     families = defaultdict(int)
     genera = defaultdict(int)
@@ -48,7 +47,7 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
 
 def parse_log(cluster_name: str, output: Path) -> dict:
     """
-    Parses log files and gathers count, alen, length, eff_nseqs, mean entropy and total_entropy.
+    Parses .log files and gathers count, alen, length, eff_nseqs, mean entropy and total_entropy.
 
     :param cluster_name: cluster name from which to gather log file
     :param output: path to output folder where .log files are stored
@@ -82,9 +81,9 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     """
     Calls hmmstat and captures kullback_leibler_divergence and mean_positional_relative_entropy data.
 
-    :param cluster_name: name of cluster file
+    :param cluster_name: name of cluster FASTA file
     :param output: path to output directory
-    :return: mean_positional_relative_entropy and kullback_leibler_divergence values
+    :return: mean_positional_relative_entropy and kullback_leibler_divergence
     """
     hmm_path = output / "intermediate_files" / f"{cluster_name}.hmm"
 
@@ -105,9 +104,9 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
 
 def get_names(annotation: dict) -> List[str]:
     """
-    Returns three most common names in "entries" list and returns them to be output in json file.
+    Gathers three most common names in "entries" list and returns them to be output in .json file.
 
-    :param annotation: dictionary containing all information to be output to json file for one cluster
+    :param annotation: dictionary containing all information to be output to .json file for one cluster
     :return: top three names
     """
     names = [entry["name"] for entry in annotation["entries"]]

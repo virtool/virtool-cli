@@ -49,7 +49,7 @@ def test_remove_phages(input_paths, input_dir):
     LARGE_INPUT
 ])
 def test_curated_file(input_dir, group_records, output):
-    """Assert all sequences are longer than min_length, no record descriptions contain 'phage'."""
+    """Assert all sequences are longer than min_length, no record descriptions contain "phage"."""
     no_dupes = write_curated_recs(group_records, output, 1)
 
     with Path(no_dupes) as handle:
