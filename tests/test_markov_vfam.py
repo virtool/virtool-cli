@@ -23,8 +23,8 @@ LARGE_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Large" / "fasta_files"
                                                    (LARGE_INPUT, BLAST_LARGE)])
 def test_abc(input_dir, blast_path, output, abc_file):
     """Test that write_abc produces an abc files to match original vfam output."""
-    result = abc_file
-    expected = Path(str(blast_path) + '.abc')
+    expected = abc_file
+    result = Path(str(blast_path) + '.abc')
 
     assert filecmp.cmp(result, expected)
 

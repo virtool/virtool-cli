@@ -10,11 +10,11 @@ def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None,
 
     CD-HIT collapses the input sequences into non-redundant representatives at the specified levels.
 
-    :param curated_fasta_path: path to FASTA file from vfam_curate step, to have cd-hit performed on it
-    :param fraction_id: Fraction ID for cd-hit step
+    :param curated_fasta_path: path to FASTA file from vfam_curate step, to have CD-HIT performed on it
+    :param fraction_id: Fraction ID for CD-HIT step
     :param prefix: Prefix for intermediate and result files
-    :param fraction_cov: Fraction coverage for cd-hit step
-    :return: output_path, path to a file containing cluster information created at cd-hit step
+    :param fraction_cov: Fraction coverage for CD-HIT step
+    :return: output_path, path to a file containing cluster information created at CD-HIT step
     """
     output_name = "clustered_fasta.faa"
     if prefix:
@@ -74,7 +74,7 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
 
     Runs BLAST on the file to itself as the BLAST-formatted database.
 
-    :param clustered_fasta_path: path to FASTA file from previous cd-hit step
+    :param clustered_fasta_path: path to FASTA file from previous CD-HIT step
     :param num_cores: number of cores to use at all_by_all blast step
     :param prefix: Prefix for intermediate and result files
     :return: path to tab-delimited formatted BLAST results file

@@ -8,7 +8,7 @@ def get_sequence_lengths(blast_results_path: Path) -> dict:
     """
     Takes path to BLAST results file in BLAST tabular output format 6, parses file using SearchIO.
 
-    If query sequence ID matches the subject sequence ID, sequence length is given as the length of the alignment.
+    If query sequence ID matches the subject sequence ID, sequence length is given as the length of the query_result.
 
     Sequence lengths of each sequence are stored as {sequence ID: sequence length} pairs in seq_lengths dictionary.
 
@@ -17,11 +17,11 @@ def get_sequence_lengths(blast_results_path: Path) -> dict:
     """
     seq_lengths = dict()
 
-    for alignment in SearchIO.parse(blast_results_path, "blast-tab"):
-        for hit in alignment.hits:
-            if alignment.id == hit.id:
+    for query_result in SearchIO.parse(blast_results_path, "blast-tab"):
+        for hit in query_result.hits:
+            if query_result.id == hit.id:
                 for hsp in hit.hsps:
-                    seq_lengths[alignment.id] = hsp.aln_span
+                    seq_lengths[query_result.id] = hsp.aln_span
 
     return seq_lengths
 
@@ -32,19 +32,19 @@ def get_alignment_records(blast_results_path: Path) -> defaultdict:
 
     Iterates through QueryResult objects to gather query ID, subject ID, query start, and query end info.
 
-    QueryResult information for each alignment is stored in alignment_records dictionary
+    QueryResult information for each query_result is stored in alignment_records dictionary
 
     :param blast_results_path: path to BLAST file produced in blast_all_by_all step
-    :return: alignment_records, a dictionary containing all alignment objects for each query
+    :return: alignment_records, a dictionary containing all query_result objects for each query
     """
     alignment_records = defaultdict(list)
 
-    for alignment in SearchIO.parse(blast_results_path, "blast-tab"):
-        for hit in alignment.hits:
-            if alignment.id != hit.id:
+    for query_result in SearchIO.parse(blast_results_path, "blast-tab"):
+        for hit in query_result.hits:
+            if query_result.id != hit.id:
                 for hsp in hit.hsps:
-                    alignment_records[alignment.id].append({
-                        "q_id": alignment.id,
+                    alignment_records[query_result.id].append({
+                        "q_id": query_result.id,
                         "s_id": hit.id,
                         "q_start": hsp.query_start,
                         "q_end": hsp.query_end
@@ -127,27 +127,3 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
                     polyprotein_ids.append(checked_by_position)
 
     return polyprotein_ids
-
-
-class Alignment:
-    """
-    Class to facilitate parsing blast tabular output format 6
-
-    Naming conventions and descriptions from https://www.metagenomics.wiki/tools/blast/blastn-output-format-6
-    """
-
-    def __init__(self, blast_data):
-        """Assigns field names to data gathered from lines in tab-delimited format."""
-        blast_data = blast_data.split("\t")
-        self.query = blast_data[0]
-        self.subject = blast_data[1]
-        self.pident = float(blast_data[2])
-        self.length = float(blast_data[3])
-        self.mismatch = float(blast_data[4])
-        self.gapopen = float(blast_data[5])
-        self.qstart = int(blast_data[6])
-        self.qend = int(blast_data[7])
-        self.sstart = int(blast_data[8])
-        self.send = int(blast_data[9])
-        self.evalue = str(blast_data[10])
-        self.bitscore = float(blast_data[11])
