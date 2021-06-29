@@ -17,7 +17,8 @@ def get_input_paths(src_path: Path) -> List[Path]:
     if input_paths:
         return input_paths
 
-    raise Exception("No files found in input directory")
+    print("No files found in input directory")
+    sys.exit(1)
 
 
 def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
