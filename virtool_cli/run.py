@@ -27,7 +27,7 @@ def cli():
 @click.option("--no-named-polyproteins", default=False, help="Filter out polyprotein sequences based on "
                                                              "record description")
 @click.option("--inflation-num", default=None, help="Inflation number to be used in mcl step")
-@click.option("-cvg-check", "--coverage-check", default=False, help="Filter clustered fasta files on coverage")
+@click.option("--filter-clusters", default=False, help="Filter clustered fasta files on coverage")
 @click.option("-min-seqs", "--min-sequences", default=2, help="Filter out clusters with fewer records than "
                                                               "min-sequences")
 def vfam(src_path: str,
@@ -40,7 +40,7 @@ def vfam(src_path: str,
          num_cores: int,
          no_named_polyproteins: bool,
          inflation_num: int,
-         coverage_check: bool,
+         filter_clusters: bool,
          min_sequences: int):
     """Build profile HMMS from fasta."""
     try:
@@ -54,7 +54,7 @@ def vfam(src_path: str,
                              num_cores,
                              no_named_polyproteins,
                              inflation_num,
-                             coverage_check,
+                             filter_clusters,
                              min_sequences)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory")

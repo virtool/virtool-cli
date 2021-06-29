@@ -2,6 +2,7 @@ import subprocess
 
 from pathlib import Path
 from Bio import SeqIO
+from virtool_cli.vfam_console import console
 
 
 def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None, fraction_cov=None) -> Path:
@@ -43,9 +44,13 @@ def rmv_polyproteins(clustered_fasta_path: Path) -> list:
 
     :param clustered_fasta_path: path to clustered FASTA file from generate_clusters()
     """
+    polyprotein_count = 0
     for record in SeqIO.parse(clustered_fasta_path, "fasta"):
         if "polyprotein" not in record.description:
             yield record
+        else:
+            polyprotein_count += 1
+    console.print(f"✔ Removed {polyprotein_count} polyprotein records from input by name", style="green")
 
 
 def write_rmv_polyproteins(clustered_fasta_path: Path, prefix=None) -> Path:

@@ -3,6 +3,7 @@ import sys
 from Bio import SeqIO
 from pathlib import Path
 from typing import List
+from virtool_cli.vfam_console import console
 
 
 def get_input_paths(src_path: Path) -> List[Path]:
@@ -15,9 +16,10 @@ def get_input_paths(src_path: Path) -> List[Path]:
     input_paths = list(src_path.iterdir())
 
     if input_paths:
+        console.print(f"✔ Retreived {len(input_paths)} files from input directory", style="green")
         return input_paths
 
-    print("No files found in input directory")
+    console.print("✘ No files found in input directory", style="red")
     sys.exit(1)
 
 
@@ -31,13 +33,18 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     :param no_named_phages: bool that dictates whether phage records are filtered out by name or not
     :return: list of all records found in input paths
     """
+    phage_count = 0
     for input_path in input_paths:
         for record in SeqIO.parse(input_path, "fasta"):
             if no_named_phages:
                 if "phage" not in record.description:
                     yield record
+                else:
+                    phage_count += 1
             else:
                 yield record
+    if no_named_phages and phage_count > 0:
+        console.print(f"✔ Removed {phage_count} phage records from input by name", style="green")
 
 
 def remove_dupes(records: iter, sequence_min_length: int) -> list:
@@ -48,11 +55,17 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
     :param sequence_min_length: minimum length of sequence to be included in output
     """
     record_seqs = list()
+    dupes_count = 0
 
     for record in records:
         if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
             record_seqs.append(record.seq)
             yield record
+        else:
+            dupes_count += 1
+
+    if dupes_count > 0:
+        console.print(f"✔ Removed {dupes_count} duplicate records from input", style="green")
 
 
 def write_curated_recs(records: iter, output: Path, sequence_min_length: int, prefix=None) -> Path:

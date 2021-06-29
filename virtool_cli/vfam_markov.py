@@ -3,6 +3,7 @@ import subprocess
 from Bio import SeqIO, SearchIO
 from pathlib import Path
 from typing import List
+from virtool_cli.vfam_console import console
 
 
 def write_abc(blast_results_path: Path, polyprotein_ids: List[str], prefix=None) -> Path:
@@ -120,4 +121,6 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
 
+    console.print(f"✔ Collected {len(set(mcl_path_dict.values()))} FASTA cluster files produced by mcxload",
+                  style="green")
     return list(set(mcl_path_dict.values()))

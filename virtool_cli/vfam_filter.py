@@ -2,6 +2,7 @@ from Bio import SeqIO
 from pathlib import Path
 
 from typing import Optional, List
+from virtool_cli.vfam_console import console
 
 COVERAGE_HEUR_DICT = {
     0: 0.6,
@@ -106,12 +107,16 @@ def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
     :param fasta_paths: list of paths to FASTA files from mcl_to_fasta step to be filtered
     :return: filtered_by_coverage, a list of paths to filtered FASTA files
     """
+    num_unfiltered = len(fasta_paths)
     filtered_by_coverage = []
     for fasta_path in fasta_paths:
         filtered_file = filter_file_on_coverage(fasta_path)
         if filtered_file:
             filtered_by_coverage.append(filtered_file)
 
+    num_filtered = len(filtered_by_coverage)
+
+    console.print(f"✔ Filtered {num_unfiltered - num_filtered} FASTA cluster files out of output", style="green")
     return filtered_by_coverage
 
 

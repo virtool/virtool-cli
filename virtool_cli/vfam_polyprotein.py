@@ -2,6 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 from Bio import SearchIO
+from virtool_cli.vfam_console import console
 
 
 def get_sequence_lengths(blast_results_path: Path) -> dict:
@@ -126,4 +127,6 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
                 if checked_by_position:
                     polyprotein_ids.append(checked_by_position)
 
+    if len(polyprotein_ids) > 0:
+        console.print(f"✔ Removed {len(polyprotein_ids)} phage records from input based on coverage", style="green")
     return polyprotein_ids

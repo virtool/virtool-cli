@@ -10,6 +10,7 @@ from typing import Tuple, List
 from urllib.error import HTTPError
 from Bio import Entrez
 from Bio import GenBank, SeqIO
+from virtool_cli.vfam_console import console
 
 
 def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
@@ -40,6 +41,7 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
                 genera[genus] += 1
 
         except (HTTPError, AttributeError):
+            console.print(f"✘ No records found for {seq_id} in NCBI database", style="red")
             continue
 
     return dict(families), dict(genera)
@@ -124,7 +126,7 @@ def get_json_from_clusters(cluster_paths: List[Path], output: Path):
     :param cluster_paths: list of paths to clustered, filtered FASTA files from vfam pipeline
     :param output: Path to output directory containing intermediate files from vfam pipeline
     """
-    output_path = output / "master.json"
+    output_path = output / "vfam.json"
     annotations = list()
 
     for cluster_path in cluster_paths:
@@ -167,5 +169,7 @@ def get_json_from_clusters(cluster_paths: List[Path], output: Path):
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
 
+    console.print(f"✔ Gathered {len(annotations)} annotations to be included in master JSON file", style="green")
     with open(output_path, "wt") as f:
         json.dump(annotations, f, indent=4)
+    console.print(f"✔ Master JSON file built in {output_path}", style="green")
