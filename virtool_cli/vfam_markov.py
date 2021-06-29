@@ -1,19 +1,20 @@
 import subprocess
 
-from Bio import SeqIO
+from Bio import SeqIO, SearchIO
 from pathlib import Path
 from typing import List
-from virtool_cli.vfam_polyprotein import Alignment
 
 
 def write_abc(blast_results_path: Path, polyprotein_ids: List[str], prefix=None) -> Path:
     """
-    Takes in BLAST results path and list of polyprotein_ids to not include, writes a .abc file with desired alignments.
+    Takes in BLAST results file path and list of polyprotein sequence IDs to not include in output.
 
-    :param blast_results_path: path to blast file produced in all_by_all blast step
-    :param polyprotein_ids: list of sequence ids of polyprotein-like records to not be included in output
+    Gathers query ID, sequence ID, and evalue for each QueryResult object in BLAST results file and writes to abc_path.
+
+    :param blast_results_path: path to BLAST file produced in blast_all_by_all step
+    :param polyprotein_ids: list of sequence IDs of polyprotein-like records to not be included in output
     :param prefix: Prefix for intermediate and result files
-    :return: path to abc file
+    :return: path to .abc file
     """
     abc_name = "blast.abc"
     if prefix:
@@ -21,14 +22,18 @@ def write_abc(blast_results_path: Path, polyprotein_ids: List[str], prefix=None)
 
     abc_path = blast_results_path.parent / Path(abc_name)
 
-    with blast_results_path.open("r") as blast_file:
-        with abc_path.open("w") as abc_file:
-            for line in blast_file:
+    with abc_path.open("w") as abc_file:
 
-                alignment = Alignment(line)
-                if alignment.query not in polyprotein_ids and alignment.subject not in polyprotein_ids:
-                    abc_line = "\t".join([alignment.query, alignment.subject, alignment.evalue]) + "\n"
-                    abc_file.write(abc_line)
+        for query_result in SearchIO.parse(blast_results_path, "blast-tab"):
+            for hit in query_result.hits:
+                q_id = query_result.id
+                s_id = hit.id
+                for hsp in hit.hsps:
+                    evalue = hsp.evalue
+
+                    if q_id not in polyprotein_ids and s_id not in polyprotein_ids:
+                        abc_line = "\t".join([q_id, s_id, str(evalue)]) + "\n"
+                        abc_file.write(abc_line)
 
     return abc_path
 
@@ -41,7 +46,7 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
 
     Calls mcl on .tab file to generate newline-separated clusters.
 
-    :param blast_results_path: path to blast file produced in all_by_all blast step
+    :param blast_results_path: path to BLAST file produced in all_by_all BLAST step
     :param polyprotein_ids: list of sequence ids of polyprotein like sequences to not be included in output
     :param inflation_num: Inflation number to be used in mcl call
     :param prefix: Prefix for intermediate and result files
