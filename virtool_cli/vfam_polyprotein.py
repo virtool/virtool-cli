@@ -1,68 +1,75 @@
 from collections import defaultdict
 from pathlib import Path
-
 from typing import List, Optional
+from Bio import SearchIO
 
 
 def get_sequence_lengths(blast_results_path: Path) -> dict:
     """
-    Takes path to BLAST results file and parses through lines, creating an alignment object from each line.
+    Takes path to BLAST results file in BLAST tabular output format 6, parses file using SearchIO.
 
-    If alignment query matches the alignment subject, sequence length is stored as the length of that query.
+    If query sequence ID matches the subject sequence ID, sequence length is given as the length of the alignment.
 
-    :param blast_results_path: path to BLAST file produced in all_by_all blast step
-    :return: sequence_lengths, a dictionary containing each sequence and its sequence length
+    Sequence lengths of each sequence are stored as {sequence ID: sequence length} pairs in seq_lengths dictionary.
+
+    :param blast_results_path: path to BLAST file produced in blast_all_by_all step
+    :return: sequence_lengths, a dictionary containing each sequence ID and its sequence length
     """
     seq_lengths = dict()
 
-    with blast_results_path.open("r") as handle:
-        for line in handle:
-            alignment = Alignment(line)
-            if alignment.query == alignment.subject:
-                seq_lengths[alignment.query] = alignment.length
+    for alignment in SearchIO.parse(blast_results_path, "blast-tab"):
+        for hit in alignment.hits:
+            if alignment.id == hit.id:
+                for hsp in hit.hsps:
+                    seq_lengths[alignment.id] = hsp.aln_span
 
     return seq_lengths
 
 
-def get_alignment_records(blast_results_path: Path) -> dict:
+def get_alignment_records(blast_results_path: Path) -> defaultdict:
     """
-    Takes path to BLAST file and parses through lines, producing an alignment object from each line.
+    Takes path to BLAST file in BLAST tabular output format 6 and parses file using SearchIO.
 
-    If alignment query does not match subject, alignment is added to list of alignments for each query.
+    Iterates through QueryResult objects to gather query ID, subject ID, query start, and query end info.
 
-    :param blast_results_path: path to BLAST file produced in all_by_all blast step
+    QueryResult information for each alignment is stored in alignment_records dictionary
+
+    :param blast_results_path: path to BLAST file produced in blast_all_by_all step
     :return: alignment_records, a dictionary containing all alignment objects for each query
     """
     alignment_records = defaultdict(list)
 
-    with blast_results_path.open("r") as handle:
-
-        for line in handle:
-            alignment = Alignment(line)
-
-            if alignment.query != alignment.subject:
-                alignment_records[alignment.query].append(alignment)
+    for alignment in SearchIO.parse(blast_results_path, "blast-tab"):
+        for hit in alignment.hits:
+            if alignment.id != hit.id:
+                for hsp in hit.hsps:
+                    alignment_records[alignment.id].append({
+                        "q_id": alignment.id,
+                        "s_id": hit.id,
+                        "q_start": hsp.query_start,
+                        "q_end": hsp.query_end
+                    })
 
     return alignment_records
 
 
-def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths: dict) -> list:
+def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths: dict) -> List[defaultdict]:
     """
     Iterates through alignment records for seq_id, adds alignment record to checked_alignments if:
 
      - The length of the subject is less than 70% the length of the query
-     - Alignment spans more than 70% of the alignment subject
+     - The alignment spans more than 70% of the subject length
 
     :param seq_id: sequence ID for which to filter alignment records
-    :param alignment_records: dictionary containing all alignment records for each seq_id
-    :param seq_lengths: dictionary containing sequence ID: sequence length pairs
+    :param alignment_records: dictionary containing all alignment information for each seq_id
+    :param seq_lengths: dictionary containing {sequence ID: sequence} length pairs
     :return: checked alignments, a list of alignment records to investigate further in check_alignments_by_position()
     """
-    checked_alignments = []
+    checked_alignments = list()
 
     for alignment in alignment_records[seq_id]:
-        if seq_lengths[alignment.subject] < 0.7 * seq_lengths[alignment.query]:
-            subject_coverage = float(abs(alignment.qstart - alignment.qend)) / seq_lengths[alignment.subject]
+        if seq_lengths[alignment["s_id"]] < 0.7 * seq_lengths[alignment["q_id"]]:
+            subject_coverage = float(abs(alignment["q_start"] - alignment["q_end"])) / seq_lengths[alignment["s_id"]]
 
             if subject_coverage >= 0.7:
                 checked_alignments.append(alignment)
@@ -70,7 +77,7 @@ def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths
     return checked_alignments
 
 
-def check_alignments_by_position(seq_id: str, checked_by_length: list, seq_lengths: dict) -> Optional[str]:
+def check_alignments_by_position(seq_id: str, checked_by_length: List[dict], seq_lengths: dict) -> Optional[str]:
     """
     Iterates through alignment records for sequence ID to be further investigated from check_alignments_by_length().
 
@@ -78,13 +85,13 @@ def check_alignments_by_position(seq_id: str, checked_by_length: list, seq_lengt
 
     :param seq_id: sequence ID for sequence to be investigated
     :param checked_by_length: alignments to be further investigated from check_alignment_records()
-    :param seq_lengths: dictionary containing sequence ID: sequence length pairs
-    :return: seq_id if found polyprotein-like
+    :param seq_lengths: dictionary containing {sequence ID: sequence length} pairs
+    :return: seq_id if found to be polyprotein-like
     """
     query_coverage = dict()
 
     for alignment in checked_by_length:
-        for position in range(alignment.qstart, alignment.qend):
+        for position in range(alignment["q_start"], alignment["q_end"]):
             query_coverage[position] = None
 
     if len(query_coverage) > 0.8 * (seq_lengths[seq_id]):
@@ -102,8 +109,7 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
     - these two or more other proteins were covered at least 80% by the longer sequence.
 
     :param blast_results_path: path to BLAST file produced in blast_all_by_all() step
-    :return: polyprotein_ids, a list of sequences to not include in output
-
+    :return: polyprotein_ids, a list of sequence IDs to not include in output
     """
     seq_lengths = get_sequence_lengths(blast_results_path)
     alignment_records = get_alignment_records(blast_results_path)
@@ -129,6 +135,7 @@ class Alignment:
 
     Naming conventions and descriptions from https://www.metagenomics.wiki/tools/blast/blastn-output-format-6
     """
+
     def __init__(self, blast_data):
         """Assigns field names to data gathered from lines in tab-delimited format."""
         blast_data = blast_data.split("\t")
