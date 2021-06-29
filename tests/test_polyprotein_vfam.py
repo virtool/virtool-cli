@@ -19,7 +19,7 @@ def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output
     """Test that find_polyproteins catches same polyprotein sequences as original vfam."""
     result = polyproteins
 
-    with Path(expected_polyproteins).open('r') as handle:
+    with Path(expected_polyproteins).open("r") as handle:
         expected = [line.split()[0] for line in handle]
 
     assert len(expected) == len(result)

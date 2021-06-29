@@ -75,9 +75,9 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     Runs BLAST on the file to itself as the BLAST-formatted database.
 
     :param clustered_fasta_path: path to FASTA file from previous CD-HIT step
-    :param num_cores: number of cores to use at all_by_all blast step
+    :param num_cores: number of cores to use at BLAST step
     :param prefix: Prefix for intermediate and result files
-    :return: path to tab-delimited formatted BLAST results file
+    :return: path to tab-delimited format 6 BLAST results file
     """
     format_db_cmd = [
         "makeblastdb",

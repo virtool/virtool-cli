@@ -29,10 +29,10 @@ def write_abc(blast_results_path: Path, polyprotein_ids: List[str], prefix=None)
                 q_id = query_result.id
                 s_id = hit.id
                 for hsp in hit.hsps:
-                    evalue = hsp.evalue
+                    e_value = hsp.evalue
 
                     if q_id not in polyprotein_ids and s_id not in polyprotein_ids:
-                        abc_line = "\t".join([q_id, s_id, str(evalue)]) + "\n"
+                        abc_line = "\t".join([q_id, s_id, str(e_value)]) + "\n"
                         abc_file.write(abc_line)
 
     return abc_path

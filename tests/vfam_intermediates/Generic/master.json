@@ -78,14 +78,14 @@
                 "organism": "Lake Sarah-associated circular virus-28"
             }
         ],
-        "count": 14,
+        "count": 14.0,
         "alen": 2387,
         "length": 572,
         "eff_nseq": 6.34,
         "mean_entropy": 0.59,
         "total_entropy": 8.26,
-        "prelE": 0.44,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.44,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Bullavirinae": 5,
             "Fimoviridae": 5,
@@ -121,14 +121,14 @@
                 "organism": "Aquatic bird bornavirus 2"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 202,
         "length": 202,
         "eff_nseq": 0.46,
         "mean_entropy": 0.588,
         "total_entropy": 1.76,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Bornaviridae": 3
         },
@@ -158,14 +158,14 @@
                 "organism": "Borna disease virus 1"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 87,
         "length": 87,
         "eff_nseq": 0.61,
         "mean_entropy": 0.655,
         "total_entropy": 1.97,
-        "prelE": 0.59,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.59,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Bornaviridae": 3
         },
@@ -197,14 +197,14 @@
                 "organism": "Equus caballus papillomavirus 3"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 498,
         "length": 222,
         "eff_nseq": 1.0,
         "mean_entropy": 0.589,
         "total_entropy": 1.77,
-        "prelE": 0.48,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Bullavirinae": 2,
             "Firstpapillomavirinae": 1
@@ -237,14 +237,14 @@
                 "organism": "Raspberry leaf blotch emaravirus"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 545,
         "length": 477,
         "eff_nseq": 0.95,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Fimoviridae": 3
         },
@@ -269,14 +269,14 @@
                 "organism": "Aquatic bird bornavirus 1"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 371,
         "length": 371,
         "eff_nseq": 0.43,
         "mean_entropy": 0.595,
         "total_entropy": 1.19,
-        "prelE": 0.52,
-        "compKL": 0.0,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.0,
         "families": {
             "Bornaviridae": 2
         },
@@ -301,14 +301,14 @@
                 "organism": "Aquatic bird bornavirus 1"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 142,
         "length": 142,
         "eff_nseq": 0.39,
         "mean_entropy": 0.588,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Bornaviridae": 2
         },
@@ -334,14 +334,14 @@
                 "organism": "Raspberry leaf blotch emaravirus"
             }
         ],
-        "count": 2,
+        "count": 2.0,
         "alen": 385,
         "length": 385,
         "eff_nseq": 0.53,
         "mean_entropy": 0.589,
         "total_entropy": 1.18,
-        "prelE": 0.52,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Fimoviridae": 2
         },
@@ -388,14 +388,14 @@
                 "organism": "Aquatic bird bornavirus 2"
             }
         ],
-        "count": 6,
+        "count": 6.0,
         "alen": 622,
         "length": 400,
         "eff_nseq": 1.45,
         "mean_entropy": 0.591,
         "total_entropy": 3.55,
-        "prelE": 0.48,
-        "compKL": 0.02,
+        "mean_positional_relative_entropy": 0.48,
+        "kullback_leibler_divergence": 0.02,
         "families": {
             "Bornaviridae": 3,
             "Bullavirinae": 1,
@@ -437,14 +437,14 @@
                 "organism": "Aquatic bird bornavirus 2"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 1715,
         "length": 1711,
         "eff_nseq": 0.61,
         "mean_entropy": 0.588,
         "total_entropy": 2.35,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Bornaviridae": 3,
             "Firstpapillomavirinae": 1
@@ -483,14 +483,14 @@
                 "organism": "Fig mosaic emaravirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 701,
         "length": 643,
         "eff_nseq": 0.82,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.52,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Fimoviridae": 4
         },
@@ -526,14 +526,14 @@
                 "organism": "Pigeonpea sterility mosaic emaravirus 1"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 328,
         "length": 294,
         "eff_nseq": 0.97,
         "mean_entropy": 0.59,
         "total_entropy": 2.36,
-        "prelE": 0.52,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.52,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Fimoviridae": 4
         },
@@ -570,14 +570,14 @@
                 "organism": "Raspberry leaf blotch emaravirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 237,
         "length": 190,
         "eff_nseq": 1.05,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.53,
-        "compKL": 0.06,
+        "mean_positional_relative_entropy": 0.53,
+        "kullback_leibler_divergence": 0.06,
         "families": {
             "Fimoviridae": 4
         },
@@ -614,14 +614,14 @@
                 "organism": "Fig mosaic emaravirus"
             }
         ],
-        "count": 4,
+        "count": 4.0,
         "alen": 363,
         "length": 217,
         "eff_nseq": 1.27,
         "mean_entropy": 0.591,
         "total_entropy": 2.36,
-        "prelE": 0.47,
-        "compKL": 0.03,
+        "mean_positional_relative_entropy": 0.47,
+        "kullback_leibler_divergence": 0.03,
         "families": {
             "Bullavirinae": 1,
             "Fimoviridae": 2,
@@ -657,14 +657,14 @@
                 "organism": "Equus caballus papillomavirus 3"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 551,
         "length": 407,
         "eff_nseq": 0.76,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.01,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.01,
         "families": {
             "Bullavirinae": 2,
             "Firstpapillomavirinae": 1
@@ -698,14 +698,14 @@
                 "organism": "Pigeonpea sterility mosaic emaravirus 1"
             }
         ],
-        "count": 3,
+        "count": 3.0,
         "alen": 509,
         "length": 467,
         "eff_nseq": 0.82,
         "mean_entropy": 0.59,
         "total_entropy": 1.77,
-        "prelE": 0.51,
-        "compKL": 0.04,
+        "mean_positional_relative_entropy": 0.51,
+        "kullback_leibler_divergence": 0.04,
         "families": {
             "Fimoviridae": 3
         },

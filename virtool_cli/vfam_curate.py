@@ -17,17 +17,16 @@ def get_input_paths(src_path: Path) -> List[Path]:
     if input_paths:
         return input_paths
 
-    print("No files found in input directory")
-    sys.exit(1)
+    raise Exception("No files found in input directory")
 
 
 def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     """
-    Takes input_paths as input and yields records.
+    Takes input_paths from get_input_paths() as input and yields records.
 
     Filters out records with "phage" in their description if no_named_phages is True.
 
-    :param input_paths: list of paths to input files
+    :param input_paths: list of paths to input FASTA files
     :param no_named_phages: bool that dictates whether phage records are filtered out by name or not
     :return: list of all records found in input paths
     """

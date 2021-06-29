@@ -99,13 +99,6 @@ def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
     return None
 
 
-    output_path = Path(f"{fasta_path}_filtered")
-    to_write = (record for record in SeqIO.parse(fasta_path, "fasta") if record.id in record_lengths)
-    SeqIO.write(to_write, output_path, "fasta")
-
-    return output_path
-
-
 def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
     """
     Takes in list of FASTA paths, and calls filter_file_on_coverage to filter each file by coverage.
