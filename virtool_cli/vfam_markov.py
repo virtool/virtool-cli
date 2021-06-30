@@ -82,7 +82,7 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
         subprocess.run(mcxload_cmd, check=True, shell=False)
     except FileNotFoundError as e:
         console.log(e)
-        console.print(f"Missing MCL dependency for mcxload command, exiting...", style="red")
+        console.print("Missing MCL dependency for mcxload command, exiting...", style="red")
         sys.exit(1)
 
     mcl_cmd = [
@@ -98,7 +98,7 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
         subprocess.run(mcl_cmd, check=True, shell=False)
     except FileNotFoundError as e:
         console.log(e)
-        console.print(f"Missing MCL dependency for mcl command, exiting...", style="red")
+        console.print("Missing MCL dependency for mcl command, exiting...", style="red")
         sys.exit(1)
 
     return mcl_path

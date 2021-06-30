@@ -98,7 +98,7 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
         stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
     except FileNotFoundError as e:
         console.log(e)
-        console.print(f"✘ Missing HMMER dependency for hmmstat command, exiting...", style="red")
+        console.print("✘ Missing HMMER dependency for hmmstat command, exiting...", style="red")
         sys.exit(1)
 
     for line in stat_data:

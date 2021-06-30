@@ -1,4 +1,3 @@
-import sys
 import click
 import virtool_cli.vfam
 import virtool_cli.build
