@@ -31,11 +31,12 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
         ]
         try:
             subprocess.run(muscle_cmd, check=True, shell=False)
-        except FileNotFoundError:
-            console.print(f"✘ Missing MUSCLE dependency for muscle command, exiting...", style="red")
+        except FileNotFoundError as e:
+            console.log(e)
+            console.print(f"Missing MUSCLE dependency for muscle command, exiting...", style="red")
             sys.exit(1)
 
-    console.print(f"✔ Produced {len(msa_paths)} MSAs from {len(fasta_paths)} FASTA cluster files", style="green")
+    console.print(f"✔ Produced {len(msa_paths)} MSAs from {len(fasta_paths)} FASTA cluster files.", style="green")
 
     return msa_paths
 
@@ -63,11 +64,12 @@ def batch_hmm_call(msa_paths: List[Path]) -> List[Path]:
         ]
         try:
             subprocess.run(hmmer_cmd, check=True, shell=False)
-        except FileNotFoundError:
-            console.print(f"✘ Missing HMMER dependency for hmmbuild command, exiting...", style="red")
+        except FileNotFoundError as e:
+            console.log(e)
+            console.print(f"Missing HMMER dependency for hmmbuild command, exiting...", style="red")
             sys.exit(1)
 
-    console.print(f"✔ Collected {len(hmm_paths)} HMM profiles produced by hmmbuild", style="green")
+    console.print(f"✔ Collected {len(hmm_paths)} HMM profiles produced by hmmbuild.", style="green")
     return hmm_paths
 
 
@@ -90,5 +92,5 @@ def concatenate_hmms(hmm_paths: List[Path], output: Path, prefix: Optional[str])
             with hmm_path.open("r") as h_handle:
                 for line in h_handle:
                     o_handle.write(line)
-    console.print(f"✔ Master HMM profile built in {output_path}", style="green")
+    console.print(f"Master HMM profile built in {output_path}", style="green")
     return output_path

@@ -116,7 +116,7 @@ def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
 
     num_filtered = len(filtered_by_coverage)
 
-    console.print(f"✔ Filtered out {num_unfiltered - num_filtered} FASTA cluster files based on coverage",
+    console.print(f"✔ Filtered out {num_unfiltered - num_filtered} FASTA cluster files based on coverage.",
                   style="green")
 
     return filtered_by_coverage
@@ -142,6 +142,6 @@ def filter_on_number(fasta_paths: List[Path], min_sequences: int) -> List[Path]:
     num_filtered = len(filtered_fasta_paths)
 
     console.print(f"✔ Filtered out {num_unfiltered - num_filtered} "
-                  f"FASTA cluster files based on number of sequences", style="green")
+                  f"FASTA cluster files based on number of sequences.", style="green")
 
     return filtered_fasta_paths

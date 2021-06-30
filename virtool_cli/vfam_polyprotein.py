@@ -128,6 +128,6 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
                     polyprotein_ids.append(checked_by_position)
 
     if len(polyprotein_ids) > 0:
-        console.print(f"✔ Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage",
+        console.print(f"✔ Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage.",
                       style="green")
     return polyprotein_ids

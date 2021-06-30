@@ -1,5 +1,4 @@
-from pathlib import Path
-
+import sys
 import click
 import virtool_cli.vfam
 import virtool_cli.build
@@ -7,6 +6,9 @@ import virtool_cli.divide
 import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
+
+from pathlib import Path
+from virtool_cli.vfam_console import console
 
 
 @click.group()
@@ -57,7 +59,8 @@ def vfam(src_path: str,
                              filter_clusters,
                              min_sequences)
     except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo("Not a valid reference directory")
+        console.log(e)
+        console.print("Not a valid reference directory, exiting...", style="red")
 
 
 @cli.command()

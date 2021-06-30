@@ -80,8 +80,9 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
     ]
     try:
         subprocess.run(mcxload_cmd, check=True, shell=False)
-    except FileNotFoundError:
-        console.print(f"✘ Missing MCL dependency for mcxload command, exiting...", style="red")
+    except FileNotFoundError as e:
+        console.log(e)
+        console.print(f"Missing MCL dependency for mcxload command, exiting...", style="red")
         sys.exit(1)
 
     mcl_cmd = [
@@ -95,8 +96,9 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
 
     try:
         subprocess.run(mcl_cmd, check=True, shell=False)
-    except FileNotFoundError:
-        console.print(f"✘ Missing MCL dependency for mcl command, exiting...", style="red")
+    except FileNotFoundError as e:
+        console.log(e)
+        console.print(f"Missing MCL dependency for mcl command, exiting...", style="red")
         sys.exit(1)
 
     return mcl_path
@@ -131,6 +133,6 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
 
-    console.print(f"✔ Produced {len(list(set(mcl_path_dict.values())))} FASTA cluster files from MCL clusters",
+    console.print(f"✔ Produced {len(list(set(mcl_path_dict.values())))} FASTA cluster files from MCL clusters.",
                   style="green")
     return list(set(mcl_path_dict.values()))

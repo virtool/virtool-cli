@@ -41,9 +41,10 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
 
                 genera[genus] += 1
 
-        except (HTTPError, AttributeError):
-            console.print(f"✘ No records found for {seq_id} in NCBI database", style="red")
-            console.print(f"{seq_id} will not be included in output", style="red")
+        except (HTTPError, AttributeError) as e:
+            console.log(e)
+            console.print(f"✘ No records found for {seq_id} in NCBI database.", style="red")
+            console.print(f"{seq_id} will not be included in output.", style="red")
             continue
 
     return dict(families), dict(genera)
@@ -95,7 +96,8 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
 
     try:
         stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        console.log(e)
         console.print(f"✘ Missing HMMER dependency for hmmstat command, exiting...", style="red")
         sys.exit(1)
 
@@ -108,7 +110,7 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
 
             return mean_positional_relative_entropy, kullback_leibler_divergence
 
-    raise Exception("hmmstat output not captured")
+    raise Exception("hmmstat output not captured.")
 
 
 def get_names(annotation: dict) -> List[str]:
@@ -179,4 +181,4 @@ def get_json_from_clusters(cluster_paths: List[Path], output: Path):
     with open(output_path, "wt") as f:
         json.dump(annotations, f, indent=4)
 
-    console.print(f"✔ Master JSON file built in {output_path}", style="green")
+    console.print(f"Master JSON file built in {output_path}", style="green")

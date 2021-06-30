@@ -16,10 +16,10 @@ def get_input_paths(src_path: Path) -> List[Path]:
     input_paths = list(src_path.iterdir())
 
     if input_paths:
-        console.print(f"✔ Retreived {len(input_paths)} files from input directory", style="green")
+        console.print(f"✔ Retrieved {len(input_paths)} files from input directory.", style="green")
         return input_paths
 
-    console.print("✘ No files found in input directory, exiting...", style="red")
+    console.print("No files found in input directory, exiting...", style="red")
     sys.exit(1)
 
 
@@ -46,10 +46,10 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
             else:
                 yield record
 
-    console.print(f"✔ Retrieved {record_count} records from {len(input_paths)} input files", style="green")
+    console.print(f"✔ Retrieved {record_count} records from {len(input_paths)} input files.", style="green")
 
     if no_named_phages:
-        console.print(f"✔ Filtered out {phage_count} phage records by name", style="green")
+        console.print(f"✔ Filtered out {phage_count} phage records by name.", style="green")
 
 
 def remove_dupes(records: iter, sequence_min_length: int) -> list:
@@ -69,7 +69,7 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
         else:
             dupes_count += 1
 
-    console.print(f"✔ Filtered out {dupes_count} duplicate records", style="green")
+    console.print(f"✔ Filtered out {dupes_count} duplicate records.", style="green")
 
 
 def write_curated_recs(records: iter, output: Path, sequence_min_length: int, prefix=None) -> Path:

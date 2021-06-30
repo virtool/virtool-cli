@@ -36,10 +36,10 @@ def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None,
 
     try:
         subprocess.run(cd_hit_cmd, check=True, shell=False)
-    except FileNotFoundError:
-        console.print(f"✘ Missing CD-HIT dependency, exiting...", style="red")
+    except FileNotFoundError as e:
+        console.log(e)
+        console.print(f"Missing CD-HIT dependency, exiting...", style="red")
         sys.exit(1)
-
     return output_path
 
 
@@ -55,7 +55,7 @@ def rmv_polyproteins(clustered_fasta_path: Path) -> list:
             yield record
         else:
             polyprotein_count += 1
-    console.print(f"✔ Filtered out {polyprotein_count} polyprotein records by name", style="green")
+    console.print(f"✔ Filtered out {polyprotein_count} polyprotein records by name.", style="green")
 
 
 def write_rmv_polyproteins(clustered_fasta_path: Path, prefix=None) -> Path:
@@ -96,8 +96,9 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     ]
     try:
         subprocess.run(format_db_cmd, check=True, shell=False)
-    except FileNotFoundError:
-        console.print(f"✘ Missing BLAST dependency for makeblastdb command, exiting...", style="red")
+    except FileNotFoundError as e:
+        console.log(e)
+        console.print(f"Missing BLAST dependency for makeblastdb command, exiting...", style="red")
         sys.exit(1)
 
     blast_name = "blast.br"
@@ -117,8 +118,9 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
 
     try:
         subprocess.run(blast_cmd, check=True, shell=False)
-    except FileNotFoundError:
-        console.print(f"✘ Missing BLAST dependency for blastp command, exiting...", style="red")
+    except FileNotFoundError as e:
+        console.log(e)
+        console.print(f"Missing BLAST dependency for blastp command, exiting...", style="red")
         sys.exit(1)
 
     return blast_results_path
