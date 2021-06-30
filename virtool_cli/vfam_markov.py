@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 from Bio import SeqIO, SearchIO
 from pathlib import Path
@@ -77,7 +78,11 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
         "-o", mci_path,
         "-write-tab", tab_path
     ]
-    subprocess.run(mcxload_cmd, check=True, shell=False)
+    try:
+        subprocess.run(mcxload_cmd, check=True, shell=False)
+    except FileNotFoundError:
+        console.print(f"✘ Missing MCL dependency for mcxload command, exiting...", style="red")
+        sys.exit(1)
 
     mcl_cmd = [
         "mcl", mci_path,
@@ -88,7 +93,11 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
     if inflation_num:
         mcl_cmd += ["-I", inflation_num]
 
-    subprocess.run(mcl_cmd, check=True, shell=False)
+    try:
+        subprocess.run(mcl_cmd, check=True, shell=False)
+    except FileNotFoundError:
+        console.print(f"✘ Missing MCL dependency for mcl command, exiting...", style="red")
+        sys.exit(1)
 
     return mcl_path
 
@@ -113,6 +122,7 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
 
             for record_id in line.strip().split("\t"):
                 mcl_path_dict[record_id] = fasta_path / Path(fasta_name)
+                open(mcl_path_dict[record_id], "w").close()
 
     for record in SeqIO.parse(clustered_fasta_path, "fasta"):
 
@@ -121,6 +131,6 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
 
-    console.print(f"✔ Collected {len(set(mcl_path_dict.values()))} FASTA cluster files produced by mcxload",
+    console.print(f"✔ Produced {len(list(set(mcl_path_dict.values())))} FASTA cluster files from MCL clusters",
                   style="green")
     return list(set(mcl_path_dict.values()))

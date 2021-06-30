@@ -3,6 +3,7 @@ import json
 import operator
 import os.path
 import subprocess
+import sys
 
 from collections import defaultdict
 from pathlib import Path
@@ -25,7 +26,7 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
 
     for seq_id in seq_ids:
         try:
-            handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
+            handle = Entrez.efetch(db="Protein", id=seq_id, rettype="gb", retmode="text")
             for record in GenBank.parse(handle):
 
                 family = record.taxonomy[-2]
@@ -42,6 +43,7 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
 
         except (HTTPError, AttributeError):
             console.print(f"✘ No records found for {seq_id} in NCBI database", style="red")
+            console.print(f"{seq_id} will not be included in output", style="red")
             continue
 
     return dict(families), dict(genera)
@@ -90,7 +92,12 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     hmm_path = output / "intermediate_files" / f"{cluster_name}.hmm"
 
     hmmstat_cmd = ["hmmstat", hmm_path]
-    stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
+
+    try:
+        stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
+    except FileNotFoundError:
+        console.print(f"✘ Missing HMMER dependency for hmmstat command, exiting...", style="red")
+        sys.exit(1)
 
     for line in stat_data:
         if not line.startswith("#") and not line.startswith("CompletedProcess"):
@@ -169,7 +176,7 @@ def get_json_from_clusters(cluster_paths: List[Path], output: Path):
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
 
-    console.print(f"✔ Gathered {len(annotations)} annotations to be included in master JSON file", style="green")
     with open(output_path, "wt") as f:
         json.dump(annotations, f, indent=4)
+
     console.print(f"✔ Master JSON file built in {output_path}", style="green")

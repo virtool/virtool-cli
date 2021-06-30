@@ -19,7 +19,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
         console.print(f"✔ Retreived {len(input_paths)} files from input directory", style="green")
         return input_paths
 
-    console.print("✘ No files found in input directory", style="red")
+    console.print("✘ No files found in input directory, exiting...", style="red")
     sys.exit(1)
 
 
@@ -34,17 +34,22 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     :return: list of all records found in input paths
     """
     phage_count = 0
+    record_count = 0
     for input_path in input_paths:
         for record in SeqIO.parse(input_path, "fasta"):
+            record_count += 1
             if no_named_phages:
-                if "phage" not in record.description:
-                    yield record
-                else:
+                if "phage" in record.description:
                     phage_count += 1
+                else:
+                    yield record
             else:
                 yield record
-    if no_named_phages and phage_count > 0:
-        console.print(f"✔ Removed {phage_count} phage records from input by name", style="green")
+
+    console.print(f"✔ Retrieved {record_count} records from {len(input_paths)} input files", style="green")
+
+    if no_named_phages:
+        console.print(f"✔ Filtered out {phage_count} phage records by name", style="green")
 
 
 def remove_dupes(records: iter, sequence_min_length: int) -> list:
@@ -64,8 +69,7 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
         else:
             dupes_count += 1
 
-    if dupes_count > 0:
-        console.print(f"✔ Removed {dupes_count} duplicate records from input", style="green")
+    console.print(f"✔ Filtered out {dupes_count} duplicate records", style="green")
 
 
 def write_curated_recs(records: iter, output: Path, sequence_min_length: int, prefix=None) -> Path:
