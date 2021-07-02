@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Tuple, List
 from urllib.error import HTTPError
 from Bio import Entrez
-from Bio import GenBank, SeqIO
+from Bio import SeqIO
 
 
 def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
@@ -25,15 +25,16 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
     for seq_id in seq_ids:
         try:
             handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
-            for record in GenBank.parse(handle):
+            for record in SeqIO.parse(handle, "genbank"):
+                taxonomy = record.annotations["taxonomy"]
 
-                family = record.taxonomy[-2]
+                family = taxonomy[-2]
                 if family.lower() == "viruses":
                     family = "None"
 
                 families[family] += 1
 
-                genus = record.taxonomy[-1]
+                genus = taxonomy[-1]
                 if genus.lower() == "unclassified viruses":
                     genus = "None"
 
