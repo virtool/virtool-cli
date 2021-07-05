@@ -25,6 +25,7 @@ def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None,
     output_path = curated_fasta_path.parent / output_name
 
     cd_hit_cmd = [
+        "cd-hit",
         "-i", curated_fasta_path,
         "-o", output_path,
         "-s", str(fraction_id)

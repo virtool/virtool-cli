@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import click
 import virtool_cli.vfam
 import virtool_cli.build
@@ -45,6 +48,12 @@ def vfam(src_path: str,
          min_sequences: int):
     """Build profile HMMS from fasta."""
     try:
+        check_vfam_dependencies()
+    except (FileNotFoundError, PermissionError):
+        console.print("Missing external program dependency.", style="red")
+        sys.exit(1)
+
+    try:
         virtool_cli.vfam.run(Path(src_path),
                              Path(output),
                              prefix,
@@ -59,6 +68,18 @@ def vfam(src_path: str,
                              min_sequences)
     except (FileNotFoundError, NotADirectoryError):
         console.print("Not a valid reference directory.", style="red")
+
+
+def check_vfam_dependencies():
+    """Check external dependencies for VFam pipeline"""
+    subprocess.run(["hmmstat", "-h"])
+    subprocess.run(["cd-hit", "-h"])
+    subprocess.run(["makeblastdb", "-h"])
+    subprocess.run(["blastp", "-h"])
+    subprocess.run(["mcxload", "-h"])
+    subprocess.run(["mcl", "-h"])
+    subprocess.run(["muscle", "-h"])
+    subprocess.run(["hmmbuild", "-h"])
 
 
 @cli.command()
