@@ -43,7 +43,7 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
 
 def remove_dupes(records: iter, sequence_min_length: int) -> list:
     """
-    Iterates through records and yields record if sequence isn't in record_seqs and is longer than sequence_min_length.
+    Iterates through records and filters out repeated records and sequences shorter than sequence_min_length.
 
     :param records: iterable of records gathered in group_input_paths()
     :param sequence_min_length: minimum length of sequence to be included in output
@@ -71,18 +71,16 @@ def get_taxonomy(records: iter):
         try:
             handle = Entrez.efetch(db="protein", id=record.id, rettype="gb", retmode="text")
             for seq_record in SeqIO.parse(handle, "genbank"):
-                record_taxonomy[seq_record.id] = seq_record.annotations["taxonomy"]
+                record_taxonomy[seq_record.id] = seq_record.annotations["taxonomy"][-2:]
 
         except (HTTPError, AttributeError):
             continue
     return record_taxonomy
 
 
-def write_curated_recs(records: iter, output: Path, taxonomy_ids, prefix=None) -> Path:
+def write_curated_recs(records: iter, output: Path, taxonomy_ids: List[str], prefix=None) -> Path:
     """
-    Removes duplicates in no_phages list, writes all records in list to output.
-
-    Verifies length of each sequence is longer than SEQUENCE_MIN_LENGTH.
+    Writes filtered records to output if taxonomic information was found for the record in get_taxonomy().
 
     :param records: list of records from all protein files without keyword "phage"
     :param output: Path to output directory for profile HMMs and intermediate files

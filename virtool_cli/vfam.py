@@ -8,8 +8,18 @@ from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_
 from virtool_cli.vfam_annotation import get_json_from_clusters
 
 
-def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction_coverage, fraction_id, num_cores,
-        no_named_polyproteins, inflation_num, coverage_check, min_sequences):
+def run(src_path,
+        output,
+        prefix,
+        sequence_min_length,
+        no_named_phages,
+        fraction_coverage,
+        fraction_id,
+        num_cores,
+        no_named_polyproteins,
+        inflation_num,
+        coverage_check,
+        min_sequences):
     """Dictates workflow for vfam pipeline."""
     input_paths = get_input_paths(Path(src_path))
 
@@ -21,7 +31,7 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
 
     curated_recs = write_curated_recs(no_dupes, output, list(taxonomy_records.keys()), prefix)
 
-    cd_hit_result = generate_clusters(curated_recs, fraction_id, prefix, fraction_coverage)
+    cd_hit_result = generate_clusters(curated_recs, fraction_id, fraction_coverage, prefix)
 
     if no_named_polyproteins:
         cd_hit_result = write_rmv_polyproteins(cd_hit_result, prefix)
@@ -45,11 +55,4 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
 
     concatenate_hmms(hmm_files, output, prefix)
 
-    get_json_from_clusters(fasta_files, output)
-
-
-
-
-
-
-
+    get_json_from_clusters(fasta_files, taxonomy_records, output)

@@ -7,41 +7,32 @@ import subprocess
 from collections import defaultdict
 from pathlib import Path
 from typing import Tuple, List
-from urllib.error import HTTPError
-from Bio import Entrez
 from Bio import SeqIO
 
 
-def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
+def get_taxonomy(seq_ids: List[str], taxonomy_records: dict) -> Tuple[dict, dict]:
     """
-    Takes in list of sequence IDs and makes calls to NCBI database to gather family and genus information for each ID.
+    Takes in list of sequence IDs and gathers family, genus information from taxonomy_records for each sequence.
 
     :param seq_ids: list of sequence IDs
+    :param taxonomy_records: dictionary containing taxonomic information for each record
     :return: family and genus dictionaries containing occurrences of each
     """
     families = defaultdict(int)
     genera = defaultdict(int)
 
     for seq_id in seq_ids:
-        try:
-            handle = Entrez.efetch(db="protein", id=seq_id, rettype="gb", retmode="text")
-            for record in SeqIO.parse(handle, "genbank"):
-                taxonomy = record.annotations["taxonomy"]
+        family = taxonomy_records[seq_id][0]
+        if family.lower() == "viruses":
+            family = "None"
 
-                family = taxonomy[-2]
-                if family.lower() == "viruses":
-                    family = "None"
+        families[family] += 1
 
-                families[family] += 1
+        genus = taxonomy_records[seq_id][1]
+        if genus.lower() == "unclassified viruses":
+            genus = "None"
 
-                genus = taxonomy[-1]
-                if genus.lower() == "unclassified viruses":
-                    genus = "None"
-
-                genera[genus] += 1
-
-        except (HTTPError, AttributeError):
-            continue
+        genera[genus] += 1
 
     return dict(families), dict(genera)
 
@@ -116,13 +107,14 @@ def get_names(annotation: dict) -> List[str]:
     return [entry[0] for entry in top_three]
 
 
-def get_json_from_clusters(cluster_paths: List[Path], output: Path):
+def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: Path):
     """
     Parses all filtered FASTA cluster files and creates annotation dictionaries.
 
     All data from each annotation is written to master.json file.
 
     :param cluster_paths: list of paths to clustered, filtered FASTA files from vfam pipeline
+    :param taxonomy_records: dictionary containing taxonomic information for each record
     :param output: Path to output directory containing intermediate files from vfam pipeline
     """
     output_path = output / "master.json"
@@ -156,7 +148,7 @@ def get_json_from_clusters(cluster_paths: List[Path], output: Path):
                     "organism": record.description.split("[")[1].replace("]", "").strip()
                 })
 
-            taxonomy = get_taxonomy(seq_ids)
+            taxonomy = get_taxonomy(seq_ids, taxonomy_records)
             if taxonomy:
                 annotation["families"] = json.loads(str(taxonomy[0]).replace("'", '"'))
                 annotation["genera"] = json.loads(str(taxonomy[1]).replace("'", '"'))
@@ -168,5 +160,5 @@ def get_json_from_clusters(cluster_paths: List[Path], output: Path):
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
 
-    with open(output_path, "wt") as f:
+    with open(output_path, "w") as f:
         json.dump(annotations, f, indent=4)

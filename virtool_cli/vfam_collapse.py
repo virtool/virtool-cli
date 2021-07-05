@@ -4,7 +4,7 @@ from pathlib import Path
 from Bio import SeqIO
 
 
-def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None, fraction_cov=None) -> Path:
+def generate_clusters(curated_fasta_path: Path, fraction_id: float, fraction_cov=None, prefix=None) -> Path:
     """
     Takes in path to a FASTA file, minimum fraction ID, minimum fraction coverage and calls CD-HIT to cluster data.
 

@@ -112,11 +112,11 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
 
             for record_id in line.strip().split("\t"):
                 mcl_path_dict[record_id] = fasta_path / Path(fasta_name)
+                open(mcl_path_dict[record_id], "w").close()
 
     for record in SeqIO.parse(clustered_fasta_path, "fasta"):
 
         if record.id in mcl_path_dict:
-
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
 
