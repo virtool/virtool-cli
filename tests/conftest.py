@@ -1,7 +1,9 @@
 import pytest
 
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
+from Bio import SeqIO
+
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
 from virtool_cli.vfam_collapse import generate_clusters, blast_all_by_all
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_markov import blast_to_mcl, write_abc, mcl_to_fasta
@@ -28,12 +30,26 @@ def group_records(input_paths):
 
 @pytest.fixture()
 def no_dupes(group_records, output):
-    return write_curated_recs(group_records, output, 1)
+    return remove_dupes(group_records, 1)
 
 
 @pytest.fixture()
-def clustered_result(output, no_dupes):
-    return generate_clusters(no_dupes, 1.0)
+def curated_recs(no_dupes, output):
+    output_dir = output / Path("intermediate_files")
+    if not output_dir.exists():
+        output_dir.mkdir()
+
+    output_name = "curated_records.faa"
+    output_path = output_dir / Path(output_name)
+
+    SeqIO.write(no_dupes, Path(output_path), "fasta")
+
+    return output_path
+
+
+@pytest.fixture()
+def clustered_result(output, curated_recs):
+    return generate_clusters(curated_recs, 1.0)
 
 
 @pytest.fixture()

@@ -1,6 +1,7 @@
 import sys
+from urllib.error import HTTPError
 
-from Bio import SeqIO
+from Bio import SeqIO, Entrez
 from pathlib import Path
 from typing import List
 
@@ -48,14 +49,36 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
     :param sequence_min_length: minimum length of sequence to be included in output
     """
     record_seqs = list()
-
+    no_dupes = list()
     for record in records:
         if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
             record_seqs.append(record.seq)
-            yield record
+            no_dupes.append(record)
+    return no_dupes
 
 
-def write_curated_recs(records: iter, output: Path, sequence_min_length: int, prefix=None) -> Path:
+def get_taxonomy(records: iter):
+    """
+   Makes calls to NCBI database using Bio.Entrez to gather taxonomic information for each record.
+
+   If record isn't found in NCBI, record isn't included in output.
+
+   :param records: list of records from group_input_paths() step.
+   :return: record_taxonomy, a dictionary containing {record ID: taxonomy} pairs
+   """
+    record_taxonomy = dict()
+    for record in records:
+        try:
+            handle = Entrez.efetch(db="protein", id=record.id, rettype="gb", retmode="text")
+            for seq_record in SeqIO.parse(handle, "genbank"):
+                record_taxonomy[seq_record.id] = seq_record.annotations["taxonomy"]
+
+        except (HTTPError, AttributeError):
+            continue
+    return record_taxonomy
+
+
+def write_curated_recs(records: iter, output: Path, taxonomy_ids, prefix=None) -> Path:
     """
     Removes duplicates in no_phages list, writes all records in list to output.
 
@@ -63,8 +86,8 @@ def write_curated_recs(records: iter, output: Path, sequence_min_length: int, pr
 
     :param records: list of records from all protein files without keyword "phage"
     :param output: Path to output directory for profile HMMs and intermediate files
+    :param taxonomy_ids: list of record IDs for which taxonomy was found
     :param prefix: Prefix for intermediate and result files
-    :param sequence_min_length: Minimum sequence length for a record to be included in the input
     :return: Path to curated FASTA file without repeats or phages
     """
     output_dir = output / Path("intermediate_files")
@@ -75,8 +98,8 @@ def write_curated_recs(records: iter, output: Path, sequence_min_length: int, pr
     output_name = "curated_records.faa"
     if prefix:
         output_name = f"{prefix}_{output_name}"
-
     output_path = output_dir / Path(output_name)
-    SeqIO.write(remove_dupes(records, sequence_min_length), Path(output_path), "fasta")
+
+    SeqIO.write((record for record in records if record.id in taxonomy_ids), Path(output_path), "fasta")
 
     return output_path

@@ -1,5 +1,5 @@
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs, remove_dupes, get_taxonomy
 from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, blast_all_by_all
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
@@ -15,9 +15,13 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
 
     records = group_input_paths(input_paths, no_named_phages)
 
-    no_dupes = write_curated_recs(records, output, sequence_min_length, prefix)
+    no_dupes = remove_dupes(records, sequence_min_length)
 
-    cd_hit_result = generate_clusters(no_dupes, fraction_id, prefix, fraction_coverage)
+    taxonomy_records = get_taxonomy(no_dupes)
+
+    curated_recs = write_curated_recs(no_dupes, output, list(taxonomy_records.keys()), prefix)
+
+    cd_hit_result = generate_clusters(curated_recs, fraction_id, prefix, fraction_coverage)
 
     if no_named_polyproteins:
         cd_hit_result = write_rmv_polyproteins(cd_hit_result, prefix)
