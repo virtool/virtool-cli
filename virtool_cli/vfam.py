@@ -1,5 +1,6 @@
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs, remove_dupes, get_taxonomy
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs, remove_dupes, \
+    get_taxonomy, write_no_dupes
 from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, blast_all_by_all
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
@@ -27,9 +28,11 @@ def run(src_path,
 
     no_dupes = remove_dupes(records, sequence_min_length)
 
-    taxonomy_records = get_taxonomy(no_dupes)
+    no_dupes_path = write_no_dupes(no_dupes, output, prefix)
 
-    curated_recs = write_curated_recs(no_dupes, output, list(taxonomy_records.keys()), prefix)
+    taxonomy_records = get_taxonomy(no_dupes_path)
+
+    curated_recs = write_curated_recs(no_dupes_path, list(taxonomy_records.keys()), prefix)
 
     cd_hit_result = generate_clusters(curated_recs, fraction_id, fraction_coverage, prefix)
 
