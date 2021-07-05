@@ -19,7 +19,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
         console.print(f"✔ Retrieved {len(input_paths)} files from input directory.", style="green")
         return input_paths
 
-    console.print("No files found in input directory, exiting...", style="red")
+    console.print("No files found in input directory.", style="red")
     sys.exit(1)
 
 

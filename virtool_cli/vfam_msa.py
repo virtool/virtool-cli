@@ -31,9 +31,8 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
         ]
         try:
             subprocess.run(muscle_cmd, check=True, shell=False)
-        except FileNotFoundError as e:
-            console.log(e)
-            console.print("Missing MUSCLE dependency for muscle command, exiting...", style="red")
+        except FileNotFoundError:
+            console.print("Dependency muscle not found in path", style="red")
             sys.exit(1)
 
     console.print(f"✔ Produced {len(msa_paths)} MSAs from {len(fasta_paths)} FASTA cluster files.", style="green")
@@ -64,9 +63,8 @@ def batch_hmm_call(msa_paths: List[Path]) -> List[Path]:
         ]
         try:
             subprocess.run(hmmer_cmd, check=True, shell=False)
-        except FileNotFoundError as e:
-            console.log(e)
-            console.print("Missing HMMER dependency for hmmbuild command, exiting...", style="red")
+        except FileNotFoundError:
+            console.print("Dependency hmmbuild not found in path.", style="red")
             sys.exit(1)
 
     console.print(f"✔ Collected {len(hmm_paths)} HMM profiles produced by hmmbuild.", style="green")

@@ -57,9 +57,8 @@ def vfam(src_path: str,
                              inflation_num,
                              filter_clusters,
                              min_sequences)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        console.log(e)
-        console.print("Not a valid reference directory, exiting...", style="red")
+    except (FileNotFoundError, NotADirectoryError):
+        console.print("Not a valid reference directory.", style="red")
 
 
 @cli.command()

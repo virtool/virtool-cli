@@ -25,7 +25,6 @@ def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None,
     output_path = curated_fasta_path.parent / output_name
 
     cd_hit_cmd = [
-        "cd-hit",
         "-i", curated_fasta_path,
         "-o", output_path,
         "-s", str(fraction_id)
@@ -36,9 +35,8 @@ def generate_clusters(curated_fasta_path: Path, fraction_id: float, prefix=None,
 
     try:
         subprocess.run(cd_hit_cmd, check=True, shell=False)
-    except FileNotFoundError as e:
-        console.log(e)
-        console.print("Missing CD-HIT dependency, exiting...", style="red")
+    except FileNotFoundError:
+        console.print("Dependency cd-hit not found in path.", style="red")
         sys.exit(1)
     return output_path
 
@@ -96,9 +94,8 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     ]
     try:
         subprocess.run(format_db_cmd, check=True, shell=False)
-    except FileNotFoundError as e:
-        console.log(e)
-        console.print("Missing BLAST dependency for makeblastdb command, exiting...", style="red")
+    except FileNotFoundError:
+        console.print("Dependency makeblastdb not found in path.", style="red")
         sys.exit(1)
 
     blast_name = "blast.br"
@@ -118,9 +115,8 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
 
     try:
         subprocess.run(blast_cmd, check=True, shell=False)
-    except FileNotFoundError as e:
-        console.log(e)
-        console.print("Missing BLAST dependency for blastp command, exiting...", style="red")
+    except FileNotFoundError:
+        console.print("Dependency blastp not found in path.", style="red")
         sys.exit(1)
 
     return blast_results_path

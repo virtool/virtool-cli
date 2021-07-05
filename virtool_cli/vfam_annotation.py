@@ -41,8 +41,7 @@ def get_taxonomy(seq_ids: List[str]) -> Tuple[dict, dict]:
 
                 genera[genus] += 1
 
-        except (HTTPError, AttributeError) as e:
-            console.log(e)
+        except (HTTPError, AttributeError):
             console.print(f"✘ No records found for {seq_id} in NCBI database.", style="red")
             console.print(f"{seq_id} will not be included in output.", style="red")
             continue
@@ -96,9 +95,8 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
 
     try:
         stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
-    except FileNotFoundError as e:
-        console.log(e)
-        console.print("✘ Missing HMMER dependency for hmmstat command, exiting...", style="red")
+    except FileNotFoundError:
+        console.print("✘ Dependency hmmstat not found in path.", style="red")
         sys.exit(1)
 
     for line in stat_data:
