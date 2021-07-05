@@ -47,6 +47,7 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
 
     :param records: iterable of records gathered in group_input_paths()
     :param sequence_min_length: minimum length of sequence to be included in output
+    :return: no_dupes, a list of filtered records
     """
     record_seqs = list()
     no_dupes = list()
@@ -57,14 +58,14 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
     return no_dupes
 
 
-def get_taxonomy(records: iter):
+def get_taxonomy(records: list):
     """
    Makes calls to NCBI database using Bio.Entrez to gather taxonomic information for each record.
 
    If record isn't found in NCBI, record isn't included in output.
 
    :param records: list of records from group_input_paths() step.
-   :return: record_taxonomy, a dictionary containing {record ID: taxonomy} pairs
+   :return: record_taxonomy, a dictionary containing {record ID: [family, genus]} pairs
    """
     record_taxonomy = dict()
     for record in records:
