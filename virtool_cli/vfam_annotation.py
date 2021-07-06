@@ -3,6 +3,7 @@ import json
 import operator
 import os.path
 import subprocess
+import sys
 
 from collections import defaultdict
 from pathlib import Path
@@ -80,7 +81,12 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     hmm_path = output / "intermediate_files" / f"{cluster_name}.hmm"
 
     hmmstat_cmd = ["hmmstat", hmm_path]
-    stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
+
+    try:
+        stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
+    except FileNotFoundError:
+        console.print("✘ Dependency hmmstat not found in path.", style="red")
+        sys.exit(1)
 
     for line in stat_data:
         if not line.startswith("#") and not line.startswith("CompletedProcess"):
@@ -91,7 +97,7 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
 
             return mean_positional_relative_entropy, kullback_leibler_divergence
 
-    raise Exception("hmmstat output not captured")
+    raise Exception("hmmstat output not captured.")
 
 
 def get_names(annotation: dict) -> List[str]:
@@ -117,7 +123,7 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
     :param taxonomy_records: dictionary containing taxonomic information for each record
     :param output: Path to output directory containing intermediate files from vfam pipeline
     """
-    output_path = output / "master.json"
+    output_path = output / "vfam.json"
     annotations = list()
 
     for cluster_path in cluster_paths:
@@ -162,3 +168,5 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
 
     with open(output_path, "w") as f:
         json.dump(annotations, f, indent=4)
+
+    console.print(f"Master JSON file built in {output_path}", style="green")

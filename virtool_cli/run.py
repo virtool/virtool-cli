@@ -1,4 +1,5 @@
-from pathlib import Path
+import subprocess
+import sys
 
 import click
 import virtool_cli.vfam
@@ -7,6 +8,9 @@ import virtool_cli.divide
 import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
+
+from pathlib import Path
+from virtool_cli.vfam_console import console
 
 
 @click.group()
@@ -27,7 +31,7 @@ def cli():
 @click.option("--no-named-polyproteins", default=False, help="Filter out polyprotein sequences based on "
                                                              "record description")
 @click.option("--inflation-num", default=None, help="Inflation number to be used in mcl step")
-@click.option("-cvg-check", "--coverage-check", default=False, help="Filter clustered fasta files on coverage")
+@click.option("--filter-clusters", default=False, help="Filter clustered fasta files on coverage")
 @click.option("-min-seqs", "--min-sequences", default=2, help="Filter out clusters with fewer records than "
                                                               "min-sequences")
 def vfam(src_path: str,
@@ -40,9 +44,15 @@ def vfam(src_path: str,
          num_cores: int,
          no_named_polyproteins: bool,
          inflation_num: int,
-         coverage_check: bool,
+         filter_clusters: bool,
          min_sequences: int):
     """Build profile HMMS from fasta."""
+    try:
+        check_vfam_dependencies()
+    except (FileNotFoundError, PermissionError):
+        console.print("Missing external program dependency.", style="red")
+        sys.exit(1)
+
     try:
         virtool_cli.vfam.run(Path(src_path),
                              Path(output),
@@ -54,10 +64,22 @@ def vfam(src_path: str,
                              num_cores,
                              no_named_polyproteins,
                              inflation_num,
-                             coverage_check,
+                             filter_clusters,
                              min_sequences)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo("Not a valid reference directory")
+    except (FileNotFoundError, NotADirectoryError):
+        console.print("Not a valid reference directory.", style="red")
+
+
+def check_vfam_dependencies():
+    """Check external dependencies for VFam pipeline"""
+    subprocess.run(["hmmstat", "-h"])
+    subprocess.run(["cd-hit", "-h"])
+    subprocess.run(["makeblastdb", "-h"])
+    subprocess.run(["blastp", "-h"])
+    subprocess.run(["mcxload", "-h"])
+    subprocess.run(["mcl", "-h"])
+    subprocess.run(["muscle", "-h"])
+    subprocess.run(["hmmbuild", "-h"])
 
 
 @cli.command()

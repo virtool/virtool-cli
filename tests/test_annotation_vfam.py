@@ -26,5 +26,3 @@ def test_get_taxonomy(input_path):
                 for i in annotation["genera"]:
                     genus_count += annotation["genera"][i]
                 assert genus_count == family_count
-
-
