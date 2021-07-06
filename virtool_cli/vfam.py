@@ -36,7 +36,7 @@ def run(
 
     curated_recs = write_curated_recs(no_dupes_path, list(taxonomy_records.keys()), prefix)
 
-    cd_hit_result = generate_clusters(curated_recs, fraction_id, fraction_coverage, prefix)
+    cd_hit_result_path = generate_clusters(curated_recs, fraction_id, fraction_coverage, prefix)
 
     if no_named_polyproteins:
         cd_hit_result_path = write_rmv_polyproteins(cd_hit_result_path, prefix)
