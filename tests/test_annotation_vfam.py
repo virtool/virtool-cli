@@ -14,13 +14,12 @@ def test_get_taxonomy(input_path):
     with input_path.open("r") as handle:
         json_decode = json.load(handle)
         for annotation in json_decode:
-            assert annotation["count"] == len(annotation["entries"])
             family_count = 0
             if "families" in annotation:
                 for i in annotation["families"]:
                     family_count += annotation["families"][i]
-                assert family_count <= len(annotation["entries"])
-                assert annotation["count"] >= family_count
+                assert family_count == len(annotation["entries"])
+                assert annotation["count"] == family_count
 
             genus_count = 0
             if "genera" in annotation:

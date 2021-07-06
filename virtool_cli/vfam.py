@@ -1,6 +1,6 @@
 from pathlib import Path
-
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs, remove_dupes, \
+    get_taxonomy, write_no_dupes
 from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, blast_all_by_all
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
@@ -9,16 +9,34 @@ from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call, concatenate_
 from virtool_cli.vfam_annotation import get_json_from_clusters
 
 
-def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction_coverage, fraction_id, num_cores,
-        no_named_polyproteins, inflation_num, filter_clusters, min_sequences):
+def run(
+    src_path,
+    output,
+    prefix,
+    sequence_min_length,
+    no_named_phages,
+    fraction_coverage,
+    fraction_id,
+    num_cores,
+    no_named_polyproteins,
+    inflation_num,
+    filter_clusters,
+    min_sequences
+):
     """Dictates workflow for vfam pipeline."""
     input_paths = get_input_paths(Path(src_path))
 
     records = group_input_paths(input_paths, no_named_phages)
 
-    no_dupes_path = write_curated_recs(records, output, sequence_min_length, prefix)
+    no_dupes = remove_dupes(records, sequence_min_length)
 
-    cd_hit_result_path = generate_clusters(no_dupes_path, fraction_id, prefix, fraction_coverage)
+    no_dupes_path = write_no_dupes(no_dupes, output, prefix)
+
+    taxonomy_records = get_taxonomy(no_dupes_path)
+
+    curated_recs = write_curated_recs(no_dupes_path, list(taxonomy_records.keys()), prefix)
+
+    cd_hit_result_path = generate_clusters(curated_recs, fraction_id, fraction_coverage, prefix)
 
     if no_named_polyproteins:
         cd_hit_result_path = write_rmv_polyproteins(cd_hit_result_path, prefix)
@@ -42,11 +60,4 @@ def run(src_path, output, prefix, sequence_min_length, no_named_phages, fraction
 
     concatenate_hmms(hmm_file_paths, output, prefix)
 
-    get_json_from_clusters(fasta_paths, output)
-
-
-
-
-
-
-
+    get_json_from_clusters(fasta_paths, taxonomy_records, output)
