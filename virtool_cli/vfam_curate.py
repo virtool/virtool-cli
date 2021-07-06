@@ -3,6 +3,7 @@ import sys
 from Bio import SeqIO
 from pathlib import Path
 from typing import List
+from virtool_cli.vfam_console import console
 
 
 def get_input_paths(src_path: Path) -> List[Path]:
@@ -15,9 +16,10 @@ def get_input_paths(src_path: Path) -> List[Path]:
     input_paths = list(src_path.iterdir())
 
     if input_paths:
+        console.print(f"✔ Retrieved {len(input_paths)} files from input directory.", style="green")
         return input_paths
 
-    print("No files found in input directory")
+    console.print("No files found in input directory.", style="red")
     sys.exit(1)
 
 
@@ -31,13 +33,23 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     :param no_named_phages: bool that dictates whether phage records are filtered out by name or not
     :return: list of all records found in input paths
     """
+    phage_count = 0
+    record_count = 0
     for input_path in input_paths:
         for record in SeqIO.parse(input_path, "fasta"):
+            record_count += 1
             if no_named_phages:
-                if "phage" not in record.description:
+                if "phage" in record.description:
+                    phage_count += 1
+                else:
                     yield record
             else:
                 yield record
+
+    console.print(f"✔ Retrieved {record_count} records from {len(input_paths)} input files.", style="green")
+
+    if no_named_phages:
+        console.print(f"✔ Filtered out {phage_count} phage records by name.", style="green")
 
 
 def remove_dupes(records: iter, sequence_min_length: int) -> list:
@@ -48,11 +60,16 @@ def remove_dupes(records: iter, sequence_min_length: int) -> list:
     :param sequence_min_length: minimum length of sequence to be included in output
     """
     record_seqs = list()
+    dupes_count = 0
 
     for record in records:
         if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
             record_seqs.append(record.seq)
             yield record
+        else:
+            dupes_count += 1
+
+    console.print(f"✔ Filtered out {dupes_count} duplicate records.", style="green")
 
 
 def write_curated_recs(records: iter, output: Path, sequence_min_length: int, prefix=None) -> Path:

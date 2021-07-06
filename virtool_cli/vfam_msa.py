@@ -1,8 +1,10 @@
 import os.path
 import subprocess
+import sys
 
 from pathlib import Path
 from typing import List, Optional
+from virtool_cli.vfam_console import console
 
 NUM_CORES = 16
 
@@ -27,8 +29,13 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
             "-log", log_path,
             "-quiet"
         ]
+        try:
+            subprocess.run(muscle_cmd, check=True, shell=False)
+        except FileNotFoundError:
+            console.print("Dependency muscle not found in path", style="red")
+            sys.exit(1)
 
-        subprocess.run(muscle_cmd, check=True, shell=False)
+    console.print(f"✔ Produced {len(msa_paths)} MSAs from {len(fasta_paths)} FASTA cluster files.", style="green")
 
     return msa_paths
 
@@ -54,9 +61,13 @@ def batch_hmm_call(msa_paths: List[Path]) -> List[Path]:
             hmm_path,
             msa_path
         ]
+        try:
+            subprocess.run(hmmer_cmd, check=True, shell=False)
+        except FileNotFoundError:
+            console.print("Dependency hmmbuild not found in path.", style="red")
+            sys.exit(1)
 
-        subprocess.run(hmmer_cmd, check=True, shell=False)
-
+    console.print(f"✔ Collected {len(hmm_paths)} HMM profiles produced by hmmbuild.", style="green")
     return hmm_paths
 
 
@@ -68,7 +79,7 @@ def concatenate_hmms(hmm_paths: List[Path], output: Path, prefix: Optional[str])
     :param output: Path to output directory
     :param prefix: Prefix for intermediate and result files
     """
-    output_name = "master.hmm"
+    output_name = "vfam.hmm"
     if prefix:
         output_name = f"{prefix}_{output_name}"
 
@@ -79,5 +90,5 @@ def concatenate_hmms(hmm_paths: List[Path], output: Path, prefix: Optional[str])
             with hmm_path.open("r") as h_handle:
                 for line in h_handle:
                     o_handle.write(line)
-
+    console.print(f"Master HMM profile built in {output_path}", style="green")
     return output_path
