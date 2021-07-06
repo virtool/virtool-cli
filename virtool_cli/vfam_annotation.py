@@ -67,7 +67,6 @@ def parse_log(cluster_name: str, output: Path) -> dict:
                 }
 
                 return log_data
-
     return dict()
 
 
@@ -127,6 +126,9 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
     output_path = output / "vfam.json"
     annotations = list()
 
+    family_count = 0
+    genus_count = 0
+    record_count = 0
     for cluster_path in cluster_paths:
         annotation = {
             "cluster": os.path.basename(cluster_path).split("_")[1],
@@ -154,11 +156,13 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
                     "name": name,
                     "organism": record.description.split("[")[1].replace("]", "").strip()
                 })
-
+            record_count += len(seq_ids)
             taxonomy = get_taxonomy(seq_ids, taxonomy_records)
             if taxonomy:
                 annotation["families"] = json.loads(str(taxonomy[0]).replace("'", '"'))
+                family_count += len(taxonomy[0])
                 annotation["genera"] = json.loads(str(taxonomy[1]).replace("'", '"'))
+                genus_count += len(taxonomy[1])
 
         annotation["names"] = get_names(annotation)
         annotation["entries"] = sorted(annotation["entries"], key=operator.itemgetter("accession"))
@@ -166,6 +170,9 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
         annotations.append(annotation)
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
+
+    console.print(f"✔ Retreived {family_count} families and {genus_count} genus for {record_count} sequences",
+                  style="green")
 
     with open(output_path, "w") as f:
         json.dump(annotations, f, indent=4)

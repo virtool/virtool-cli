@@ -120,6 +120,8 @@ def get_taxonomy(no_dupes_path: Path) -> dict:
                     record_taxonomy[seq_record.id] = seq_record.annotations["taxonomy"][-2:]
 
             except (HTTPError, AttributeError):
+                console.print(f"✘ No records found for {record.id} in NCBI database", style="red")
+                console.print(f"{record.id} will not be included in output", style="red")
                 continue
 
     return record_taxonomy
