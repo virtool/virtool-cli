@@ -1,6 +1,6 @@
 from pathlib import Path
 from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs, remove_dupes, \
-    get_taxonomy, write_no_dupes
+    get_taxonomy, write_no_dupes, get_genbank_files
 from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, blast_all_by_all
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
@@ -24,6 +24,8 @@ def run(
     min_sequences
 ):
     """Dictates workflow for vfam pipeline."""
+    get_genbank_files(output)
+
     input_paths = get_input_paths(Path(src_path))
 
     records = group_input_paths(input_paths, no_named_phages)

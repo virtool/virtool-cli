@@ -1,10 +1,71 @@
+import subprocess
 import sys
+from abc import ABC
+from html.parser import HTMLParser
 from urllib.error import HTTPError
 
 from Bio import SeqIO, Entrez
+from subprocess import SubprocessError
 from pathlib import Path
 from typing import List
 from virtool_cli.vfam_console import console
+
+
+def get_genbank_files(output: Path) -> List[Path]:
+    """
+    Collects .gpff files from https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/ using wget
+
+    :param output: path to output directory
+    :return: genbank_file_paths, a list of paths to the .gpff files
+    """
+    output_path = Path(output / "genbank_input.html")
+    viral_release_url = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
+
+    wget_cmd = [
+        "wget", viral_release_url,
+        "-O", output_path,
+    ]
+    try:
+        subprocess.run(wget_cmd)
+    except (SubprocessError, HTTPError):
+        console.print(f"Error gathering .html file from {viral_release_url}.", style="red")
+        sys.exit(1)
+
+    parser = ViralProteinParser()
+
+    with output_path.open("r") as handle:
+        parser.feed(handle.read())
+    file_names = parser.close()
+
+    genbank_file_paths = list()
+    for file_name in file_names:
+        output_path = output / file_name
+        wget_cmd = [
+            "wget", f"{viral_release_url}/{file_name}",
+            "-O", output_path
+        ]
+        genbank_file_paths.append(output_path)
+
+        try:
+            subprocess.run(wget_cmd)
+        except (SubprocessError, HTTPError):
+            console.print(f"✘ Error gathering {file_name} from {viral_release_url}.", style="red")
+            console.print(f"Record data from {file_name} will not be included in output.", style="red")
+
+    console.print(f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.", style="green")
+    return genbank_file_paths
+
+
+class ViralProteinParser(HTMLParser, ABC):
+    """Parser used to gather viral protein data"""
+    file_names = list()
+
+    def handle_data(self, data):
+        if data.startswith("viral") and ".gpff" in data:
+            self.file_names.append(data)
+
+    def close(self):
+        return self.file_names
 
 
 def get_input_paths(src_path: Path) -> List[Path]:
