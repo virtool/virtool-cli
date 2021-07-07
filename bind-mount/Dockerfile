@@ -13,4 +13,5 @@ RUN conda install -c bioconda cd-hit
 RUN conda install -c bioconda hmmer
 RUN conda install -c bioconda blast
 RUN conda install -c bioconda mcl
+RUN conda install -y -c conda-forge -c bioconda -c defaults entrez-direct
 
