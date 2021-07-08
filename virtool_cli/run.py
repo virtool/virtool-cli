@@ -54,7 +54,7 @@ def vfam(src_path: str,
 
     try:
         virtool_cli.vfam.run(src_path,
-                             output,
+                             Path(output),
                              prefix,
                              sequence_min_length,
                              no_named_phages,
