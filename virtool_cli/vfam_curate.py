@@ -1,10 +1,11 @@
+import gzip
 import subprocess
 import sys
 from abc import ABC
 from html.parser import HTMLParser
 from urllib.error import HTTPError
 
-from Bio import SeqIO, Entrez
+from Bio import SeqIO
 from subprocess import SubprocessError
 from pathlib import Path
 from typing import List
@@ -13,10 +14,12 @@ from virtool_cli.vfam_console import console
 
 def get_genbank_files(output: Path) -> List[Path]:
     """
-    Collects .gpff files from https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/ using wget
+    Gathers .html file from https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/ using wget.
+
+    Parses .html file to find .gpff filenames. Gathers .gpff files using wget.
 
     :param output: path to output directory
-    :return: genbank_file_paths, a list of paths to the .gpff files
+    :return: genbank_file_paths, a list of paths to the .gpff files in project directory
     """
     output_path = Path(output / "genbank_input.html")
     viral_release_url = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
@@ -25,6 +28,7 @@ def get_genbank_files(output: Path) -> List[Path]:
         "wget", viral_release_url,
         "-O", output_path,
     ]
+
     try:
         subprocess.run(wget_cmd)
     except (SubprocessError, HTTPError):
@@ -44,28 +48,20 @@ def get_genbank_files(output: Path) -> List[Path]:
             "wget", f"{viral_release_url}/{file_name}",
             "-O", output_path
         ]
+
         genbank_file_paths.append(output_path)
 
         try:
             subprocess.run(wget_cmd)
         except (SubprocessError, HTTPError):
+            genbank_file_paths.remove(file_name)
             console.print(f"✘ Error gathering {file_name} from {viral_release_url}.", style="red")
             console.print(f"Record data from {file_name} will not be included in output.", style="red")
+            continue
 
     console.print(f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.", style="green")
+
     return genbank_file_paths
-
-
-class ViralProteinParser(HTMLParser, ABC):
-    """Parser used to gather viral protein data"""
-    file_names = list()
-
-    def handle_data(self, data):
-        if data.startswith("viral") and ".gpff" in data:
-            self.file_names.append(data)
-
-    def close(self):
-        return self.file_names
 
 
 def get_input_paths(src_path: Path) -> List[Path]:
@@ -87,7 +83,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
 
 def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     """
-    Takes input_paths from get_input_paths() as input and yields records.
+    Takes in paths to genbank files as input and yields records.
 
     Filters out records with "phage" in their description if no_named_phages is True.
 
@@ -97,8 +93,15 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     """
     phage_count = 0
     record_count = 0
+
     for input_path in input_paths:
-        for record in SeqIO.parse(input_path, "fasta"):
+
+        if str(input_path).endswith(".gz"):
+            handle = gzip.open(input_path, "rt")
+        else:
+            handle = open(input_path, "r")
+
+        for record in SeqIO.parse(handle, "genbank"):
             record_count += 1
             if no_named_phages:
                 if "phage" in record.description:
@@ -107,6 +110,8 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
                     yield record
             else:
                 yield record
+
+        handle.close()
 
     console.print(f"✔ Retrieved {record_count} records from {len(input_paths)} input files.", style="green")
 
@@ -149,23 +154,23 @@ def write_no_dupes(no_dupes: iter, output: Path, prefix: str) -> Path:
     if not output_dir.exists():
         output_dir.mkdir()
 
-    output_name = "no_duplicate_records.faa"
+    output_name = "no_duplicate_records.gpff"
 
     if prefix:
         output_name = f"{prefix}_{output_name}"
 
     output_path = output_dir / Path(output_name)
 
-    SeqIO.write(no_dupes, Path(output_path), "fasta")
+    SeqIO.write(no_dupes, Path(output_path), "genbank")
 
     return output_path
 
 
 def get_taxonomy(no_dupes_path: Path) -> dict:
     """
-    Iterates through records in no_dupes_path, Makes calls to NCBI database using Bio.Entrez.
+    Iterates through genbank records in no_dupes_path using SeqIO.
 
-    Gathers taxonomic information for each record, if record isn't found in NCBI, record is filtered out.
+    Gathers taxonomic information for each record, stores in record_taxonomy dictionary.
 
     :param no_dupes_path: path to file containing all records from write_no_dupes()
     :return: record_taxonomy, a dictionary containing {record ID: [family, genus]} key-value pairs
@@ -173,27 +178,18 @@ def get_taxonomy(no_dupes_path: Path) -> dict:
     record_taxonomy = dict()
 
     with no_dupes_path.open("r") as handle:
-        for record in SeqIO.parse(handle, "fasta"):
-            try:
-                handle = Entrez.efetch(db="protein", id=record.id, rettype="gb", retmode="text")
+        for record in SeqIO.parse(handle, "genbank"):
 
-                for seq_record in SeqIO.parse(handle, "genbank"):
-                    record_taxonomy[seq_record.id] = seq_record.annotations["taxonomy"][-2:]
-
-            except (HTTPError, AttributeError):
-                console.print(f"✘ No records found for {record.id} in NCBI database", style="red")
-                console.print(f"{record.id} will not be included in output", style="red")
-                continue
+            record_taxonomy[record.id] = record.annotations["taxonomy"][-2:]
 
     return record_taxonomy
 
 
-def write_curated_recs(no_dupes_path, taxonomy_ids: List[str], prefix=None) -> Path:
+def write_curated_recs(no_dupes_path, prefix=None) -> Path:
     """
     Iterates through records in no_dupes_path, writes records to output if taxonomy was found in get_taxonomy().
 
     :param no_dupes_path: path to file containing all records from write_no_dupes()
-    :param taxonomy_ids: list of record IDs for which taxonomy was found
     :param prefix: Prefix for intermediate and result files
     :return: Path to curated FASTA file without repeats or phages
     """
@@ -206,9 +202,21 @@ def write_curated_recs(no_dupes_path, taxonomy_ids: List[str], prefix=None) -> P
 
     with no_dupes_path.open("r") as handle:
         SeqIO.write(
-            (record for record in SeqIO.parse(handle, "fasta") if record.id in taxonomy_ids),
+            (record for record in SeqIO.parse(handle, "genbank")),
             Path(output_path),
             "fasta"
         )
 
     return output_path
+
+
+class ViralProteinParser(HTMLParser, ABC):
+    """Parser used to gather viral protein data"""
+    file_names = list()
+
+    def handle_data(self, data):
+        if data.startswith("viral") and ".gpff" in data:
+            self.file_names.append(data)
+
+    def close(self):
+        return self.file_names

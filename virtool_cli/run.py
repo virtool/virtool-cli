@@ -19,7 +19,7 @@ def cli():
 
 
 @cli.command()
-@click.option("-src", "--src-path", required=True, help="Path to input reference directory")
+@click.option("-src", "--src-path", default=None, help="Path to input reference directory if not gathering from NCBI")
 @click.option("-o", "--output", required=True, help="Path to output directory for profile HMMs and "
                                                     "intermediate files")
 @click.option("-p", "--prefix", default=None, help="Prefix for intermediate and result files")

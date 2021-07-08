@@ -24,9 +24,10 @@ def run(
     min_sequences
 ):
     """Dictates workflow for vfam pipeline."""
-    get_genbank_files(output)
-
-    input_paths = get_input_paths(Path(src_path))
+    if src_path:
+        input_paths = get_input_paths(Path(src_path))
+    else:
+        input_paths = get_genbank_files(output)
 
     records = group_input_paths(input_paths, no_named_phages)
 
@@ -36,7 +37,7 @@ def run(
 
     taxonomy_records = get_taxonomy(no_dupes_path)
 
-    curated_recs = write_curated_recs(no_dupes_path, list(taxonomy_records.keys()), prefix)
+    curated_recs = write_curated_recs(no_dupes_path, prefix)
 
     cd_hit_result_path = generate_clusters(curated_recs, fraction_id, fraction_coverage, prefix)
 
