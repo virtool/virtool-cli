@@ -1,12 +1,11 @@
 import gzip
-import subprocess
 import sys
+import urllib.request
+
 from abc import ABC
 from html.parser import HTMLParser
-from urllib.error import HTTPError
-
+from urllib.error import HTTPError, URLError
 from Bio import SeqIO
-from subprocess import SubprocessError
 from pathlib import Path
 from typing import List
 from virtool_cli.vfam_console import console
@@ -14,54 +13,50 @@ from virtool_cli.vfam_console import console
 
 def get_genbank_files(output: Path) -> List[Path]:
     """
-    Gathers .html file from https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/ using wget.
+    Gathers .html file from https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/ using a urllib request.
 
-    Parses .html file to find .gpff filenames. Gathers .gpff files using wget.
+    Parses .html file with ViralProteinParser, an HTMLParser subclass to find .gpff filenames.
+
+    Gathers .gpff files using urllib requests.
 
     :param output: path to output directory
     :return: genbank_file_paths, a list of paths to the .gpff files in project directory gathered from NCBI
     """
-    output_path = Path(output / "genbank_input.html")
     viral_release_url = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
 
-    wget_cmd = [
-        "wget", viral_release_url,
-        "-O", output_path,
-    ]
-
+    parser = ViralProteinParser()
     try:
-        subprocess.run(wget_cmd)
-    except (SubprocessError, HTTPError):
-        console.print(f"Error gathering .html file from {viral_release_url}.", style="red")
+        with urllib.request.urlopen(viral_release_url) as html_file:
+            parser.feed(html_file.read().decode("utf-8"))
+    except (HTTPError, URLError):
+        console.print(f"Error fetching .html file from {viral_release_url}", style="red")
         sys.exit(1)
 
-    parser = ViralProteinParser()
-
-    with output_path.open("r") as handle:
-        parser.feed(handle.read())
     file_names = parser.close()
 
     genbank_file_paths = list()
+
     for file_name in file_names:
-        output_path = output / file_name
-        wget_cmd = [
-            "wget", f"{viral_release_url}/{file_name}",
-            "-O", output_path
-        ]
-
-        genbank_file_paths.append(output_path)
-
         try:
-            subprocess.run(wget_cmd)
-        except (SubprocessError, HTTPError):
-            genbank_file_paths.remove(file_name)
-            console.print(f"✘ Error gathering {file_name} from {viral_release_url}.", style="red")
-            console.print(f"Record data from {file_name} will not be included in output.", style="red")
+            output_path = output / file_name
+
+            with urllib.request.urlopen(f"{viral_release_url}/{file_name}") as gpff_file:
+
+                open(output_path, "wb").write(gpff_file.read())
+
+                genbank_file_paths.append(output_path)
+
+        except (HTTPError, URLError):
+            console.print(f"Error retrieving {file_name} from {viral_release_url}", style="red")
+            console.print(f"Record data from {file_name} will not be included in output", style="red")
             continue
 
-    console.print(f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.", style="green")
+    if genbank_file_paths:
+        console.print(f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.", style="green")
+        return genbank_file_paths
 
-    return genbank_file_paths
+    console.print(f"Retrieved 0 .gpff files from {viral_release_url}", style="red")
+    sys.exit(1)
 
 
 def get_input_paths(src_path: Path) -> List[Path]:
