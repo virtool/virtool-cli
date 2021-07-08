@@ -38,7 +38,7 @@ def test_get_input_paths(input_dir, input_paths):
 ])
 def test_remove_phages(input_paths, input_dir):
     """Test that "phage" is not found in record descriptions for any records in records list."""
-    no_phages = group_input_paths(input_paths, True)
+    no_phages = group_input_paths(input_paths, True, 2)
     for record in no_phages:
         assert "phage" not in record.description
 
@@ -60,7 +60,7 @@ def test_curated_file(input_dir, curated_recs):
     (GENERIC_INPUT, FILTERED_GENERIC),
     (LARGE_INPUT, FILTERED_LARGE)
 ])
-def test_remove_dupes(filtered_file, curated_recs):
+def test_remove_dupes(input_dir, filtered_file, curated_recs):
     """Test that remove_dupes step of program produces desired output to match filtered og vfam file."""
     result = curated_recs
     expected = Path(filtered_file)

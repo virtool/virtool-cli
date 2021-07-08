@@ -2,8 +2,7 @@ import pytest
 
 from pathlib import Path
 from Bio import SeqIO
-
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, remove_dupes
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths
 from virtool_cli.vfam_collapse import generate_clusters, blast_all_by_all
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
 from virtool_cli.vfam_markov import blast_to_mcl, write_abc, mcl_to_fasta
@@ -25,16 +24,11 @@ def input_paths(input_dir):
 
 @pytest.fixture()
 def group_records(input_paths):
-    return group_input_paths(input_paths, False)
+    return group_input_paths(input_paths, False, 2)
 
 
 @pytest.fixture()
-def no_dupes(group_records, output):
-    return remove_dupes(group_records, 1)
-
-
-@pytest.fixture()
-def curated_recs(no_dupes, output):
+def curated_recs(group_records, output):
     output_dir = output / Path("intermediate_files")
     if not output_dir.exists():
         output_dir.mkdir()
@@ -42,7 +36,7 @@ def curated_recs(no_dupes, output):
     output_name = "curated_records.faa"
     output_path = output_dir / Path(output_name)
 
-    SeqIO.write(no_dupes, Path(output_path), "fasta")
+    SeqIO.write(group_records, Path(output_path), "fasta")
 
     return output_path
 
