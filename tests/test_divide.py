@@ -33,4 +33,3 @@ def test_divide(command, src, output, tmpdir):
     comparison = filecmp.dircmp(TEST_DIRECTORY_PATH, output)
 
     assert len(comparison.diff_files) == 0
-

@@ -19,7 +19,7 @@ def get_genbank_files(output: Path) -> List[Path]:
     Parses .html file to find .gpff filenames. Gathers .gpff files using wget.
 
     :param output: path to output directory
-    :return: genbank_file_paths, a list of paths to the .gpff files in project directory
+    :return: genbank_file_paths, a list of paths to the .gpff files in project directory gathered from NCBI
     """
     output_path = Path(output / "genbank_input.html")
     viral_release_url = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
@@ -81,18 +81,23 @@ def get_input_paths(src_path: Path) -> List[Path]:
     sys.exit(1)
 
 
-def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
+def group_input_paths(input_paths: List[Path], no_named_phages: bool, sequence_min_length: int) -> list:
     """
     Takes in paths to genbank files as input and yields records.
 
+    Filters out duplicate records and records with sequences shorter than sequence_min_length.
+
     Filters out records with "phage" in their description if no_named_phages is True.
 
-    :param input_paths: list of paths to input FASTA files
+    :param input_paths: list of paths to input genbank files
     :param no_named_phages: bool that dictates whether phage records are filtered out by name or not
+    :param sequence_min_length: minimum length of sequence to be included in output
     :return: records found in input paths
     """
-    phage_count = 0
+    record_seqs = list()
     record_count = 0
+    dupes_count = 0
+    phage_count = 0
 
     for input_path in input_paths:
 
@@ -103,13 +108,20 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
 
         for record in SeqIO.parse(handle, "genbank"):
             record_count += 1
-            if no_named_phages:
-                if "phage" in record.description:
-                    phage_count += 1
+
+            if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
+
+                if no_named_phages:
+                    if "phage" in record.description:
+                        phage_count += 1
+                    else:
+                        record_seqs.append(record.seq)
+                        yield record
                 else:
+                    record_seqs.append(record.seq)
                     yield record
             else:
-                yield record
+                dupes_count += 1
 
         handle.close()
 
@@ -118,66 +130,47 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool) -> list:
     if no_named_phages:
         console.print(f"✔ Filtered out {phage_count} phage records by name.", style="green")
 
-
-def remove_dupes(records: iter, sequence_min_length: int) -> list:
-    """
-    Iterates through records, yields record if sequence isn't a duplicate and is longer than sequence_min_length.
-
-    :param records: iterable of records gathered in group_input_paths()
-    :param sequence_min_length: minimum length of sequence to be included in output
-    :return: records with sequences longer than sequence_min_length, without duplicates
-    """
-    record_seqs = list()
-    dupes_count = 0
-
-    for record in records:
-        if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
-            record_seqs.append(record.seq)
-            yield record
-        else:
-            dupes_count += 1
-
     console.print(f"✔ Filtered out {dupes_count} duplicate records.", style="green")
 
 
-def write_no_dupes(no_dupes: iter, output: Path, prefix: str) -> Path:
+def write_curated_records(curated_records: iter, output: Path, prefix: str) -> Path:
     """
     Writes records from no_dupes() generator function to no_duplicate_records.faa.
 
-    :param no_dupes: iterable of records gathered in remove_dupes()
+    :param curated_records: iterable of records gathered in group_input_paths()
     :param output: path to output directory
     :param prefix:  Prefix for intermediate and result files
-    :return: path to no_duplicate_records.faa in output directory
+    :return: path to curated_records.gpff in output directory
     """
     output_dir = output / Path("intermediate_files")
 
     if not output_dir.exists():
         output_dir.mkdir()
 
-    output_name = "no_duplicate_records.gpff"
+    output_name = "curated_records.gpff"
 
     if prefix:
         output_name = f"{prefix}_{output_name}"
 
     output_path = output_dir / Path(output_name)
 
-    SeqIO.write(no_dupes, Path(output_path), "genbank")
+    SeqIO.write(curated_records, Path(output_path), "genbank")
 
     return output_path
 
 
-def get_taxonomy(no_dupes_path: Path) -> dict:
+def get_taxonomy(curated_records_path: Path) -> dict:
     """
-    Iterates through genbank records in no_dupes_path using SeqIO.
+    Iterates through genbank records in curated_records_path using SeqIO.
 
     Gathers taxonomic information for each record, stores in record_taxonomy dictionary.
 
-    :param no_dupes_path: path to file containing all records from write_no_dupes()
+    :param curated_records_path: path to genbank file containing all records from write_no_dupes()
     :return: record_taxonomy, a dictionary containing {record ID: [family, genus]} key-value pairs
     """
     record_taxonomy = dict()
 
-    with no_dupes_path.open("r") as handle:
+    with curated_records_path.open("r") as handle:
         for record in SeqIO.parse(handle, "genbank"):
 
             record_taxonomy[record.id] = record.annotations["taxonomy"][-2:]
@@ -185,22 +178,22 @@ def get_taxonomy(no_dupes_path: Path) -> dict:
     return record_taxonomy
 
 
-def write_curated_recs(no_dupes_path, prefix=None) -> Path:
+def genbank_to_fasta(curated_records_path, prefix=None) -> Path:
     """
-    Iterates through records in no_dupes_path, writes records to output if taxonomy was found in get_taxonomy().
+    Iterates through genbank records in curated_records_path, writes all records to output in FASTA format.
 
-    :param no_dupes_path: path to file containing all records from write_no_dupes()
+    :param curated_records_path: path to file containing all genbank records from write_curated_records()
     :param prefix: Prefix for intermediate and result files
-    :return: Path to curated FASTA file without repeats or phages
+    :return: Path to curated FASTA file
     """
     output_name = "curated_records.faa"
 
     if prefix:
         output_name = f"{prefix}_{output_name}"
 
-    output_path = no_dupes_path.parent / Path(output_name)
+    output_path = curated_records_path.parent / Path(output_name)
 
-    with no_dupes_path.open("r") as handle:
+    with curated_records_path.open("r") as handle:
         SeqIO.write(
             (record for record in SeqIO.parse(handle, "genbank")),
             Path(output_path),
@@ -211,7 +204,7 @@ def write_curated_recs(no_dupes_path, prefix=None) -> Path:
 
 
 class ViralProteinParser(HTMLParser, ABC):
-    """Parser used to gather viral protein data"""
+    """Parser used to gather .gpff file names from NCBI viral release .html file"""
     file_names = list()
 
     def handle_data(self, data):

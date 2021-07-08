@@ -57,4 +57,3 @@ def test_batch_hmm_call(get_hmm, input_dir, hmm):
                 e_lines = e_lines[16:]
 
                 assert r_lines == e_lines
-

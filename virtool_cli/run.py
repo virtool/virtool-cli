@@ -1,6 +1,5 @@
 import subprocess
 import sys
-
 import click
 import virtool_cli.vfam
 import virtool_cli.build
@@ -54,8 +53,8 @@ def vfam(src_path: str,
         sys.exit(1)
 
     try:
-        virtool_cli.vfam.run(Path(src_path),
-                             Path(output),
+        virtool_cli.vfam.run(src_path,
+                             output,
                              prefix,
                              sequence_min_length,
                              no_named_phages,

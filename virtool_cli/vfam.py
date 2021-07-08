@@ -1,6 +1,6 @@
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_recs, remove_dupes, \
-    get_taxonomy, write_no_dupes, get_genbank_files
+from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_records, \
+    get_taxonomy, genbank_to_fasta, get_genbank_files
 from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, blast_all_by_all
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
@@ -27,19 +27,17 @@ def run(
     if src_path:
         input_paths = get_input_paths(Path(src_path))
     else:
-        input_paths = get_genbank_files(output)
+        input_paths = get_genbank_files(Path(output))
 
-    records = group_input_paths(input_paths, no_named_phages)
+    curated_records = group_input_paths(input_paths, no_named_phages, sequence_min_length)
 
-    no_dupes = remove_dupes(records, sequence_min_length)
+    curated_records_path = write_curated_records(curated_records, output, prefix)
 
-    no_dupes_path = write_no_dupes(no_dupes, output, prefix)
+    taxonomy_records = get_taxonomy(curated_records_path)
 
-    taxonomy_records = get_taxonomy(no_dupes_path)
+    curated_fasta_path = genbank_to_fasta(curated_records_path, prefix)
 
-    curated_recs = write_curated_recs(no_dupes_path, prefix)
-
-    cd_hit_result_path = generate_clusters(curated_recs, fraction_id, fraction_coverage, prefix)
+    cd_hit_result_path = generate_clusters(curated_fasta_path, fraction_id, fraction_coverage, prefix)
 
     if no_named_polyproteins:
         cd_hit_result_path = write_rmv_polyproteins(cd_hit_result_path, prefix)
