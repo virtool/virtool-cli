@@ -199,6 +199,7 @@ def genbank_to_fasta(curated_records_path, prefix=None) -> Path:
 
 
 class ViralProteinParser(HTMLParser, ABC):
+
     """Parser used to gather .gpff file names from NCBI viral release .html file"""
     file_names = list()
 
