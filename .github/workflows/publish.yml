@@ -12,9 +12,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install Poetry
         run: pip install poetry
+      - name: Set Version
+        run: poetry version ${{ github.event.release.tag_name }}
       - name: Build
         run: poetry build
       - name: Publish
-        run: |
-          poetry version ${{ github.event.release.tag_name }}
-          poetry publish --dry-run -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_TOKEN }}
+        run: poetry publish --dry-run -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_TOKEN }}
