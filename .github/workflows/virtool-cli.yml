@@ -1,4 +1,4 @@
-name: virtool_cli
+name: ci
 
 on:
   pull_request:
@@ -11,15 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Build
-        run: docker build -t virtool/cli .
-
       - name: Run CI
-        run: |
-          cd tests
-          docker-compose up --build --abort-on-container-exit --exit-code-from pytest
-
+        run:
+          docker build -t virtool/cli:test --target=test .
       - name: Run codacy-coverage-reporter
         if: ${{ github.event_name == 'push' }}
         uses: codacy/codacy-coverage-reporter-action@master
