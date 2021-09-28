@@ -58,4 +58,4 @@ Some of the tools in the CLI make API requests to NCBI. Unauthenticated requests
 | Name | Description |
 |----|---------|
 | `NCBI_EMAIL` | The e-mail address used for your NCBI account |
-| `NCBI_API_KEY` | The API key associated with your NCBI account. If you are currently signed into NCBI it can be found [here] https://www.ncbi.nlm.nih.gov/account/settings/). |
+| `NCBI_API_KEY` | The [API key](https://www.ncbi.nlm.nih.gov/account/settings/) associated with your NCBI account. |
