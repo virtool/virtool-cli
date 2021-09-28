@@ -53,11 +53,9 @@ virtool taxid -src DIRECTORY_PATH -f
 ```
 
 ### Environmental Variables
-Some of the tools in the CLI make requests to NCBI databases, which are usually
-rate-limited to 3 requests/second. If you are working with larger directories this will cause some tools
-to run extremely slowly. Fortunately, with correct authenication this limit can be raised to
-10 requests/second. This involves setting up the following environmental variables:
+Some of the tools in the CLI make API requests to NCBI. Unauthenticated requests are are limited to 3 per second. Setting NCBI credentials in environmental variables can increase this to 10 per second.
 
-`NCBI_EMAIL` - The e-mail address used for your NCBI account
-
-`NCBI_API_KEY` - The API key associated with your NCBI account. If you are currently signed into NCBI it can be found [here](https://www.ncbi.nlm.nih.gov/account/settings/).
+| Name | Description |
+|----|---------|
+| `NCBI_EMAIL` | The e-mail address used for your NCBI account |
+| `NCBI_API_KEY` | The API key associated with your NCBI account. If you are currently signed into NCBI it can be found [here] https://www.ncbi.nlm.nih.gov/account/settings/). |
