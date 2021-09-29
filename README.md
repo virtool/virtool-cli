@@ -8,8 +8,7 @@ A command line tool for working with Virtool data.
 ## Installation
 
 ```shell script
-git clone https://github.com/virtool/virtool-cli.git
-pip install .
+pip install virtool-cli
 ```
 
 ### Usage
