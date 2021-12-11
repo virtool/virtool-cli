@@ -7,6 +7,7 @@ import virtool_cli.divide
 import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
+import virtool_cli.merge_refs
 
 from pathlib import Path
 from virtool_cli.vfam_console import console
@@ -135,6 +136,20 @@ def repair(src_path):
     """Fix every OTU in a given reference directory."""
     try:
         virtool_cli.repair.run(Path(src_path))
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo("Not a valid reference directory")
+
+
+@cli.command()
+@click.option("-s", "--source-src-path", required=True, type=str,
+              help="Path to src for reference to copy isolates from")
+@click.option("-t", "--target-src-path", required=True, type=str, help="Path to src for reference to write to")
+@click.option("-r", "--resume", is_flag=True, help="Resume in-progress merge using cache")
+@click.option("-i", "--in-place", is_flag=True, help="Place new isolates directly into target reference")
+@click.option("-o", "--output", default="merged_ref", help="Name for merged reference directory")
+def merge_refs(source_src_path, target_src_path, resume, in_place, output):
+    try:
+        virtool_cli.merge_refs.run(source_src_path, target_src_path, resume, in_place, output)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 

@@ -1,0 +1,13 @@
+{
+    "_id": "1wlxortj",
+    "name": "Babaco mosaic virus",
+    "abbreviation": "",
+    "schema": [
+        {
+            "name": "segment",
+            "molecule": "ssRNA+",
+            "required": true
+        }
+    ],
+    "taxid": 2060511
+}
