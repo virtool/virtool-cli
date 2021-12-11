@@ -1,0 +1,13 @@
+{
+    "_id": "l23za9r6",
+    "name": "Bamboo mosaic virus satellite RNA",
+    "abbreviation": "satBaMV",
+    "schema": [
+        {
+            "name": "satellite RNA",
+            "molecule": "ssRNA+",
+            "required": true
+        }
+    ],
+    "taxid": 190811
+}

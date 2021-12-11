@@ -1,0 +1,18 @@
+{
+    "_id": "epa08esw",
+    "name": "Abutilon Brazil virus",
+    "abbreviation": "AbBV",
+    "schema": [
+        {
+            "name": "Segment A",
+            "molecule": "ssDNA",
+            "required": true
+        },
+        {
+            "name": "Segment B",
+            "molecule": "ssDNA",
+            "required": true
+        }
+    ],
+    "taxid": 665102
+}

@@ -1,0 +1,13 @@
+{
+    "_id": "foobar",
+    "name": "test",
+    "abbreviation": "",
+    "schema": [
+        {
+            "name": "foo",
+            "molecule": "bar",
+            "required": true
+        }
+    ],
+    "taxid": null
+}
