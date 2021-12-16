@@ -396,7 +396,7 @@ def test_prepare_prompt(num_isolates):
             "Is this a new isolate?\n"
             "\n"
             "\t• Ⓢ  Source - Isolate ybkddtby (2060511)\n"
-            "\t\t• MF978248 | Babaco mosaic virus isolate Tandapi, complete genome. | Length=6692 | Hash = 24910a29\n"
+            "\t\t• MF978248 | Babaco mosaic virus isolate Tandapi, complete genome. | Length=6692 | Hash=24910a29\n"
         )
 
     else:
