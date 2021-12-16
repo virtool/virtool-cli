@@ -14,3 +14,20 @@ jobs:
       - name: Run CI
         run:
           docker build -t virtool/cli:test --target=test .
+  release:
+      if: github.event.name == "push"
+      runs-on: ubuntu-20.04
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+        - name: Setup NodeJS
+          uses: actions/setup-node@v1
+          with:
+            node-version: 16
+        - name: Install semantic-release
+          run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
+        - name: Release
+          env:
+            GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
+            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          run: npx semantic-release
