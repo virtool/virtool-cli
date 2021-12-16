@@ -2,6 +2,7 @@ import asyncio
 import json
 from collections import defaultdict
 from dataclasses import dataclass, asdict
+from hashlib import md5
 from pathlib import Path
 from typing import List
 
@@ -311,8 +312,9 @@ def prepare_prompt(isolate_infos: list) -> str:
             accession = sequence["accession"]
             definition = sequence["definition"]
             length = len(sequence["sequence"])
+            sequence_hash = md5(sequence["sequence"].encode())
 
-            prompt += f"\t\t• {accession} | {definition} | Length={length}\n"
+            prompt += f"\t\t• {accession} | {definition} | Length={length} | Hash={sequence_hash.hexdigest()[0:8]}\n"
 
     return prompt
 
