@@ -29,7 +29,9 @@ def get_genbank_files(output: Path) -> List[Path]:
         with urllib.request.urlopen(viral_release_url) as html_file:
             parser.feed(html_file.read().decode("utf-8"))
     except (HTTPError, URLError):
-        console.print(f"Error fetching .html file from {viral_release_url}", style="red")
+        console.print(
+            f"Error fetching .html file from {viral_release_url}", style="red"
+        )
         sys.exit(1)
 
     file_names = parser.close()
@@ -40,19 +42,29 @@ def get_genbank_files(output: Path) -> List[Path]:
         try:
             output_path = output / file_name
 
-            with urllib.request.urlopen(f"{viral_release_url}/{file_name}") as gpff_file:
+            with urllib.request.urlopen(
+                f"{viral_release_url}/{file_name}"
+            ) as gpff_file:
 
                 open(output_path, "wb").write(gpff_file.read())
 
                 genbank_file_paths.append(output_path)
 
         except (HTTPError, URLError):
-            console.print(f"Error retrieving {file_name} from {viral_release_url}", style="red")
-            console.print(f"Record data from {file_name} will not be included in output", style="red")
+            console.print(
+                f"Error retrieving {file_name} from {viral_release_url}", style="red"
+            )
+            console.print(
+                f"Record data from {file_name} will not be included in output",
+                style="red",
+            )
             continue
 
     if genbank_file_paths:
-        console.print(f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.", style="green")
+        console.print(
+            f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.",
+            style="green",
+        )
         return genbank_file_paths
 
     console.print(f"Retrieved 0 .gpff files from {viral_release_url}", style="red")
@@ -69,14 +81,18 @@ def get_input_paths(src_path: Path) -> List[Path]:
     input_paths = list(src_path.iterdir())
 
     if input_paths:
-        console.print(f"✔ Retrieved {len(input_paths)} files from input directory.", style="green")
+        console.print(
+            f"✔ Retrieved {len(input_paths)} files from input directory.", style="green"
+        )
         return input_paths
 
     console.print("No files found in input directory.", style="red")
     sys.exit(1)
 
 
-def group_input_paths(input_paths: List[Path], no_named_phages: bool, sequence_min_length: int) -> list:
+def group_input_paths(
+    input_paths: List[Path], no_named_phages: bool, sequence_min_length: int
+) -> list:
     """
     Takes in paths to genbank files as input and yields records.
 
@@ -120,10 +136,15 @@ def group_input_paths(input_paths: List[Path], no_named_phages: bool, sequence_m
 
         handle.close()
 
-    console.print(f"✔ Retrieved {record_count} records from {len(input_paths)} input files.", style="green")
+    console.print(
+        f"✔ Retrieved {record_count} records from {len(input_paths)} input files.",
+        style="green",
+    )
 
     if no_named_phages:
-        console.print(f"✔ Filtered out {phage_count} phage records by name.", style="green")
+        console.print(
+            f"✔ Filtered out {phage_count} phage records by name.", style="green"
+        )
 
     console.print(f"✔ Filtered out {dupes_count} duplicate records.", style="green")
 
@@ -192,7 +213,7 @@ def genbank_to_fasta(curated_records_path, prefix=None) -> Path:
         SeqIO.write(
             (record for record in SeqIO.parse(handle, "genbank")),
             Path(output_path),
-            "fasta"
+            "fasta",
         )
 
     return output_path
@@ -201,6 +222,7 @@ def genbank_to_fasta(curated_records_path, prefix=None) -> Path:
 class ViralProteinParser(HTMLParser, ABC):
 
     """Parser used to gather .gpff file names from NCBI viral release .html file"""
+
     file_names = list()
 
     def handle_data(self, data):

@@ -49,7 +49,9 @@ def get_otus(paths: list) -> dict:
     return path_taxid_map
 
 
-def create_otu_path(otu_name: str, reference_path: pathlib.Path = None, first_letter: str = None) -> pathlib.Path:
+def create_otu_path(
+    otu_name: str, reference_path: pathlib.Path = None, first_letter: str = None
+) -> pathlib.Path:
     """
     Generates a new path in a reference for an OTU directory if the full path is provided, else it just returns
     the formatted name of an OTU directory
@@ -60,7 +62,11 @@ def create_otu_path(otu_name: str, reference_path: pathlib.Path = None, first_le
     :return: Path in a reference to generate an OTU directory
     """
     if reference_path and first_letter:
-        return reference_path / first_letter / otu_name.replace(" ", "_").replace("/", "_").lower()
+        return (
+            reference_path
+            / first_letter
+            / otu_name.replace(" ", "_").replace("/", "_").lower()
+        )
 
     return otu_name.replace(" ", "_").replace("/", "_").lower()
 

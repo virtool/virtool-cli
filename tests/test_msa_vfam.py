@@ -16,8 +16,9 @@ DUPES_HMM = VFAM_INTERMEDIATES_PATH / "Dupes" / "hmm_files"
 GENERIC_HMM = VFAM_INTERMEDIATES_PATH / "Generic" / "hmm_files"
 
 
-@pytest.mark.parametrize("input_dir, msa", [(DUPES_INPUT, DUPES_MSA),
-                                            (GENERIC_INPUT, GENERIC_MSA)])
+@pytest.mark.parametrize(
+    "input_dir, msa", [(DUPES_INPUT, DUPES_MSA), (GENERIC_INPUT, GENERIC_MSA)]
+)
 def test_batch_muscle_call(get_msa, input_dir, msa):
     """Test msa files by comparing to og vfam msa data."""
     msa_names = os.listdir(msa)
@@ -34,8 +35,9 @@ def test_batch_muscle_call(get_msa, input_dir, msa):
         assert filecmp.cmp(r_file, e_file)
 
 
-@pytest.mark.parametrize("input_dir, hmm", [(DUPES_INPUT, DUPES_HMM),
-                                            (GENERIC_INPUT, GENERIC_HMM)])
+@pytest.mark.parametrize(
+    "input_dir, hmm", [(DUPES_INPUT, DUPES_HMM), (GENERIC_INPUT, GENERIC_HMM)]
+)
 def test_batch_hmm_call(get_hmm, input_dir, hmm):
     """Test profile HMMs by comparing lines 17 onward (part that contains hmm data) of output data and og vfam data."""
     hmm_names = os.listdir(hmm)

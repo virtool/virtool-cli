@@ -12,9 +12,14 @@ POLYP_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "polyprotein_ids"
 POLYP_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "polyprotein_ids"
 
 
-@pytest.mark.parametrize("input_dir, expected_polyproteins", [(DUPES_INPUT, POLYP_DUPES),
-                                                              (GENERIC_INPUT, POLYP_GENERIC),
-                                                              (LARGE_INPUT, POLYP_LARGE)])
+@pytest.mark.parametrize(
+    "input_dir, expected_polyproteins",
+    [
+        (DUPES_INPUT, POLYP_DUPES),
+        (GENERIC_INPUT, POLYP_GENERIC),
+        (LARGE_INPUT, POLYP_LARGE),
+    ],
+)
 def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output):
     """Test that find_polyproteins catches same polyprotein sequences as original vfam."""
     result = polyproteins

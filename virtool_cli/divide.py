@@ -4,28 +4,11 @@ import shutil
 
 from virtool_cli.utils import create_otu_path
 
-OTU_KEYS = [
-    "_id",
-    "name",
-    "abbreviation",
-    "schema",
-    "taxid"
-]
+OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
-ISOLATE_KEYS = [
-    "id",
-    "source_type",
-    "source_name",
-    "default"
-]
+ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 
-SEQUENCE_KEYS = [
-    "_id",
-    "accession",
-    "definition",
-    "host",
-    "sequence"
-]
+SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def run(src_path: pathlib.Path, output: pathlib.Path):
@@ -58,10 +41,7 @@ def run(src_path: pathlib.Path, output: pathlib.Path):
                     build_sequence(isolate_path, sequence)
 
         with open(output / "meta.json", "w") as f:
-            json.dump({
-                "data_type": data["data_type"],
-                "organism": data["organism"]
-            }, f)
+            json.dump({"data_type": data["data_type"], "organism": data["organism"]}, f)
 
 
 def build_otu(output: pathlib.Path, otu: dict) -> str:

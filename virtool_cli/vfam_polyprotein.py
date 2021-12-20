@@ -44,17 +44,21 @@ def get_alignment_records(blast_results_path: Path) -> defaultdict:
         for hit in query_result.hits:
             if query_result.id != hit.id:
                 for hsp in hit.hsps:
-                    alignment_records[query_result.id].append({
-                        "q_id": query_result.id,
-                        "s_id": hit.id,
-                        "q_start": hsp.query_start,
-                        "q_end": hsp.query_end
-                    })
+                    alignment_records[query_result.id].append(
+                        {
+                            "q_id": query_result.id,
+                            "s_id": hit.id,
+                            "q_start": hsp.query_start,
+                            "q_end": hsp.query_end,
+                        }
+                    )
 
     return alignment_records
 
 
-def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths: dict) -> List[defaultdict]:
+def check_alignments_by_length(
+    seq_id: str, alignment_records: dict, seq_lengths: dict
+) -> List[defaultdict]:
     """
     Iterates through alignment records for seq_id, adds alignment record to checked_alignments if:
 
@@ -70,7 +74,10 @@ def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths
 
     for alignment in alignment_records[seq_id]:
         if seq_lengths[alignment["s_id"]] < 0.7 * seq_lengths[alignment["q_id"]]:
-            subject_coverage = float(abs(alignment["q_start"] - alignment["q_end"])) / seq_lengths[alignment["s_id"]]
+            subject_coverage = (
+                float(abs(alignment["q_start"] - alignment["q_end"]))
+                / seq_lengths[alignment["s_id"]]
+            )
 
             if subject_coverage >= 0.7:
                 checked_alignments.append(alignment)
@@ -78,7 +85,9 @@ def check_alignments_by_length(seq_id: str, alignment_records: dict, seq_lengths
     return checked_alignments
 
 
-def check_alignments_by_position(seq_id: str, checked_by_length: List[dict], seq_lengths: dict) -> Optional[str]:
+def check_alignments_by_position(
+    seq_id: str, checked_by_length: List[dict], seq_lengths: dict
+) -> Optional[str]:
     """
     Iterates through alignment records for sequence ID to be further investigated from check_alignments_by_length().
 
@@ -119,15 +128,21 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
     for seq_id in seq_lengths:
         if seq_lengths[seq_id] > 400 and seq_id in alignment_records:
 
-            checked_by_length = check_alignments_by_length(seq_id, alignment_records, seq_lengths)
+            checked_by_length = check_alignments_by_length(
+                seq_id, alignment_records, seq_lengths
+            )
 
             if checked_by_length:
-                checked_by_position = check_alignments_by_position(seq_id, checked_by_length, seq_lengths)
+                checked_by_position = check_alignments_by_position(
+                    seq_id, checked_by_length, seq_lengths
+                )
 
                 if checked_by_position:
                     polyprotein_ids.append(checked_by_position)
 
     if len(polyprotein_ids) > 0:
-        console.print(f"✔ Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage.",
-                      style="green")
+        console.print(
+            f"✔ Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage.",
+            style="green",
+        )
     return polyprotein_ids
