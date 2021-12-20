@@ -3,28 +3,11 @@ import pathlib
 
 import arrow
 
-OTU_KEYS = [
-    "_id",
-    "name",
-    "abbreviation",
-    "schema",
-    "taxid"
-]
+OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
-ISOLATE_KEYS = [
-    "id",
-    "source_type",
-    "source_name",
-    "default"
-]
+ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 
-SEQUENCE_KEYS = [
-    "_id",
-    "accession",
-    "definition",
-    "host",
-    "sequence"
-]
+SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str):
@@ -70,11 +53,9 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
             otus.append(otu)
 
     with open(output, "w") as f:
-        data.update({
-            "otus": otus,
-            "name": version,
-            "created_at": arrow.utcnow().isoformat()
-        })
+        data.update(
+            {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
+        )
 
         json.dump(data, f, indent=4 if indent else None, sort_keys=True)
 
@@ -115,7 +96,9 @@ def parse_otu(otu_path: pathlib.Path) -> (dict, list):
 
     otu["isolates"] = list()
 
-    isolate_ids = [i for i in otu_path.iterdir() if i.name != "otu.json" and i.name[0] != "."]
+    isolate_ids = [
+        i for i in otu_path.iterdir() if i.name != "otu.json" and i.name[0] != "."
+    ]
 
     return otu, isolate_ids
 
@@ -132,6 +115,10 @@ def parse_isolate(isolate_path: pathlib.Path) -> (dict, list):
 
     isolate["sequences"] = list()
 
-    sequence_ids = [i for i in isolate_path.iterdir() if i.name != "isolate.json" and i.name[0] != "."]
+    sequence_ids = [
+        i
+        for i in isolate_path.iterdir()
+        if i.name != "isolate.json" and i.name[0] != "."
+    ]
 
     return isolate, sequence_ids

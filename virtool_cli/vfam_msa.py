@@ -24,10 +24,13 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
 
         muscle_cmd = [
             "muscle",
-            "-in", fasta_path,
-            "-out", msa_path,
-            "-log", log_path,
-            "-quiet"
+            "-in",
+            fasta_path,
+            "-out",
+            msa_path,
+            "-log",
+            log_path,
+            "-quiet",
         ]
         try:
             subprocess.run(muscle_cmd, check=True, shell=False)
@@ -35,7 +38,10 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
             console.print("Dependency muscle not found in path", style="red")
             sys.exit(1)
 
-    console.print(f"✔ Produced {len(msa_paths)} MSAs from {len(fasta_paths)} FASTA cluster files.", style="green")
+    console.print(
+        f"✔ Produced {len(msa_paths)} MSAs from {len(fasta_paths)} FASTA cluster files.",
+        style="green",
+    )
 
     return msa_paths
 
@@ -55,11 +61,14 @@ def batch_hmm_call(msa_paths: List[Path]) -> List[Path]:
 
         hmmer_cmd = [
             "hmmbuild",
-            "--informat", "afa",
-            "-o", log_path,
-            "--cpu", str(NUM_CORES),
+            "--informat",
+            "afa",
+            "-o",
+            log_path,
+            "--cpu",
+            str(NUM_CORES),
             hmm_path,
-            msa_path
+            msa_path,
         ]
         try:
             subprocess.run(hmmer_cmd, check=True, shell=False)
@@ -67,11 +76,16 @@ def batch_hmm_call(msa_paths: List[Path]) -> List[Path]:
             console.print("Dependency hmmbuild not found in path.", style="red")
             sys.exit(1)
 
-    console.print(f"✔ Collected {len(hmm_paths)} HMM profiles produced by hmmbuild.", style="green")
+    console.print(
+        f"✔ Collected {len(hmm_paths)} HMM profiles produced by hmmbuild.",
+        style="green",
+    )
     return hmm_paths
 
 
-def concatenate_hmms(hmm_paths: List[Path], output: Path, prefix: Optional[str]) -> Path:
+def concatenate_hmms(
+    hmm_paths: List[Path], output: Path, prefix: Optional[str]
+) -> Path:
     """
     Takes in a list of paths to HMM files containing individual profiles and writes them all to a master results file.
 

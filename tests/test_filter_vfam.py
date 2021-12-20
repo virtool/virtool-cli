@@ -23,9 +23,14 @@ DUPES_FILTERED_BY_NUM = VFAM_INTERMEDIATES_PATH / "Dupes" / "filtered_by_number"
 GENERIC_FILTERED_BY_NUM = VFAM_INTERMEDIATES_PATH / "Generic" / "filtered_by_number"
 
 
-@pytest.mark.parametrize("input_dir, filtered_files", [(DUPES_INPUT, DUPES_COVERAGE),
-                                                       (GENERIC_INPUT, GENERIC_COVERAGE),
-                                                       (LARGE_INPUT, LARGE_COVERAGE)])
+@pytest.mark.parametrize(
+    "input_dir, filtered_files",
+    [
+        (DUPES_INPUT, DUPES_COVERAGE),
+        (GENERIC_INPUT, GENERIC_COVERAGE),
+        (LARGE_INPUT, LARGE_COVERAGE),
+    ],
+)
 def test_on_cvg_files(input_dir, filtered_files, filter_on_cvg):
     """Test that filter_on_coverage filters the same files as original vfam."""
     with Path(filtered_files).open("r") as handle:
@@ -35,9 +40,14 @@ def test_on_cvg_files(input_dir, filtered_files, filter_on_cvg):
     assert len(expected) == len(result)
 
 
-@pytest.mark.parametrize("input_dir, removed_recs", [(DUPES_INPUT, DUPES_REMOVED_CVG),
-                                                     (GENERIC_INPUT, GENERIC_REMOVED_CVG),
-                                                     (LARGE_INPUT, LARGE_REMOVED_CVG)])
+@pytest.mark.parametrize(
+    "input_dir, removed_recs",
+    [
+        (DUPES_INPUT, DUPES_REMOVED_CVG),
+        (GENERIC_INPUT, GENERIC_REMOVED_CVG),
+        (LARGE_INPUT, LARGE_REMOVED_CVG),
+    ],
+)
 def test_on_cvg_recs(input_dir, removed_recs, filter_on_cvg):
     """Test that filter_on_coverage removes the same records as original vfam."""
     with Path(removed_recs).open("r") as handle:
@@ -49,8 +59,10 @@ def test_on_cvg_recs(input_dir, removed_recs, filter_on_cvg):
             assert record.id not in removed_records
 
 
-@pytest.mark.parametrize("input_dir, filtered_files", [(DUPES_INPUT, DUPES_FILTERED_BY_NUM),
-                                                       (GENERIC_INPUT, GENERIC_FILTERED_BY_NUM)])
+@pytest.mark.parametrize(
+    "input_dir, filtered_files",
+    [(DUPES_INPUT, DUPES_FILTERED_BY_NUM), (GENERIC_INPUT, GENERIC_FILTERED_BY_NUM)],
+)
 def test_on_number(input_dir, filtered_files, filter_on_num):
     """Test that filter_on_number filters the same files as original vfam."""
     result = filter_on_num

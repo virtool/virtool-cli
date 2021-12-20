@@ -6,7 +6,9 @@ from Bio import SeqIO
 from virtool_cli.vfam_console import console
 
 
-def generate_clusters(curated_fasta_path: Path, fraction_id: float, fraction_cov=None, prefix=None) -> Path:
+def generate_clusters(
+    curated_fasta_path: Path, fraction_id: float, fraction_cov=None, prefix=None
+) -> Path:
     """
     Takes in path to a FASTA file, minimum fraction ID, minimum fraction coverage and calls CD-HIT to cluster data.
 
@@ -26,9 +28,12 @@ def generate_clusters(curated_fasta_path: Path, fraction_id: float, fraction_cov
 
     cd_hit_cmd = [
         "cd-hit",
-        "-i", curated_fasta_path,
-        "-o", output_path,
-        "-s", str(fraction_id)
+        "-i",
+        curated_fasta_path,
+        "-o",
+        output_path,
+        "-s",
+        str(fraction_id),
     ]
 
     if fraction_cov:
@@ -54,7 +59,10 @@ def rmv_polyproteins(clustered_fasta_path: Path) -> list:
             yield record
         else:
             polyprotein_count += 1
-    console.print(f"✔ Filtered out {polyprotein_count} polyprotein records by name.", style="green")
+    console.print(
+        f"✔ Filtered out {polyprotein_count} polyprotein records by name.",
+        style="green",
+    )
 
 
 def write_rmv_polyproteins(clustered_fasta_path: Path, prefix=None) -> Path:
@@ -88,11 +96,7 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     :param prefix: Prefix for intermediate and result files
     :return: path to tab-delimited format 6 BLAST results file
     """
-    format_db_cmd = [
-        "makeblastdb",
-        "-in", clustered_fasta_path,
-        "-dbtype", "prot"
-    ]
+    format_db_cmd = ["makeblastdb", "-in", clustered_fasta_path, "-dbtype", "prot"]
     try:
         subprocess.run(format_db_cmd, check=True, shell=False)
     except FileNotFoundError:
@@ -107,11 +111,16 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
 
     blast_cmd = [
         "blastp",
-        "-query", clustered_fasta_path,
-        "-out", blast_results_path,
-        "-db", clustered_fasta_path,
-        "-outfmt", "6",
-        "-num_threads", str(num_cores)
+        "-query",
+        clustered_fasta_path,
+        "-out",
+        blast_results_path,
+        "-db",
+        clustered_fasta_path,
+        "-outfmt",
+        "6",
+        "-num_threads",
+        str(num_cores),
     ]
 
     try:

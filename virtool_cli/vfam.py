@@ -1,7 +1,17 @@
 from pathlib import Path
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths, write_curated_records, \
-    get_taxonomy, genbank_to_fasta, get_genbank_files
-from virtool_cli.vfam_collapse import generate_clusters, write_rmv_polyproteins, blast_all_by_all
+from virtool_cli.vfam_curate import (
+    get_input_paths,
+    group_input_paths,
+    write_curated_records,
+    get_taxonomy,
+    genbank_to_fasta,
+    get_genbank_files,
+)
+from virtool_cli.vfam_collapse import (
+    generate_clusters,
+    write_rmv_polyproteins,
+    blast_all_by_all,
+)
 from virtool_cli.vfam_polyprotein import find_polyproteins
 from virtool_cli.vfam_markov import blast_to_mcl, mcl_to_fasta
 from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
@@ -21,7 +31,7 @@ def run(
     no_named_polyproteins,
     inflation_num,
     filter_clusters,
-    min_sequences
+    min_sequences,
 ):
     """Dictates workflow for vfam pipeline."""
     if src_path:
@@ -29,7 +39,9 @@ def run(
     else:
         input_paths = get_genbank_files(Path(output))
 
-    curated_records = group_input_paths(input_paths, no_named_phages, sequence_min_length)
+    curated_records = group_input_paths(
+        input_paths, no_named_phages, sequence_min_length
+    )
 
     curated_records_path = write_curated_records(curated_records, output, prefix)
 
@@ -37,7 +49,9 @@ def run(
 
     curated_fasta_path = genbank_to_fasta(curated_records_path, prefix)
 
-    cd_hit_result_path = generate_clusters(curated_fasta_path, fraction_id, fraction_coverage, prefix)
+    cd_hit_result_path = generate_clusters(
+        curated_fasta_path, fraction_id, fraction_coverage, prefix
+    )
 
     if no_named_polyproteins:
         cd_hit_result_path = write_rmv_polyproteins(cd_hit_result_path, prefix)
@@ -46,7 +60,9 @@ def run(
 
     polyprotein_ids = find_polyproteins(blast_results_path)
 
-    mcl_results_path = blast_to_mcl(blast_results_path, polyprotein_ids, inflation_num, prefix)
+    mcl_results_path = blast_to_mcl(
+        blast_results_path, polyprotein_ids, inflation_num, prefix
+    )
 
     fasta_paths = mcl_to_fasta(mcl_results_path, cd_hit_result_path, prefix)
 

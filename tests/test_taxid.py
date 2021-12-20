@@ -10,17 +10,19 @@ TEST_PATH = TEST_FILES_PATH / "src_a"
 
 @pytest.fixture(scope="session", autouse=True)
 def command():
-    command = [
-        "python", "virtool_cli/run.py",
-        "taxid", "-src",
-        TEST_PATH, "-f"]
+    command = ["python", "virtool_cli/run.py", "taxid", "-src", TEST_PATH, "-f"]
     subprocess.call(command)
 
 
-@pytest.mark.parametrize("path", ["h/hop_stunt_viroid",
-                                  "r/reovirus_tf1_(not_a_plant_virus)",
-                                  "t/tobacco_mosaic_virus",
-                                  "t/totivirus_tf1_(not_a_plant_virus)"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "h/hop_stunt_viroid",
+        "r/reovirus_tf1_(not_a_plant_virus)",
+        "t/tobacco_mosaic_virus",
+        "t/totivirus_tf1_(not_a_plant_virus)",
+    ],
+)
 def test_taxid(path, command):
     path = os.path.join(TEST_PATH, path)
 

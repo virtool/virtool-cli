@@ -68,7 +68,9 @@ async def taxid(src_path: pathlib.Path, force_update: bool):
             taxids.append(taxid)
         update_otu(taxid, otu_paths[name])
 
-    console.print(f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green")
+    console.print(
+        f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green"
+    )
 
 
 def fetch_taxid(name: str) -> int:
@@ -132,7 +134,7 @@ def update_otu(taxid: int, path: pathlib.Path):
     :param taxid: Taxid for a given OTU if found, else None
     :param path: Path to a given OTU in the reference directory
     """
-    with open(path / "otu.json", 'r+') as f:
+    with open(path / "otu.json", "r+") as f:
         otu = json.load(f)
         otu["taxid"] = taxid if taxid else taxid
         f.seek(0)

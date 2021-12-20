@@ -7,7 +7,9 @@ from typing import List
 from virtool_cli.vfam_console import console
 
 
-def write_abc(blast_results_path: Path, polyprotein_ids: List[str], prefix=None) -> Path:
+def write_abc(
+    blast_results_path: Path, polyprotein_ids: List[str], prefix=None
+) -> Path:
     """
     Takes in BLAST results file path and list of polyprotein sequence IDs to not include in output.
 
@@ -40,7 +42,12 @@ def write_abc(blast_results_path: Path, polyprotein_ids: List[str], prefix=None)
     return abc_path
 
 
-def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation_num=None, prefix=None) -> Path:
+def blast_to_mcl(
+    blast_results_path: Path,
+    polyprotein_ids: List[str],
+    inflation_num=None,
+    prefix=None,
+) -> Path:
     """
     Converts sequences in blast_results_path to a .abc file.
 
@@ -71,12 +78,16 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
 
     mcxload_cmd = [
         "mcxload",
-        "-abc", abc_path,
+        "-abc",
+        abc_path,
         "--stream-mirror",
         "--stream-neg-log10",
-        "-stream-tf", ""'ceil(200)'"",
-        "-o", mci_path,
-        "-write-tab", tab_path
+        "-stream-tf",
+        "" "ceil(200)" "",
+        "-o",
+        mci_path,
+        "-write-tab",
+        tab_path,
     ]
     try:
         subprocess.run(mcxload_cmd, check=True, shell=False)
@@ -84,11 +95,7 @@ def blast_to_mcl(blast_results_path: Path, polyprotein_ids: List[str], inflation
         console.print("Dependency mcxload not found in path", style="red")
         sys.exit(1)
 
-    mcl_cmd = [
-        "mcl", mci_path,
-        "-use-tab", tab_path,
-        "-o", mcl_path
-    ]
+    mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
 
     if inflation_num:
         mcl_cmd += ["-I", inflation_num]
@@ -130,6 +137,8 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
 
-    console.print(f"✔ Produced {len(list(set(mcl_path_dict.values())))} FASTA cluster files from MCL clusters.",
-                  style="green")
+    console.print(
+        f"✔ Produced {len(list(set(mcl_path_dict.values())))} FASTA cluster files from MCL clusters.",
+        style="green",
+    )
     return list(set(mcl_path_dict.values()))

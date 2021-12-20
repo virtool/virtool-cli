@@ -4,17 +4,12 @@ from pathlib import Path
 from typing import Optional, List
 from virtool_cli.vfam_console import console
 
-COVERAGE_HEUR_DICT = {
-    0: 0.6,
-    1: 0.65,
-    2: 0.7,
-    3: 0.75,
-    4: 0.8,
-    5: 0.85
-}
+COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
 
 
-def remove_on_coverage(record_lengths: dict, median: float, coverage_threshold: float) -> List[str]:
+def remove_on_coverage(
+    record_lengths: dict, median: float, coverage_threshold: float
+) -> List[str]:
     """
     Filters records based on coverage threshold, returns record IDs that subscribe to coverage heuristics.
 
@@ -22,12 +17,15 @@ def remove_on_coverage(record_lengths: dict, median: float, coverage_threshold: 
     :param median: median sequence length from get_median()
     :param coverage_threshold: coverage threshold calculated in get_coverage_threshold()
     :return: list of record IDs for filtered records
-    
+
     """
     filtered_record_ids = list()
 
     for seq_id, length in record_lengths.items():
-        if length >= coverage_threshold * median and length * coverage_threshold <= median:
+        if (
+            length >= coverage_threshold * median
+            and length * coverage_threshold <= median
+        ):
             filtered_record_ids.append(seq_id)
 
     return filtered_record_ids
@@ -92,7 +90,11 @@ def filter_file_on_coverage(fasta_path: Path) -> Optional[Path]:
 
     if filtered_record_ids:
         output_path = Path(f"{fasta_path}_filtered")
-        to_write = (record for record in SeqIO.parse(fasta_path, "fasta") if record.id in filtered_record_ids)
+        to_write = (
+            record
+            for record in SeqIO.parse(fasta_path, "fasta")
+            if record.id in filtered_record_ids
+        )
         SeqIO.write(to_write, output_path, "fasta")
 
         return output_path
@@ -116,8 +118,10 @@ def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
 
     num_filtered = len(filtered_by_coverage)
 
-    console.print(f"✔ Filtered out {num_unfiltered - num_filtered} FASTA cluster files based on coverage.",
-                  style="green")
+    console.print(
+        f"✔ Filtered out {num_unfiltered - num_filtered} FASTA cluster files based on coverage.",
+        style="green",
+    )
 
     return filtered_by_coverage
 
@@ -141,7 +145,10 @@ def filter_on_number(fasta_paths: List[Path], min_sequences: int) -> List[Path]:
 
     num_filtered = len(filtered_fasta_paths)
 
-    console.print(f"✔ Filtered out {num_unfiltered - num_filtered} "
-                  f"FASTA cluster files based on number of sequences.", style="green")
+    console.print(
+        f"✔ Filtered out {num_unfiltered - num_filtered} "
+        f"FASTA cluster files based on number of sequences.",
+        style="green",
+    )
 
     return filtered_fasta_paths

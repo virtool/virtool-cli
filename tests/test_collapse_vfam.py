@@ -17,9 +17,14 @@ BLAST_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "blast.br"
 BLAST_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "blast.br"
 
 
-@pytest.mark.parametrize("input_dir, clustered_file", [(DUPES_INPUT, COLLAPSED_DUPES),
-                                                       (GENERIC_INPUT, COLLAPSED_GENERIC),
-                                                       (LARGE_INPUT, COLLAPSED_LARGE)])
+@pytest.mark.parametrize(
+    "input_dir, clustered_file",
+    [
+        (DUPES_INPUT, COLLAPSED_DUPES),
+        (GENERIC_INPUT, COLLAPSED_GENERIC),
+        (LARGE_INPUT, COLLAPSED_LARGE),
+    ],
+)
 def test_cluster_sequences(input_dir, input_paths, clustered_file, clustered_result):
     """Test that cluster output file from cluster sequences matches output from original vfam. Skip no_phages."""
     result = clustered_result
@@ -30,9 +35,14 @@ def test_cluster_sequences(input_dir, input_paths, clustered_file, clustered_res
     assert filecmp.cmp(result, clustered_file)
 
 
-@pytest.mark.parametrize("input_dir, blast_file", [(DUPES_INPUT, BLAST_DUPES),
-                                                   (GENERIC_INPUT, BLAST_GENERIC),
-                                                   (LARGE_INPUT, BLAST_LARGE)])
+@pytest.mark.parametrize(
+    "input_dir, blast_file",
+    [
+        (DUPES_INPUT, BLAST_DUPES),
+        (GENERIC_INPUT, BLAST_GENERIC),
+        (LARGE_INPUT, BLAST_LARGE),
+    ],
+)
 def test_all_by_all_blast(input_dir, input_paths, blast_result, blast_file):
     """Test that cluster output file from cluster sequences matches output from original vfam. Skip no_phages."""
     assert filecmp.cmp(blast_result, Path(blast_file))

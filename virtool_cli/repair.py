@@ -65,16 +65,10 @@ def fix_taxid(otu: dict) -> Optional[dict]:
     try:
         taxid = otu["taxid"]
         if isinstance(taxid, str):
-            return {
-                **otu,
-                "taxid": int(taxid)
-            }
+            return {**otu, "taxid": int(taxid)}
     except KeyError:
         # assure that taxid field is set to None
-        return {
-            **otu,
-            "taxid": None
-        }
+        return {**otu, "taxid": None}
 
     return None
 

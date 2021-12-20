@@ -12,8 +12,14 @@ import aiojobs
 from Bio import Entrez, SeqIO
 from rich.console import Console
 
-from virtool_cli.utils import get_otu_paths, get_otus, get_isolates, get_sequences, \
-    get_unique_ids, NCBI_REQUEST_INTERVAL
+from virtool_cli.utils import (
+    get_otu_paths,
+    get_otus,
+    get_isolates,
+    get_sequences,
+    get_unique_ids,
+    NCBI_REQUEST_INTERVAL,
+)
 
 
 async def isolate(src: pathlib.Path):
@@ -43,8 +49,7 @@ async def isolate(src: pathlib.Path):
         name = otu_path_map[path].get("name")
 
         if taxid is None:
-            console.print(f"✘ [red]{name}\n"
-                          f"  [red]No taxid assigned to OTU\n")
+            console.print(f"✘ [red]{name}\n" f"  [red]No taxid assigned to OTU\n")
             continue
 
         accessions = existing_accessions.get(str(taxid))
@@ -77,8 +82,14 @@ async def isolate(src: pathlib.Path):
     write_cache(updated_cache)
 
 
-async def fetch_otu_isolates(taxid: str, name: str, path: pathlib.Path, accessions: list, paths: list,
-                             queue: asyncio.Queue):
+async def fetch_otu_isolates(
+    taxid: str,
+    name: str,
+    path: pathlib.Path,
+    accessions: list,
+    paths: list,
+    queue: asyncio.Queue,
+):
     """
     Fetch new isolates for a given OTU, creating a directory for each
 
@@ -92,7 +103,9 @@ async def fetch_otu_isolates(taxid: str, name: str, path: pathlib.Path, accessio
 
     isolates = await get_isolates(path)
 
-    records, new_accessions = await asyncio.get_event_loop().run_in_executor(None, get_records, accessions, taxid)
+    records, new_accessions = await asyncio.get_event_loop().run_in_executor(
+        None, get_records, accessions, taxid
+    )
 
     isolate_ids, sequence_ids = await get_unique_ids(paths)
 
@@ -100,7 +113,9 @@ async def fetch_otu_isolates(taxid: str, name: str, path: pathlib.Path, accessio
 
     if records is None:
         console.print(f"[red]✘ {name} ({taxid})")
-        console.print("  [red]Found 0 isolates, could not link taxid to nucleotide records\n")
+        console.print(
+            "  [red]Found 0 isolates, could not link taxid to nucleotide records\n"
+        )
         return
 
     new_isolates = dict()
@@ -128,7 +143,9 @@ async def fetch_otu_isolates(taxid: str, name: str, path: pathlib.Path, accessio
 
         isolate_path = path / isolates.get(isolate_name)
 
-        new_id = await store_sequence(isolate_path, accession, accession_data, sequence_ids)
+        new_id = await store_sequence(
+            isolate_path, accession, accession_data, sequence_ids
+        )
         sequence_ids.add(new_id)
 
         await queue.put((taxid, new_accessions))
@@ -160,8 +177,9 @@ def get_accession_numbers(taxid: str) -> list:
     """
     accessions = []
 
-    record = Entrez.read(Entrez.elink(dbfrom="taxonomy", db="nucleotide",
-                                      id=taxid, idtype="acc"))
+    record = Entrez.read(
+        Entrez.elink(dbfrom="taxonomy", db="nucleotide", id=taxid, idtype="acc")
+    )
 
     for linksetdb in record[0]["LinkSetDb"][0]["Link"]:
         accessions.append(linksetdb["Id"])
@@ -178,8 +196,9 @@ def fetch_records(accessions: list) -> Optional[dict]:
     :return: A SeqIO dictionary object
     """
     try:
-        handle = Entrez.efetch(db="nucleotide", id=accessions,
-                               rettype="gb", retmode="text")
+        handle = Entrez.efetch(
+            db="nucleotide", id=accessions, rettype="gb", retmode="text"
+        )
     except HTTPError:
         return None
 
@@ -198,9 +217,13 @@ async def log_results(name: str, taxid: str, new_isolates: dict, console: Consol
     new_isolate_count = len(new_isolates)
 
     if new_isolate_count == 0:
-        console.print(f"[red]✘ {name} ({taxid})\n  Found {new_isolate_count} new isolates\n")
+        console.print(
+            f"[red]✘ {name} ({taxid})\n  Found {new_isolate_count} new isolates\n"
+        )
     else:
-        console.print(f"[green]✔ {name} ({taxid})\n  Found {new_isolate_count} new isolates:")
+        console.print(
+            f"[green]✔ {name} ({taxid})\n  Found {new_isolate_count} new isolates:"
+        )
         for isolate_name, isolate_type in new_isolates.items():
             console.print(f"[green]    - {isolate_type} {isolate_name}")
         console.print()
@@ -236,7 +259,9 @@ async def find_isolate(isolate_data: dict) -> Optional[str]:
     return None
 
 
-async def store_sequence(path: pathlib.Path, accession: SeqIO.SeqRecord, data: dict, unique_ids: set) -> Optional[str]:
+async def store_sequence(
+    path: pathlib.Path, accession: SeqIO.SeqRecord, data: dict, unique_ids: set
+) -> Optional[str]:
     """
     Creates a new sequence file for a given isolate
 
@@ -258,12 +283,13 @@ async def store_sequence(path: pathlib.Path, accession: SeqIO.SeqRecord, data: d
     # generate new sequence id
     new_id = random_alphanumeric(8, False, unique_ids)
 
-    seq_file = {"_id": new_id,
-                "accession": accession_id,
-                "definition": accession.description,
-                "host": data.get("host")[0] if data.get("host") is not None else None,
-                "sequence": str(accession.seq)
-                }
+    seq_file = {
+        "_id": new_id,
+        "accession": accession_id,
+        "definition": accession.description,
+        "host": data.get("host")[0] if data.get("host") is not None else None,
+        "sequence": str(accession.seq),
+    }
 
     async with aiofiles.open(path / (new_id + ".json"), "w") as f:
         await f.write(json.dumps(seq_file, indent=4))
@@ -271,7 +297,9 @@ async def store_sequence(path: pathlib.Path, accession: SeqIO.SeqRecord, data: d
     return new_id
 
 
-async def store_isolate(path: pathlib.Path, source_name: str, source_type: str, unique_ids: set) -> str:
+async def store_isolate(
+    path: pathlib.Path, source_name: str, source_type: str, unique_ids: set
+) -> str:
     """
     Creates a new isolate folder for an OTU
 
@@ -289,7 +317,7 @@ async def store_isolate(path: pathlib.Path, source_name: str, source_type: str, 
         "id": new_id,
         "source_type": source_type,
         "source_name": source_name,
-        "default": False
+        "default": False,
     }
 
     async with aiofiles.open(path / new_id / "isolate.json", "w") as f:
@@ -320,10 +348,7 @@ def update_cache(existing_cache: dict, results: list) -> dict:
     """
     cache_update = dict(results)
 
-    return {
-        **existing_cache,
-        **cache_update
-    }
+    return {**existing_cache, **cache_update}
 
 
 def write_cache(accessions: dict):
@@ -341,7 +366,9 @@ def write_cache(accessions: dict):
         json.dump(accessions, f, indent=4)
 
 
-def random_alphanumeric(length: int = 6, mixed_case: bool = False, excluded: Optional[Iterable[str]] = None) -> str:
+def random_alphanumeric(
+    length: int = 6, mixed_case: bool = False, excluded: Optional[Iterable[str]] = None
+) -> str:
     """
     Generates a random string composed of letters and numbers.
 

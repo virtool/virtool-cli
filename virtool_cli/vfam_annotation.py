@@ -63,7 +63,7 @@ def parse_log(cluster_name: str, output: Path) -> dict:
                     "length": int(line_data[4]),
                     "eff_nseq": float(line_data[5]),
                     "mean_entropy": mean_entropy,
-                    "total_entropy": round(mean_entropy * count, 2)
+                    "total_entropy": round(mean_entropy * count, 2),
                 }
 
                 return log_data
@@ -133,7 +133,7 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
         annotation = {
             "cluster": os.path.basename(cluster_path).split("_")[1],
             "names": list(),
-            "entries": list()
+            "entries": list(),
         }
 
         log_data = parse_log(os.path.basename(cluster_path), output)
@@ -151,11 +151,15 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
                 name = record.description.split("[")[0].split()
                 name = " ".join(name[1:])
 
-                annotation["entries"].append({
-                    "accession": record.id,
-                    "name": name,
-                    "organism": record.description.split("[")[1].replace("]", "").strip()
-                })
+                annotation["entries"].append(
+                    {
+                        "accession": record.id,
+                        "name": name,
+                        "organism": record.description.split("[")[1]
+                        .replace("]", "")
+                        .strip(),
+                    }
+                )
             record_count += len(seq_ids)
             taxonomy = get_taxonomy(seq_ids, taxonomy_records)
             if taxonomy:
@@ -165,14 +169,18 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
                 genus_count += len(taxonomy[1])
 
         annotation["names"] = get_names(annotation)
-        annotation["entries"] = sorted(annotation["entries"], key=operator.itemgetter("accession"))
+        annotation["entries"] = sorted(
+            annotation["entries"], key=operator.itemgetter("accession")
+        )
 
         annotations.append(annotation)
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
 
-    console.print(f"✔ Retreived {family_count} families and {genus_count} genus for {record_count} sequences",
-                  style="green")
+    console.print(
+        f"✔ Retreived {family_count} families and {genus_count} genus for {record_count} sequences",
+        style="green",
+    )
 
     with open(output_path, "w") as f:
         json.dump(annotations, f, indent=4)

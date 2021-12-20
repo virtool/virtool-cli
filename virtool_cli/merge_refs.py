@@ -30,16 +30,22 @@ class IsolateInfo:
     taxid: str
 
 
-def run(source_src_path: str, target_src_path: str, resume: bool, in_place: bool, output: str):
+def run(
+    source_src_path: str,
+    target_src_path: str,
+    resume: bool,
+    in_place: bool,
+    output: str,
+):
     asyncio.run(merge_refs(source_src_path, target_src_path, resume, in_place, output))
 
 
 async def merge_refs(
-        source_src_path: str,
-        target_src_path: str,
-        resume: bool,
-        in_place: bool,
-        output: str,
+    source_src_path: str,
+    target_src_path: str,
+    resume: bool,
+    in_place: bool,
+    output: str,
 ):
     """
     Runs routines to merge two references.
@@ -76,15 +82,18 @@ async def merge_refs(
         isolate_infos_to_add = await compare_isolates(isolate_infos_by_source_name)
 
         otu_results_path = (
-                source_src_path.parent.parent
-                / output
-                / "src"
-                / otu_infos[0].directory[0]
-                / otu_infos[0].directory
+            source_src_path.parent.parent
+            / output
+            / "src"
+            / otu_infos[0].directory[0]
+            / otu_infos[0].directory
         )
 
         result = {
-            taxid: {"otu_path": str(otu_results_path), "isolate_infos": isolate_infos_to_add}
+            taxid: {
+                "otu_path": str(otu_results_path),
+                "isolate_infos": isolate_infos_to_add,
+            }
         }
 
         update_cache(result)
@@ -93,7 +102,9 @@ async def merge_refs(
     await write_isolates(verified_isolates)
 
 
-async def organize_otus_by_taxid(source_src_path: Path, target_src_path: Path) -> [defaultdict, List]:
+async def organize_otus_by_taxid(
+    source_src_path: Path, target_src_path: Path
+) -> [defaultdict, List]:
     """
     Organize OTUInfo objects by taxid.
 
@@ -127,10 +138,7 @@ async def organize_otus_by_taxid(source_src_path: Path, target_src_path: Path) -
 
 
 async def organize_isolates_by_source_name(
-        otu_infos: list,
-        source_src_path: Path,
-        target_src_path: Path,
-        taxid: str
+    otu_infos: list, source_src_path: Path, target_src_path: Path, taxid: str
 ) -> defaultdict:
     """
     Iterate through OTUInfo objects with the same taxid and generate dictionary containing IsolateInfo objects
@@ -151,7 +159,10 @@ async def organize_isolates_by_source_name(
         for folder in otu_path.iterdir():
             # ignore the otu.json file in the OTU folder and parse through isolate folders
 
-            if folder.name != "otu.json" and folder / "isolate.json" in folder.iterdir():
+            if (
+                folder.name != "otu.json"
+                and folder / "isolate.json" in folder.iterdir()
+            ):
                 sequences = await get_sequences(otu_path)
 
                 async with aiofiles.open(folder / "isolate.json", "r") as f:
@@ -171,7 +182,9 @@ async def organize_isolates_by_source_name(
     return isolate_infos_by_source_name
 
 
-def generate_otu_path(otu_info: OTUInfo, source_src_path: Path, target_src_path: Path) -> Path:
+def generate_otu_path(
+    otu_info: OTUInfo, source_src_path: Path, target_src_path: Path
+) -> Path:
     """
     Generate path to OTU directory from OTUInfo object
 
