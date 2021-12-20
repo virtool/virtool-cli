@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ from virtool_cli.merge_refs import (
     get_sequences,
     prepare_prompt,
     write_sequences,
+    get_accessions_for_unknown_isolate,
 )
 
 
@@ -132,11 +134,12 @@ async def test_organize_isolates_by_source_name():
         ),
     ]
 
-    result = await organize_isolates_by_source_name(
+    result, unknown_isolates = await organize_isolates_by_source_name(
         otu_infos,
         Path("./tests/files/source_ref/src"),
         Path("./tests/files/target_ref/src"),
         "665102",
+        False,
     )
 
     expected = {
@@ -201,6 +204,39 @@ async def test_organize_isolates_by_source_name():
     }
 
     assert result == expected
+
+
+@pytest.mark.asyncio
+async def test_get_accessions_for_unkown_isolate():
+    isolate_path = Path("./tests/files/source_ref/src/a/abutilon_brazil_virus/un404hxp")
+
+    result = await get_accessions_for_unknown_isolate(isolate_path)
+
+    assert result == ["NC_014138", "NC_014139"]
+
+
+def test_write_unknown_isolates(mocker):
+    mocker.patch("rich.prompt.Prompt.ask", return_value="Y")
+
+    command = [
+        "virtool",
+        "merge-refs",
+        "-s",
+        "./tests/files/source_ref/src",
+        "-t",
+        "./tests/files/target_ref/src",
+        "--output-unknown-isolates",
+    ]
+
+    subprocess.call(command)
+
+    with open(Path("./tests/files/unknown_isolates"), "r") as f:
+        result = f.read()
+
+    assert (
+        result == "Abutilon  Brazil  virus\tun404hxp\t['NC_014138',  'NC_014139']\n"
+        "Abutilon  Brazil  virus\tun404hxp\t['NC_014138',  'NC_014139']\n"
+    )
 
 
 def test_generate_otu_path():

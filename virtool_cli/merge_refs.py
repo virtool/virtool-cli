@@ -1,5 +1,7 @@
 import asyncio
+import csv
 import json
+import shutil
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 from hashlib import md5
@@ -30,14 +32,33 @@ class IsolateInfo:
     taxid: str
 
 
+@dataclass
+class UnknownIsolate:
+    otu_name: str
+    isolate_id: str
+    sequence_accessions: list
+
+
 def run(
     source_src_path: str,
     target_src_path: str,
     resume: bool,
     in_place: bool,
     output: str,
+    output_unknown_isolates: bool,
+    unknown_output: str,
 ):
-    asyncio.run(merge_refs(source_src_path, target_src_path, resume, in_place, output))
+    asyncio.run(
+        merge_refs(
+            source_src_path,
+            target_src_path,
+            resume,
+            in_place,
+            output,
+            output_unknown_isolates,
+            unknown_output,
+        )
+    )
 
 
 async def merge_refs(
@@ -46,6 +67,8 @@ async def merge_refs(
     resume: bool,
     in_place: bool,
     output: str,
+    output_unknown_isolates: bool,
+    unknown_output: str,
 ):
     """
     Runs routines to merge two references.
@@ -54,6 +77,9 @@ async def merge_refs(
     :param target_src_path: path to src for target reference
     :param resume: flag to determine whether in-progress merge should be continued using cache
     :param in_place: flag to determine whether output should be written directly to directory of target reference
+    :param output_unknown_isolates: flag to determine whether to write CSV file for isolates with unknown source name
+    or source type
+    :param unknown_output: name of output CSV file for isolates with unknown source name or source type
     :param output: name of output directory
     """
     source_src_path = Path(source_src_path)
@@ -70,14 +96,36 @@ async def merge_refs(
         existing_cache = get_cache()
         for taxid in existing_cache.keys():
             otu_infos_by_taxid.pop(taxid, None)
+
+        shutil.copyfile(
+            Path("./.cli/unknown_isolates.txt"),
+            source_src_path.parent.parent / unknown_output,
+        )
     else:
         # empty cache
         write_cache({})
 
+        # empty unknown isolates cache
+        try:
+            with open(source_src_path.parent.parent / unknown_output, "r+") as f:
+                f.truncate()
+
+            with open(Path("./.cli/unknown_isolates.txt"), "r+") as f:
+                f.truncate()
+
+        except (NotADirectoryError, FileNotFoundError):
+            pass
+
     for taxid, otu_infos in otu_infos_by_taxid.items():
-        isolate_infos_by_source_name = await organize_isolates_by_source_name(
-            otu_infos, source_src_path, target_src_path, taxid
+        (
+            isolate_infos_by_source_name,
+            unknown_isolates,
+        ) = await organize_isolates_by_source_name(
+            otu_infos, source_src_path, target_src_path, taxid, output_unknown_isolates
         )
+
+        if output_unknown_isolates:
+            write_unknown_isolates(unknown_isolates, unknown_output, source_src_path)
 
         isolate_infos_to_add = await compare_isolates(isolate_infos_by_source_name)
 
@@ -138,8 +186,12 @@ async def organize_otus_by_taxid(
 
 
 async def organize_isolates_by_source_name(
-    otu_infos: list, source_src_path: Path, target_src_path: Path, taxid: str
-) -> defaultdict:
+    otu_infos: list,
+    source_src_path: Path,
+    target_src_path: Path,
+    taxid: str,
+    output_unknown_isolates: bool,
+) -> [defaultdict, list]:
     """
     Iterate through OTUInfo objects with the same taxid and generate dictionary containing IsolateInfo objects
     organized by the source name of each isolate.
@@ -148,10 +200,13 @@ async def organize_isolates_by_source_name(
     :param source_src_path: path to src for source reference
     :param target_src_path: path to src for target reference
     :param taxid: taxid for OTU to which isolates belong
+    :param output_unknown_isolates: flag to determine whether to write CSV file for isolates with unknown source name
+    or source type
 
     :return: Dictionary of isolate paths organized by source name
     """
     isolate_infos_by_source_name = defaultdict(list)
+    unknown_isolates = list()
 
     for otu_info in otu_infos:
         otu_path = generate_otu_path(otu_info, source_src_path, target_src_path)
@@ -168,6 +223,18 @@ async def organize_isolates_by_source_name(
                 async with aiofiles.open(folder / "isolate.json", "r") as f:
                     isolate = json.loads(await f.read())
 
+                    if (
+                        isolate["source_name"].lower() == "unknown"
+                        or isolate["source_type"].lower == "unknown"
+                    ):
+                        if output_unknown_isolates:
+                            accessions = await get_accessions_for_unknown_isolate(
+                                folder
+                            )
+                            unknown_isolates.append(
+                                UnknownIsolate(otu_info.name, isolate["id"], accessions)
+                            )
+
                     isolate_infos_by_source_name[isolate["source_name"].lower()].append(
                         IsolateInfo(
                             ref=otu_info.ref,
@@ -179,7 +246,54 @@ async def organize_isolates_by_source_name(
                         )
                     )
 
-    return isolate_infos_by_source_name
+    return isolate_infos_by_source_name, unknown_isolates
+
+
+async def get_accessions_for_unknown_isolate(isolate_path: Path) -> list:
+    """
+    Gather accessions for all sequences of isolate with unknown source type or source name.
+
+    :param isolate_path: path to directory containing isolate.json file and sequences
+    """
+    accessions = list()
+
+    for path in isolate_path.iterdir():
+        if path.name != "isolate.json":
+            async with aiofiles.open(path, "r") as f:
+                sequence = json.loads(await f.read())
+                accessions.append(sequence["accession"])
+
+    return accessions
+
+
+def write_unknown_isolates(
+    unknown_isolates: list, unknown_output: str, source_src_path: Path
+):
+    """
+    Write CSV file containing information about isolates with unknown source type or source name
+
+    :param unknown_isolates: list of UnknownIsolate objects
+    :param unknown_output: name for CSV file
+    :param source_src_path: path to source ref directory
+    """
+    output_path = source_src_path.parent.parent / unknown_output
+    with open(output_path, "a", newline="") as handle:
+        writer = csv.writer(
+            handle, delimiter="\t", escapechar=" ", quoting=csv.QUOTE_NONE
+        )
+
+        for unknown_isolate in unknown_isolates:
+            writer.writerow(
+                [
+                    unknown_isolate.otu_name,
+                    unknown_isolate.isolate_id,
+                    sorted(unknown_isolate.sequence_accessions),
+                ]
+            )
+
+    unknown_isolates_cache = Path("./.cli/unknown_isolates.txt")
+
+    shutil.copyfile(output_path, unknown_isolates_cache)
 
 
 def generate_otu_path(

@@ -256,10 +256,37 @@ def repair(src_path):
 @click.option(
     "-o", "--output", default="merged_ref", help="Name for merged reference directory"
 )
-def merge_refs(source_src_path, target_src_path, resume, in_place, output):
+@click.option(
+    "--output-unknown-isolates",
+    is_flag=True,
+    help="Write CSV file for isolates with unknown source name " "or source type",
+)
+@click.option(
+    "--unknown-output",
+    default="unknown_isolates",
+    type=str,
+    help="Name for CSV file containing all "
+    "isolates with unknown source name or "
+    "source type",
+)
+def merge_refs(
+    source_src_path,
+    target_src_path,
+    resume,
+    in_place,
+    output,
+    output_unknown_isolates,
+    unknown_output,
+):
     try:
         virtool_cli.merge_refs.run(
-            source_src_path, target_src_path, resume, in_place, output
+            source_src_path,
+            target_src_path,
+            resume,
+            in_place,
+            output,
+            output_unknown_isolates,
+            unknown_output,
         )
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
