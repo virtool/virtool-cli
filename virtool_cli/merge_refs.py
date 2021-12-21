@@ -175,7 +175,7 @@ async def organize_otus_by_taxid(
             otu = json.loads(f.read())
             ref = "source" if str(source_src_path) in str(otu_path) else "target"
 
-            if otu["taxid"]:
+            if otu.get("taxid", None):
                 otus_by_taxid[str(otu["taxid"])].append(
                     OTUInfo(ref, otu["name"], directory=otu_path.name)
                 )
