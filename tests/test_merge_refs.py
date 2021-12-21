@@ -256,7 +256,7 @@ def test_generate_otu_path():
 
 @pytest.mark.asyncio
 async def test_get_sequences():
-    otu_path = Path("tests/files/target_ref/src/a/abutilon_brazil_virus")
+    otu_path = Path("tests/files/target_ref/src/a/abutilon_brazil_virus/un404hxp")
 
     result = await get_sequences(otu_path)
     sequences = [
