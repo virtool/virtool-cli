@@ -51,6 +51,43 @@ If you wish to force a taxon id lookup for all OTUs
 virtool taxid -src DIRECTORY_PATH -f
 ```
 
+#### Merge-Refs
+To interactively merge two references
+
+```shell script
+virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH
+```
+
+If you wish to resume an incomplete merge
+
+```shell script
+virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -r
+```
+
+If you wish to place new isolates directly into target reference
+
+```shell script
+virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -i
+```
+
+If you wish to specify a name for the merged reference directory
+
+```shell script
+virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -o OUTPUT_DIRECTORY_NAME
+```
+
+If you wish to produce a CSV file containing information about all isolates with unknown source name or source type
+
+```shell script
+virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates
+```
+
+If you wish to specify the name of the CSV file containing all isolates with unknown source name or source type
+
+```shell script
+virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates --unknown-output OUTPUT_FILE_NAME
+```
+
 ### Environmental Variables
 Some of the tools in the CLI make API requests to NCBI. Unauthenticated requests are are limited to 3 per second. Setting NCBI credentials in environmental variables can increase this to 10 per second.
 
@@ -58,3 +95,4 @@ Some of the tools in the CLI make API requests to NCBI. Unauthenticated requests
 |----|---------|
 | `NCBI_EMAIL` | The e-mail address used for your NCBI account |
 | `NCBI_API_KEY` | The [API key](https://www.ncbi.nlm.nih.gov/account/settings/) associated with your NCBI account. |
+
