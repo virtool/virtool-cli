@@ -259,7 +259,7 @@ def repair(src_path):
 @click.option(
     "--output-unknown-isolates",
     is_flag=True,
-    help="Write CSV file for isolates with unknown source name " "or source type",
+    help="Write CSV file for isolates with unknown source name or source type",
 )
 @click.option(
     "--unknown-output",
