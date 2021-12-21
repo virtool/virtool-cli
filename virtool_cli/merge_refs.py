@@ -218,7 +218,7 @@ async def organize_isolates_by_source_name(
                 folder.name != "otu.json"
                 and folder / "isolate.json" in folder.iterdir()
             ):
-                sequences = await get_sequences(otu_path)
+                sequences = await get_sequences(folder)
 
                 async with aiofiles.open(folder / "isolate.json", "r") as f:
                     isolate = json.loads(await f.read())
@@ -316,23 +316,21 @@ def generate_otu_path(
     return otu_path
 
 
-async def get_sequences(otu_path: Path) -> list:
+async def get_sequences(isolate_path: Path) -> list:
     """
     Returns a list of sequences for a given OTU
 
-    :param otu_path: A path to an otu directory in a reference
+    :param isolate_path: A path to an otu directory in a reference
     :return: A list of all sequence dictionaries found for given OTU
     """
     sequences = list()
-    folders = list(otu_path.iterdir())
+    file_paths = list(isolate_path.iterdir())
 
-    for folder in sorted(folders):
-        if folder.name != "otu.json":
-            for sequence_id in sorted(folder.iterdir()):
-                if sequence_id.name != "isolate.json":
-                    async with aiofiles.open(sequence_id, "r") as f:
-                        sequence = json.loads(await f.read())
-                        sequences.append(sequence)
+    for file in sorted(file_paths):
+        if file.name != "isolate.json":
+            async with aiofiles.open(file, "r") as f:
+                sequence = json.loads(await f.read())
+                sequences.append(sequence)
 
     return sequences
 
