@@ -5,6 +5,7 @@ import shutil
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 from hashlib import md5
+from json import JSONDecodeError
 from pathlib import Path
 from typing import List
 
@@ -97,10 +98,18 @@ async def merge_refs(
         for taxid in existing_cache.keys():
             otu_infos_by_taxid.pop(taxid, None)
 
-        shutil.copyfile(
-            Path("./.cli/unknown_isolates.txt"),
-            source_src_path.parent.parent / unknown_output,
-        )
+        if output_unknown_isolates:
+            try:
+                shutil.copyfile(
+                    Path("./.cli/unknown_isolates.txt"),
+                    source_src_path.parent.parent / unknown_output,
+                )
+            except FileNotFoundError:
+                (Path.cwd() / ".cli").mkdir()
+                Path("./.cli/unknown_isolates.txt").touch()
+
+            with open(Path("./.cli/unknown_isolates.txt"), "r+") as f:
+                f.truncate()
     else:
         # empty cache
         write_cache({})
@@ -110,11 +119,18 @@ async def merge_refs(
             with open(source_src_path.parent.parent / unknown_output, "r+") as f:
                 f.truncate()
 
+        except (NotADirectoryError, FileNotFoundError):
+            if output_unknown_isolates:
+                Path(source_src_path.parent.parent / unknown_output).touch()
+
+        try:
             with open(Path("./.cli/unknown_isolates.txt"), "r+") as f:
                 f.truncate()
 
         except (NotADirectoryError, FileNotFoundError):
-            pass
+            if output_unknown_isolates:
+                (Path.cwd() / ".cli").mkdir(exist_ok=True)
+                Path("./.cli/unknown_isolates.txt").touch()
 
     for taxid, otu_infos in otu_infos_by_taxid.items():
         (
@@ -277,6 +293,8 @@ def write_unknown_isolates(
     :param source_src_path: path to source ref directory
     """
     output_path = source_src_path.parent.parent / unknown_output
+    output_path.touch(exist_ok=True)
+
     with open(output_path, "a", newline="") as handle:
         writer = csv.writer(
             handle, delimiter="\t", escapechar=" ", quoting=csv.QUOTE_NONE
@@ -489,6 +507,7 @@ def write_cache(isolates: dict):
     :param isolates: Dictionary containing an updated mapping of taxids to their accessions
     """
     (Path.cwd() / ".cli").mkdir(exist_ok=True)
+    (Path.cwd() / ".cli" / "isolates.json").touch(exist_ok=True)
 
     with open(".cli/isolates.json", "w") as f:
         json.dump(isolates, f, indent=4)
@@ -503,7 +522,7 @@ def get_cache() -> dict:
     try:
         with open(".cli/isolates.json", "r") as f:
             return json.load(f)
-    except (NotADirectoryError, FileNotFoundError):
+    except (NotADirectoryError, FileNotFoundError, JSONDecodeError):
         return {}
 
 

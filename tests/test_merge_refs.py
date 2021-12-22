@@ -230,7 +230,7 @@ def test_write_unknown_isolates(mocker):
 
     subprocess.call(command)
 
-    with open(Path("./tests/files/unknown_isolates"), "r") as f:
+    with open(Path("./tests/files/unknown_isolates.txt"), "r") as f:
         result = f.read()
 
     assert (

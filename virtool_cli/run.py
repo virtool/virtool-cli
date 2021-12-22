@@ -263,7 +263,7 @@ def repair(src_path):
 )
 @click.option(
     "--unknown-output",
-    default="unknown_isolates",
+    default="unknown_isolates.txt",
     type=str,
     help="Name for CSV file containing all "
     "isolates with unknown source name or "
