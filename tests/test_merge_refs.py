@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from virtool_cli.merge_refs import (
+from virtool_cli.merge import (
     organize_otus_by_taxid,
     organize_isolates_by_source_name,
     write_cache,
@@ -220,7 +220,8 @@ def test_write_unknown_isolates(mocker):
 
     command = [
         "virtool",
-        "merge-refs",
+        "ref",
+        "merge",
         "-s",
         "./tests/files/source_ref/src",
         "-t",

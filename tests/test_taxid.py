@@ -10,7 +10,7 @@ TEST_PATH = TEST_FILES_PATH / "src_a"
 
 @pytest.fixture(scope="session", autouse=True)
 def command():
-    command = ["python", "virtool_cli/run.py", "taxid", "-src", TEST_PATH, "-f"]
+    command = ["python", "virtool_cli/run.py", "ref", "taxid", "-src", TEST_PATH, "-f"]
     subprocess.call(command)
 
 

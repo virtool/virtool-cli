@@ -11,81 +11,85 @@ A command line tool for working with Virtool data.
 pip install virtool-cli
 ```
 
-### Usage
+## Usage
+
+### Ref
+Commands related to references
+
 #### Build
 To build a `reference.json` file from a src directory
 
 ```shell script
-virtool build -src DIRECTORY_PATH -o OUTPUT_PATH
+virtool ref build -src DIRECTORY_PATH -o OUTPUT_PATH
 ```
 
 If you wish for the output file to be more easily readable you can specify it to be indented
 
 ```shell script
-virtool build -src DIRECTORY_PATH -i
+virtool ref build -src DIRECTORY_PATH -i
 ```
 
 To specify a version to include in the `reference.json` file
 
 ```shell script
-virtool build -src DIRECTORY_PATH -V VERSION
+virtool ref build -src DIRECTORY_PATH -V VERSION
 ```
 
 #### Divide
 If you have an existing `reference.json` you can divide it into a src directory
 
 ```shell script
-virtool divide -src REFERENCE_PATH -o OUTPUT_PATH
+virtool ref divide -src REFERENCE_PATH -o OUTPUT_PATH
 ```
 
 #### Taxid
 To fetch taxon ids for OTUs in a given src directory that do not currently have one
 
 ```shell script
-virtool taxid -src DIRECTORY_PATH
+virtool ref taxid -src DIRECTORY_PATH
 ```
 
 If you wish to force a taxon id lookup for all OTUs
 
 ```shell script
-virtool taxid -src DIRECTORY_PATH -f
+virtool ref taxid -src DIRECTORY_PATH -f
 ```
 
 #### Merge-Refs
 To interactively merge two references
 
 ```shell script
-virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH
+virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH
 ```
 
 If you wish to resume an incomplete merge
 
 ```shell script
-virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -r
+virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -r
 ```
 
 If you wish to place new isolates directly into target reference
 
 ```shell script
-virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -i
+virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -i
 ```
 
 If you wish to specify a name for the merged reference directory
 
 ```shell script
-virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -o OUTPUT_DIRECTORY_NAME
+virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -o OUTPUT_DIRECTORY_NAME
 ```
 
 If you wish to produce a CSV file containing information about all isolates with unknown source name or source type
 
 ```shell script
-virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates
+virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates
 ```
 
 If you wish to specify the name of the CSV file containing all isolates with unknown source name or source type
 
 ```shell script
-virtool merge-refs -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates --unknown-output OUTPUT_FILE_NAME
+virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates --unknown-output OUTPUT_FILE_NAME
 ```
 
 ### Environmental Variables
