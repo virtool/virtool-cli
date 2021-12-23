@@ -385,11 +385,11 @@ async def test_compare_isolate(mocker, isolates_to_compare):
         }
         expected = [
             {
-                "ref": "target",
+                "ref": "source",
                 "otu_name": "babaco_mosaic_virus",
-                "id": "0f6",
+                "id": "ybkddtby",
                 "isolate": {
-                    "id": "0f6",
+                    "id": "ybkddtby",
                     "source_type": "isolate",
                     "source_name": "Tandapi",
                     "default": True,

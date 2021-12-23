@@ -396,7 +396,7 @@ async def compare_isolates(isolates_to_compare: dict) -> List:
             same = Prompt.ask("", choices=["Y", "N"], default="Y")
 
             if same == "Y":
-                add_target_isolate = True
+                add_source_isolate = True
             else:
                 prompt = """Which isolate should be added to result?\n
         1) Ⓢ Source
