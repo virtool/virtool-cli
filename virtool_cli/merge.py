@@ -279,7 +279,7 @@ async def get_accessions_for_unknown_isolate(isolate_path: Path) -> list:
                 sequence = json.loads(await f.read())
                 accessions.append(sequence["accession"])
 
-    return accessions
+    return sorted(accessions)
 
 
 def write_unknown_isolates(
@@ -450,7 +450,13 @@ def prepare_prompt(isolate_infos: list) -> str:
         else:
             symbol = "Ⓣ"
 
-        prompt += f"\n\t• {symbol}  {isolate_info.ref.capitalize()} - Isolate {isolate_info.id} ({isolate_info.taxid})\n"
+        source_type_caps = isolate_info.isolate["source_type"].capitalize()
+        source_name = isolate_info.isolate["source_name"]
+
+        isolate_name = f"{source_type_caps} {source_name}"
+
+        prompt += f"\n\t• {symbol}  {isolate_info.ref.capitalize()} - {isolate_name} ({isolate_info.taxid})\n"
+
         for sequence in isolate_info.sequences:
             accession = sequence["accession"]
             definition = sequence["definition"]

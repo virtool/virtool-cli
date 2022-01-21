@@ -432,7 +432,7 @@ def test_prepare_prompt(num_isolates):
         expected = (
             "Is this a new isolate?\n"
             "\n"
-            "\t• Ⓢ  Source - Isolate ybkddtby (2060511)\n"
+            "\t• Ⓢ  Source - Isolate Tandapi (2060511)\n"
             "\t\t• MF978248 | Babaco mosaic virus isolate Tandapi, complete genome. | Length=6692 | Hash=24910a29\n"
         )
 
@@ -469,9 +469,9 @@ def test_prepare_prompt(num_isolates):
         expected = (
             "Are these isolates the same?\n"
             "\n"
-            "\t• Ⓢ  Source - Isolate ybkddtby (2060511)\n"
+            "\t• Ⓢ  Source - Isolate Tandapi (2060511)\n"
             "\n"
-            "\t• Ⓣ  Target - Isolate 0f6 (2060511)\n"
+            "\t• Ⓣ  Target - Isolate Tandapi (2060511)\n"
         )
 
     prompt = prepare_prompt(isolate_infos)
