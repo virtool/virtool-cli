@@ -8,7 +8,15 @@ OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
 ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 
-SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
+SEQUENCE_KEYS = (
+    "_id",
+    "accession",
+    "definition",
+    "host",
+    "segment",
+    "sequence",
+    "target",
+)
 
 
 def run(src_path: pathlib.Path, output: pathlib.Path):
@@ -26,7 +34,6 @@ def run(src_path: pathlib.Path, output: pathlib.Path):
         data = json.load(export_handle)
 
         for otu in data["otus"]:
-
             otu_path = build_otu(output, otu)
 
             isolates = otu.pop("isolates")
@@ -100,4 +107,8 @@ def build_sequence(isolate_path: pathlib.Path, sequence: dict):
     :param sequence: A dictionary containing information on one of the isolates' sequences
     """
     with open(isolate_path / "{}.json".format(sequence["_id"]), "w") as f:
-        json.dump({key: sequence[key] for key in SEQUENCE_KEYS}, f, indent=4)
+        json.dump(
+            {key: sequence[key] for key in SEQUENCE_KEYS if key in sequence},
+            f,
+            indent=4,
+        )
