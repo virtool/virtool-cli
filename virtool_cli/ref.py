@@ -5,7 +5,6 @@ import click
 import virtool_cli.build
 import virtool_cli.divide
 import virtool_cli.isolate
-import virtool_cli.merge
 import virtool_cli.repair
 import virtool_cli.taxid
 
@@ -118,70 +117,6 @@ def repair(src_path):
     """Fix every OTU in a given reference directory."""
     try:
         virtool_cli.repair.run(Path(src_path))
-    except (FileNotFoundError, NotADirectoryError):
-        click.echo("Not a valid reference directory")
-
-
-@ref.command()
-@click.option(
-    "-s",
-    "--source-src-path",
-    required=True,
-    type=str,
-    help="Path to src for reference to copy isolates from",
-)
-@click.option(
-    "-t",
-    "--target-src-path",
-    required=True,
-    type=str,
-    help="Path to src for reference to write to",
-)
-@click.option(
-    "-r", "--resume", is_flag=True, help="Resume in-progress merge using cache"
-)
-@click.option(
-    "-i",
-    "--in-place",
-    is_flag=True,
-    help="Place new isolates directly into target reference",
-)
-@click.option(
-    "-o", "--output", default="merged_ref", help="Name for merged reference directory"
-)
-@click.option(
-    "--output-unknown-isolates",
-    is_flag=True,
-    help="Write CSV file for isolates with unknown source name or source type",
-)
-@click.option(
-    "--unknown-output",
-    default="unknown_isolates.txt",
-    type=str,
-    help="Name for CSV file containing all "
-    "isolates with unknown source name or "
-    "source type",
-)
-def merge(
-    source_src_path,
-    target_src_path,
-    resume,
-    in_place,
-    output,
-    output_unknown_isolates,
-    unknown_output,
-):
-    """Interactively merge references"""
-    try:
-        virtool_cli.merge.run(
-            source_src_path,
-            target_src_path,
-            resume,
-            in_place,
-            output,
-            output_unknown_isolates,
-            unknown_output,
-        )
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 
