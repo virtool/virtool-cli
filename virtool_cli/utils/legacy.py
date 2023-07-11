@@ -1,0 +1,128 @@
+import json
+import os
+from typing import Tuple
+from pathlib import Path
+
+import aiofiles
+from Bio import Entrez
+
+Entrez.email = os.environ.get("NCBI_EMAIL")
+Entrez.api_key = os.environ.get("NCBI_API_KEY")
+
+NCBI_REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.8
+
+
+def get_otu_paths(src_path: Path) -> list:
+    """
+    Generates a list of paths to all OTUs in a src directory.
+
+    :param src_path: Path to a src database directory
+    :return: List of paths to all OTU in a src directory
+    """
+    paths = []
+
+    for alpha in src_path.glob('[a-z]'):
+        otu_paths = [otu for otu in alpha.iterdir() if otu.is_dir()]
+        paths += otu_paths
+
+    return paths
+
+
+def get_otus(paths: list) -> dict:
+    """
+    Returns a mapping of every OTU path to their deserialized OTU dictionary.
+
+    :param paths: List of paths to all OTU in a reference
+    :return: A mapping of every OTU path to its OTU dictionary
+    """
+    path_taxid_map = dict()
+
+    for path in paths:
+        with open(path / "otu.json", "r") as f:
+            otu = json.load(f)
+            path_taxid_map[path] = otu
+
+    return path_taxid_map
+
+
+def create_otu_path(
+    otu_name: str, 
+    reference_path: Path = None, 
+    first_letter: str = None
+) -> Path:
+    """
+    Generates a new path in a reference for an OTU directory if the full path is provided, else it just returns
+    the formatted name of an OTU directory
+
+    :param otu_name: Lowercase name of an OTU to be appended on the end of the path
+    :param reference_path: Path to a reference directory
+    :param first_letter: First letter of an OTU name
+    :return: Path in a reference to generate an OTU directory
+    """
+    if reference_path and first_letter:
+        return (
+            reference_path
+            / first_letter
+            / otu_name.replace(" ", "_").replace("/", "_").lower()
+        )
+
+    return otu_name.replace(" ", "_").replace("/", "_").lower()
+
+
+async def get_isolates(path: Path) -> dict:
+    """
+    Returns a mapping to every isolate and their folder name.
+
+    :param path: A path to a OTU directory in a reference
+    :return: A mapping of all of an OTU's isolates to their folder name (id)
+    """
+    isolates = dict()
+
+    for folder in path.iterdir():
+        # ignore the otu.json file in the OTU folder and parse through isolate folders
+        if folder.is_dir(): 
+            if folder / "isolate.json" in folder.iterdir():
+                async with aiofiles.open(folder / "isolate.json", "r") as f:
+                    isolate = json.loads(await f.read())
+                    isolates[isolate["source_name"]] = folder.name
+
+    return isolates
+
+
+async def get_sequences(path: Path) -> dict:
+    """
+    Returns a mapping of sequence accessions to their file name in a isolate directory.
+
+    :param path: A path to an isolate directory in a reference
+    :return: A mapping of all accessions in an isolate to their file name (id)
+    """
+    sequences = dict()
+
+    for sequence_id in path.glob('*.json'):
+        if sequence_id.name != "isolate.json":
+            async with aiofiles.open(sequence_id, "r") as f:
+                sequence = json.loads(await f.read())
+                sequences[sequence["accession"]] = sequence_id.name
+
+    return sequences
+
+
+async def get_unique_ids(paths: list) -> Tuple[set, set]:
+    """
+    Returns sets containing unique random alphanumeric ids for both the isolates and the sequences
+
+    :param paths: List of paths to all OTU in a reference
+    :return: Sets containing unique ids for both isolates and sequences
+    """
+    isolate_ids = set()
+    sequence_ids = set()
+
+    for path in paths:
+        for isolate_id in path.iterdir():
+            if isolate_id.is_dir():
+                isolate_ids.add(isolate_id)
+                for seq_id in isolate_id.iterdir():
+                    if seq_id.name != "isolate.json" and seq_id.name != ".DS_Store":
+                        sequence_ids.add(seq_id.name.rstrip(".json"))
+
+    return isolate_ids, sequence_ids

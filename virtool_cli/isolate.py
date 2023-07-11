@@ -12,7 +12,7 @@ import aiojobs
 from Bio import Entrez, SeqIO
 from rich.console import Console
 
-from virtool_cli.utils import (
+from virtool_cli.legacy_utils import (
     get_otu_paths,
     get_otus,
     get_isolates,
@@ -22,7 +22,7 @@ from virtool_cli.utils import (
 )
 
 
-async def isolate(src: pathlib.Path):
+async def isolate(src: pathlib.Path, verbose=False):
     """
     Runs routines to find new isolates for OTU in a reference directory and writes newfound accessions to local cache
 
@@ -38,6 +38,8 @@ async def isolate(src: pathlib.Path):
 
     existing_accessions = get_cache()
 
+    console.print(f"Getting OTUs from local database...\n")
+
     # get paths for all OTU in the directory
     paths = get_otu_paths(src)
 
@@ -49,12 +51,17 @@ async def isolate(src: pathlib.Path):
         name = otu_path_map[path].get("name")
 
         if taxid is None:
-            console.print(f"✘ [red]{name}\n" f"  [red]No taxid assigned to OTU\n")
+            console.print(
+                f"[red]✘ {name}\n" + f"  [red]No taxid assigned to OTU\n"
+            )
             continue
 
         accessions = existing_accessions.get(str(taxid))
 
-        coros.append(fetch_otu_isolates(str(taxid), name, path, accessions, paths, q))
+        coros.append(
+            fetch_otu_isolates(str(taxid), name, path, accessions, paths, q, verbose))
+        
+    console.print(f"Searching for new isolates...\n")
 
     while len(coros) != 0:
         try:
@@ -89,6 +96,7 @@ async def fetch_otu_isolates(
     accessions: list,
     paths: list,
     queue: asyncio.Queue,
+    verbose=False
 ):
     """
     Fetch new isolates for a given OTU, creating a directory for each
@@ -150,7 +158,7 @@ async def fetch_otu_isolates(
 
         await queue.put((taxid, new_accessions))
 
-    await log_results(name, taxid, new_isolates, console)
+    await log_results(name, taxid, new_isolates, console, verbose)
 
 
 def get_records(accessions: list, taxid: str) -> Tuple[Optional[dict], list]:
@@ -205,7 +213,9 @@ def fetch_records(accessions: list) -> Optional[dict]:
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
-async def log_results(name: str, taxid: str, new_isolates: dict, console: Console):
+async def log_results(name: str, taxid: str, 
+        new_isolates: dict, console: Console, 
+        verbose=False):
     """
     Log isolate discovery results to console
 
@@ -216,10 +226,11 @@ async def log_results(name: str, taxid: str, new_isolates: dict, console: Consol
     """
     new_isolate_count = len(new_isolates)
 
-    if new_isolate_count == 0:
-        console.print(
-            f"[red]✘ {name} ({taxid})\n  Found {new_isolate_count} new isolates\n"
-        )
+    if new_isolate_count==0:
+        if verbose:
+            console.print(
+                f"[red]✘ {name} ({taxid})\n  Found {new_isolate_count} new isolates\n"
+            )
     else:
         console.print(
             f"[green]✔ {name} ({taxid})\n  Found {new_isolate_count} new isolates:"
@@ -389,10 +400,10 @@ def random_alphanumeric(
     return random_alphanumeric(length=length, excluded=excluded)
 
 
-def run(src: str):
+def run(src: str, verbose=False):
     """
     Runs the asynchronous routines to find new isolates for all OTU in a reference
 
     :param src: Path to a reference directory
     """
-    asyncio.run(isolate(src))
+    asyncio.run(isolate(src, verbose))

@@ -4,7 +4,7 @@ import pathlib
 
 from rich.console import Console
 
-from virtool_cli.utils import get_otu_paths, get_otus, create_otu_path
+from virtool_cli.legacy_utils import get_otu_paths, get_otus, create_otu_path
 
 
 def run(src_path: pathlib.Path):

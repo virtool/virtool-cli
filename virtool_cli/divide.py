@@ -2,7 +2,9 @@ import json
 import pathlib
 import shutil
 
-from virtool_cli.utils import create_otu_path
+from rich.console import Console
+
+from virtool_cli.legacy_utils import create_otu_path
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -26,6 +28,7 @@ def run(src_path: pathlib.Path, output: pathlib.Path):
     :param src_path: Path to a reference.json file
     :param output: Path to the where the src tree should be generated
     """
+    console = Console()
 
     shutil.rmtree(output, ignore_errors=True)
     output.mkdir()
@@ -39,7 +42,6 @@ def run(src_path: pathlib.Path, output: pathlib.Path):
             isolates = otu.pop("isolates")
 
             for isolate in isolates:
-
                 isolate_path = build_isolate(otu_path, isolate)
 
                 sequences = isolate.pop("sequences")
@@ -49,6 +51,8 @@ def run(src_path: pathlib.Path, output: pathlib.Path):
 
         with open(output / "meta.json", "w") as f:
             json.dump({"data_type": data["data_type"], "organism": data["organism"]}, f)
+        console.print(f"[green]  ✔ [/green]" + 
+            f"Reference file '{src_path}' has been written to the '{output}' directory")
 
 
 def build_otu(output: pathlib.Path, otu: dict) -> str:

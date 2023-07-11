@@ -1,5 +1,8 @@
 import json
 import pathlib
+from typing import Tuple
+
+from rich.console import Console
 
 import arrow
 
@@ -19,6 +22,7 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
+    console = Console()
     meta = parse_meta(src_path)
 
     data = {
@@ -28,7 +32,7 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
 
     otus = list()
 
-    alpha_paths = [path for path in src_path.iterdir() if path.name != "meta.json"]
+    alpha_paths = [path for path in src_path.iterdir() if path.is_dir()]
 
     for alpha in alpha_paths:
 
@@ -52,12 +56,18 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
 
             otus.append(otu)
 
-    with open(output, "w") as f:
-        data.update(
-            {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
-        )
+    try:
+        with open(output, "w") as f:
+            data.update(
+                {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
+            )
 
-        json.dump(data, f, indent=4 if indent else None, sort_keys=True)
+            json.dump(data, f, indent=4 if indent else None, sort_keys=True)
+            console.print(f"[green]  ✔ [/green]" + 
+                f"Reference folder '{src_path}' has been written to '{output}'")
+    except:
+        console.print(f"[red]  ✘ [/red]" + 
+                f"Reference folder '{src_path}' could not be written to '{output}'")
 
 
 def parse_meta(src_path: pathlib.Path) -> dict:
@@ -81,10 +91,10 @@ def parse_alpha(alpha: pathlib.Path) -> list:
     :param alpha: Path to a given alpha directory in a reference
     :return: A list containing all the OTU in the given directory
     """
-    return [otu for otu in alpha.iterdir()]
+    return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
 
-def parse_otu(otu_path: pathlib.Path) -> (dict, list):
+def parse_otu(otu_path: pathlib.Path) -> Tuple[dict, list]:
     """
     Creates an list of isolate IDs for a given OTU
 
@@ -103,7 +113,7 @@ def parse_otu(otu_path: pathlib.Path) -> (dict, list):
     return otu, isolate_ids
 
 
-def parse_isolate(isolate_path: pathlib.Path) -> (dict, list):
+def parse_isolate(isolate_path: pathlib.Path) -> Tuple[dict, list]:
     """
     Creates a list of sequence IDs for a given sequence
 
@@ -117,7 +127,7 @@ def parse_isolate(isolate_path: pathlib.Path) -> (dict, list):
 
     sequence_ids = [
         i
-        for i in isolate_path.iterdir()
+        for i in isolate_path.glob('*.json')
         if i.name != "isolate.json" and i.name[0] != "."
     ]
 
