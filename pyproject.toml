@@ -13,8 +13,8 @@ maintainers = [
 description = "CLI Tool for working with Virtool data"
 license = "MIT"
 classifiers = [
-
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10"
 ]
 
 [tool.poetry.dependencies]
