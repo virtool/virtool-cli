@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.9.2 as base
+FROM continuumio/miniconda3:23.3.1-0 as base
 WORKDIR /app
 RUN conda config --add channels defaults
 RUN conda config --add channels bioconda
