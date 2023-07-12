@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "virtool-cli"
-version = "0.0.0"
+version = "1.1.0-beta.1"
 authors = [
     "Ian Boyes <igboyes@gmail.com>",
     "Jake Alexander",
-    "Lilly Roberts"
+    "Lilly Roberts",
+    "Shelley Gao"
 ]
 maintainers = [
     "Ian Boyes <igboyes@gmail.com>"
