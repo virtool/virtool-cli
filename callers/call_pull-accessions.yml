@@ -1,0 +1,12 @@
+name: Call repo update (branch & pull)
+on: 
+  workflow_dispatch:
+  repository_dispatch:
+    types: [scheduled-update-pull]
+
+jobs:
+  call_pull-accessions:
+    uses: ${{ env.GITHUB_REPOSITORY_OWNER }}/ref-workflows/.github/workflows/pull-accessions.yml@main
+    secrets: inherit
+    permissions:
+      contents: write

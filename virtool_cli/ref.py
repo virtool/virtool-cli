@@ -7,6 +7,7 @@ import virtool_cli.divide
 import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
+import virtool_cli.init
 
 
 @click.group("ref")
@@ -120,6 +121,19 @@ def repair(src_path):
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory")
 
+@ref.command()
+@click.option(
+    "-repo", "--repo_path",
+    required=True,
+    type=str,
+    help="the path to a new to-be-initialized reference source directory",
+)
+def init(repo_path: str):
+    """
+    Initialize an empty Virtool reference repo for uploading to Github,
+    including workflow callers
+    """
+    virtool_cli.init.run(repo_path=Path(repo_path))
 
 if __name__ == "__main__":
     ref()
