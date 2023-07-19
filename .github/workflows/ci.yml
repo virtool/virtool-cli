@@ -1,5 +1,4 @@
 name: ci
-
 on:
   pull_request:
     branches: [ main ]
@@ -9,11 +8,45 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: continuumio/miniconda3:latest
+      env:
+        NODE_ENV: development
+      ports:
+        - 80
+      volumes:
+        - my_docker_volume:/volume_mount
+      options: --cpus 1
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Run CI
-        run:
-          docker build -t virtool/cli:test --target=test .
+      - uses: actions/checkout@v3
+      
+      - name: Install MUSCLE v3
+        run: |
+          wget https://drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
+          tar -xvzf muscle3.8.31_i86linux64.tar.gz
+          mv muscle3.8.31_i86linux64 /bin/muscle
+          chmod u+x /bin/muscle
+          whereis muscle
+
+      - name: Install conda and poetry
+        run: |
+          conda install -c bioconda cd-hit hmmer blast mcl -q -y
+          pip install poetry
+          
+      - name: Install package
+        run: |
+          poetry lock
+          poetry install
+      
+      - name: Run tests
+        run: |
+          echo $CALLER_API_URL
+          poetry run pytest
+        env:
+          CALLER_API_URL: "${{ vars.CALLER_API_URL }}"
+          GH_PAT: "${{ secrets.GH_BOT_PAT }}"
+      
   release:
     if: github.event_name == 'push'
     needs:
@@ -21,7 +54,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
@@ -32,4 +65,4 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx semantic-release
+        run: npx semantic-releaseå

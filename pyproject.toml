@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "virtool-cli"
-version = "0.0.0"
+version = "2.0.0-beta.1"
 authors = [
     "Ian Boyes <igboyes@gmail.com>",
     "Jake Alexander",
-    "Lilly Roberts"
+    "Lilly Roberts",
+    "Shelley Gao"
 ]
 maintainers = [
     "Ian Boyes <igboyes@gmail.com>"
@@ -12,33 +13,36 @@ maintainers = [
 description = "CLI Tool for working with Virtool data"
 license = "MIT"
 classifiers = [
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10"
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-aiofiles = ">0.5.0"
-aiohttp = "3.6.2"
-aiojobs = "0.2.2"
-arrow = "0.16.0"
-biopython = "^1.79"
-rich = "^7.0.0"
-pytest-asyncio = "^0.16.0"
-pytest-mock = "^3.6.1"
-click = "^8.0.3"
+python = "^3.10"
+aiofiles = "^23.1"
+aiohttp = "^3.8"
+aiojobs = "^1.1"
+numpy = "^1.25"
+arrow = "^1.1"
+biopython = "^1.81"
+rich = "^13.4.2"
+pytest-asyncio = "^0.21.0"
+pytest-mock = "^3.11"
+click = "^8.1"
+structlog = "^23.1.0"
+requests = "^2.31"
+pyyaml = "^6.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.4"
-pytest-cov = "^2.12.1"
-pytest-datafiles = "^2.0"
-black = "^21.12b0"
-pre-commit = "^2.16.0"
+pytest = "^7.1.3"
+pytest-cov = "^4.1"
+pytest-datafiles = "^3.0"
+black = "^23.7"
+pre-commit = "^3.3.3"
 
 [tool.poetry.scripts]
 virtool = "virtool_cli.run:cli"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.6"]
 build-backend = "poetry.core.masonry.api"
