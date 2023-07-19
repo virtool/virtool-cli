@@ -24,9 +24,9 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
 
         muscle_cmd = [
             "muscle",
-            "-in",
+            "-align",
             fasta_path,
-            "-out",
+            "-output",
             msa_path,
             "-log",
             log_path,

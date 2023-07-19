@@ -39,7 +39,10 @@ def test_batch_muscle_call(get_msa, input_dir, msa):
     "input_dir, hmm", [(DUPES_INPUT, DUPES_HMM), (GENERIC_INPUT, GENERIC_HMM)]
 )
 def test_batch_hmm_call(get_hmm, input_dir, hmm):
-    """Test profile HMMs by comparing lines 17 onward (part that contains hmm data) of output data and og vfam data."""
+    """
+    Test profile HMMs by comparing lines 17 onward (part that contains hmm data) 
+    of output data and og vfam data.
+    """
     hmm_names = os.listdir(hmm)
     expected = []
     for name in hmm_names:

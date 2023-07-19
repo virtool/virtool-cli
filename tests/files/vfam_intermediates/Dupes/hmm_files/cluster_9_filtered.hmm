@@ -1,5 +1,5 @@
 HMMER3/f [3.3.2 | Nov 2020]
-NAME
+NAME  cluster_9_filtered
 LENG  113
 ALPH  amino
 RF    no
@@ -7,7 +7,7 @@ MM    no
 CONS  yes
 CS    no
 MAP   yes
-DATE  Wed Jun  9 22:29:49 2021
+DATE  Thu Jul 20 00:04:00 2023
 NSEQ  2
 EFFN  0.378906
 CKSUM 1179514962

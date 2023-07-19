@@ -1,5 +1,5 @@
 HMMER3/f [3.3.2 | Nov 2020]
-NAME  GENERIC_noDupes_minL1_s100_cluster15
+NAME  cluster_15
 LENG  142
 ALPH  amino
 RF    no
@@ -7,7 +7,7 @@ MM    no
 CONS  yes
 CS    no
 MAP   yes
-DATE  Wed Jun  9 22:32:56 2021
+DATE  Thu Jul 20 00:06:24 2023
 NSEQ  2
 EFFN  0.394531
 CKSUM 3780945285
