@@ -4,7 +4,7 @@ import sys
 
 from pathlib import Path
 from typing import List, Optional
-from virtool_cli.vfam_console import console
+from .console import console
 
 NUM_CORES = 16
 

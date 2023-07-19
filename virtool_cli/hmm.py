@@ -4,7 +4,7 @@ import click
 import virtool_cli.vfam
 
 from pathlib import Path
-from virtool_cli.vfam_console import console
+from virtool_cli.vfam import console
 
 
 @click.group("hmm")

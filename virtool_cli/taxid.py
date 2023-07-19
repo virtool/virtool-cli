@@ -9,7 +9,7 @@ import aiojobs
 from Bio import Entrez
 from rich.console import Console
 
-from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.legacy import get_otu_paths, NCBI_REQUEST_INTERVAL
 
 
 async def taxid(src_path: pathlib.Path, force_update: bool):

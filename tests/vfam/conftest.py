@@ -3,12 +3,12 @@ from pathlib import Path
 import pytest
 from Bio import SeqIO
 
-from virtool_cli.vfam_collapse import generate_clusters, blast_all_by_all
-from virtool_cli.vfam_curate import get_input_paths, group_input_paths
-from virtool_cli.vfam_filter import filter_on_coverage, filter_on_number
-from virtool_cli.vfam_markov import blast_to_mcl, write_abc, mcl_to_fasta
-from virtool_cli.vfam_msa import batch_muscle_call, batch_hmm_call
-from virtool_cli.vfam_polyprotein import find_polyproteins
+from virtool_cli.vfam.collapse import generate_clusters, blast_all_by_all
+from virtool_cli.vfam.curate import get_input_paths, group_input_paths
+from virtool_cli.vfam.filter import filter_on_coverage, filter_on_number
+from virtool_cli.vfam.markov import blast_to_mcl, write_abc, mcl_to_fasta
+from virtool_cli.vfam.msa import batch_muscle_call, batch_hmm_call
+from virtool_cli.vfam.polyprotein import find_polyproteins
 
 
 @pytest.fixture()

@@ -2,7 +2,7 @@ import json
 import pathlib
 import shutil
 
-from virtool_cli.utils import create_otu_path
+from virtool_cli.utils.legacy import create_otu_path
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 

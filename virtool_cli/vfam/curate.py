@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 from Bio import SeqIO
 from pathlib import Path
 from typing import List
-from virtool_cli.vfam_console import console
+from .console import console
 
 
 def get_genbank_files(output: Path) -> List[Path]:

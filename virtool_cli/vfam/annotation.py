@@ -9,7 +9,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Tuple, List
 from Bio import SeqIO
-from virtool_cli.vfam_console import console
+from .console import console
 
 
 def get_taxonomy(seq_ids: List[str], taxonomy_records: dict) -> Tuple[dict, dict]:

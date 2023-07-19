@@ -4,7 +4,7 @@ import sys
 from Bio import SeqIO, SearchIO
 from pathlib import Path
 from typing import List
-from virtool_cli.vfam_console import console
+from .console import console
 
 
 def write_abc(
