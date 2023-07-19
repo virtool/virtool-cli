@@ -11,7 +11,7 @@ pip install virtool-cli
 ## Usage
 
 ### Ref
-Commands related to references
+Commands related to building, maintaining and pulling new data for reference databases.
 
 #### Build
 To build a `reference.json` file from a src directory
@@ -32,61 +32,18 @@ To specify a version to include in the `reference.json` file
 virtool ref build -src DIRECTORY_PATH -V VERSION
 ```
 
-#### Divide
-If you have an existing `reference.json` you can divide it into a src directory
+#### Repair
+Fix folder-JSON name mismatches and incorrect taxid types
 
 ```shell script
-virtool ref divide -src REFERENCE_PATH -o OUTPUT_PATH
+virtool ref repair -src DIRECTORY_PATH
 ```
 
-#### Taxid
-To fetch taxon ids for OTUs in a given src directory that do not currently have one
+#### taxid
+Search GenBank for matching OTUs and add their taxon ids to otu.json entries in the source directory.
 
 ```shell script
 virtool ref taxid -src DIRECTORY_PATH
-```
-
-If you wish to force a taxon id lookup for all OTUs
-
-```shell script
-virtool ref taxid -src DIRECTORY_PATH -f
-```
-
-#### Merge-Refs
-To interactively merge two references
-
-```shell script
-virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH
-```
-
-If you wish to resume an incomplete merge
-
-```shell script
-virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -r
-```
-
-If you wish to place new isolates directly into target reference
-
-```shell script
-virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -i
-```
-
-If you wish to specify a name for the merged reference directory
-
-```shell script
-virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH -o OUTPUT_DIRECTORY_NAME
-```
-
-If you wish to produce a CSV file containing information about all isolates with unknown source name or source type
-
-```shell script
-virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates
-```
-
-If you wish to specify the name of the CSV file containing all isolates with unknown source name or source type
-
-```shell script
-virtool ref merge -s SOURCE_DIRECTORY_PATH -t TARGET_DIRECTORY_PATH --output-unknown-isolates --unknown-output OUTPUT_FILE_NAME
 ```
 
 ### Environmental Variables

@@ -9,7 +9,7 @@ from Bio import Entrez
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
-NCBI_REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.6
+NCBI_REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.8
 
 
 def get_otu_paths(src_path: pathlib.Path) -> list:
@@ -21,13 +21,9 @@ def get_otu_paths(src_path: pathlib.Path) -> list:
     """
     paths = []
 
-    for alpha in src_path.iterdir():
-        if alpha.name == "meta.json":
-            continue
-
-        otu_paths = [otu for otu in alpha.iterdir()]
-        for otu in otu_paths:
-            paths.append(otu)
+    for alpha in src_path.glob('[a-z]'):
+        otu_paths = [otu for otu in alpha.iterdir() if otu.is_dir()]
+        paths += otu_paths
 
     return paths
 
@@ -82,10 +78,11 @@ async def get_isolates(path: pathlib.Path) -> dict:
 
     for folder in path.iterdir():
         # ignore the otu.json file in the OTU folder and parse through isolate folders
-        if folder.name != "otu.json" and folder / "isolate.json" in folder.iterdir():
-            async with aiofiles.open(folder / "isolate.json", "r") as f:
-                isolate = json.loads(await f.read())
-                isolates[isolate["source_name"]] = folder.name
+        if folder.is_dir(): 
+            if folder / "isolate.json" in folder.iterdir():
+                async with aiofiles.open(folder / "isolate.json", "r") as f:
+                    isolate = json.loads(await f.read())
+                    isolates[isolate["source_name"]] = folder.name
 
     return isolates
 
@@ -99,7 +96,7 @@ async def get_sequences(path: pathlib.Path) -> dict:
     """
     sequences = dict()
 
-    for sequence_id in path.iterdir():
+    for sequence_id in path.glob('*.json'):
         if sequence_id.name != "isolate.json":
             async with aiofiles.open(sequence_id, "r") as f:
                 sequence = json.loads(await f.read())
@@ -120,10 +117,10 @@ async def get_unique_ids(paths: list) -> Tuple[set, set]:
 
     for path in paths:
         for isolate_id in path.iterdir():
-            if isolate_id.name != "otu.json":
+            if isolate_id.is_dir():
                 isolate_ids.add(isolate_id)
                 for seq_id in isolate_id.iterdir():
-                    if seq_id.name != "isolate.json":
+                    if seq_id.name != "isolate.json" and seq_id.name != ".DS_Store":
                         sequence_ids.add(seq_id.name.rstrip(".json"))
 
     return isolate_ids, sequence_ids
