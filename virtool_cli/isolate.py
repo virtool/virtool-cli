@@ -12,7 +12,7 @@ import aiojobs
 from Bio import Entrez, SeqIO
 from rich.console import Console
 
-from virtool_cli.utils import (
+from virtool_cli.utils.legacy import (
     get_otu_paths,
     get_otus,
     get_isolates,
