@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import click
 
 import virtool_cli.build

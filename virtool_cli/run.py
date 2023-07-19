@@ -1,4 +1,5 @@
 import click
+
 from virtool_cli.ref import ref
 from virtool_cli.hmm import hmm
 

@@ -1,13 +1,12 @@
 import json
 from typing import Optional
-import pathlib
-
+from pathlib import Path
 from rich.console import Console
 
 from virtool_cli.utils.legacy import get_otu_paths, get_otus, create_otu_path
 
 
-def run(src_path: pathlib.Path):
+def run(src_path: Path):
     """
     Fixes any folder-JSON name mismatches and incorrect taxid types
 
@@ -40,7 +39,7 @@ def run(src_path: pathlib.Path):
     write_otus(otus_to_update)
 
 
-def fix_folder_name(path: pathlib.Path, otu: dict) -> Optional[str]:
+def fix_folder_name(path: Path, otu: dict) -> Optional[str]:
     """
     Fixes each OTU folder name by ensuring that it's the same as the "name" field in its otu.json file
 
