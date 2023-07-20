@@ -5,7 +5,7 @@ from Bio import SeqIO
 from pathlib import Path
 
 from vfam_fixtures import *
-from paths import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
+from paths_vfam import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
 
 DUPES_COVERAGE = VFAM_INTERMEDIATES_PATH / "Dupes" / "filtered_on_coverage"
 GENERIC_COVERAGE = VFAM_INTERMEDIATES_PATH / "Generic" / "filtered_on_coverage"

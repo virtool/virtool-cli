@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 from vfam_fixtures import *
-from paths import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
+from paths_vfam import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
 
 BLAST_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "blast"
 BLAST_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "blast"
