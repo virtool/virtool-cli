@@ -12,22 +12,9 @@ jobs:
       image: continuumio/miniconda3:latest
       env:
         NODE_ENV: development
-      ports:
-        - 80
-      volumes:
-        - my_docker_volume:/volume_mount
-      options: --cpus 1
 
     steps:
       - uses: actions/checkout@v3
-      
-      # - name: Install MUSCLE v3
-      #   run: |
-      #     wget https://drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
-      #     tar -xvzf muscle3.8.31_i86linux64.tar.gz
-      #     mv muscle3.8.31_i86linux64 /bin/muscle
-      #     chmod u+x /bin/muscle
-      #     whereis muscle
 
       - name: Install conda and poetry
         run: |
@@ -58,11 +45,11 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
-          node-version: 16
+          node-version: 18
       - name: Install semantic-release
         run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
       - name: Release
         env:
           GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx semantic-releaseå
+        run: npx semantic-release
