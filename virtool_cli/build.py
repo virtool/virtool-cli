@@ -4,6 +4,8 @@ from typing import Tuple
 from rich.console import Console
 import arrow
 
+from virtool_cli.utils.legacy import get_otu_paths
+
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
 ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
@@ -30,29 +32,25 @@ def run(src_path: Path, output: Path, indent: bool, version: str):
 
     otus = list()
 
-    alpha_paths = [path for path in src_path.iterdir() if path.is_dir()]
+    otu_paths = get_otu_paths(src_path)
 
-    for alpha in alpha_paths:
+    for otu_path in otu_paths:
 
-        otu_paths = parse_alpha(alpha)
+        otu, isolate_ids = parse_otu(otu_path)
 
-        for otu_path in otu_paths:
+        for isolate_path in isolate_ids:
 
-            otu, isolate_ids = parse_otu(otu_path)
+            isolate, sequence_ids = parse_isolate(isolate_path)
 
-            for isolate_path in isolate_ids:
+            for sequence_path in sequence_ids:
+                with open(sequence_path, "r") as f:
+                    sequence = json.load(f)
 
-                isolate, sequence_ids = parse_isolate(isolate_path)
+                isolate["sequences"].append(sequence)
 
-                for sequence_path in sequence_ids:
-                    with open(sequence_path, "r") as f:
-                        sequence = json.load(f)
+            otu["isolates"].append(isolate)
 
-                    isolate["sequences"].append(sequence)
-
-                otu["isolates"].append(isolate)
-
-            otus.append(otu)
+        otus.append(otu)
 
     try:
         with open(output, "w") as f:
@@ -70,7 +68,7 @@ def run(src_path: Path, output: Path, indent: bool, version: str):
 
 def parse_meta(src_path: Path) -> dict:
     """
-    Deserializes and returns meta.json if found, else returns an empty dictionary.
+    Deserializes and returns meta.json if found, else returns an empty dictionary. 
 
     :param src_path: Path to database src directory
     :return: The deserialized meta.json object or an empty dictionary
@@ -84,7 +82,8 @@ def parse_meta(src_path: Path) -> dict:
 
 def parse_alpha(alpha: Path) -> list:
     """
-    Generates and returns a list with every OTU in the directory of the given alpha
+    Generates and returns a list with every OTU in the directory of the given alpha.
+    Deprecated as of v2.
 
     :param alpha: Path to a given alpha directory in a reference
     :return: A list containing all the OTU in the given directory
