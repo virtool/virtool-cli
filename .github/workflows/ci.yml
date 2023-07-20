@@ -21,17 +21,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Install MUSCLE v3
-        run: |
-          wget https://drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
-          tar -xvzf muscle3.8.31_i86linux64.tar.gz
-          mv muscle3.8.31_i86linux64 /bin/muscle
-          chmod u+x /bin/muscle
-          whereis muscle
+      # - name: Install MUSCLE v3
+      #   run: |
+      #     wget https://drive5.com/muscle/downloads3.8.31/muscle3.8.31_i86linux64.tar.gz
+      #     tar -xvzf muscle3.8.31_i86linux64.tar.gz
+      #     mv muscle3.8.31_i86linux64 /bin/muscle
+      #     chmod u+x /bin/muscle
+      #     whereis muscle
 
       - name: Install conda and poetry
         run: |
-          conda install -c bioconda cd-hit hmmer blast mcl -q -y
+          conda install -c bioconda cd-hit hmmer blast mcl muscle -q -y
           pip install poetry
           
       - name: Install package
