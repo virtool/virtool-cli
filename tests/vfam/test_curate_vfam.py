@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from Bio import SeqIO
 
-from vfam_fixtures import *
+from fixtures_vfam import *
 from paths_vfam import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
 from virtool_cli.vfam.curate import group_input_paths
 

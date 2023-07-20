@@ -4,7 +4,7 @@ import filecmp
 from Bio import SeqIO
 from pathlib import Path
 
-from vfam_fixtures import *
+from fixtures_vfam import *
 from paths_vfam import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
 
 DUPES_COVERAGE = VFAM_INTERMEDIATES_PATH / "Dupes" / "filtered_on_coverage"
