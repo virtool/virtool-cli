@@ -8,7 +8,11 @@ from virtool_cli.vfam import console, run
 
 @click.group("hmm")
 def hmm():
-    """Commands related to Hidden Markov Models"""
+    """
+    Commands related to Hidden Markov Models.
+
+    Requires bioconda packages: cd-hit, hmmer, blast, mcl, muscle 
+    """
     pass
 
 
@@ -79,7 +83,9 @@ def vfam(
     filter_clusters: bool,
     min_sequences: int,
 ):
-    """Build profile HMMs from FASTAs"""
+    """
+    Build profile HMMs from FASTAs
+    """
     try:
         check_vfam_dependencies()
     except (FileNotFoundError, PermissionError):
