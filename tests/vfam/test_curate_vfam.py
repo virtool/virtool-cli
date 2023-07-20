@@ -1,10 +1,10 @@
 import filecmp
 import os
 from pathlib import Path
-
 import pytest
 from Bio import SeqIO
 
+from vfam_fixtures import *
 from paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
 from virtool_cli.vfam.curate import group_input_paths
 

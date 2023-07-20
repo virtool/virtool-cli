@@ -1,8 +1,9 @@
 import pytest
 import filecmp
 import os
-
 from pathlib import Path
+
+from vfam_fixtures import *
 from paths import VFAM_INTERMEDIATES_PATH, VFAM_INPUT_PATH
 
 DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
