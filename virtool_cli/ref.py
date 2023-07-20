@@ -10,7 +10,7 @@ import virtool_cli.taxid
 
 @click.group("ref")
 def ref():
-    """Commands related to references"""
+    """Commands related to reference files"""
     pass
 
 

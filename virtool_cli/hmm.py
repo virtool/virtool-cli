@@ -8,7 +8,7 @@ from virtool_cli.vfam import console, run
 
 @click.group("hmm")
 def hmm():
-    """Commands related to HMMs"""
+    """Commands related to Hidden Markov Models"""
     pass
 
 
@@ -79,7 +79,7 @@ def vfam(
     filter_clusters: bool,
     min_sequences: int,
 ):
-    """Build profile HMMS from fasta."""
+    """Build profile HMMs from FASTAs"""
     try:
         check_vfam_dependencies()
     except (FileNotFoundError, PermissionError):
