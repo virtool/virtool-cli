@@ -13,7 +13,7 @@ class OrderCommands(click.Group):
     return list(self.commands)
 
 @click.group(cls=OrderCommands)
-def cli():
+def entry():
     """
     ex. virtool ref --help
 
@@ -23,6 +23,6 @@ def cli():
     pass
 
 
-cli.add_command(ref)
-cli.add_command(hmm)
-cli()
+entry.add_command(ref)
+entry.add_command(hmm)
+entry()

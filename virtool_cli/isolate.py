@@ -11,6 +11,7 @@ import aiofiles
 import aiojobs
 from Bio import Entrez, SeqIO
 from rich.console import Console
+import structlog
 
 from virtool_cli.utils.legacy import (
     get_otu_paths,

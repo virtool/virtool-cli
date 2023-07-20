@@ -41,7 +41,7 @@ black = "^23.7"
 pre-commit = "^3.3.3"
 
 [tool.poetry.scripts]
-virtool = "virtool_cli.run:cli"
+virtool = "virtool_cli.cli:entry"
 
 [build-system]
 requires = ["poetry-core>=1.6"]
