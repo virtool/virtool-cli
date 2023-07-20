@@ -5,12 +5,8 @@ import pytest
 from Bio import SeqIO
 
 from vfam_fixtures import *
-from paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
+from paths import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
 from virtool_cli.vfam.curate import group_input_paths
-
-DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
-GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
-LARGE_INPUT = VFAM_INPUT_PATH / "Large"
 
 FILTERED_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "filtered_fasta"
 FILTERED_GENERIC = VFAM_INTERMEDIATES_PATH / "Generic" / "filtered_fasta"

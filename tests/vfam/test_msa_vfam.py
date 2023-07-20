@@ -1,14 +1,9 @@
 import os
 import pytest
 import filecmp
+
 from pathlib import Path
-
-from vfam_fixtures import *
-from paths import VFAM_INPUT_PATH, VFAM_INTERMEDIATES_PATH
-
-DUPES_INPUT = VFAM_INPUT_PATH / "Dupes"
-GENERIC_INPUT = VFAM_INPUT_PATH / "Generic"
-LARGE_INPUT = VFAM_INPUT_PATH / "Large"
+from paths import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT
 
 DUPES_MSA = VFAM_INTERMEDIATES_PATH / "Dupes" / "msa_files"
 GENERIC_MSA = VFAM_INTERMEDIATES_PATH / "Generic" / "msa_files"

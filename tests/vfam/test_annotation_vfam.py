@@ -1,6 +1,7 @@
 import pytest
 import json
 
+from vfam_fixtures import *
 from paths import VFAM_INTERMEDIATES_PATH
 
 DUPES_JSON = VFAM_INTERMEDIATES_PATH / "Dupes" / "master.json"
