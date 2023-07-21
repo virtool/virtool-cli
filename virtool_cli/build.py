@@ -1,9 +1,7 @@
 import json
 from pathlib import Path
 from typing import Tuple
-from rich.console import Console
 import arrow
-import rich
 import structlog
 
 from virtool_cli.utils.legacy import get_otu_paths
@@ -26,7 +24,6 @@ def run(src_path: Path, output: Path, indent: bool, version: str):
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
-    console = Console()
     meta = parse_meta(src_path)
 
     data = {
