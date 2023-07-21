@@ -3,13 +3,15 @@ import json
 from pathlib import Path
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Optional
+import structlog
 
 import aiofiles
 import aiojobs
 from Bio import Entrez
-from rich.console import Console
 
 from virtool_cli.utils.legacy import get_otu_paths, NCBI_REQUEST_INTERVAL
+
+logger = structlog.get_logger()
 
 
 async def taxid(src_path: Path, force_update: bool):
@@ -33,7 +35,6 @@ async def taxid(src_path: Path, force_update: bool):
             otu_paths[name] = path
             coros.append(name)
 
-    console = Console()
     results = list()
 
     q = asyncio.Queue()
@@ -43,7 +44,7 @@ async def taxid(src_path: Path, force_update: bool):
         if scheduler.active_count < scheduler.limit:
             name = coros.pop()
 
-            await scheduler.spawn(fetch_taxid_call(name, q, console))
+            await scheduler.spawn(fetch_taxid_call(name, q))
 
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
@@ -68,8 +69,9 @@ async def taxid(src_path: Path, force_update: bool):
             taxids.append(taxid)
         update_otu(taxid, otu_paths[name])
 
-    console.print(
-        f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green"
+    logger.info(
+        f"Retrieved {len(taxids)} taxids for {len(names)} OTUs", 
+        n_updated=len(taxids), n_otus=len(names)
     )
 
 
@@ -81,6 +83,8 @@ def fetch_taxid(name: str) -> int:
     :param name: Name of a given OTU
     :return: Taxonomy id for the given OTU
     """
+    log = logger.bind(name=name)
+
     handle = Entrez.esearch(db="taxonomy", term=name)
     record = Entrez.read(handle)
 
@@ -92,7 +96,7 @@ def fetch_taxid(name: str) -> int:
     return taxid
 
 
-async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console):
+async def fetch_taxid_call(name: str, q: asyncio.queues.Queue):
     """
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
@@ -103,12 +107,12 @@ async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console)
     """
     taxid = await asyncio.get_event_loop().run_in_executor(None, fetch_taxid, name)
 
-    await log_results(name, taxid, console)
+    await log_results(name, taxid)
 
     await q.put((name, taxid))
 
 
-async def log_results(name: str, taxid: int, console: Console):
+async def log_results(name: str, taxid: int):
     """
     Logs results of the taxid fetch from the NCBI taxonomy database
 
@@ -116,14 +120,11 @@ async def log_results(name: str, taxid: int, console: Console):
     :param taxid: Taxid for a given OTU if found, else None
     :param console: Rich console object used for logging
     """
+    otu_log = logger.bind(name=name)
     if taxid:
-        console.print(f"[green]✔ {name}")
-        console.print(f"[green]  Found taxid {taxid}")
+        otu_log.info('', taxid=taxid)
     else:
-        console.print(f"[red]✘ {name}")
-        console.print("[red]  Could not find taxid")
-
-    console.print()
+        otu_log.debug('', taxid=None)
 
 
 def update_otu(taxid: int, path: Path):

@@ -3,8 +3,9 @@ import sys
 import click
 from pathlib import Path
 
-from virtool_cli.vfam import console, run
+from virtool_cli.vfam import run
 
+ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
 @click.group("hmm")
 def hmm():
@@ -88,8 +89,11 @@ def vfam(
     """
     try:
         check_vfam_dependencies()
-    except (FileNotFoundError, PermissionError):
-        console.print("Missing external program dependency.", style="red")
+    except (FileNotFoundError, PermissionError) as e:
+        click.echo(
+            ERROR_MESSAGE +
+            "Missing external program dependency")
+        click.echo(e)
         sys.exit(1)
 
     try:
@@ -108,7 +112,10 @@ def vfam(
             min_sequences,
         )
     except (FileNotFoundError, NotADirectoryError):
-        console.print("Not a valid reference directory.", style="red")
+        click.echo(
+            ERROR_MESSAGE, 
+            "Not a valid reference directory.")
+        click.echo(e)
 
 
 def check_vfam_dependencies():
