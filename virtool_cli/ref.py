@@ -1,5 +1,7 @@
+import sys
 from pathlib import Path
 import click
+import structlog
 
 import virtool_cli.build
 import virtool_cli.divide
@@ -7,7 +9,10 @@ import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
 
+ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
+logger = structlog.get_logger()
+    
 @click.group("ref")
 def ref():
     """
@@ -27,6 +32,7 @@ def ref():
 @click.option(
     "-o",
     "--output",
+    type=str,
     default="reference.json",
     help="the output path for a reference.json file",
 )
@@ -39,11 +45,19 @@ def ref():
     help="the version string to include in the reference.json file",
 )
 def build(src_path, output, indent, version):
-    """Build a Virtool reference JSON file from a reference directory."""
+    """Build a Virtool reference JSON file from a source directory."""
+    build_logger = logger.bind(command='build', src_path=src_path, out_path=output)
+
+    if not Path(src_path).exists():
+        build_logger.error('Directory not found at src_path')
+        return
+    
     try:
         virtool_cli.build.run(Path(src_path), Path(output), indent, version)
     except (FileNotFoundError, NotADirectoryError):
-        click.echo("Not a valid reference directory")
+        build_logger.exception('Source directory has critical errors')
+    except:
+        build_logger.exception('Unexpected exception')
 
 
 @ref.command()
@@ -67,10 +81,11 @@ def divide(src_path, output):
         if not src_path.endswith(".json"):
             raise TypeError
         virtool_cli.divide.run(Path(src_path), Path(output))
-    except (TypeError, FileNotFoundError):
+    except (TypeError, FileNotFoundError) as e:
         click.echo(
-            "Specified reference file either does not exist or is not a proper JSON file"
+            ERROR_MESSAGE + "Specified reference file either does not exist or is not a proper JSON file"
         )
+        click.echo(e)
 
 
 @ref.command()
@@ -85,9 +100,11 @@ def divide(src_path, output):
 def taxid(src_path, force_update):
     """Fetch taxid for all OTU in given reference directory."""
     try:
+        logger.info("Scanning OTUs for taxon IDs...")
         virtool_cli.taxid.run(Path(src_path), force_update)
-    except (FileNotFoundError, NotADirectoryError):
-        click.echo("Not a valid reference directory")
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
+        click.echo(e)
 
 
 @ref.command()
@@ -102,8 +119,9 @@ def isolate(src_path):
     """Fetch new isolates for all OTU in a given reference directory."""
     try:
         virtool_cli.isolate.run(Path(src_path))
-    except (FileNotFoundError, NotADirectoryError):
+    except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory")
+        click.echo(e)
 
 
 @ref.command()
@@ -116,10 +134,14 @@ def isolate(src_path):
 )
 def repair(src_path):
     """Fix every OTU in a given reference directory."""
+    if not Path(src_path).exists():
+        logger.critical('Source directory does not exist')
+
     try:
         virtool_cli.repair.run(Path(src_path))
-    except (FileNotFoundError, NotADirectoryError):
-        click.echo("Not a valid reference directory")
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
+        click.echo(e)
 
 
 if __name__ == "__main__":

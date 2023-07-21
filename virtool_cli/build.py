@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 from typing import Tuple
-from rich.console import Console
 import arrow
+import structlog
 
 from virtool_cli.utils.legacy import get_otu_paths
 
@@ -11,6 +11,8 @@ OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 
 SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
+
+logger = structlog.get_logger()
 
 
 def run(src_path: Path, output: Path, indent: bool, version: str):
@@ -22,7 +24,6 @@ def run(src_path: Path, output: Path, indent: bool, version: str):
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
-    console = Console()
     meta = parse_meta(src_path)
 
     data = {
@@ -59,11 +60,9 @@ def run(src_path: Path, output: Path, indent: bool, version: str):
             )
 
             json.dump(data, f, indent=4 if indent else None, sort_keys=True)
-            console.print(f"[green]  ✔ [/green]" + 
-                f"Reference folder '{src_path}' has been written to '{output}'")
+            logger.info('Reference file built', src=src_path, output=output)
     except:
-        console.print(f"[red]  ✘ [/red]" + 
-                f"Reference folder '{src_path}' could not be written to '{output}'")
+        logger.critical('Reference file build failed', src=src_path, output=output)
 
 
 def parse_meta(src_path: Path) -> dict:

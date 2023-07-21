@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 
@@ -20,3 +21,15 @@ def generate_otu_dirname(otu_name: str):
     # otu_name.replace(" ", "_").replace("/", "_").lower()
 
     return no_symbols
+
+def parse_otu(path: Path) -> dict:
+    """
+    Returns a json file in dict form
+
+    :param paths: Path to an OTU in a reference
+    :return: OTU data in dict form
+    """
+    with open(path / "otu.json", "r") as f:
+        otu = json.load(f)
+
+    return otu
