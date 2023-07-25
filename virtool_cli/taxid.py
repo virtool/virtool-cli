@@ -83,8 +83,6 @@ def fetch_taxid(name: str) -> int:
     :param name: Name of a given OTU
     :return: Taxonomy id for the given OTU
     """
-    log = logger.bind(name=name)
-
     handle = Entrez.esearch(db="taxonomy", term=name)
     record = Entrez.read(handle)
 

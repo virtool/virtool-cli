@@ -1,10 +1,11 @@
 import json
 from typing import Optional
 from pathlib import Path
-from rich.console import Console
+import structlog
 
 from virtool_cli.utils.legacy import get_otu_paths, get_otus, create_otu_path
 
+logger = structlog.get_logger()
 
 def run(src_path: Path):
     """
@@ -15,7 +16,6 @@ def run(src_path: Path):
     paths = get_otu_paths(src_path)
     otus = get_otus(paths)
     otus_to_update = {}
-    console = Console()
 
     for path in paths:
         results = []
@@ -23,7 +23,7 @@ def run(src_path: Path):
         new_path = fix_folder_name(path, otus[path])
         # if a folder name has been changed then a new path will return
         if new_path:
-            results.append("    - Fixed folder name")
+            results.append("Fixed folder name")
             # making sure to update the dictionary that maps paths to OTUs
             otus[new_path] = otus[path]
             path = new_path
@@ -32,12 +32,11 @@ def run(src_path: Path):
         # if a new otu is returned then it should be updated
         if otu:
             otus_to_update[path] = otu
-            results.append("    - Fixed taxid field")
+            results.append("Fixed taxid field")
 
-        log_results(results, otus[path]["name"], console)
+        log_results(results, otus[path]["name"])
 
     write_otus(otus_to_update)
-
 
 def fix_folder_name(path: Path, otu: dict) -> Optional[str]:
     """
@@ -72,7 +71,7 @@ def fix_taxid(otu: dict) -> Optional[dict]:
     return None
 
 
-def log_results(results: list, name: str, console: Console):
+def log_results(results: list, name: str):
     """
     Log repair results to console
 
@@ -84,11 +83,7 @@ def log_results(results: list, name: str, console: Console):
     if not results:
         return
 
-    console.print(f"[green]✔ {name}")
-
-    for result in results:
-        console.print(f"[green]{result}")
-    console.print()
+    logger.info(f"Changed {name}", name=name, result=results)
 
 
 def write_otus(otus: dict):
