@@ -83,12 +83,12 @@ def filter_on_num(filter_on_cvg):
 
 
 @pytest.fixture()
-def get_msa(output, fasta_files):
+def filtered_msa(output, fasta_files):
     fasta_files = filter_on_coverage(fasta_files)
     fasta_files = filter_on_number(fasta_files, 2)
     return batch_muscle_call(fasta_files)
 
 
 @pytest.fixture()
-def get_hmm(get_msa):
-    return batch_hmm_call(get_msa)
+def filtered_hmm(filtered_msa):
+    return batch_hmm_call(filtered_msa)

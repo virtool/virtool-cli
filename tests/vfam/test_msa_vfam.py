@@ -15,7 +15,7 @@ GENERIC_HMM = VFAM_INTERMEDIATES_PATH / "Generic" / "hmm_files"
 @pytest.mark.parametrize(
     "input_dir, msa", [(DUPES_INPUT, DUPES_MSA), (GENERIC_INPUT, GENERIC_MSA)]
 )
-def test_batch_muscle_call(get_msa, input_dir, msa):
+def test_batch_muscle_call(filtered_msa, input_dir, msa):
     """Test msa files by comparing to og vfam msa data."""
     msa_names = os.listdir(msa)
     expected = []
@@ -23,7 +23,7 @@ def test_batch_muscle_call(get_msa, input_dir, msa):
         expected.append(msa / Path(name))
     expected.sort()
 
-    result = get_msa
+    result = filtered_msa
     result.sort()
 
     assert len(expected) == len(result)
@@ -34,7 +34,7 @@ def test_batch_muscle_call(get_msa, input_dir, msa):
 @pytest.mark.parametrize(
     "input_dir, hmm", [(DUPES_INPUT, DUPES_HMM), (GENERIC_INPUT, GENERIC_HMM)]
 )
-def test_batch_hmm_call(get_hmm, input_dir, hmm):
+def test_batch_hmm_call(filtered_hmm, input_dir, hmm):
     """
     Test profile HMMs by comparing lines 17 onward (part that contains hmm data) 
     of output data and og vfam data.
@@ -45,7 +45,7 @@ def test_batch_hmm_call(get_hmm, input_dir, hmm):
         expected.append(hmm / Path(name))
     expected.sort()
 
-    result = get_hmm
+    result = filtered_hmm
     result.sort()
 
     assert len(expected) == len(result)
