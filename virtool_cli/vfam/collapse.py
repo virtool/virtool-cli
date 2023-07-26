@@ -3,7 +3,7 @@ import sys
 
 from pathlib import Path
 from Bio import SeqIO
-from virtool_cli.vfam..console import console
+from virtool_cli.vfam.console import console
 
 
 def generate_clusters(
