@@ -28,11 +28,7 @@ jobs:
       
       - name: Run tests
         run: |
-          echo $CALLER_API_URL
           poetry run pytest
-        env:
-          CALLER_API_URL: "${{ vars.CALLER_API_URL }}"
-          GH_PAT: "${{ secrets.GH_BOT_PAT }}"
       
   release:
     if: github.event_name == 'push'
