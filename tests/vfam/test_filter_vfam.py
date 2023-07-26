@@ -27,12 +27,12 @@ GENERIC_FILTERED_BY_NUM = VFAM_INTERMEDIATES_PATH / "Generic" / "filtered_by_num
         (LARGE_INPUT, LARGE_COVERAGE),
     ],
 )
-def test_on_cvg_files(input_dir, filtered_files, filter_on_cvg):
+def test_on_cvg_files(input_dir, filtered_files, filtered_on_cvg):
     """Test that filter_on_coverage filters the same files as original vfam."""
     with Path(filtered_files).open("r") as handle:
         expected = [line.split()[0] for line in handle]
     expected.sort()
-    result = filter_on_cvg
+    result = filtered_on_cvg
     assert len(expected) == len(result)
 
 
@@ -44,12 +44,12 @@ def test_on_cvg_files(input_dir, filtered_files, filter_on_cvg):
         (LARGE_INPUT, LARGE_REMOVED_CVG),
     ],
 )
-def test_on_cvg_recs(input_dir, removed_recs, filter_on_cvg):
+def test_on_cvg_recs(input_dir, removed_recs, filtered_on_cvg):
     """Test that filter_on_coverage removes the same records as original vfam."""
     with Path(removed_recs).open("r") as handle:
         removed_records = [line.split()[0] for line in handle]
 
-    result = filter_on_cvg
+    result = filtered_on_cvg
     for file in result:
         for record in SeqIO.parse(file.open("r"), "fasta"):
             assert record.id not in removed_records
@@ -59,9 +59,9 @@ def test_on_cvg_recs(input_dir, removed_recs, filter_on_cvg):
     "input_dir, filtered_files",
     [(DUPES_INPUT, DUPES_FILTERED_BY_NUM), (GENERIC_INPUT, GENERIC_FILTERED_BY_NUM)],
 )
-def test_on_number(input_dir, filtered_files, filter_on_num):
+def test_on_number(input_dir, filtered_files, filtered_on_num):
     """Test that filter_on_number filters the same files as original vfam."""
-    result = filter_on_num
+    result = filtered_on_num
     result.sort()
 
     filtered_names = os.listdir(filtered_files)

@@ -73,13 +73,13 @@ def fasta_files(output, mcl_results, clustered_result):
 
 
 @pytest.fixture()
-def filter_on_cvg(fasta_files):
+def filtered_on_cvg(fasta_files):
     return filter_on_coverage(fasta_files)
 
 
 @pytest.fixture()
-def filter_on_num(filter_on_cvg):
-    return filter_on_number(filter_on_cvg, 2)
+def filtered_on_num(filtered_on_cvg):
+    return filter_on_number(filtered_on_cvg, 2)
 
 
 @pytest.fixture()
