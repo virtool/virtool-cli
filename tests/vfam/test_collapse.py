@@ -2,7 +2,7 @@ import filecmp
 import pytest
 from pathlib import Path
 
-from fixtures_vfam import *
+from fixtures import *
 from paths_vfam import VFAM_INTERMEDIATES_PATH, DUPES_INPUT, GENERIC_INPUT, LARGE_INPUT
 
 COLLAPSED_DUPES = VFAM_INTERMEDIATES_PATH / "Dupes" / "collapsed_fasta"
