@@ -3,7 +3,7 @@ import sys
 import click
 from pathlib import Path
 
-from virtool_cli.vfam import run
+from virtool_cli.vfam.vfam import run
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
