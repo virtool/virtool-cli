@@ -18,7 +18,6 @@ def generate_otu_dirname(otu_name: str):
     no_whitespace = otu_name.replace(" ", "_")
     no_plus = no_whitespace.replace('+', 'and')
     no_symbols = re.split(r'[()/-]+', no_plus)
-    # otu_name.replace(" ", "_").replace("/", "_").lower()
 
     return no_symbols
 

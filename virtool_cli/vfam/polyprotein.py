@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 from Bio import SearchIO
-from .console import console
+from virtool_cli.vfam.console import console
 
 
 def get_sequence_lengths(blast_results_path: Path) -> dict:
