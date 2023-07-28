@@ -1,6 +1,6 @@
 import asyncio
 import json
-import pathlib
+from pathlib import Path
 from concurrent.futures.thread import ThreadPoolExecutor
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -11,8 +11,9 @@ import aiofiles
 import aiojobs
 from Bio import Entrez, SeqIO
 from rich.console import Console
+import structlog
 
-from virtool_cli.utils import (
+from virtool_cli.utils.legacy import (
     get_otu_paths,
     get_otus,
     get_isolates,
@@ -22,7 +23,7 @@ from virtool_cli.utils import (
 )
 
 
-async def isolate(src: pathlib.Path):
+async def isolate(src: Path):
     """
     Runs routines to find new isolates for OTU in a reference directory and writes newfound accessions to local cache
 
@@ -85,7 +86,7 @@ async def isolate(src: pathlib.Path):
 async def fetch_otu_isolates(
     taxid: str,
     name: str,
-    path: pathlib.Path,
+    path: Path,
     accessions: list,
     paths: list,
     queue: asyncio.Queue,
@@ -260,7 +261,7 @@ async def find_isolate(isolate_data: dict) -> Optional[str]:
 
 
 async def store_sequence(
-    path: pathlib.Path, accession: SeqIO.SeqRecord, data: dict, unique_ids: set
+    path: Path, accession: SeqIO.SeqRecord, data: dict, unique_ids: set
 ) -> Optional[str]:
     """
     Creates a new sequence file for a given isolate
@@ -298,7 +299,7 @@ async def store_sequence(
 
 
 async def store_isolate(
-    path: pathlib.Path, source_name: str, source_type: str, unique_ids: set
+    path: Path, source_name: str, source_type: str, unique_ids: set
 ) -> str:
     """
     Creates a new isolate folder for an OTU
@@ -358,7 +359,7 @@ def write_cache(accessions: dict):
     :param accessions: Dictionary containing an updated mapping of taxids to their accessions
     """
     try:
-        (pathlib.Path.cwd() / ".cli").mkdir()
+        (Path.cwd() / ".cli").mkdir()
     except FileExistsError:
         pass
 

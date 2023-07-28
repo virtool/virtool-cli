@@ -1,8 +1,8 @@
 import json
-import pathlib
+from pathlib import Path
 import shutil
 
-from virtool_cli.utils import create_otu_path
+from virtool_cli.utils.legacy import create_otu_path
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -19,7 +19,7 @@ SEQUENCE_KEYS = (
 )
 
 
-def run(src_path: pathlib.Path, output: pathlib.Path):
+def run(src_path: Path, output: Path):
     """
     Divide a reference.json file from Virtool into a src tree.
 
@@ -51,7 +51,7 @@ def run(src_path: pathlib.Path, output: pathlib.Path):
             json.dump({"data_type": data["data_type"], "organism": data["organism"]}, f)
 
 
-def build_otu(output: pathlib.Path, otu: dict) -> str:
+def build_otu(output: Path, otu: dict) -> str:
     """
     Creates a directory for all OTUs that begin with a particular
     letter if it doesn't already exist. Generates a directory for a
@@ -81,7 +81,7 @@ def build_otu(output: pathlib.Path, otu: dict) -> str:
     return otu_path
 
 
-def build_isolate(otu_path: pathlib.Path, isolate: dict) -> str:
+def build_isolate(otu_path: Path, isolate: dict) -> str:
     """
     Creates a directory for a given isolate and generates
     a isolate.json with key information about it.
@@ -99,7 +99,7 @@ def build_isolate(otu_path: pathlib.Path, isolate: dict) -> str:
     return isolate_path
 
 
-def build_sequence(isolate_path: pathlib.Path, sequence: dict):
+def build_sequence(isolate_path: Path, sequence: dict):
     """
     Generates a JSON file for one of the isolate's sequences
 

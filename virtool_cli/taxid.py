@@ -1,18 +1,20 @@
 import asyncio
 import json
-import pathlib
+from pathlib import Path
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Optional
+import structlog
 
 import aiofiles
 import aiojobs
 from Bio import Entrez
-from rich.console import Console
 
-from virtool_cli.utils import get_otu_paths, NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.legacy import get_otu_paths, NCBI_REQUEST_INTERVAL
+
+logger = structlog.get_logger()
 
 
-async def taxid(src_path: pathlib.Path, force_update: bool):
+async def taxid(src_path: Path, force_update: bool):
     """
     Asynchronously finds taxon ids for all OTU in a given src directory and
     writes them to each respective otu.json file.
@@ -33,7 +35,6 @@ async def taxid(src_path: pathlib.Path, force_update: bool):
             otu_paths[name] = path
             coros.append(name)
 
-    console = Console()
     results = list()
 
     q = asyncio.Queue()
@@ -43,7 +44,7 @@ async def taxid(src_path: pathlib.Path, force_update: bool):
         if scheduler.active_count < scheduler.limit:
             name = coros.pop()
 
-            await scheduler.spawn(fetch_taxid_call(name, q, console))
+            await scheduler.spawn(fetch_taxid_call(name, q))
 
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
@@ -68,8 +69,9 @@ async def taxid(src_path: pathlib.Path, force_update: bool):
             taxids.append(taxid)
         update_otu(taxid, otu_paths[name])
 
-    console.print(
-        f"\nRetrieved {len(taxids)} taxids for {len(names)} OTUs", style="green"
+    logger.info(
+        f"Retrieved {len(taxids)} taxids for {len(names)} OTUs", 
+        n_updated=len(taxids), n_otus=len(names)
     )
 
 
@@ -92,7 +94,7 @@ def fetch_taxid(name: str) -> int:
     return taxid
 
 
-async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console):
+async def fetch_taxid_call(name: str, q: asyncio.queues.Queue):
     """
     Handles calling asynchronous taxon id retrievals and updating task progress.
     Puts results in a asyncio Queue.
@@ -103,12 +105,12 @@ async def fetch_taxid_call(name: str, q: asyncio.queues.Queue, console: Console)
     """
     taxid = await asyncio.get_event_loop().run_in_executor(None, fetch_taxid, name)
 
-    await log_results(name, taxid, console)
+    await log_results(name, taxid)
 
     await q.put((name, taxid))
 
 
-async def log_results(name: str, taxid: int, console: Console):
+async def log_results(name: str, taxid: int):
     """
     Logs results of the taxid fetch from the NCBI taxonomy database
 
@@ -116,17 +118,14 @@ async def log_results(name: str, taxid: int, console: Console):
     :param taxid: Taxid for a given OTU if found, else None
     :param console: Rich console object used for logging
     """
+    otu_log = logger.bind(name=name)
     if taxid:
-        console.print(f"[green]✔ {name}")
-        console.print(f"[green]  Found taxid {taxid}")
+        otu_log.info('', taxid=taxid)
     else:
-        console.print(f"[red]✘ {name}")
-        console.print("[red]  Could not find taxid")
-
-    console.print()
+        otu_log.debug('', taxid=None)
 
 
-def update_otu(taxid: int, path: pathlib.Path):
+def update_otu(taxid: int, path: Path):
     """
     Updates a otu.json's taxid key with either a taxon id or None
     depending on whether an id was able to be retrieved.
@@ -141,7 +140,7 @@ def update_otu(taxid: int, path: pathlib.Path):
         json.dump(otu, f, indent=4)
 
 
-async def get_name_from_path(path: pathlib.Path, force_update: bool) -> Optional[str]:
+async def get_name_from_path(path: Path, force_update: bool) -> Optional[str]:
     """
     Given a path to an OTU, returns the name of the OTU. If a taxon id already exists
     for the OTU then it returns None.
@@ -163,7 +162,7 @@ async def get_name_from_path(path: pathlib.Path, force_update: bool) -> Optional
             return otu["name"]
 
 
-def run(src_path: pathlib.Path, force_update: bool):
+def run(src_path: Path, force_update: bool):
     """
     Creates and runs the event loop to asynchronously find taxon ids for all OTU in a src directory
 

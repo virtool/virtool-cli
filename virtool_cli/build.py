@@ -1,10 +1,10 @@
 import json
-import pathlib
+from pathlib import Path
 from typing import Tuple
-
-from rich.console import Console
-
 import arrow
+import structlog
+
+from virtool_cli.utils.legacy import get_otu_paths
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -12,8 +12,10 @@ ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 
 SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
+logger = structlog.get_logger()
 
-def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str):
+
+def run(src_path: Path, output: Path, indent: bool, version: str):
     """
     Build a Virtool reference JSON file from a data directory.
 
@@ -22,7 +24,6 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
-    console = Console()
     meta = parse_meta(src_path)
 
     data = {
@@ -32,29 +33,25 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
 
     otus = list()
 
-    alpha_paths = [path for path in src_path.iterdir() if path.is_dir()]
+    otu_paths = get_otu_paths(src_path)
 
-    for alpha in alpha_paths:
+    for otu_path in otu_paths:
 
-        otu_paths = parse_alpha(alpha)
+        otu, isolate_ids = parse_otu(otu_path)
 
-        for otu_path in otu_paths:
+        for isolate_path in isolate_ids:
 
-            otu, isolate_ids = parse_otu(otu_path)
+            isolate, sequence_ids = parse_isolate(isolate_path)
 
-            for isolate_path in isolate_ids:
+            for sequence_path in sequence_ids:
+                with open(sequence_path, "r") as f:
+                    sequence = json.load(f)
 
-                isolate, sequence_ids = parse_isolate(isolate_path)
+                isolate["sequences"].append(sequence)
 
-                for sequence_path in sequence_ids:
-                    with open(sequence_path, "r") as f:
-                        sequence = json.load(f)
+            otu["isolates"].append(isolate)
 
-                    isolate["sequences"].append(sequence)
-
-                otu["isolates"].append(isolate)
-
-            otus.append(otu)
+        otus.append(otu)
 
     try:
         with open(output, "w") as f:
@@ -63,16 +60,14 @@ def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str
             )
 
             json.dump(data, f, indent=4 if indent else None, sort_keys=True)
-            console.print(f"[green]  ✔ [/green]" + 
-                f"Reference folder '{src_path}' has been written to '{output}'")
+            logger.info('Reference file built', src=src_path, output=output)
     except:
-        console.print(f"[red]  ✘ [/red]" + 
-                f"Reference folder '{src_path}' could not be written to '{output}'")
+        logger.critical('Reference file build failed', src=src_path, output=output)
 
 
-def parse_meta(src_path: pathlib.Path) -> dict:
+def parse_meta(src_path: Path) -> dict:
     """
-    Deserializes and returns meta.json if found, else returns an empty dictionary.
+    Deserializes and returns meta.json if found, else returns an empty dictionary. 
 
     :param src_path: Path to database src directory
     :return: The deserialized meta.json object or an empty dictionary
@@ -84,9 +79,10 @@ def parse_meta(src_path: pathlib.Path) -> dict:
         return dict()
 
 
-def parse_alpha(alpha: pathlib.Path) -> list:
+def parse_alpha(alpha: Path) -> list:
     """
-    Generates and returns a list with every OTU in the directory of the given alpha
+    Generates and returns a list with every OTU in the directory of the given alpha.
+    Deprecated as of v2.
 
     :param alpha: Path to a given alpha directory in a reference
     :return: A list containing all the OTU in the given directory
@@ -94,7 +90,7 @@ def parse_alpha(alpha: pathlib.Path) -> list:
     return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
 
-def parse_otu(otu_path: pathlib.Path) -> Tuple[dict, list]:
+def parse_otu(otu_path: Path) -> Tuple[dict, list]:
     """
     Creates an list of isolate IDs for a given OTU
 
@@ -113,7 +109,7 @@ def parse_otu(otu_path: pathlib.Path) -> Tuple[dict, list]:
     return otu, isolate_ids
 
 
-def parse_isolate(isolate_path: pathlib.Path) -> Tuple[dict, list]:
+def parse_isolate(isolate_path: Path) -> Tuple[dict, list]:
     """
     Creates a list of sequence IDs for a given sequence
 
