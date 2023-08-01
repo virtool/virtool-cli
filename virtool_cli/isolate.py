@@ -13,15 +13,12 @@ from Bio import Entrez, SeqIO
 from rich.console import Console
 import structlog
 
-from virtool_cli.utils.legacy import (
-    get_otu_paths,
-    get_otus,
-    get_isolates,
-    get_sequences,
-    get_unique_ids,
-    NCBI_REQUEST_INTERVAL,
-)
+from virtool_cli.utils.ref import get_otu_paths
+from virtool_cli.utils.hashing import get_unique_ids
+from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.legacy import get_otus
 
+logger = structlog.get_logger()
 
 async def isolate(src: Path):
     """
@@ -102,6 +99,8 @@ async def fetch_otu_isolates(
     :param queue: Asyncio queue to put newfound accessions onto for caching purposes
     """
 
+    otu_log = logger.bind(name=name, taxid=taxid)
+
     isolates = await get_isolates(path)
 
     records, new_accessions = await asyncio.get_event_loop().run_in_executor(
@@ -110,12 +109,9 @@ async def fetch_otu_isolates(
 
     isolate_ids, sequence_ids = await get_unique_ids(paths)
 
-    console = Console()
-
     if records is None:
-        console.print(f"[red]✘ {name} ({taxid})")
-        console.print(
-            "  [red]Found 0 isolates, could not link taxid to nucleotide records\n"
+        otu_log.info(
+            "Found 0 isolates, could not link taxid to nucleotide records"
         )
         return
 
@@ -151,7 +147,7 @@ async def fetch_otu_isolates(
 
         await queue.put((taxid, new_accessions))
 
-    await log_results(name, taxid, new_isolates, console)
+    await log_results(name, taxid, new_isolates, otu_log)
 
 
 def get_records(accessions: list, taxid: str) -> Tuple[Optional[dict], list]:
@@ -206,7 +202,7 @@ def fetch_records(accessions: list) -> Optional[dict]:
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
-async def log_results(name: str, taxid: str, new_isolates: dict, console: Console):
+async def log_results(name: str, taxid: str, new_isolates: dict, console: structlog.BoundLogger):
     """
     Log isolate discovery results to console
 
@@ -217,18 +213,9 @@ async def log_results(name: str, taxid: str, new_isolates: dict, console: Consol
     """
     new_isolate_count = len(new_isolates)
 
-    if new_isolate_count == 0:
-        console.print(
-            f"[red]✘ {name} ({taxid})\n  Found {new_isolate_count} new isolates\n"
-        )
-    else:
-        console.print(
-            f"[green]✔ {name} ({taxid})\n  Found {new_isolate_count} new isolates:"
-        )
-        for isolate_name, isolate_type in new_isolates.items():
-            console.print(f"[green]    - {isolate_type} {isolate_name}")
-        console.print()
-
+    console.info(
+        f"Found {new_isolate_count} new isolates", n_isolates=new_isolate_count
+    )
 
 async def get_qualifiers(seq: list) -> dict:
     """
@@ -389,6 +376,42 @@ def random_alphanumeric(
 
     return random_alphanumeric(length=length, excluded=excluded)
 
+async def get_isolates(path: Path) -> dict:
+    """
+    Returns a mapping to every isolate and their folder name.
+
+    :param path: A path to a OTU directory in a reference
+    :return: A mapping of all of an OTU's isolates to their folder name (id)
+    """
+    isolates = dict()
+
+    for folder in path.iterdir():
+        # ignore the otu.json file in the OTU folder and parse through isolate folders
+        if folder.is_dir(): 
+            if folder / "isolate.json" in folder.iterdir():
+                async with aiofiles.open(folder / "isolate.json", "r") as f:
+                    isolate = json.loads(await f.read())
+                    isolates[isolate["source_name"]] = folder.name
+
+    return isolates
+
+
+async def get_sequences(path: Path) -> dict:
+    """
+    Returns a mapping of sequence accessions to their file name in a isolate directory.
+
+    :param path: A path to an isolate directory in a reference
+    :return: A mapping of all accessions in an isolate to their file name (id)
+    """
+    sequences = dict()
+
+    for sequence_id in path.glob('*.json'):
+        if sequence_id.name != "isolate.json":
+            async with aiofiles.open(sequence_id, "r") as f:
+                sequence = json.loads(await f.read())
+                sequences[sequence["accession"]] = sequence_id.name
+
+    return sequences
 
 def run(src: str):
     """

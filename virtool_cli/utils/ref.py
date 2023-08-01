@@ -45,11 +45,12 @@ def generate_otu_dirname(name: str, id: str = ''):
     :param id: ID hash of OTU 
     :return: A directory name in the form of 'converted_otu_name--taxid'
     """
-    no_whitespace = name.replace(" ", "_")
-    no_plus = no_whitespace.replace('+', 'and')
-    no_symbols = re.split(r'[()/-]+', no_plus)
+    no_plus = name.replace('+', 'plus ')
+    no_symbols = re.split(r'[():/-]+', no_plus)
+    joined = ' '.join(no_symbols)
+    no_whitespace = re.sub(r'[\s]+', "_", joined)
 
-    dirname = no_symbols
+    dirname = no_whitespace.lower()
     dirname += '--' + id
 
     return dirname

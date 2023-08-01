@@ -3,7 +3,8 @@ from typing import Optional
 from pathlib import Path
 import structlog
 
-from virtool_cli.utils.legacy import get_otu_paths, get_otus, create_otu_path
+from virtool_cli.utils.ref import get_otu_paths, generate_otu_dirname
+from virtool_cli.utils.legacy import get_otus
 
 logger = structlog.get_logger()
 
@@ -45,7 +46,7 @@ def fix_folder_name(path: Path, otu: dict) -> Optional[str]:
     :param path: Path to a given reference directory
     :param otu: A deserialized otu.json
     """
-    new_folder_name = create_otu_path(otu.get("name"))
+    new_folder_name = generate_otu_dirname(otu['name'], otu['_id'])
 
     if path.name != new_folder_name:
         new_path = path.with_name(new_folder_name)

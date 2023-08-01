@@ -10,7 +10,7 @@ import aiojobs
 from Bio import Entrez
 
 from virtool_cli.utils.ref import get_otu_paths
-from virtool_cli.utils.legacy import NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
 logger = structlog.get_logger()
 
@@ -71,8 +71,8 @@ async def taxid(src_path: Path, force_update: bool):
         update_otu(taxid, otu_paths[name])
 
     logger.info(
-        f"Retrieved {len(taxids)} taxids for {len(names)} OTUs", 
-        n_updated=len(taxids), n_otus=len(names)
+        f"Retrieved {len(taxids)} taxids for {len(paths)} OTUs", 
+        n_updated=len(taxids), n_otus=len(paths)
     )
 
 
@@ -119,7 +119,7 @@ async def log_results(name: str, taxid: int):
     :param taxid: Taxid for a given OTU if found, else None
     :param console: Rich console object used for logging
     """
-    otu_log = logger.bind(name=name)
+    otu_log = logger.bind(existing_name=name)
     if taxid:
         otu_log.info('Taxon ID found', taxid=taxid)
     else:

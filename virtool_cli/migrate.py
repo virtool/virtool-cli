@@ -36,9 +36,8 @@ def flatten_src(src_path: Path):
         otu_paths = [otu for otu in alpha.iterdir() if otu.is_dir()]
         
         for otu_path in otu_paths:
-            new_name = reassemble_otu_dirname(
-                old_name=otu_path.name, 
-                otu=parse_otu(otu_path))
+            otu = parse_otu(otu_path)
+            new_name = generate_otu_dirname(otu['name'], otu['_id'])
             new_path = src_path / new_name
             otu_path.rename(new_path)
             print(new_path)
@@ -50,12 +49,3 @@ def flatten_src(src_path: Path):
         except Exception as e:
             return e
         alpha.rmdir()
-    
-def reassemble_otu_dirname(old_name: str, otu: dict):
-    return old_name + '--' + otu['_id']
-
-if __name__ == '__main__':
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    src_path = Path(REPO_DIR) / 'ref-plant-viruses/src'
-
-    run(src_path)
