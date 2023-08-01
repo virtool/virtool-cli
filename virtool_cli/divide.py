@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import shutil
 
-from virtool_cli.utils.legacy import create_otu_path
+from virtool_cli.utils.ref import generate_otu_dirname
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -62,14 +62,8 @@ def build_otu(output: Path, otu: dict) -> str:
     :return: Path to a newly generated OTU directory
     """
     lower_name = otu["name"].lower()
-    first_letter = lower_name[0]
 
-    try:
-        (output / first_letter).mkdir()
-    except FileExistsError:
-        pass
-
-    otu_path = create_otu_path(lower_name, output, first_letter)
+    otu_path = output / generate_otu_dirname(lower_name, otu['_id'])
     otu_path.mkdir()
 
     with open(otu_path / "otu.json", "w") as f:
