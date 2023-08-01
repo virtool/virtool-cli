@@ -10,13 +10,11 @@ from urllib.error import HTTPError
 import aiofiles
 import aiojobs
 from Bio import Entrez, SeqIO
-from rich.console import Console
 import structlog
 
-from virtool_cli.utils.ref import get_otu_paths
+from virtool_cli.utils.ref import get_otu_paths, map_otus
 from virtool_cli.utils.hashing import get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.utils.legacy import get_otus
 
 logger = structlog.get_logger()
 
@@ -29,8 +27,6 @@ async def isolate(src: Path):
     scheduler = await aiojobs.create_scheduler()
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
-    console = Console()
-
     coros = []
     q = asyncio.Queue()
 
@@ -40,14 +36,14 @@ async def isolate(src: Path):
     paths = get_otu_paths(src)
 
     # get mapping of all OTU paths to its OTU JSON file
-    otu_path_map = get_otus(paths)
+    otu_path_map = map_otus(paths)
 
     for path in paths:
-        taxid = otu_path_map[path].get("taxid")
-        name = otu_path_map[path].get("name")
+        taxid = otu_path_map[path].get("taxid", None)
+        name = otu_path_map[path].get("name", '')
 
         if taxid is None:
-            console.print(f"✘ [red]{name}\n" f"  [red]No taxid assigned to OTU\n")
+            logger.info(f"No taxid assigned to OTU", taxid=taxid, name=name)
             continue
 
         accessions = existing_accessions.get(str(taxid))

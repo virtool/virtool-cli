@@ -66,3 +66,17 @@ def parse_otu(path: Path) -> dict:
         otu = json.load(f)
 
     return otu
+
+def map_otus(paths: list) -> dict:
+    """
+    Returns a mapping of every OTU path to their deserialized OTU dictionary.
+
+    :param paths: List of paths to all OTU in a reference
+    :return: A mapping of every OTU path to its OTU dictionary
+    """
+    path_taxid_map = dict()
+
+    for path in paths:
+        path_taxid_map[path] = parse_otu(path)
+
+    return path_taxid_map

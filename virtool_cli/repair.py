@@ -3,8 +3,12 @@ from typing import Optional
 from pathlib import Path
 import structlog
 
-from virtool_cli.utils.ref import get_otu_paths, generate_otu_dirname
-from virtool_cli.utils.legacy import get_otus
+from virtool_cli.utils.ref import (
+    get_otu_paths, 
+    generate_otu_dirname, 
+    parse_otu, 
+    map_otus
+)
 
 logger = structlog.get_logger()
 
@@ -15,7 +19,7 @@ def run(src_path: Path):
     :param src_path: Path to a given reference directory
     """
     paths = get_otu_paths(src_path)
-    otus = get_otus(paths)
+    otus = map_otus(paths)
     otus_to_update = {}
 
     for path in paths:
