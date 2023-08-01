@@ -9,6 +9,7 @@ import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
 import virtool_cli.migrate
+import virtool_cli.accessions
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
@@ -144,6 +145,7 @@ def repair(src_path):
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
         click.echo(e)
 
+
 @ref.command()
 @click.option(
     "-src",
@@ -152,13 +154,47 @@ def repair(src_path):
     type=str,
     help="the path to a reference directory",
 )
-def migrate(src_path):
+@click.option('--debug/--no-debug', default=False)
+def migrate(src_path, debug):
     """Convert a reference directory from v1.x to v2.x"""
     if not Path(src_path).exists():
         logger.critical('Source directory does not exist')
 
     try:
         virtool_cli.migrate.run(Path(src_path))
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
+        click.echo(e)
+
+
+@ref.command()
+@click.option(
+    "-src",
+    "--src_path",
+    required=True,
+    type=str,
+    help="the path to a reference directory",
+)
+@click.option(
+    "-cache",
+    "--cache_path",
+    required=True,
+    type=str,
+    default='.cache',
+    help="the path to a cache directory",
+)
+@click.option('--debug/--no-debug', default=False)
+def accessions(src_path, cache_path, debug):
+    """Convert a reference directory from v1.x to v2.x"""
+    if not Path(src_path).exists():
+        logger.critical('Source directory does not exist')
+
+    try:
+        virtool_cli.accessions.run(
+            src=Path(src_path),
+            cache=Path(cache_path),
+            debugging=debug
+        )
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
         click.echo(e)
