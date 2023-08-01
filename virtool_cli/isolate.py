@@ -405,7 +405,7 @@ async def get_sequences(path: Path) -> dict:
         if sequence_id.name != "isolate.json":
             async with aiofiles.open(sequence_id, "r") as f:
                 sequence = json.loads(await f.read())
-                sequences[sequence["accession"]] = sequence_id.name
+                sequences[sequence.get("accession")] = sequence_id.name
 
     return sequences
 

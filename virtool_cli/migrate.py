@@ -37,7 +37,10 @@ def flatten_src(src_path: Path):
         
         for otu_path in otu_paths:
             otu = parse_otu(otu_path)
-            new_name = generate_otu_dirname(otu['name'], otu['_id'])
+            new_name = generate_otu_dirname(
+                otu.get('name'), 
+                otu.get('_id')
+            )
             new_path = src_path / new_name
             otu_path.rename(new_path)
             print(new_path)

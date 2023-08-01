@@ -6,7 +6,6 @@ import structlog
 from virtool_cli.utils.ref import (
     get_otu_paths, 
     generate_otu_dirname, 
-    parse_otu, 
     map_otus
 )
 
@@ -25,12 +24,12 @@ def run(src_path: Path):
     for path in paths:
         results = []
 
-        new_path = fix_folder_name(path, otus[path])
+        new_path = fix_folder_name(path, otus.get(path))
         # if a folder name has been changed then a new path will return
         if new_path:
             results.append("Fixed folder name")
             # making sure to update the dictionary that maps paths to OTUs
-            otus[new_path] = otus[path]
+            otus[new_path] = otus.get(path)
             path = new_path
 
         otu = fix_taxid(otus[path])
@@ -66,7 +65,7 @@ def fix_taxid(otu: dict) -> Optional[dict]:
     :return: The modified otu parameter if it needs to be updated, else None
     """
     try:
-        taxid = otu["taxid"]
+        taxid = otu.get("taxid", None)
         if isinstance(taxid, str):
             return {**otu, "taxid": int(taxid)}
     except KeyError:
@@ -99,4 +98,4 @@ def write_otus(otus: dict):
     """
     for path in otus.keys():
         with open(path / "otu.json", "w") as f:
-            json.dump(otus[path], f, indent=4)
+            json.dump(otus.get(path), f, indent=4)

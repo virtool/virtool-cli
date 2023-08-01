@@ -33,7 +33,7 @@ def run(src_path: Path, output: Path):
     with open(src_path, "r") as export_handle:
         data = json.load(export_handle)
 
-        for otu in data["otus"]:
+        for otu in data.get("otus"):
             otu_path = build_otu(output, otu)
 
             isolates = otu.pop("isolates")
@@ -61,9 +61,9 @@ def build_otu(output: Path, otu: dict) -> str:
     :param otu: Dictionary of an OTU
     :return: Path to a newly generated OTU directory
     """
-    lower_name = otu["name"].lower()
+    # lower_name = otu["name"].lower()
 
-    otu_path = output / generate_otu_dirname(lower_name, otu['_id'])
+    otu_path = output / generate_otu_dirname(otu.get('name'), otu.get('_id'))
     otu_path.mkdir()
 
     with open(otu_path / "otu.json", "w") as f:
@@ -84,7 +84,7 @@ def build_isolate(otu_path: Path, isolate: dict) -> str:
     :param isolate: A dictionary containing isolate information
     :return: A path to a newly generated isolate directory
     """
-    isolate_path = otu_path / isolate["id"]
+    isolate_path = otu_path / isolate.get("id")
     isolate_path.mkdir()
 
     with open(isolate_path / "isolate.json", "w") as f:
