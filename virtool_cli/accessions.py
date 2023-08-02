@@ -235,17 +235,3 @@ def update_record(
         json.dump(current_record, f, indent=2 if indent else None)
     
     return
-
-
-if __name__ == '__main__':
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    
-    src_path = Path(REPO_DIR) / 'ref-mini/src'
-    cache_path = src_path.parent / '.cache'
-
-    if not cache_path.exists():
-        cache_path.mkdir()
-
-    accession_path = Path(REPO_DIR) / 'ref-fetched-accessions/src'
-
-    run(src=src_path, cache=cache_path, debugging=False)

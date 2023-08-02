@@ -102,7 +102,7 @@ def divide(src_path, output):
 def taxid(src_path, force_update):
     """Fetch taxid for all OTU in given reference directory."""
     try:
-        logger.info("Scanning OTUs for taxon IDs...")
+        click.echo("Scanning OTUs for taxon IDs...")
         virtool_cli.taxid.run(Path(src_path), force_update)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
@@ -187,7 +187,8 @@ def migrate(src_path, debug):
 def accessions(src_path, cache_path, debug):
     """Convert a reference directory from v1.x to v2.x"""
     if not Path(src_path).exists():
-        logger.critical('Source directory does not exist')
+        click.echo(ERROR_MESSAGE + 'Source directory does not exist')
+        return
 
     try:
         virtool_cli.accessions.run(
@@ -197,7 +198,7 @@ def accessions(src_path, cache_path, debug):
         )
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
-        click.echo(e)
+        logger.exception(e)
 
 
 if __name__ == "__main__":
