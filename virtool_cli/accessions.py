@@ -28,6 +28,17 @@ def run(src: Path, cache: Path, debugging: bool = False):
 
     get_all_accessions(src, cache)
 
+def get_accessions_by_id(records: Path, otu_id: str):
+    """
+    Searches records for a matching id
+    Returns the first matched path in the accession records
+    """
+    matches = [record for record in records.glob(f'*--{otu_id}.json')]
+    if matches:
+        return matches[0]
+    else:
+        return FileNotFoundError
+
 def get_all_accessions(src: Path, cache: Path):
     """
     :param src: Path to a reference directory
@@ -96,7 +107,7 @@ def check_all_records(src: Path, cache: Path):
             taxid=taxid,
             record_path=record_path,
             otu_path=otu_path, 
-            ref_accessions=get_current_accessions(otu_path), 
+            ref_accessions=get_ref_otu_accessions(otu_path), 
             cache=cache, 
             otu_log=otu_log
         )
@@ -153,7 +164,7 @@ def generate_accession_records(src: Path):
         except Exception as e:
             logger.warning('taxid not found', path=src(otu_path))
             continue
-        accessions = get_current_accessions(otu_path)
+        accessions = get_ref_otu_accessions(otu_path)
 
         all_accessions[taxid] = generate_record(otu_data, accessions)
     
@@ -170,7 +181,7 @@ def generate_record(otu_data: dict, accession_list: list):
     
     return otu_fetch_data
 
-def get_current_accessions(otu_path: Path):
+def get_ref_otu_accessions(otu_path: Path):
     """
     Gets all accessions from an OTU directory
 
