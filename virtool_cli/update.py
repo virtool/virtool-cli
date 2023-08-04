@@ -90,7 +90,7 @@ async def processor_loop(
         otu_id = fetch_packet['otu_id']
         taxid_log = logger.bind(taxid=taxid)
 
-        otu_updates = {}
+        otu_updates = []
         for seq_list in fetch_packet['data']:
             for seq_data in seq_list:
                 seq_qualifier_data = await get_qualifiers(seq_data.features)
@@ -98,13 +98,19 @@ async def processor_loop(
                 isolate_type = await find_isolate(seq_qualifier_data)
                 if isolate_type is None:
                     continue
-
                 isolate_name = seq_qualifier_data.get(isolate_type)[0]
-                if isolate_name not in otu_updates:
-                    otu_updates[isolate_name] = []
+                
+                # if isolate_name not in otu_updates:
+                #     otu_updates[isolate_name] = []
 
                 seq_dict = await format_sequence(seq_data, seq_qualifier_data)
-                otu_updates[isolate_name].append(seq_dict)
+                isolate = { 
+                    'source_name': isolate_name, 
+                    'source_type': isolate_type
+                }
+                seq_dict['isolate'] = isolate
+                otu_updates.append(seq_dict)
+                # otu_updates[isolate_name].append(seq_dict)
             
                 # taxid_log.debug(
                 #     'Processed data', 
@@ -137,16 +143,27 @@ async def writer_loop(queue, src_path, storage):
         otu_path = search_otu_by_id(src_path, otu_id)
         ref_isolates = await label_isolates(otu_path)
 
-        for source_name in new_sequence_set:
+        print_new(new_sequence_set)
+
+        try:
+            seq_hashes = generate_hashes(n=len(new_sequence_set), length=8, mixed_case=False, excluded=unique_seq)
+        except Exception as e:
+            log.exception(e)
+            return e
+
+        for seq_data in new_sequence_set:
             
-            if source_name in ref_isolates:
-                iso_hash = ref_isolates[source_name]['id']
+            isolate_data = seq_data.pop('isolate')
+            isolate_name = isolate_data['source_name']
+            isolate_type = isolate_data['source_type']
+
+            if isolate_name in ref_isolates:
+                iso_hash = ref_isolates[isolate_name]['id']
                 log.debug(
                     'Existing isolate name found', 
-                    iso_name=source_name, 
+                    iso_name=isolate_name, 
                     iso_hash=iso_hash
                 )
-                iso_path = otu_path / iso_hash
 
             else:
                 try:
@@ -156,25 +173,35 @@ async def writer_loop(queue, src_path, storage):
                     log.exception(e)
                 
                 log.debug('Assigning new isolate hash', 
-                    iso_name=source_name,
+                    iso_name=isolate_name,
                     iso_hash=iso_hash)
-                await store_isolate(source_name, '', iso_hash, otu_path, indent=2)
+                await store_isolate(isolate_name, isolate_type, iso_hash, otu_path, indent=2)
                 unique_iso.add(iso_hash)
             
-            try:
-                seq_hashes = generate_hashes(n=4, length=8, mixed_case=False, excluded=unique_seq)
-            except Exception as e:
-                log.exception(e)
-                return e
+            iso_path = otu_path / iso_hash
+            
+            seq_hash = seq_hashes.pop()
+            log.debug('Assigning new sequence', 
+                seq_name=isolate_name,
+                seq_hash=seq_hash)
+            
+            await store_sequence(seq_data, seq_hash, iso_path, indent=2)
+            unique_seq.add(seq_hash)
+            
+        #     try:
+        #         seq_hashes = generate_hashes(n=4, length=8, mixed_case=False, excluded=unique_seq)
+        #     except Exception as e:
+        #         log.exception(e)
+        #         return e
 
-            for sequence in new_sequence_set.get(source_name):
-                seq_hash = seq_hashes.pop()
-                log.debug('Assigning new sequence', 
-                    iso_name=source_name,
-                    iso_hash=iso_hash)
+        #     for sequence in new_sequence_set.get(source_name):
+        #         seq_hash = seq_hashes.pop()
+        #         log.debug('Assigning new sequence', 
+        #             iso_name=source_name,
+        #             iso_hash=iso_hash)
                 
-                await store_sequence(sequence, seq_hash, iso_path, indent=2)
-                unique_seq.add(seq_hash)
+        #         await store_sequence(sequence, seq_hash, iso_path, indent=2)
+        #         unique_seq.add(seq_hash)
 
         await asyncio.sleep(0.1)
         queue.task_done()
@@ -336,31 +363,15 @@ async def format_sequence(accession: SeqIO.SeqRecord, data: dict) -> dict:
         logger.exception(e)
         return {}
 
-def print_new_all(storage: dict):
-    for taxid in storage:
-        print(f"{taxid}")
-
-        for isolate in storage[taxid]:
-            print(f"  {isolate}")
-
-            for sequence in storage[taxid][isolate]:
-                # print(sequence)
-                print(f"     {sequence['accession']}:") 
-                print(f"     {sequence['definition']}")
-
-        print()
-
 def print_new(otu_record: dict) -> None:
-    for isolate in otu_record:
-        print(f"  {isolate}")
-
-        for sequence in otu_record[isolate]:
-            # print(sequence)
-            print(f"     {sequence['accession']}:") 
-            print(f"     {sequence['definition']}")
+    for sequence in otu_record:
+        print(f"     {sequence['accession']}:") 
+        print(f"     {sequence['definition']}")
+        print(f"     {sequence['isolate']}")
 
         print()
     return
+
 
 if __name__ == '__main__':
     debug = True
