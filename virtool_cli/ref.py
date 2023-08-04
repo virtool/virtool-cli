@@ -176,24 +176,28 @@ def migrate(src_path, debug):
     help="the path to a reference directory",
 )
 @click.option(
-    "-cache",
-    "--cache_path",
+    "-cat",
+    "--catalog_path",
     required=True,
     type=str,
-    default='.cache',
-    help="the path to a cache directory",
+    default='.cache/catalog',
+    help="the path to a catalog directory",
 )
 @click.option('--debug/--no-debug', default=False)
-def accessions(src_path, cache_path, debug):
+def accessions(src_path, catalog_path, debug):
     """Convert a reference directory from v1.x to v2.x"""
     if not Path(src_path).exists():
         click.echo(ERROR_MESSAGE + 'Source directory does not exist')
         return
+    
+    catalog_dir = Path(catalog_path)
+    if not catalog_dir.exists():
+        catalog_dir.mkdir(parents=True)
 
     try:
         virtool_cli.accessions.run(
             src=Path(src_path),
-            cache=Path(cache_path),
+            catalog=Path(catalog_path),
             debugging=debug
         )
     except (FileNotFoundError, NotADirectoryError) as e:

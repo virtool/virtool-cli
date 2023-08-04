@@ -12,56 +12,66 @@ from virtool_cli.utils.ref import (
 logger = structlog.get_logger()
 
 
-def run(src: Path, cache: Path, debugging: bool = False):
+def run(src: Path, catalog: Path, debugging: bool = False):
     """
     :param src: Path to a reference directory
-    :param cache: Path to a cache directory
+    :param catalog: Path to an accession catalog directory
+    :param debugging: Debugging flag
     """
 
     filter_class = DEBUG if debugging else INFO
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(filter_class))
     
-    if not cache.exists():
-        logger.info('Initializing .cache directory...', cache=str(cache))
-        cache.mkdir()
+    if not catalog.exists():
+        logger.info('Initializing .cache directory...', catalog=str(catalog))
+        catalog.mkdir()
 
-    get_all_accessions(src, cache)
+    get_catalog(src, catalog)
 
-def search_accessions_by_id(records: Path, otu_id: str):
+def split_pathname(path):
     """
-    Searches records for a matching id
-    Returns the first matched path in the accession records
     """
-    matches = [record for record in records.glob(f'*--{otu_id}.json')]
+    [ taxid, otu_id ] = (path.stem).split('--')
+
+    return taxid, otu_id
+
+def search_by_id(catalog: Path, otu_id: str):
+    """
+    Searches records for a matching id and returns the first matching path in the accession records
+
+
+    """
+    matches = [listing for listing in catalog.glob(f'*--{otu_id}.json')]
     if matches:
         return matches[0]
     else:
         return FileNotFoundError
 
-def get_all_accessions(src: Path, cache: Path):
+def get_catalog(src: Path, catalog: Path):
     """
     :param src: Path to a reference directory
-    :param cache: Path to a cache directory
+    :param catalog: Path to an accession catalog directory
     """
-    cache_paths = [record for record in cache.glob('*.json')]
+    catalog_paths = [record for record in catalog.glob('*.json')]
     
-    if cache_paths:
+    if catalog_paths:
         logger.info(
-            'Cache is already populated. \n Checking accessions for accuracy...', 
-            cache=str(cache))
+            'Catalog is already populated. \n Checking listings for accuracy...', 
+            catalog=str(catalog))
 
-        updated_list = check_all_records(src=src, cache=cache)
+        updated_list = check_listing(src=src, catalog=catalog)
         
         if updated_list:
-            logger.info(f'Updated {len(updated_list)} cache entries', updated=updated_list)
+            logger.info(f'Updated {len(updated_list)} cache entries', 
+                updated=updated_list)
         else:
             logger.info(f'Cache is up to date')
 
     else:
-        logger.info('Empty cache, initializing records...', cache=str(cache))
+        logger.info('Empty cache, initializing listings...', catalog=str(catalog))
 
-        all_current_accessions = generate_accession_records(src)
+        all_current_accessions = generate_catalog(src)
     
         for taxid in all_current_accessions:
             logger.debug(
@@ -70,10 +80,10 @@ def get_all_accessions(src: Path, cache: Path):
                 current_accessions=all_current_accessions.get(taxid))
             
             try:
-                write_record(
+                write_listing(
                     taxid=taxid, 
                     record=all_current_accessions.get(taxid),
-                    cache=cache
+                    catalog=catalog
                 )
             except Exception as e:
                 logger.exception(e)
@@ -81,12 +91,12 @@ def get_all_accessions(src: Path, cache: Path):
     
     # logger.info('Accessions written to cache', cache=str(cache))
 
-def check_all_records(src: Path, cache: Path):
+def check_listing(src: Path, catalog: Path):
     """
     :param src: Path to a reference directory
-    :param cache: Path to a cache directory
+    :param catalog: Path to a catalog directory
     """
-    cache_change_list = []
+    changed_listings = []
 
     for otu_path in get_otu_paths(src):
         try:
@@ -101,57 +111,59 @@ def check_all_records(src: Path, cache: Path):
             continue
 
         otu_log = logger.bind(name=otu_data['name'], otu_id=otu_data['_id'], taxid=taxid)
-        record_path = cache / f"{taxid}--{otu_data.get('_id')}.json"
+        record_path = catalog / f"{taxid}--{otu_data.get('_id')}.json"
 
-        check_record(
+        check_listing(
             taxid=taxid,
-            record_path=record_path,
+            listing_path=record_path,
             otu_path=otu_path, 
-            ref_accessions=get_ref_otu_accessions(otu_path), 
-            cache=cache, 
-            otu_log=otu_log
+            ref_accessions=catalog_otu(otu_path), 
+            cache=catalog, 
+            log=otu_log
         )
     
-    return cache_change_list
+    return changed_listings
 
-def check_record(taxid, record_path, otu_path, ref_accessions, cache, otu_log):
+def check_listing(
+    taxid, listing_path, otu_path, ref_accessions, cache, log
+):
     """
     """
-    if record_path.exists():
-        with open(record_path, "r") as f:
+    if listing_path.exists():
+        with open(listing_path, "r") as f:
             cached_record = json.load(f)
 
         if set(ref_accessions) != set(cached_record.get('accessions')['included']):
-            otu_log.info('Changes found')
-            print(record_path.name)
+            log.info('Changes found')
+            print(listing_path.name)
             print(cached_record['accessions']['included'])
             print(ref_accessions)
 
             cached_record.get('accessions')['included'] = ref_accessions
             
-            update_record(record_path, ref_accessions, cached_record)
-            otu_log.debug('Wrote new list')
+            update_listing(listing_path, ref_accessions, cached_record)
+            log.debug('Wrote new list')
             return taxid
 
     else:
-        otu_log.info(f'No accession record for f{taxid}. Creating {record_path.name}')
+        log.info(f'No accession record for f{taxid}. Creating {listing_path.name}')
         
         new_record = generate_record(
             otu_data=parse_otu(otu_path), 
             accession_list=ref_accessions)
-        write_record(taxid, new_record, cache)
+        write_listing(taxid, new_record, cache)
         return taxid
     
     return
 
-def generate_accession_records(src: Path):
+def generate_catalog(src: Path):
     """
-    Initialize an accession cache list by pulling accessions
+    Initialize an accession catalog by pulling accessions
     from all OTU directories
 
     :param src: Path to a reference directory
     """
-    all_accessions = {}
+    catalog = {}
 
     counter = 0
     for otu_path in get_otu_paths(src):
@@ -164,11 +176,11 @@ def generate_accession_records(src: Path):
         except Exception as e:
             logger.warning('taxid not found', path=src(otu_path))
             continue
-        accessions = get_ref_otu_accessions(otu_path)
+        accessions = catalog_otu(otu_path)
 
-        all_accessions[taxid] = generate_record(otu_data, accessions)
+        catalog[taxid] = generate_record(otu_data, accessions)
     
-    return all_accessions
+    return catalog
 
 def generate_record(otu_data: dict, accession_list: list):
     """
@@ -181,9 +193,9 @@ def generate_record(otu_data: dict, accession_list: list):
     
     return otu_fetch_data
 
-def get_ref_otu_accessions(otu_path: Path):
+def catalog_otu(otu_path: Path) -> list:
     """
-    Gets all accessions from an OTU directory
+    Gets all accessions from an OTU directory and returns a list
 
     :param src: Path to an OTU directory
     """
@@ -197,10 +209,10 @@ def get_ref_otu_accessions(otu_path: Path):
 
     return accessions
 
-def write_record(
+def write_listing(
         taxid: int, 
         record: dict, 
-        cache: Path,
+        catalog: Path,
         indent: bool = True):
     """
     Write accession file to cache directory
@@ -212,7 +224,7 @@ def write_record(
     """
     taxid_log = logger.bind(taxid=taxid)
 
-    output_path = cache / f"{taxid}--{record['_id']}.json"
+    output_path = catalog / f"{taxid}--{record['_id']}.json"
 
     taxid_log.debug('Writing accession', accession_path=output_path)
 
@@ -223,10 +235,10 @@ def write_record(
     
     return
 
-def update_record(
+def update_listing(
         path: Path,
         accessions: list,
-        current_record: dict, 
+        listing: dict, 
         indent: bool = True):
     """
     Write accession file to cache directory
@@ -240,9 +252,9 @@ def update_record(
 
     taxid_log.debug('Updating accession', accession_path=path)
 
-    current_record['accessions']['included'] = accessions
+    listing['accessions']['included'] = accessions
 
     with open(path, "w") as f:
-        json.dump(current_record, f, indent=2 if indent else None)
+        json.dump(listing, f, indent=2 if indent else None)
     
     return

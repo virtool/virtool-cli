@@ -12,14 +12,14 @@ from Bio import Entrez, SeqIO
 from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, parse_otu, parse_isolates, map_otus, search_otu_by_id
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions import search_accessions_by_id
+from virtool_cli.accessions import search_by_id
 
 logger = structlog.get_logger()
 
 
-def run(src: Path, records: Path, debugging: bool = False):
+def run(src: Path, catalog: Path, debugging: bool = False):
     """
-    Runs the asynchronous routines to find new isolates for all OTU in a reference
+    Calls the parent routine
 
     :param src: Path to a reference directory
     """
@@ -27,20 +27,58 @@ def run(src: Path, records: Path, debugging: bool = False):
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(filter_class))
 
-    asyncio.run(update(src, records))
+    logger.info('Updating src directory accessions using catalog listings...')
 
-async def update(src: Path, records: Path):
-    """
-    """
-    upstream_queue = asyncio.Queue()
-    write_queue = asyncio.Queue()
+    asyncio.run(
+        update(src_path=src, catalog_path=catalog)
+    )
 
-    included_records = filter_records(src, records)
+async def update(src_path: Path, catalog_path: Path):
+    """
+    Creates 2 queues:
+        1) upstream: Holds raw NCBI GenBank data,
+        2) write: Holds formatted sequence data and isolate data
+    
+    Monitors 3 asynchrononous processes:
+        1) fetcher: 
+            Requests and retrieves new accessions from NCBI GenBank
+            and pushes results to upstream queue
+        2) processor: 
+            Pulls Genbank data from upstream queue, 
+            formats into dict form and pushes to write queue
+        3) writer: 
+            Pulls formatted sequences from write queue
+            and writes json to the correct location in the 
+            src directory
+
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
+    """
+
+    # Filter out cached listings that are not present in this src directory
+    included_listings = filter_catalog(src_path, catalog_path)
     storage = {}
 
-    fetcher = asyncio.create_task(fetcher_loop(upstream_queue, included_records))
-    processor = asyncio.create_task(processor_loop(upstream_queue, write_queue))
-    writer = asyncio.create_task(writer_loop(write_queue, src, storage))
+    # Holds raw NCBI GenBank data
+    upstream_queue = asyncio.Queue()
+
+    # Holds formatted sequence data and isolate data
+    write_queue = asyncio.Queue()
+
+    # Requests and retrieves new accessions from NCBI GenBank
+    # and pushes results to upstream queue
+    fetcher = asyncio.create_task(
+        fetcher_loop(upstream_queue, included_listings))
+    
+    # Pulls Genbank data from upstream queue, formats into dict form 
+    # and pushes to write queue
+    asyncio.create_task(
+        processor_loop(upstream_queue, write_queue))
+    
+    # Pulls formatted sequences from write queue, checks isolate metadata
+    # and writes json to the correct location in the src directory
+    asyncio.create_task(
+        writer_loop(write_queue, src_path, storage))
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 
@@ -48,29 +86,42 @@ async def update(src: Path, records: Path):
     
     await write_queue.join()
 
-    # print(storage)
+    return
 
-async def fetcher_loop(queue: asyncio.Queue, record_paths: list):
+async def fetcher_loop(
+    queue: asyncio.Queue, 
+    listing_paths: list
+) -> None:
     """
+    Loops through selected OTU listings from accession catalogue, 
+    indexed by NCBI taxon ID, and:
+        1) requests NCBI Genbank for accession numbers not extant
+            in catalog,
+        2) loops through retrieved new accession numbers and 
+            requests relevant record data from NCBI Genbank
+        3) Pushes new records and corresponding OTU information
+            to a queue for formatting
     """
-    for record_path in record_paths:
-        record = json.loads(record_path.read_text())
+    for path in listing_paths:
+        acc_listing = json.loads(path.read_text())
 
-        taxid = (record_path.name).split('--')[0]
-        taxid_log = logger.bind(taxid=taxid)
+        # extract taxon ID and _id hash from listing filename
+        [ taxid, otu_id ] = (path.stem).split('--')
+        
+        taxid_log = logger.bind(taxid=taxid, otu_id=otu_id)
 
-        new_accessions = await fetch_upstream_new(taxid, record)
+        new_accessions = await fetch_upstream_accessions(taxid, acc_listing)
         # await asyncio.sleep(NCBI_REQUEST_INTERVAL)
         
         await taxid_log.adebug('New accessions', new=new_accessions)
 
         data = []
         for accession in new_accessions:
-            new_data = await fetch_accession_data(accession, taxid_log)
+            new_data = await fetch_upstream_records(accession, taxid_log)
             data.append(new_data)
-            # await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+            await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
-        packet = { 'taxid': taxid, 'otu_id': record['_id'], 'data': data }
+        packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': data }
 
         await queue.put(packet)
         taxid_log.debug(
@@ -127,6 +178,7 @@ async def processor_loop(
 
 async def writer_loop(queue, src_path, storage):
     """
+    TO-DO: write changes back to local catalog?
     """
     unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
     # generate_hashes(n=1, length=8, mixed_case=False, excluded=unique_seq)
@@ -187,24 +239,145 @@ async def writer_loop(queue, src_path, storage):
             
             await store_sequence(seq_data, seq_hash, iso_path, indent=2)
             unique_seq.add(seq_hash)
-            
-        #     try:
-        #         seq_hashes = generate_hashes(n=4, length=8, mixed_case=False, excluded=unique_seq)
-        #     except Exception as e:
-        #         log.exception(e)
-        #         return e
-
-        #     for sequence in new_sequence_set.get(source_name):
-        #         seq_hash = seq_hashes.pop()
-        #         log.debug('Assigning new sequence', 
-        #             iso_name=source_name,
-        #             iso_hash=iso_hash)
-                
-        #         await store_sequence(sequence, seq_hash, iso_path, indent=2)
-        #         unique_seq.add(seq_hash)
 
         await asyncio.sleep(0.1)
         queue.task_done()
+
+async def label_isolates(otu_path: Path) -> dict:
+    """
+    Return all isolates present in an OTU directory
+    """
+    if not otu_path.exists():
+        return FileNotFoundError
+
+    isolates = {}
+    
+    for iso_path in get_isolate_paths(otu_path):
+        with open(iso_path / "isolate.json", "r") as f:
+            isolate = json.load(f)
+        isolates[isolate.get('source_name')] = isolate
+    
+    return isolates
+
+async def fetch_upstream_accessions(
+    taxid: int, record: dict
+) -> list:
+    """
+    """
+    upstream_accessions = []
+    entrez_record = Entrez.read(
+        Entrez.elink(
+            dbfrom="taxonomy", db="nucleotide", 
+            id=str(taxid), idtype="acc")
+    )
+
+    for linksetdb in entrez_record[0]["LinkSetDb"][0]["Link"]:
+        upstream_accessions.append(linksetdb["Id"])
+
+    filter_set = set(
+        record['accessions']['included'] + \
+        record['accessions']['excluded'])
+    upstream_set = set(upstream_accessions)
+
+    return list(upstream_set.difference(filter_set))
+
+async def fetch_upstream_records(
+    fetch_list: list, log: structlog.BoundLogger
+) -> list:
+    """
+    Take a list of accession numbers and request the records from NCBI GenBank
+    """
+    try:
+        handle = Entrez.efetch(
+            db="nucleotide", id=fetch_list, rettype="gb", retmode="text"
+        )
+    except HTTPError as e:
+        log.exception(e)
+        return []
+    
+    ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
+
+    if ncbi_records is None:
+        return []
+    
+    try:
+        accession_list = [record for record in ncbi_records.values() if record.seq]
+        return accession_list
+    except Exception as e:
+        log.exception(e)
+        return []
+
+def filter_catalog(
+    src, catalog
+) -> list:
+    """
+    Return paths for cached accession catalogues 
+    that are included in the source reference
+
+    :param src: Path to a reference directory
+    :param records: Path to an accession record directory
+    """
+    otu_paths = get_otu_paths(src)
+    included_listings = []
+    
+    for path in otu_paths:
+        otu_id = (path.name).split('--')[1]
+
+        included_listings.append(
+            search_by_id(catalog, otu_id)
+        )
+    
+    return included_listings
+
+async def get_qualifiers(seq: list) -> dict:
+    """
+    Get relevant qualifiers in a Genbank record
+
+    :param seq: SeqIO features object for a particular accession
+    :return: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
+    """
+    features = [feature for feature in seq if feature.type == "source"]
+    isolate_data = {}
+
+    for feature in features:
+        for qualifier in feature.qualifiers:
+            isolate_data[qualifier] = feature.qualifiers.get(qualifier)
+    return isolate_data
+
+async def find_isolate(isolate_data: dict) -> Optional[str]:
+    """
+    Determine the source type in a Genbank record
+
+    :param isolate_data: Dictionary containing qualifiers in a features section of a Genbank record
+    :return:
+    """
+    for qualifier in ["isolate", "strain"]:
+        if qualifier in isolate_data:
+            return qualifier
+
+    return None
+
+async def format_sequence(record: SeqIO.SeqRecord, qualifiers: dict) -> dict:
+    """
+    Creates a new sequence file for a given isolate
+
+    :param path: Path to a isolate folder
+    :param record: Genbank record object for a given accession
+    :param qualifiers: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
+    :return: The newly generated unique id
+    """
+    try:
+        seq_dict = {
+            "accession": record.id,
+            "definition": record.description,
+            "host": qualifiers.get("host")[0] if qualifiers.get("host") is not None else None,
+            "sequence": str(record.seq),
+        }
+        return seq_dict
+    
+    except Exception as e:
+        logger.exception(e)
+        return {}
 
 async def store_isolate(
     source_name: str, source_type: str, 
@@ -237,134 +410,22 @@ async def store_isolate(
 async def store_sequence(
     sequence: dict, seq_hash: str, iso_path: Path, indent: int = 0):
     """
+    Write sequence to isolate directory within the src directory
     """
     sequence['_id'] = seq_hash
     seq_path = iso_path / f'{seq_hash}.json'
     
     async with aiofiles.open(seq_path, "w") as f: 
-        await f.write(json.dumps(sequence, indent=indent, sort_keys=True))
+        await f.write(
+            json.dumps(sequence, indent=indent, sort_keys=True)
+        )
 
     return seq_hash
 
-async def label_isolates(otu_path):
+def print_new(listing: dict) -> None:
     """
     """
-    isolates = {}
-    
-    for iso_path in get_isolate_paths(otu_path):
-        with open(iso_path / "isolate.json", "r") as f:
-            isolate = json.load(f)
-        isolates[isolate.get('source_name')] = isolate
-    
-    return isolates
-
-async def fetch_upstream_new(taxid: int, record: dict) -> list:
-    """
-    """
-    upstream_accessions = []
-    entrez_record = Entrez.read(
-        Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
-            id=str(taxid), idtype="acc")
-    )
-
-    for linksetdb in entrez_record[0]["LinkSetDb"][0]["Link"]:
-        upstream_accessions.append(linksetdb["Id"])
-
-    filter_set = set(
-        record['accessions']['included'] + \
-        record['accessions']['excluded'])
-    upstream_set = set(upstream_accessions)
-
-    return list(upstream_set.difference(filter_set))
-
-async def fetch_accession_data(fetch_list: list, log) -> list:
-    """
-    """
-    try:
-        handle = Entrez.efetch(
-            db="nucleotide", id=fetch_list, rettype="gb", retmode="text"
-        )
-    except HTTPError as e:
-        log.exception(e)
-        return []
-    
-    ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
-
-    if ncbi_records is None:
-        return []
-    
-    try:
-        accession_list = [record for record in ncbi_records.values() if record.seq]
-        return accession_list
-    except Exception as e:
-        log.exception(e)
-        return []
-
-def filter_records(src, records):
-    """
-    """
-    otu_paths = get_otu_paths(src)
-    included_records = []
-    
-    for path in otu_paths:
-        otu_id = (path.name).split('--')[1]
-        included_records.append(search_accessions_by_id(records, otu_id))
-    
-    return included_records
-
-async def get_qualifiers(seq: list) -> dict:
-    """
-    Get relevant qualifiers in a Genbank record
-
-    :param seq: SeqIO features object for a particular accession
-    :return: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
-    """
-    features = [feature for feature in seq if feature.type == "source"]
-    isolate_data = {}
-
-    for feature in features:
-        for qualifier in feature.qualifiers:
-            isolate_data[qualifier] = feature.qualifiers.get(qualifier)
-    return isolate_data
-
-async def find_isolate(isolate_data: dict) -> Optional[str]:
-    """
-    Determine the source type in a Genbank record
-
-    :param isolate_data: Dictionary containing qualifiers in a features section of a Genbank record
-    :return:
-    """
-    for qualifier in ["isolate", "strain"]:
-        if qualifier in isolate_data:
-            return qualifier
-
-    return None
-
-async def format_sequence(accession: SeqIO.SeqRecord, data: dict) -> dict:
-    """
-    Creates a new sequence file for a given isolate
-
-    :param path: Path to a isolate folder
-    :param accession: Genbank record object for a given accession
-    :param data: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
-    :return: The newly generated unique id
-    """
-    try:
-        seq_dict = {
-            "accession": accession.id,
-            "definition": accession.description,
-            "host": data.get("host")[0] if data.get("host") is not None else None,
-            "sequence": str(accession.seq),
-        }
-        return seq_dict
-    
-    except Exception as e:
-        logger.exception(e)
-        return {}
-
-def print_new(otu_record: dict) -> None:
-    for sequence in otu_record:
+    for sequence in listing:
         print(f"     {sequence['accession']}:") 
         print(f"     {sequence['definition']}")
         print(f"     {sequence['isolate']}")
@@ -380,6 +441,7 @@ if __name__ == '__main__':
     
     project_path = Path(REPO_DIR) / 'ref-mini-mini'
     src_path = project_path / 'src'
-    cache_path = project_path / '.cache'
+    # catalog_path = project_path / '.cache/catalog'
+    catalog_path = Path(REPO_DIR) / 'ref-fetched-accessions/src'
 
-    run(src_path, cache_path, debugging=True)
+    run(src_path, catalog_path, debugging=True)
