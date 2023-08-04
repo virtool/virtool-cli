@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import asyncio
+import aiofiles
 from typing import Optional
 import structlog
 from logging import INFO, DEBUG
@@ -8,10 +9,10 @@ from urllib.error import HTTPError
 
 from Bio import Entrez, SeqIO
 
-from virtool_cli.utils.ref import get_otu_paths, map_otus
-from virtool_cli.utils.hashing import get_unique_ids
+from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, parse_otu, parse_isolates, map_otus, search_otu_by_id
+from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions import get_accessions_by_id
+from virtool_cli.accessions import search_accessions_by_id
 
 logger = structlog.get_logger()
 
@@ -32,20 +33,24 @@ async def update(src: Path, records: Path):
     """
     """
     upstream_queue = asyncio.Queue()
+    write_queue = asyncio.Queue()
 
     included_records = filter_records(src, records)
     storage = {}
 
-    requester = asyncio.create_task(fetch_loop(upstream_queue, included_records))
-    processor = asyncio.create_task(process_loop(upstream_queue, storage))
+    fetcher = asyncio.create_task(fetcher_loop(upstream_queue, included_records))
+    processor = asyncio.create_task(processor_loop(upstream_queue, write_queue))
+    writer = asyncio.create_task(writer_loop(write_queue, src, storage))
 
-    await asyncio.gather(*[requester], return_exceptions=True)
+    await asyncio.gather(*[fetcher], return_exceptions=True)
+
     await upstream_queue.join() # wait until the consumer has processed all items
-    processor.cancel()
+    
+    await write_queue.join()
 
-    await print_new(storage)
+    # print(storage)
 
-async def fetch_loop(queue: asyncio.Queue, record_paths: list):
+async def fetcher_loop(queue: asyncio.Queue, record_paths: list):
     """
     """
     for record_path in record_paths:
@@ -65,25 +70,28 @@ async def fetch_loop(queue: asyncio.Queue, record_paths: list):
             data.append(new_data)
             # await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
-        entry = { 'taxid': taxid, 'data': data }
+        packet = { 'taxid': taxid, 'otu_id': record['_id'], 'data': data }
 
-        await queue.put(entry)
+        await queue.put(packet)
         taxid_log.debug(
-            'Pushed %d requests to queue', 
+            'Pushed %d requests to upstream queue', 
             len(new_accessions), taxid=taxid)
         await asyncio.sleep(0.7)
 
-async def process_loop(queue: asyncio.Queue, storage: dict):
+async def processor_loop(
+    upstream_queue: asyncio.Queue, 
+    downstream_queue: asyncio.Queue):
     """
     """
     while True:
-        entry = await queue.get()
+        fetch_packet = await upstream_queue.get()
         
-        taxid = entry['taxid']
+        taxid = fetch_packet['taxid']
+        otu_id = fetch_packet['otu_id']
         taxid_log = logger.bind(taxid=taxid)
-        storage[taxid] = {}
-        for seq_list in entry['data']:
-            # taxid_log.debug("Checking accession...")
+
+        otu_updates = {}
+        for seq_list in fetch_packet['data']:
             for seq_data in seq_list:
                 seq_qualifier_data = await get_qualifiers(seq_data.features)
 
@@ -92,23 +100,136 @@ async def process_loop(queue: asyncio.Queue, storage: dict):
                     continue
 
                 isolate_name = seq_qualifier_data.get(isolate_type)[0]
-                if isolate_name not in storage[taxid]:
-                    storage[taxid][isolate_name] = []
+                if isolate_name not in otu_updates:
+                    otu_updates[isolate_name] = []
 
                 seq_dict = await format_sequence(seq_data, seq_qualifier_data)
-                storage[taxid][isolate_name].append(seq_dict)
+                otu_updates[isolate_name].append(seq_dict)
             
-                taxid_log.debug('Processed data', accession=seq_dict['accession'], isolate=isolate_name)
+                # taxid_log.debug(
+                #     'Processed data', 
+                #     accession=seq_dict['accession'], 
+                #     isolate=isolate_name)
+                
+        processed_packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': otu_updates }
 
-        # isolate_type = await find_isolate(seq_data)
-        #     if isolate_type is None:
-        #         continue
+        await downstream_queue.put(processed_packet)
+        taxid_log.debug(
+            f'Pushed new accessions to downstream queue')
+        await asyncio.sleep(0.7)
+        upstream_queue.task_done()
 
-        #     isolate_name = seq_data.get(isolate_type)[0]
-        #     taxid_log.debug('Isolate name found', isolate=isolate_name)
+async def writer_loop(queue, src_path, storage):
+    """
+    """
+    unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
+    # generate_hashes(n=1, length=8, mixed_case=False, excluded=unique_seq)
+
+    while True:
+        packet = await queue.get()
+        
+        taxid = packet['taxid']
+        otu_id = packet['otu_id']
+        new_sequence_set = packet['data']
+
+        log = logger.bind(otu_id=otu_id, taxid=taxid)
+
+        otu_path = search_otu_by_id(src_path, otu_id)
+        ref_isolates = await label_isolates(otu_path)
+
+        for source_name in new_sequence_set:
+            
+            if source_name in ref_isolates:
+                iso_hash = ref_isolates[source_name]['id']
+                log.debug(
+                    'Existing isolate name found', 
+                    iso_name=source_name, 
+                    iso_hash=iso_hash
+                )
+                iso_path = otu_path / iso_hash
+
+            else:
+                try:
+                    iso_hash = generate_hashes(
+                        n=1, length=8, mixed_case=False, excluded=unique_iso).pop()
+                except Exception as e:
+                    log.exception(e)
+                
+                log.debug('Assigning new isolate hash', 
+                    iso_name=source_name,
+                    iso_hash=iso_hash)
+                await store_isolate(source_name, '', iso_hash, otu_path, indent=2)
+                unique_iso.add(iso_hash)
+            
+            try:
+                seq_hashes = generate_hashes(n=4, length=8, mixed_case=False, excluded=unique_seq)
+            except Exception as e:
+                log.exception(e)
+                return e
+
+            for sequence in new_sequence_set.get(source_name):
+                seq_hash = seq_hashes.pop()
+                log.debug('Assigning new sequence', 
+                    iso_name=source_name,
+                    iso_hash=iso_hash)
+                
+                await store_sequence(sequence, seq_hash, iso_path, indent=2)
+                unique_seq.add(seq_hash)
 
         await asyncio.sleep(0.1)
         queue.task_done()
+
+async def store_isolate(
+    source_name: str, source_type: str, 
+    iso_hash: str, otu_path: Path, indent=0
+):
+    """
+    Creates a new isolate folder for an OTU
+
+    :param path: Path to an OTU
+    :param source_name: Assigned source name for an accession
+    :param source_type: Assigned source type for an accession
+    :param unique_ids: Set containing unique Virtool ids for all isolates in a reference
+    :return: A newly generated unique id
+    """
+    iso_path = otu_path / iso_hash
+    iso_path.mkdir()
+
+    new_isolate = {
+        "id": iso_hash,
+        "source_type": source_type,
+        "source_name": source_name,
+        "default": False,
+    }
+
+    async with aiofiles.open(iso_path / "isolate.json", "w") as f:
+        await f.write(json.dumps(new_isolate, indent=indent))
+    
+    return iso_hash
+
+async def store_sequence(
+    sequence: dict, seq_hash: str, iso_path: Path, indent: int = 0):
+    """
+    """
+    sequence['_id'] = seq_hash
+    seq_path = iso_path / f'{seq_hash}.json'
+    
+    async with aiofiles.open(seq_path, "w") as f: 
+        await f.write(json.dumps(sequence, indent=indent, sort_keys=True))
+
+    return seq_hash
+
+async def label_isolates(otu_path):
+    """
+    """
+    isolates = {}
+    
+    for iso_path in get_isolate_paths(otu_path):
+        with open(iso_path / "isolate.json", "r") as f:
+            isolate = json.load(f)
+        isolates[isolate.get('source_name')] = isolate
+    
+    return isolates
 
 async def fetch_upstream_new(taxid: int, record: dict) -> list:
     """
@@ -123,7 +244,9 @@ async def fetch_upstream_new(taxid: int, record: dict) -> list:
     for linksetdb in entrez_record[0]["LinkSetDb"][0]["Link"]:
         upstream_accessions.append(linksetdb["Id"])
 
-    filter_set = set(record['accessions']['included'] + record['accessions']['excluded'])
+    filter_set = set(
+        record['accessions']['included'] + \
+        record['accessions']['excluded'])
     upstream_set = set(upstream_accessions)
 
     return list(upstream_set.difference(filter_set))
@@ -159,7 +282,7 @@ def filter_records(src, records):
     
     for path in otu_paths:
         otu_id = (path.name).split('--')[1]
-        included_records.append(get_accessions_by_id(records, otu_id))
+        included_records.append(search_accessions_by_id(records, otu_id))
     
     return included_records
 
@@ -201,9 +324,7 @@ async def format_sequence(accession: SeqIO.SeqRecord, data: dict) -> dict:
     :return: The newly generated unique id
     """
     try:
-        id_unversioned = accession.id.split(".")[0]
         seq_dict = {
-            "_id": id_unversioned,
             "accession": accession.id,
             "definition": accession.description,
             "host": data.get("host")[0] if data.get("host") is not None else None,
@@ -215,17 +336,31 @@ async def format_sequence(accession: SeqIO.SeqRecord, data: dict) -> dict:
         logger.exception(e)
         return {}
 
-async def print_new(storage: dict):
+def print_new_all(storage: dict):
     for taxid in storage:
         print(f"{taxid}")
+
         for isolate in storage[taxid]:
             print(f"  {isolate}")
+
             for sequence in storage[taxid][isolate]:
                 # print(sequence)
                 print(f"     {sequence['accession']}:") 
                 print(f"     {sequence['definition']}")
 
         print()
+
+def print_new(otu_record: dict) -> None:
+    for isolate in otu_record:
+        print(f"  {isolate}")
+
+        for sequence in otu_record[isolate]:
+            # print(sequence)
+            print(f"     {sequence['accession']}:") 
+            print(f"     {sequence['definition']}")
+
+        print()
+    return
 
 if __name__ == '__main__':
     debug = True

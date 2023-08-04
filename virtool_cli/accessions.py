@@ -28,7 +28,7 @@ def run(src: Path, cache: Path, debugging: bool = False):
 
     get_all_accessions(src, cache)
 
-def get_accessions_by_id(records: Path, otu_id: str):
+def search_accessions_by_id(records: Path, otu_id: str):
     """
     Searches records for a matching id
     Returns the first matched path in the accession records

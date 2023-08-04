@@ -14,7 +14,7 @@ def get_otu_paths(src_path: Path) -> list:
 
 def get_isolate_paths(otu_path: Path) -> list:
     """
-    Generates a list of paths to all OTUs in a src directory.
+    Generates a list of paths to all isolates in an OTU directory.
 
     :param src_path: Path to a src database directory
     :return: List of paths to all OTU in a src directory
@@ -23,7 +23,7 @@ def get_isolate_paths(otu_path: Path) -> list:
 
 def get_sequence_paths(isolate_path: Path) -> list:
     """
-    Generates a list of paths to all OTUs in a src directory.
+    Generates a list of paths to all sequences in an isolate directory.
 
     :param src_path: Path to a src database directory
     :return: List of paths to all OTU in a src directory
@@ -55,6 +55,13 @@ def generate_otu_dirname(name: str, id: str = ''):
 
     return dirname
 
+def search_otu_by_id(src_path: Path, otu_id: str):
+    matches = [otu for otu in src_path.glob(f'*--{otu_id}')]
+    if matches:
+        return matches[0]
+    else:
+        return FileNotFoundError
+
 def parse_otu(path: Path) -> dict:
     """
     Returns a json file in dict form
@@ -66,6 +73,21 @@ def parse_otu(path: Path) -> dict:
         otu = json.load(f)
 
     return otu
+
+def parse_isolates(otu_path: Path) -> dict:
+    """
+    Returns a json file in dict form
+
+    :param paths: Path to an OTU in a reference
+    :return: OTU data in dict form
+    """
+    isolates = {}
+    for iso_path in get_isolate_paths(otu_path):
+        with open(iso_path / "isolate.json", "r") as f:
+            isolate = json.load(f)
+        isolates[iso_path.name] = isolate
+
+    return isolates
 
 def map_otus(paths: list) -> dict:
     """

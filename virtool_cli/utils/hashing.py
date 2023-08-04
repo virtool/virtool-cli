@@ -2,6 +2,8 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Optional, Tuple
 
+from virtool_cli.utils.ref import get_isolate_paths, get_sequence_paths
+
 def generate_random_alphanumeric(
     length: int = 8,
     mixed_case: bool = False,
@@ -26,22 +28,37 @@ def generate_random_alphanumeric(
 
     return generate_random_alphanumeric(length=length, excluded=excluded)
 
-async def get_unique_ids(paths: list) -> Tuple[set, set]:
+def generate_hashes(
+    n: int = 1,
+    length: int = 8,
+    mixed_case: bool = False,
+    excluded: Optional[Iterable[str]] = None
+):
+    """
+    """
+    new_uniques = set()
+    while len(new_uniques) < n:
+        new_uniques.add(generate_random_alphanumeric(length, mixed_case, excluded))
+    
+    return new_uniques
+    
+
+async def get_unique_ids(otu_paths: list) -> Tuple[set, set]:
     """
     Returns sets containing unique random alphanumeric ids for both the isolates and the sequences
 
-    :param paths: List of paths to all OTU in a reference
+    :param otu_paths: List of paths to all OTU in a reference
     :return: Sets containing unique ids for both isolates and sequences
     """
     isolate_ids = set()
     sequence_ids = set()
 
-    for path in paths:
-        for isolate_id in path.iterdir():
-            if isolate_id.is_dir():
-                isolate_ids.add(isolate_id)
-                for seq_id in isolate_id.iterdir():
-                    if seq_id.name != "isolate.json" and seq_id.name != ".DS_Store":
-                        sequence_ids.add(seq_id.name.rstrip(".json"))
+    for otu_path in otu_paths:
+
+        for isolate_path in get_isolate_paths(otu_path):
+            isolate_ids.add(isolate_path.name)
+
+            for seq_path in get_sequence_paths(isolate_path):
+                sequence_ids.add(seq_path.stem)
 
     return isolate_ids, sequence_ids
