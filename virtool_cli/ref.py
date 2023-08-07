@@ -8,7 +8,7 @@ import virtool_cli.divide
 import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
-import virtool_cli.migrate
+from virtool_cli.migrate import run as run_migrate
 from virtool_cli.accessions.catalog import run as run_catalog
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
@@ -161,7 +161,7 @@ def migrate(src_path, debug):
         logger.critical('Source directory does not exist')
 
     try:
-        virtool_cli.migrate.run(Path(src_path))
+        run_migrate(Path(src_path))
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
         click.echo(e)

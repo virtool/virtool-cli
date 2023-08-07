@@ -1,12 +1,9 @@
-import asyncio
 import json
-from pathlib import Path
-from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Optional
-import structlog
-
+import asyncio
 import aiofiles
+from pathlib import Path
 from Bio import Entrez
+import structlog
 
 from virtool_cli.utils.ref import get_otu_paths, parse_otu
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
@@ -14,7 +11,7 @@ from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 logger = structlog.get_logger()
 
 
-def run(src_path: Path, force_update: bool):
+def run(src_path: Path, force_update: bool = False):
     """
     Creates and runs the event loop to asynchronously find taxon ids for all OTU in a src directory
 
@@ -24,7 +21,7 @@ def run(src_path: Path, force_update: bool):
     """
     asyncio.run(taxid(src_path, force_update))
 
-async def taxid(src_path: Path, force_update: bool):
+async def taxid(src_path: Path, force_update: bool = False):
     """
     Asynchronously finds taxon ids for all OTU in a given src directory and
     writes them to each respective otu.json file.
@@ -40,7 +37,7 @@ async def taxid(src_path: Path, force_update: bool):
         included_paths = otu_paths
     
     else:
-        included_paths = filter_no_taxid(src_path)
+        included_paths = filter_unidentified(src_path)
     
     if not included_paths:
         logger.info('No OTUs with missing taxon IDs to fetch', n_otus=len(included_paths))
@@ -68,10 +65,18 @@ async def taxid(src_path: Path, force_update: bool):
     )
 
 async def fetcher_loop(
-    included_paths: list, queue: asyncio.Queue, force_update: bool):
+    included_paths: list, 
+    queue: asyncio.Queue, 
+    force_update: bool = False
+):
     """
+    Loops through a list of specified OTU directories, 
+    parses the data and pushes the name and taxon ID to the queue
+
+    :param included_paths: List of paths to relevant OTUs
+    :param queue: Queue of parsed OTU data awaiting processing
     """
-    counter = 0
+
     for path in included_paths:
         otu_data = parse_otu(path)
 
@@ -83,7 +88,7 @@ async def fetcher_loop(
         # Search for taxon id
         otu_name = otu_data.get('name')
 
-        taxid = await fetch_taxid(name=otu_name)
+        taxid = await fetch_by_taxid(name=otu_name)
 
         await log_results(name=otu_name, taxid=taxid)
         
@@ -91,12 +96,14 @@ async def fetcher_loop(
         counter += 1
 
         await asyncio.sleep(NCBI_REQUEST_INTERVAL)
-    
-    return counter
 
 
-async def writer_loop(src_path, queue):
+async def writer_loop(src_path: Path, queue: asyncio.Queue) -> None:
     """
+    Pulls packet dicts from the queue and calls the update function
+
+    :param src_path: Path to a given reference directory
+    :param queue: Queue of parsed OTU data awaiting processing
     """
     while True:
         packet = await queue.get()
@@ -104,9 +111,9 @@ async def writer_loop(src_path, queue):
         update_otu(packet['taxid'], packet['path'])
 
         await asyncio.sleep(0.1)
-        queue.task_done() 
+        queue.task_done()
 
-def filter_no_taxid(src_path: Path) -> list:
+def filter_unidentified(src_path: Path) -> list:
     """
     Return OTU paths without assigned taxon ids
 
@@ -128,7 +135,7 @@ def filter_no_taxid(src_path: Path) -> list:
     
     return included_otus
 
-async def fetch_taxid(name: str) -> int:
+async def fetch_by_taxid(name: str) -> int:
     """
     Searches the NCBI taxonomy database for a given OTU name and fetches and returns
     its taxon id. If a taxon id was not found the function should return None.
@@ -147,15 +154,14 @@ async def fetch_taxid(name: str) -> int:
 
     return taxid
 
-async def log_results(name: str, taxid: int):
+async def log_results(name: str, taxid: int=None):
     """
     Logs results of the taxid fetch from the NCBI taxonomy database
 
     :param name: Name of a given OTU
     :param taxid: Taxid for a given OTU if found, else None
-    :param console: Rich console object used for logging
     """
-    otu_log = logger.bind(existing_name=name)
+    otu_log = logger.bind(name=name)
     if taxid:
         otu_log.info('Taxon ID found', taxid=taxid)
     else:
@@ -180,22 +186,23 @@ def update_otu(taxid: int, path: Path):
     except Exception as e:
         return e
 
-async def get_name_from_path(path: Path, force_update: bool) -> Optional[str]:
+async def get_name_from_path(path: Path, force_update: bool) -> str:
     """
-    Given a path to an OTU, returns the name of the OTU. If a taxon id already exists
-    for the OTU then it returns None.
+    Given a path to an OTU, returns the name of the OTU. 
+    If a taxon id already exists for the OTU, returns an empty string.
 
     :param path: Path to a given OTU
-    :param force_update: Boolean flag used to determine if the function should return the name of the OTU even if it
-    already has a taxid
-    :return: The OTU's name if it doesn't have a taxid assigned or force_update is True, else None
+    :param force_update: Boolean flag used to determine if the function 
+        should return the name of the OTU even if it already has a taxid
+    :return: The OTU's name if it doesn't have a taxid assigned or force_update is True, 
+        else an empty string
     """
     async with aiofiles.open(path / "otu.json", "r") as f:
         otu = json.loads(await f.read())
 
         try:
             if otu["taxid"] is not None and not force_update:
-                return None
+                return ""
             else:
                 return otu["name"]
         except KeyError:

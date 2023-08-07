@@ -98,7 +98,9 @@ def get_catalog(src: Path, catalog: Path):
     
     # logger.info('Accessions written to cache', cache=str(cache))
 
-def check_catalog(src_path: Path, catalog_path: Path):
+def check_catalog(
+    src_path: Path, catalog_path: Path
+) -> list:
     """
     :param src_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
@@ -108,30 +110,31 @@ def check_catalog(src_path: Path, catalog_path: Path):
     for otu_path in get_otu_paths(src_path):
         logger = base_logger.bind(
             otu_id=otu_path.name.split('--')[1],
-            path=str(otu_path.relative_to(otu_path.parents[1])))
+            otu_path=str(otu_path.relative_to(otu_path.parents[1]))
+        )
 
-        try:
-            otu_data = parse_otu(otu_path)
-            taxid = otu_data.get('taxid', None)
-            if taxid is None:
-                logger.debug('taxid=null', name=otu_data['name'])
-                continue
-
-        except Exception as e:
-            logger.exception('taxid not found')
+        otu_data = parse_otu(otu_path)
+        taxid = otu_data.get('taxid', None)
+        if taxid is None:
+            logger.debug('taxid=null', name=otu_data['name'])
             continue
 
-        logger.bind(name=otu_data['name'], taxid=taxid)
-        record_path = catalog_path / f"{taxid}--{otu_data.get('_id')}.json"
+        listing_path = catalog_path / f"{taxid}--{otu_data.get('_id')}.json"
+        
+        logger = logger.bind(
+            name=otu_data['name'], 
+            taxid=taxid, 
+            # listing_path=str(listing_path.relative_to(catalog_path.parent))
+        )
 
-        check_listing(
+        is_changed = check_listing(
             taxid=taxid,
             ref_accessions=catalog_otu(otu_path), 
             otu_path=otu_path, 
-            listing_path=record_path,
-            catalog_path=catalog_path, 
+            listing_path=listing_path,
             logger=logger
         )
+        if is_changed: changed_listings.append(taxid)
     
     return changed_listings
 
@@ -141,20 +144,24 @@ def check_listing(
     otu_path: Path, 
     listing_path: Path,
     logger: structlog.BoundLogger
-):
+) -> bool:
     """
     :param taxid: Path to a reference directory
     :param ref_accessions: List of included accessions
     :param otu_path: Path to a OTU directory in a src directory
     :param listing_path: Path to a listing file in an accession catalog directory
     :param logger: Structured logger
+    :return: True if changes have been made to the accession list, else False
     """
     if listing_path.exists():
         with open(listing_path, "r") as f:
             cached_record = json.load(f)
 
-        if set(ref_accessions) != set(cached_record.get('accessions')['included']):
-            logger.info('Changes found')
+        if set(ref_accessions) == set(cached_record.get('accessions')['included']):
+            logger.debug('No changes found')
+
+        else:
+            logger.debug('Changes found')
             print(listing_path.name)
             print(cached_record['accessions']['included'])
             print(ref_accessions)
@@ -163,22 +170,22 @@ def check_listing(
             
             update_listing(listing_path, ref_accessions, cached_record)
             logger.debug('Wrote new list')
-            return taxid
+            return True
 
     else:
         logger.info(f'No accession record for f{taxid}. Creating {listing_path.name}')
         
-        new_record = generate_record(
+        new_record = generate_listing(
             otu_data=parse_otu(otu_path), 
             accession_list=ref_accessions)
         
         write_listing(taxid, new_record, catalog_path=listing_path.parent)
         
-        return taxid
+        return True
     
-    return ''
+    return False
 
-def generate_catalog(src: Path):
+def generate_catalog(src: Path) -> dict:
     """
     Initialize an accession catalog by pulling accessions from all OTU directories
 
@@ -199,12 +206,14 @@ def generate_catalog(src: Path):
             continue
         accessions = catalog_otu(otu_path)
 
-        catalog[taxid] = generate_record(otu_data, accessions)
+        catalog[taxid] = generate_listing(otu_data, accessions)
     
     return catalog
 
-def generate_record(otu_data: dict, accession_list: list):
+def generate_listing(otu_data: dict, accession_list: list) -> dict:
     """
+    Generates a new listing for a given OTU and returns it as a dict
+
     :param otu_data: OTU data in dict form
     :param accession_list: list of included accesssions
     """
