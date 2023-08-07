@@ -9,7 +9,7 @@ import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
 import virtool_cli.migrate
-import virtool_cli.accessions
+from virtool_cli.accessions.catalog import run as run_catalog
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
@@ -184,8 +184,8 @@ def migrate(src_path, debug):
     help="the path to a catalog directory",
 )
 @click.option('--debug/--no-debug', default=False)
-def accessions(src_path, catalog_path, debug):
-    """Convert a reference directory from v1.x to v2.x"""
+def catalog(src_path, catalog_path, debug):
+    """Update or generate a catalog of all included accessions in a src directory"""
     if not Path(src_path).exists():
         click.echo(ERROR_MESSAGE + 'Source directory does not exist')
         return
@@ -195,9 +195,9 @@ def accessions(src_path, catalog_path, debug):
         catalog_dir.mkdir(parents=True)
 
     try:
-        virtool_cli.accessions.run(
-            src=Path(src_path),
-            catalog=Path(catalog_path),
+        run_catalog(
+            src_path=Path(src_path),
+            catalog_path=Path(catalog_path),
             debugging=debug
         )
     except (FileNotFoundError, NotADirectoryError) as e:

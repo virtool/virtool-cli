@@ -12,7 +12,7 @@ from Bio import Entrez, SeqIO
 from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, parse_otu, parse_isolates, map_otus, search_otu_by_id
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions import search_by_id
+from virtool_cli.accessions.catalog import search_by_id
 
 logger = structlog.get_logger()
 
@@ -324,7 +324,7 @@ def filter_catalog(
         otu_id = (path.name).split('--')[1]
 
         included_listings.append(
-            search_by_id(catalog, otu_id)
+            search_by_id(otu_id, catalog)
         )
     
     return included_listings
