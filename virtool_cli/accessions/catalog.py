@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import asyncio
 import structlog
 from logging import INFO, DEBUG
 
@@ -8,6 +9,7 @@ from virtool_cli.utils.ref import (
     get_otu_paths,
     get_sequence_paths
 )
+from virtool_cli.utils.ncbi import fetch_taxid
 
 base_logger = structlog.get_logger()
 
@@ -28,16 +30,6 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
         catalog_path.mkdir()
 
     get_catalog(src_path, catalog_path)
-
-def split_pathname(path):
-    """
-    Split a filename formatted as 'taxid--otu_id.json' into (taxid, otu_id)
-
-    :param path: Path to a listing in an accession catalog
-    """
-    [ taxid, otu_id ] = (path.stem).split('--')
-
-    return taxid, otu_id
 
 def search_by_id(otu_id: str, catalog_path: Path):
     """
@@ -80,16 +72,18 @@ def get_catalog(src: Path, catalog: Path):
 
         all_current_accessions = generate_catalog(src)
     
-        for taxid in all_current_accessions:
+        for otu_id in all_current_accessions:
+            current_accessions = all_current_accessions.get(otu_id)
+
             logger.debug(
-                f'Processing OTU with NCBI taxon id {taxid}', 
-                taxid=taxid, 
-                current_accessions=all_current_accessions.get(taxid))
+                f'Processing OTU _id {otu_id}', 
+                taxid=current_accessions.get('taxid', None),
+                current_accessions=current_accessions)
             
             try:
                 write_listing(
-                    taxid=taxid, 
-                    record=all_current_accessions.get(taxid),
+                    taxid=current_accessions.get('taxid', None), 
+                    record=current_accessions,
                     catalog_path=catalog
                 )
             except Exception as e:
@@ -115,6 +109,7 @@ def check_catalog(
 
         otu_data = parse_otu(otu_path)
         taxid = otu_data.get('taxid', None)
+
         if taxid is None:
             logger.debug('taxid=null', name=otu_data['name'])
             continue
@@ -129,7 +124,7 @@ def check_catalog(
 
         is_changed = check_listing(
             taxid=taxid,
-            ref_accessions=catalog_otu(otu_path), 
+            ref_accessions=get_otu_accessions(otu_path), 
             otu_path=otu_path, 
             listing_path=listing_path,
             logger=logger
@@ -190,42 +185,68 @@ def generate_catalog(src: Path) -> dict:
     Initialize an accession catalog by pulling accessions from all OTU directories
 
     :param src: Path to a reference directory
+    :return: A dictionary of all accessions in each OTU, indexed by internal OTU id
     """
     catalog = {}
 
     counter = 0
     for otu_path in get_otu_paths(src):
-        try:
-            otu_data = parse_otu(otu_path)
-            taxid = otu_data.get('taxid')
-            if taxid is None:
-                taxid = f'none{counter}'
-                counter += 1
-        except Exception as e:
-            base_logger.warning('taxid not found', path=src(otu_path))
-            continue
-        accessions = catalog_otu(otu_path)
+        logger = base_logger.bind(
+            path=str(otu_path.relative_to(otu_path.parents[1]))
+        )
 
-        catalog[taxid] = generate_listing(otu_data, accessions)
+        otu_data = parse_otu(otu_path)
+        otu_id = otu_data['_id']
+        
+        logger = logger.bind(
+            name=otu_data.get('name', ''),
+            otu_id=otu_id,
+        )
+        
+        accessions = get_otu_accessions(otu_path)
+
+        catalog[otu_id] = generate_listing(otu_data, accessions, logger)
     
     return catalog
 
-def generate_listing(otu_data: dict, accession_list: list) -> dict:
+def generate_listing(
+    otu_data: dict, 
+    accession_list: list, 
+    logger: structlog.BoundLogger = base_logger
+) -> dict:
     """
     Generates a new listing for a given OTU and returns it as a dict
 
     :param otu_data: OTU data in dict form
     :param accession_list: list of included accesssions
     """
-    otu_fetch_data = {}
-    otu_fetch_data['_id'] = otu_data.get('_id')
-    otu_fetch_data['name'] = otu_data.get('name')
-    otu_fetch_data['accessions'] = {}
-    otu_fetch_data['accessions']['included'] = accession_list
     
-    return otu_fetch_data
+    catalog_listing = {}
+    
+    otu_id = otu_data.get('_id')
+    taxid = otu_data.get('taxid', None)
 
-def catalog_otu(otu_path: Path) -> list:
+    catalog_listing['_id'] = otu_id
+
+    if taxid is None:
+        logger.info('Taxon ID not found. Attempting to fetch from NCBI Taxonomy...')
+        taxid = asyncio.run(fetch_taxid(otu_data.get('name', None)))
+
+        if taxid is None:
+            catalog_listing['taxid'] = 'none'
+            logger.info(f'Taxon ID not found. Setting taxid={taxid}')
+            
+        else:
+            catalog_listing['taxid'] = int(taxid)
+            logger.info(f'Taxon ID found. Setting taxid={taxid}')
+
+    catalog_listing['name'] = otu_data.get('name')
+    catalog_listing['accessions'] = {}
+    catalog_listing['accessions']['included'] = accession_list
+    
+    return catalog_listing
+
+def get_otu_accessions(otu_path: Path) -> list:
     """
     Gets all accessions from an OTU directory and returns a list
 

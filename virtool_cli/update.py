@@ -9,7 +9,11 @@ from urllib.error import HTTPError
 
 from Bio import Entrez, SeqIO
 
-from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, parse_otu, parse_isolates, map_otus, search_otu_by_id
+from virtool_cli.utils.ref import (
+    get_otu_paths, get_isolate_paths, 
+    parse_otu, parse_isolates, 
+    map_otus, 
+    search_otu_by_id)
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.catalog import search_by_id
@@ -23,11 +27,12 @@ def run(src: Path, catalog: Path, debugging: bool = False):
 
     :param src: Path to a reference directory
     """
+    logger = base_logger.bind(command='update', src=str(src), catalog=str(catalog))
     filter_class = DEBUG if debugging else INFO
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(filter_class))
 
-    base_logger.info('Updating src directory accessions using catalog listings...')
+    logger.info('Updating src directory accessions using catalog listings...')
 
     asyncio.run(
         update(src_path=src, catalog_path=catalog)
@@ -102,6 +107,7 @@ async def fetcher_loop(
         3) Pushes new records and corresponding OTU information
             to a queue for formatting
     
+    :param listing_paths: A list of paths to listings from the accession catalog
     :param queue: Queue holding fetched NCBI GenBank data
     """
     for path in listing_paths:
@@ -126,15 +132,23 @@ async def fetcher_loop(
         packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': data }
 
         await queue.put(packet)
-        taxid_log.debug(
-            'Pushed %d requests to upstream queue', 
-            len(new_accessions), taxid=taxid)
+        taxid_log.info(
+            f'Pushed {len(new_accessions)} requests to upstream queue', 
+            accessions=new_accessions, n_requests=len(new_accessions), taxid=taxid)
         await asyncio.sleep(0.7)
 
 async def processor_loop(
     upstream_queue: asyncio.Queue, 
-    downstream_queue: asyncio.Queue):
+    downstream_queue: asyncio.Queue
+):
     """
+    Awaits fetched sequence data from the fetcher:
+        1) Formats the sequence data into reference-compatible dictionaries,
+        2) Checks for validity,
+        3) Pushes the formatted data into the downstream queue to be dealt with by the writer
+
+    :param upstream_queue: Queue holding NCBI GenBank data pushed by the fetcher,
+    :param downstream_queue: Queue holding formatted sequence and isolate data processed by this loop
     """
     while True:
         fetch_packet = await upstream_queue.get()
@@ -152,9 +166,6 @@ async def processor_loop(
                 if isolate_type is None:
                     continue
                 isolate_name = seq_qualifier_data.get(isolate_type)[0]
-                
-                # if isolate_name not in otu_updates:
-                #     otu_updates[isolate_name] = []
 
                 seq_dict = await format_sequence(seq_data, seq_qualifier_data)
                 isolate = { 
@@ -163,12 +174,6 @@ async def processor_loop(
                 }
                 seq_dict['isolate'] = isolate
                 otu_updates.append(seq_dict)
-                # otu_updates[isolate_name].append(seq_dict)
-            
-                # taxid_log.debug(
-                #     'Processed data', 
-                #     accession=seq_dict['accession'], 
-                #     isolate=isolate_name)
                 
         processed_packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': otu_updates }
 
@@ -181,6 +186,8 @@ async def processor_loop(
 async def writer_loop(src_path, storage, queue):
     """
     TO-DO: write changes back to local catalog?
+
+    :param src_path: Path to a reference directory
     """
     unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
     # generate_hashes(n=1, length=8, mixed_case=False, excluded=unique_seq)
@@ -200,7 +207,8 @@ async def writer_loop(src_path, storage, queue):
         print_new(new_sequence_set)
 
         try:
-            seq_hashes = generate_hashes(n=len(new_sequence_set), length=8, mixed_case=False, excluded=unique_seq)
+            seq_hashes = generate_hashes(
+                n=len(new_sequence_set), length=8, mixed_case=False, excluded=unique_seq)
         except Exception as e:
             log.exception(e)
             return e
@@ -462,7 +470,7 @@ if __name__ == '__main__':
     
     REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
     
-    project_path = Path(REPO_DIR) / 'ref-mini-mini'
+    project_path = Path(REPO_DIR) / 'ref-mini'
     src_path = project_path / 'src'
     # catalog_path = project_path / '.cache/catalog'
     catalog_path = Path(REPO_DIR) / 'ref-fetched-accessions/src'
