@@ -32,7 +32,7 @@ async def fetch_taxid(name: str) -> int:
 
     return taxid
 
-async def fetch_primary_ids(accessions: list) -> list:
+async def fetch_accession_gids(accessions: list):
     """
     """
     acc_stringed = []
@@ -41,42 +41,36 @@ async def fetch_primary_ids(accessions: list) -> list:
     
     deline_list = ' OR '.join(acc_stringed)
     
-    try:
-        handle = Entrez.esearch(db="nucleotide", term=deline_list)
-        record = Entrez.read(handle)
-        handle.close()
-    except HTTPError:
-        await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
-        handle = Entrez.esearch(db="nucleotide", term=deline_list)
-        record = Entrez.read(handle)
-        handle.close()
-    except:
-        return {}
-    
-    await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
-    
+    handle = Entrez.esearch(db="nucleotide", term=deline_list)
+    record = Entrez.read(handle)
+    handle.close()
+
     gids = []
     for entrez_id in record['IdList']:
         gids.append(entrez_id)
+    
+    return gids
+
+async def fetch_primary_ids(accessions: list) -> list:
+    """
+    """
+    try:
+        gids = await fetch_accession_gids(accessions)
+    except Exception as e:
+        raise e
+
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
     try:
         handle = Entrez.esummary(db="nucleotide", id=gids)
         record = Entrez.read(handle)
         handle.close()
-    except HTTPError:
-        await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
-        handle = Entrez.esummary(db="nucleotide", id=gids)
-        record = Entrez.read(handle)
-        handle.close()
-    except:
-        return {}
-    
-    await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
+    except Exception as e:
+        raise e
 
     indexed_accessions = {}
     for r in record:
-        gid = r.get('Id')
-        indexed_accessions[gid] = r.get('Caption')
+        indexed_accessions[r.get('Caption')] = int(r.get('Id'))
         
         # if 'AccessionVersion' in r:
         #     indexed_accessions[gid] = r.get('AccessionVersion')

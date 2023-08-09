@@ -11,8 +11,8 @@ from Bio import Entrez, SeqIO
 
 from virtool_cli.utils.ref import (
     get_otu_paths, get_isolate_paths, 
-    parse_otu, parse_isolates, 
-    map_otus, 
+    # parse_otu, parse_isolates, 
+    # map_otus, 
     search_otu_by_id)
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
@@ -130,16 +130,16 @@ async def fetcher_loop(
         
         logger.debug('New accessions', new=new_accessions)
 
-        data = []
+        record_data = []
         for accession in new_accessions:
             new_data = await fetch_upstream_records(accession, logger)
-            data.append(new_data)
+            record_data.append(new_data)
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
         packet = { 
             'taxid': taxid, 'otu_id': otu_id, 
             'listing': acc_listing,
-            'data': data, 
+            'data': record_data, 
             'multipartite': acc_listing.get('multipartite')
         }
 
@@ -172,17 +172,16 @@ async def processor_loop(
         otu_id = fetch_packet['otu_id']
         logger = base_logger.bind(taxid=taxid)
 
-        # filter_set = set(
-        #     listing['accessions']['included'] + \
-        #     listing.get('excluded', []))
+        filter_set = set(listing['accessions']['included'].keys())
 
         otu_updates = []
         for seq_list in fetch_packet['data']:
             for seq_data in seq_list:
+                [ accession, version ] = (seq_data.id).split('.')
                 
-                # if seq_data.id in filter_set:
-                #     logger.debug('Accession already exists', accession=seq_data.id)
-                #     continue
+                if accession in filter_set:
+                    logger.debug('Accession already exists', accession=seq_data.id)
+                    continue
                 
                 # logger.debug('Unique accession found', accession=seq_data.id)
                 seq_qualifier_data = await get_qualifiers(seq_data.features)
@@ -239,7 +238,7 @@ async def writer_loop(
         otu_path = search_otu_by_id(src_path, otu_id)
         ref_isolates = await label_isolates(otu_path)
 
-        print_new(new_sequence_set)
+        # print_new(new_sequence_set)
 
         try:
             seq_hashes = generate_hashes(excluded=unique_seq, n=len(new_sequence_set))
@@ -322,8 +321,8 @@ async def fetch_upstream_accessions(
     """
 
     filter_set = set()
-    filter_set.update(listing['accessions']['included'].keys())
-    filter_set.update(listing['accessions']['excluded'].keys())
+    filter_set.update(listing['accessions']['included'].values())
+    filter_set.update(listing['accessions']['excluded'].values())
 
     logger = base_logger.bind(taxid=taxid)
     logger.debug('Exclude catalogued accessions', catalogued=filter_set)

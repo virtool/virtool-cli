@@ -10,6 +10,8 @@ from virtool_cli.utils.ref import (
     get_sequence_paths
 )
 from virtool_cli.utils.ncbi import fetch_taxid, fetch_primary_ids
+from virtool_cli.accessions.helpers import get_otu_accessions
+from virtool_cli.accessions.initialize import initialize, generate_listing, write_listing
 
 base_logger = structlog.get_logger()
 
@@ -57,27 +59,14 @@ def get_catalog(src: Path, catalog: Path):
             'Empty catalog, initializing listings...', 
             catalog=str(catalog), catalogued=False)
 
-        all_current_accessions = generate_catalog(src)
-    
-        for otu_id in all_current_accessions:
-            current_accessions = all_current_accessions.get(otu_id)
-
-            logger.debug(
-                f'Processing OTU _id {otu_id}', 
-                taxid=current_accessions.get('taxid', None),
-                current_accessions=current_accessions)
-            
-            try:
-                write_listing(
-                    taxid=current_accessions.get('taxid', None), 
-                    record=current_accessions,
-                    catalog_path=catalog
-                )
-            except Exception as e:
-                logger.exception(e)
-    
+        generate_catalog(src, catalog)
     
     # logger.info('Accessions written to cache', cache=str(cache))
+
+def generate_catalog(src_path: Path, catalog_path: Path):
+    """
+    """
+    asyncio.run(initialize(src_path, catalog_path))
 
 def check_catalog(
     src_path: Path, catalog_path: Path
@@ -138,23 +127,24 @@ def check_listing(
     if listing_path.exists():
         with open(listing_path, "r") as f:
             listing = json.load(f)
-        
-        indexed_accessions = asyncio.run(fetch_primary_ids(ref_accessions))
 
-        if set(indexed_accessions) == set(listing.get('accessions')['included']):
-            logger.debug('No changes found')
 
-        else:
-            logger.debug('Changes found')
-            # print(listing_path.name)
-            # print(cached_record['accessions']['included'])
-            # print(ref_accessions)
+        ref_ids = set(ref_accessions)
+        acc_ids = set(listing['accessions']['included'].keys())
+
+        different_keys = ref_ids.difference(acc_ids)
+
+        if len(different_keys) < 0:
+            logger.debug('Changes found', different_keys=different_keys)
 
             listing.get('accessions')['included'] = ref_accessions
             
             update_listing(listing_path, ref_accessions, listing)
             logger.debug('Wrote new list')
             return True
+        
+        else:
+            logger.debug('No changes found')
 
     else:
         logger.info(f'No accession record for f{taxid}. Creating {listing_path.name}')
@@ -168,126 +158,6 @@ def check_listing(
         return True
     
     return False
-
-def generate_catalog(src: Path) -> dict:
-    """
-    Initialize an accession catalog by pulling accessions from all OTU directories
-
-    :param src: Path to a reference directory
-    :return: A dictionary of all accessions in each OTU, indexed by internal OTU id
-    """
-    catalog = {}
-
-    for otu_path in get_otu_paths(src):
-        logger = base_logger.bind(
-            path=str(otu_path.relative_to(otu_path.parents[1]))
-        )
-
-        otu_data = parse_otu(otu_path)
-        otu_id = otu_data['_id']
-        
-        logger = logger.bind(
-            name=otu_data.get('name', ''),
-            otu_id=otu_id,
-        )
-        
-        accessions = get_otu_accessions(otu_path)
-
-        catalog[otu_id] = generate_listing(otu_data, accessions, logger)
-    
-    return catalog
-
-def generate_listing(
-    otu_data: dict, 
-    accession_list: list, 
-    logger: structlog.BoundLogger = base_logger
-) -> dict:
-    """
-    Generates a new listing for a given OTU and returns it as a dict
-
-    :param otu_data: OTU data in dict form
-    :param accession_list: list of included accesssions
-    """
-    catalog_listing = {}
-    
-    otu_id = otu_data.get('_id')
-    taxid = otu_data.get('taxid', None)
-
-    catalog_listing['_id'] = otu_id
-
-    # Attempts to fetch the taxon id if none is found in the OTU metadata
-    if taxid is None:
-        logger.info('Taxon ID not found. Attempting to fetch from NCBI Taxonomy...')
-        taxid = asyncio.run(fetch_taxid(otu_data.get('name', None)))
-
-        if taxid is None:
-            catalog_listing['taxid'] = 'none'
-            logger.info(f'Taxon ID not found. Setting taxid={taxid}')
-            
-        else:
-            catalog_listing['taxid'] = int(taxid)
-            logger.info(f'Taxon ID found. Setting taxid={taxid}')
-    else:
-        catalog_listing['taxid'] = int(taxid)
-
-    catalog_listing['name'] = otu_data.get('name')
-
-    schema = otu_data.get('schema', [])
-    if len(schema) > 1:
-        catalog_listing['multipartite'] = True
-    else:
-        catalog_listing['multipartite'] = False
-    
-    indexed_accessions = asyncio.run(fetch_primary_ids(accession_list))
-    # print(indexed_accessions)
-
-    catalog_listing['accessions'] = {}
-    catalog_listing['accessions']['included'] = indexed_accessions
-    
-    return catalog_listing
-
-def get_otu_accessions(otu_path: Path) -> list:
-    """
-    Gets all accessions from an OTU directory and returns a list
-
-    :param otu_path: Path to an OTU directory
-    """
-    accessions = []
-    
-    for isolate_path in get_otu_paths(otu_path):
-        for sequence_path in get_sequence_paths(isolate_path):
-            with open(sequence_path, "r") as f:
-                sequence = json.load(f)
-            accessions.append(sequence['accession'])
-
-    return accessions
-
-def write_listing(
-        taxid: int, 
-        record: dict, 
-        catalog_path: Path,
-        indent: bool = True):
-    """
-    Write accession file to cache directory
-
-    :param taxid: OTU taxon id
-    :param accessions: List of OTU's accessions
-    :param catalog: Path to an accession catalog
-    :param indent: Indent flag
-    """
-
-    logger = base_logger.bind(taxid=taxid)
-
-    output_path = catalog_path / f"{taxid}--{record['_id']}.json"
-
-    logger.debug('Writing accession', accession_path=output_path)
-
-    record['accessions']['excluded'] = {}
-
-    with open(output_path, "w") as f:
-        json.dump(record, f, indent=2 if indent else None)
-    
-    return
 
 def update_listing(
         path: Path,
