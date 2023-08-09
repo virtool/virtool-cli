@@ -329,24 +329,25 @@ async def fetch_upstream_accessions(
     logger.debug('Exclude catalogued accessions', catalogued=filter_set)
 
     upstream_accessions = []
-    entrez_accessions = Entrez.read(
-        Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
-            id=str(taxid), idtype="acc")
-    )
 
-    for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
-        upstream_accessions.append(linksetdb["Id"])
-    
-    # otu_searchname = "+".join(listing.get("name").split(" "))
     # entrez_accessions = Entrez.read(
-    #     Entrez.esearch(
-    #         db="nucleotide", term=f"{otu_searchname}[Organism] AND RefSeq[keyword]"
-    #     )
+    #     Entrez.elink(
+    #         dbfrom="taxonomy", db="nucleotide", 
+    #         id=str(taxid), idtype="acc")
     # )
 
-    # for entrez_id in entrez_accessions['IdList']:
-    #     upstream_accessions.append(entrez_id)
+    # for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
+    #     upstream_accessions.append(linksetdb["Id"])
+    
+    otu_searchname = "+".join(listing.get("name").split(" "))
+    entrez_accessions = Entrez.read(
+        Entrez.esearch(
+            db="nucleotide", term=f"{otu_searchname}[Organism] AND RefSeq[keyword]"
+        )
+    )
+
+    for entrez_id in entrez_accessions['IdList']:
+        upstream_accessions.append(entrez_id)
 
     upstream_set = set(upstream_accessions)
 

@@ -1,4 +1,6 @@
 import os
+import asyncio
+from urllib.error import HTTPError
 from Bio import Entrez
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
@@ -43,8 +45,15 @@ async def fetch_primary_ids(accessions: list) -> list:
         handle = Entrez.esearch(db="nucleotide", term=deline_list)
         record = Entrez.read(handle)
         handle.close()
-    except Exception as e:
-        return e
+    except HTTPError:
+        await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
+        handle = Entrez.esearch(db="nucleotide", term=deline_list)
+        record = Entrez.read(handle)
+        handle.close()
+    except:
+        return {}
+    
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
     
     gids = []
     for entrez_id in record['IdList']:
@@ -54,9 +63,16 @@ async def fetch_primary_ids(accessions: list) -> list:
         handle = Entrez.esummary(db="nucleotide", id=gids)
         record = Entrez.read(handle)
         handle.close()
-    except Exception as e:
-        return e
+    except HTTPError:
+        await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
+        handle = Entrez.esummary(db="nucleotide", id=gids)
+        record = Entrez.read(handle)
+        handle.close()
+    except:
+        return {}
     
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL * 2)
+
     indexed_accessions = {}
     for r in record:
         gid = r.get('Id')
