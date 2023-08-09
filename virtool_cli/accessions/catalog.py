@@ -55,7 +55,7 @@ def get_catalog(src: Path, catalog: Path):
     
     if catalog_paths:
         logger.info(
-            'Catalog is already populated. \n Checking listings for accuracy...')
+            'Catalog is already populated. Checking listings for accuracy...', catalogued=True)
 
         updated_list = check_catalog(src_path=src, catalog_path=catalog)
         
@@ -63,12 +63,12 @@ def get_catalog(src: Path, catalog: Path):
             logger.info(f'Updated {len(updated_list)} cache entries', 
                 updated=updated_list)
         else:
-            logger.info(f'Cache is up to date')
+            logger.info(f'Catalog is up to date')
 
     else:
         logger.info(
-            'Empty cache, initializing listings...', 
-            catalog=str(catalog))
+            'Empty catalog, initializing listings...', 
+            catalog=str(catalog), catalogued=False)
 
         all_current_accessions = generate_catalog(src)
     
@@ -189,7 +189,6 @@ def generate_catalog(src: Path) -> dict:
     """
     catalog = {}
 
-    counter = 0
     for otu_path in get_otu_paths(src):
         logger = base_logger.bind(
             path=str(otu_path.relative_to(otu_path.parents[1]))
@@ -220,7 +219,6 @@ def generate_listing(
     :param otu_data: OTU data in dict form
     :param accession_list: list of included accesssions
     """
-    
     catalog_listing = {}
     
     otu_id = otu_data.get('_id')
@@ -228,6 +226,7 @@ def generate_listing(
 
     catalog_listing['_id'] = otu_id
 
+    # Attempts to fetch the taxon id if none is found in the OTU metadata
     if taxid is None:
         logger.info('Taxon ID not found. Attempting to fetch from NCBI Taxonomy...')
         taxid = asyncio.run(fetch_taxid(otu_data.get('name', None)))
@@ -239,8 +238,17 @@ def generate_listing(
         else:
             catalog_listing['taxid'] = int(taxid)
             logger.info(f'Taxon ID found. Setting taxid={taxid}')
+    else:
+        catalog_listing['taxid'] = int(taxid)
 
     catalog_listing['name'] = otu_data.get('name')
+
+    schema = otu_data.get('schema', [])
+    if len(schema) > 1:
+        catalog_listing['multipartite'] = True
+    else:
+        catalog_listing['multipartite'] = False
+    
     catalog_listing['accessions'] = {}
     catalog_listing['accessions']['included'] = accession_list
     
@@ -275,11 +283,12 @@ def write_listing(
     :param catalog: Path to an accession catalog
     :param indent: Indent flag
     """
-    taxid_log = base_logger.bind(taxid=taxid)
+
+    logger = base_logger.bind(taxid=taxid)
 
     output_path = catalog_path / f"{taxid}--{record['_id']}.json"
 
-    taxid_log.debug('Writing accession', accession_path=output_path)
+    logger.debug('Writing accession', accession_path=output_path)
 
     record['accessions']['excluded'] = []
 

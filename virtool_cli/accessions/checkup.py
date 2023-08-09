@@ -24,29 +24,52 @@ def run(catalog: Path, debugging: bool = False):
         logger.critical('Catalog directory not found at path', path=str(catalog))
         return
     
-    find_duplicates(catalog)
-    
+    if unassigned := search_by_taxid('none', catalog):
+        logger.warning(
+            'Found listings without assigned NCBI taxon IDs.', 
+            unassigned=unassigned)
 
-def find_duplicates(catalog):
+    if duplicates := find_duplicates(catalog):
+        logger.warning(
+            'Found non-unique taxon IDs in catalog.', 
+            taxids=duplicates)
+
+def search_by_taxid(taxid, catalog_path: Path) -> list:
+    """
+    Searches records for a matching taxon id and returns all matching paths in the accession records
+
+    :param otu_id: Unique taxon ID
+    :param catalog_path: Path to an accession catalog directory
+    """
+    matches = [str(listing.relative_to(catalog_path)) 
+        for listing in catalog_path.glob(f'{taxid}--*.json')]
+    
+    if matches:
+        return matches
+    else:
+        return []
+
+def find_duplicates(catalog: Path):
     logger = structlog.get_logger()
 
-    unique_taxids = []
+    duplicated_taxids = set()
 
     for listing_path in get_listings(catalog):
         [ taxid, otu_id ] = split_pathname(listing_path)
 
         logger = logger.bind(
             path=str(listing_path.relative_to(catalog.parent)), 
-            taxid=taxid, 
             otu_id=otu_id
         )
 
-        if taxid in unique_taxids:
-            logger.warning("Duplicate found!")
-        else:
-            unique_taxids.add(taxid)
+        if taxid != 'none':
+            matches = search_by_taxid(taxid, catalog)
+
+            if len(matches) > 1:
+                logger.debug(f"Duplicate found!", taxid=taxid)
+                duplicated_taxids.add(taxid)
     
-    # logger.info(f'{unique_taxids}')
+    return duplicated_taxids
 
 if __name__ == '__main__':
     debug = True
@@ -56,6 +79,7 @@ if __name__ == '__main__':
     project_path = Path(REPO_DIR) / 'ref-plant-viruses'
     src_path = project_path / 'src'
     # catalog_path = project_path / '.cache/catalog'
-    catalog_path = Path(REPO_DIR) / 'ref-fetched-accessions/src'
+    catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
+    # catalog_path = Path('/Users/sygao/Development/UVic/Virtool/TestSets/cotton_dupe/.cache/catalog')
 
-    run(catalog=catalog_path, debugging=True)
+    run(catalog=catalog_path, debugging=False)

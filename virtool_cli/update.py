@@ -17,6 +17,7 @@ from virtool_cli.utils.ref import (
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.catalog import search_by_id
+from virtool_cli.accessions.evaluate import evaluate
 
 base_logger = structlog.get_logger()
 
@@ -83,7 +84,7 @@ async def update(src_path: Path, catalog_path: Path):
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
     asyncio.create_task(
-        writer_loop(src_path, storage, write_queue))
+        writer_loop(src_path, storage, write_queue, dry_run=False))
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 
@@ -121,7 +122,7 @@ async def fetcher_loop(
         new_accessions = await fetch_upstream_accessions(taxid, acc_listing)
         # await asyncio.sleep(NCBI_REQUEST_INTERVAL)
         
-        await taxid_log.adebug('New accessions', new=new_accessions)
+        # await taxid_log.adebug('New accessions', new=new_accessions)
 
         data = []
         for accession in new_accessions:
@@ -129,7 +130,12 @@ async def fetcher_loop(
             data.append(new_data)
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
-        packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': data }
+        packet = { 
+            'taxid': taxid, 'otu_id': otu_id, 
+            'listing': acc_listing,
+            'data': data, 
+            'multipartite': acc_listing.get('multipartite')
+        }
 
         await queue.put(packet)
         taxid_log.info(
@@ -153,14 +159,29 @@ async def processor_loop(
     while True:
         fetch_packet = await upstream_queue.get()
         
+        listing = fetch_packet['listing']
         taxid = fetch_packet['taxid']
         otu_id = fetch_packet['otu_id']
-        taxid_log = base_logger.bind(taxid=taxid)
+        logger = base_logger.bind(taxid=taxid)
+
+        filter_set = set(
+            listing['accessions']['included'] + \
+            listing.get('excluded', []))
 
         otu_updates = []
         for seq_list in fetch_packet['data']:
             for seq_data in seq_list:
+                
+                if seq_data.id in filter_set:
+                    logger.debug('Accession already exists', accession=seq_data.id)
+                    continue
+                
+                logger.debug('Unique accession found', accession=seq_data.id)
                 seq_qualifier_data = await get_qualifiers(seq_data.features)
+
+                if fetch_packet['multipartite']:
+                    if 'segment' not in seq_qualifier_data:
+                        continue
 
                 isolate_type = await find_isolate(seq_qualifier_data)
                 if isolate_type is None:
@@ -174,23 +195,27 @@ async def processor_loop(
                 }
                 seq_dict['isolate'] = isolate
                 otu_updates.append(seq_dict)
-                
+
         processed_packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': otu_updates }
 
         await downstream_queue.put(processed_packet)
-        taxid_log.debug(
+        logger.debug(
             f'Pushed new accessions to downstream queue')
         await asyncio.sleep(0.7)
         upstream_queue.task_done()
 
-async def writer_loop(src_path, storage, queue):
+async def writer_loop(
+    src_path: Path, 
+    storage: dict, 
+    queue: asyncio.Queue, 
+    dry_run: bool = False
+):
     """
     TO-DO: write changes back to local catalog?
 
     :param src_path: Path to a reference directory
     """
     unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
-    # generate_hashes(n=1, length=8, mixed_case=False, excluded=unique_seq)
 
     while True:
         packet = await queue.get()
@@ -207,11 +232,15 @@ async def writer_loop(src_path, storage, queue):
         print_new(new_sequence_set)
 
         try:
-            seq_hashes = generate_hashes(
-                n=len(new_sequence_set), length=8, mixed_case=False, excluded=unique_seq)
+            seq_hashes = generate_hashes(excluded=unique_seq, n=len(new_sequence_set))
         except Exception as e:
             log.exception(e)
             return e
+        
+        if dry_run:
+            await asyncio.sleep(0.1)
+            queue.task_done()
+            return
 
         for seq_data in new_sequence_set:
             
@@ -229,8 +258,7 @@ async def writer_loop(src_path, storage, queue):
 
             else:
                 try:
-                    iso_hash = generate_hashes(
-                        n=1, length=8, mixed_case=False, excluded=unique_iso).pop()
+                    iso_hash = generate_hashes(excluded=unique_iso, n=1).pop()
                 except Exception as e:
                     log.exception(e)
                 
@@ -279,25 +307,31 @@ async def fetch_upstream_accessions(
     """
     :param taxid: OTU Taxon ID
     :param listing: Corresponding listing from the accession catalog for this OTU in dict form
-    :return: A filtered list of accessions from NCBI Genbank for the taxon ID, 
+    :return: A list of accessions from NCBI Genbank for the taxon ID, 
         sans included and excluded accessions
     """
     upstream_accessions = []
-    entrez_record = Entrez.read(
-        Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
-            id=str(taxid), idtype="acc")
+    # entrez_accessions = Entrez.read(
+    #     Entrez.elink(
+    #         dbfrom="taxonomy", db="nucleotide", 
+    #         id=str(taxid), idtype="acc")
+    # )
+
+    # for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
+    #     upstream_accessions.append(linksetdb["Id"])
+    
+    otu_searchname = "+".join(listing.get("name").split(" "))
+
+    entrez_accessions = Entrez.read(
+        Entrez.esearch(
+            db="nucleotide", term=f"{otu_searchname}[Organism] AND RefSeq[keyword]"
+        )
     )
 
-    for linksetdb in entrez_record[0]["LinkSetDb"][0]["Link"]:
-        upstream_accessions.append(linksetdb["Id"])
+    for entrez_id in entrez_accessions['IdList']:
+        upstream_accessions.append(entrez_id)
 
-    filter_set = set(
-        listing['accessions']['included'] + \
-        listing['accessions']['excluded'])
-    upstream_set = set(upstream_accessions)
-
-    return list(upstream_set.difference(filter_set))
+    return upstream_accessions #list(upstream_set.difference(filter_set))
 
 async def fetch_upstream_records(
     fetch_list: list, 
@@ -391,6 +425,8 @@ async def format_sequence(record: SeqIO.SeqRecord, qualifiers: dict) -> dict:
     :param qualifiers: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
     :return: A new sequence dictionary if possible, else an empty dict if not
     """
+    logger = base_logger.bind(accession=record.id)
+    # logger.debug(f"{qualifiers}")
     try:
         seq_dict = {
             "accession": record.id,
@@ -398,10 +434,13 @@ async def format_sequence(record: SeqIO.SeqRecord, qualifiers: dict) -> dict:
             "host": qualifiers.get("host")[0] if qualifiers.get("host") is not None else None,
             "sequence": str(record.seq),
         }
+        if 'segment' in qualifiers:
+            seq_dict['segment'] = qualifiers.get("segment")[0] if qualifiers.get("segment") is not None else None
+
         return seq_dict
     
     except Exception as e:
-        base_logger.exception(e)
+        logger.exception(e)
         return {}
 
 async def store_isolate(

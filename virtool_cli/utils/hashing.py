@@ -29,10 +29,10 @@ def generate_random_alphanumeric(
     return generate_random_alphanumeric(length=length, excluded=excluded)
 
 def generate_hashes(
+    excluded: list,
     n: int = 1,
     length: int = 8,
-    mixed_case: bool = False,
-    excluded: Optional[Iterable[str]] = None
+    mixed_case: bool = False
 ):
     """
     """
