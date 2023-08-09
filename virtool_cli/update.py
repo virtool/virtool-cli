@@ -16,7 +16,7 @@ from virtool_cli.utils.ref import (
     search_otu_by_id)
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions.catalog import search_by_id
+from virtool_cli.accessions.helpers import search_by_id
 from virtool_cli.accessions.evaluate import evaluate
 
 base_logger = structlog.get_logger()
@@ -111,22 +111,28 @@ async def fetcher_loop(
     :param listing_paths: A list of paths to listings from the accession catalog
     :param queue: Queue holding fetched NCBI GenBank data
     """
+    base_logger.debug("Starting fetcher...")
+
     for path in listing_paths:
         acc_listing = json.loads(path.read_text())
 
         # extract taxon ID and _id hash from listing filename
         [ taxid, otu_id ] = (path.stem).split('--')
         
-        taxid_log = base_logger.bind(taxid=taxid, otu_id=otu_id)
+        logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
-        new_accessions = await fetch_upstream_accessions(taxid, acc_listing)
+        try:
+            new_accessions = await fetch_upstream_accessions(taxid, acc_listing)
+        except Exception as e:
+            logger.exception(e)
+
         # await asyncio.sleep(NCBI_REQUEST_INTERVAL)
         
-        # await taxid_log.adebug('New accessions', new=new_accessions)
+        logger.debug('New accessions', new=new_accessions)
 
         data = []
         for accession in new_accessions:
-            new_data = await fetch_upstream_records(accession, taxid_log)
+            new_data = await fetch_upstream_records(accession, logger)
             data.append(new_data)
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
@@ -138,7 +144,7 @@ async def fetcher_loop(
         }
 
         await queue.put(packet)
-        taxid_log.info(
+        logger.info(
             f'Pushed {len(new_accessions)} requests to upstream queue', 
             accessions=new_accessions, n_requests=len(new_accessions), taxid=taxid)
         await asyncio.sleep(0.7)
@@ -156,6 +162,8 @@ async def processor_loop(
     :param upstream_queue: Queue holding NCBI GenBank data pushed by the fetcher,
     :param downstream_queue: Queue holding formatted sequence and isolate data processed by this loop
     """
+    base_logger.debug("Starting processor...")
+
     while True:
         fetch_packet = await upstream_queue.get()
         
@@ -164,19 +172,19 @@ async def processor_loop(
         otu_id = fetch_packet['otu_id']
         logger = base_logger.bind(taxid=taxid)
 
-        filter_set = set(
-            listing['accessions']['included'] + \
-            listing.get('excluded', []))
+        # filter_set = set(
+        #     listing['accessions']['included'] + \
+        #     listing.get('excluded', []))
 
         otu_updates = []
         for seq_list in fetch_packet['data']:
             for seq_data in seq_list:
                 
-                if seq_data.id in filter_set:
-                    logger.debug('Accession already exists', accession=seq_data.id)
-                    continue
+                # if seq_data.id in filter_set:
+                #     logger.debug('Accession already exists', accession=seq_data.id)
+                #     continue
                 
-                logger.debug('Unique accession found', accession=seq_data.id)
+                # logger.debug('Unique accession found', accession=seq_data.id)
                 seq_qualifier_data = await get_qualifiers(seq_data.features)
 
                 if fetch_packet['multipartite']:
@@ -215,6 +223,8 @@ async def writer_loop(
 
     :param src_path: Path to a reference directory
     """
+    base_logger.debug("Starting writer...")
+
     unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
 
     while True:
@@ -310,28 +320,37 @@ async def fetch_upstream_accessions(
     :return: A list of accessions from NCBI Genbank for the taxon ID, 
         sans included and excluded accessions
     """
+
+    filter_set = set()
+    filter_set.update(listing['accessions']['included'].keys())
+    filter_set.update(listing['accessions']['excluded'].keys())
+
+    logger = base_logger.bind(taxid=taxid)
+    logger.debug('Exclude catalogued accessions', catalogued=filter_set)
+
     upstream_accessions = []
-    # entrez_accessions = Entrez.read(
-    #     Entrez.elink(
-    #         dbfrom="taxonomy", db="nucleotide", 
-    #         id=str(taxid), idtype="acc")
-    # )
-
-    # for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
-    #     upstream_accessions.append(linksetdb["Id"])
-    
-    otu_searchname = "+".join(listing.get("name").split(" "))
-
     entrez_accessions = Entrez.read(
-        Entrez.esearch(
-            db="nucleotide", term=f"{otu_searchname}[Organism] AND RefSeq[keyword]"
-        )
+        Entrez.elink(
+            dbfrom="taxonomy", db="nucleotide", 
+            id=str(taxid), idtype="acc")
     )
 
-    for entrez_id in entrez_accessions['IdList']:
-        upstream_accessions.append(entrez_id)
+    for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
+        upstream_accessions.append(linksetdb["Id"])
+    
+    # otu_searchname = "+".join(listing.get("name").split(" "))
+    # entrez_accessions = Entrez.read(
+    #     Entrez.esearch(
+    #         db="nucleotide", term=f"{otu_searchname}[Organism] AND RefSeq[keyword]"
+    #     )
+    # )
 
-    return upstream_accessions #list(upstream_set.difference(filter_set))
+    # for entrez_id in entrez_accessions['IdList']:
+    #     upstream_accessions.append(entrez_id)
+
+    upstream_set = set(upstream_accessions)
+
+    return list(upstream_set.difference(filter_set))
 
 async def fetch_upstream_records(
     fetch_list: list, 

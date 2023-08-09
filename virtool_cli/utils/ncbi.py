@@ -31,10 +31,13 @@ async def fetch_taxid(name: str) -> int:
     return taxid
 
 async def fetch_primary_ids(accessions: list) -> list:
-    for i in len(accessions):
-        accessions[i] += '[Accession]'
+    """
+    """
+    acc_stringed = []
+    for acc in accessions:
+        acc_stringed.append(f'{acc}[Accession]')
     
-    deline_list = ' OR '.join(accessions)
+    deline_list = ' OR '.join(acc_stringed)
     
     try:
         handle = Entrez.esearch(db="nucleotide", term=deline_list)
@@ -46,5 +49,21 @@ async def fetch_primary_ids(accessions: list) -> list:
     gids = []
     for entrez_id in record['IdList']:
         gids.append(entrez_id)
+
+    try:
+        handle = Entrez.esummary(db="nucleotide", id=gids)
+        record = Entrez.read(handle)
+        handle.close()
+    except Exception as e:
+        return e
     
-    return gids
+    indexed_accessions = {}
+    for r in record:
+        gid = r.get('Id')
+        indexed_accessions[gid] = r.get('Caption')
+        
+        # if 'AccessionVersion' in r:
+        #     indexed_accessions[gid] = r.get('AccessionVersion')
+        # else:
+    
+    return indexed_accessions

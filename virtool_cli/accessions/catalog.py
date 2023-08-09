@@ -9,7 +9,7 @@ from virtool_cli.utils.ref import (
     get_otu_paths,
     get_sequence_paths
 )
-from virtool_cli.utils.ncbi import fetch_taxid
+from virtool_cli.utils.ncbi import fetch_taxid, fetch_primary_ids
 
 base_logger = structlog.get_logger()
 
@@ -30,19 +30,6 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
         catalog_path.mkdir()
 
     get_catalog(src_path, catalog_path)
-
-def search_by_id(otu_id: str, catalog_path: Path):
-    """
-    Searches records for a matching id and returns the first matching path in the accession records
-
-    :param otu_id: Unique OTU ID string
-    :param catalog_path: Path to an accession catalog directory
-    """
-    matches = [listing for listing in catalog_path.glob(f'*--{otu_id}.json')]
-    if matches:
-        return matches[0]
-    else:
-        return FileNotFoundError
 
 def get_catalog(src: Path, catalog: Path):
     """
@@ -150,20 +137,22 @@ def check_listing(
     """
     if listing_path.exists():
         with open(listing_path, "r") as f:
-            cached_record = json.load(f)
+            listing = json.load(f)
+        
+        indexed_accessions = asyncio.run(fetch_primary_ids(ref_accessions))
 
-        if set(ref_accessions) == set(cached_record.get('accessions')['included']):
+        if set(indexed_accessions) == set(listing.get('accessions')['included']):
             logger.debug('No changes found')
 
         else:
             logger.debug('Changes found')
-            print(listing_path.name)
-            print(cached_record['accessions']['included'])
-            print(ref_accessions)
+            # print(listing_path.name)
+            # print(cached_record['accessions']['included'])
+            # print(ref_accessions)
 
-            cached_record.get('accessions')['included'] = ref_accessions
+            listing.get('accessions')['included'] = ref_accessions
             
-            update_listing(listing_path, ref_accessions, cached_record)
+            update_listing(listing_path, ref_accessions, listing)
             logger.debug('Wrote new list')
             return True
 
@@ -249,8 +238,11 @@ def generate_listing(
     else:
         catalog_listing['multipartite'] = False
     
+    indexed_accessions = asyncio.run(fetch_primary_ids(accession_list))
+    # print(indexed_accessions)
+
     catalog_listing['accessions'] = {}
-    catalog_listing['accessions']['included'] = accession_list
+    catalog_listing['accessions']['included'] = indexed_accessions
     
     return catalog_listing
 
@@ -290,7 +282,7 @@ def write_listing(
 
     logger.debug('Writing accession', accession_path=output_path)
 
-    record['accessions']['excluded'] = []
+    record['accessions']['excluded'] = {}
 
     with open(output_path, "w") as f:
         json.dump(record, f, indent=2 if indent else None)
