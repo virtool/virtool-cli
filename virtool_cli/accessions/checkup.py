@@ -3,9 +3,9 @@ import json
 import structlog
 from logging import INFO, DEBUG
 
-from virtool_cli.accessions.helpers import get_listings, split_pathname
+from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname
 
-logger = structlog.get_logger()
+b_logger = structlog.get_logger()
 
 
 def run(catalog: Path, debugging: bool = False):
@@ -21,18 +21,24 @@ def run(catalog: Path, debugging: bool = False):
         wrapper_class=structlog.make_filtering_bound_logger(filter_class))
     
     if not catalog.exists():
-        logger.critical('Catalog directory not found at path', path=str(catalog))
+        b_logger.critical('Catalog directory not found at path', path=str(catalog))
         return
     
     if unassigned := search_by_taxid('none', catalog):
-        logger.warning(
+        b_logger.warning(
             'Found listings without assigned NCBI taxon IDs.', 
             unassigned=unassigned)
 
     if duplicates := find_duplicates(catalog):
-        logger.warning(
+        b_logger.warning(
             'Found non-unique taxon IDs in catalog.', 
             taxids=duplicates)
+    
+    if missing_uids := find_missing_uids(catalog):
+        b_logger.error(
+            'Found listings with malformed accession lists',
+            otu_ids=missing_uids
+        )
 
 def search_by_taxid(taxid, catalog_path: Path) -> list:
     """
@@ -50,14 +56,14 @@ def search_by_taxid(taxid, catalog_path: Path) -> list:
         return []
 
 def find_duplicates(catalog: Path):
-    logger = structlog.get_logger()
-
+    """
+    """
     duplicated_taxids = set()
 
-    for listing_path in get_listings(catalog):
+    for listing_path in get_catalog_paths(catalog):
         [ taxid, otu_id ] = split_pathname(listing_path)
 
-        logger = logger.bind(
+        logger = b_logger.bind(
             path=str(listing_path.relative_to(catalog.parent)), 
             otu_id=otu_id
         )
@@ -70,6 +76,22 @@ def find_duplicates(catalog: Path):
                 duplicated_taxids.add(taxid)
     
     return duplicated_taxids
+
+def find_missing_uids(catalog: Path):
+    """
+    """
+    missing_uids = set()
+    for listing_path in get_catalog_paths(catalog):
+        with open(listing_path, "r") as f:
+            listing = json.load(f)
+        
+        if type(listing['accessions']['included']) is not dict:
+            missing_uids.add(listing['taxid'])
+
+        if type(listing['accessions']['excluded']) is not dict:
+            missing_uids.add(listing['taxid'])
+    
+    return missing_uids
 
 if __name__ == '__main__':
     debug = True

@@ -32,8 +32,11 @@ async def fetch_taxid(name: str) -> int:
 
     return taxid
 
-async def fetch_accession_gids(accessions: list):
+async def esearch_uids(accessions: list) -> list:
     """
+    Queries Entrez esearch for a list of accessions
+
+    :param name: List of accession numbers
     """
     acc_stringed = []
     for acc in accessions:
@@ -41,9 +44,15 @@ async def fetch_accession_gids(accessions: list):
     
     deline_list = ' OR '.join(acc_stringed)
     
-    handle = Entrez.esearch(db="nucleotide", term=deline_list)
-    record = Entrez.read(handle)
-    handle.close()
+    try:
+        handle = Entrez.esearch(db="nucleotide", term=deline_list)
+        record = Entrez.read(handle)
+        handle.close()
+    except Exception as e:
+        return []
+    
+    if len(record) < 1:
+        return []
 
     gids = []
     for entrez_id in record['IdList']:
@@ -51,29 +60,39 @@ async def fetch_accession_gids(accessions: list):
     
     return gids
 
-async def fetch_primary_ids(accessions: list) -> list:
+async def fetch_accession_uids(accessions: list) -> dict:
     """
+    Creates a dictionary keyed by the input accessions,
+    fetches the corresponding UIDs from NCBI Genbank and 
+    returns as many key-value pairs as possible.
+    If a UID cannot be found for an accession, value defaults to None.add()
+
+    :param name: List of accession numbers
+    :return: Dictionary of Genbank UIDs keyed by corresponding accession number
     """
+    indexed_accessions = { accession: None for index, accession in enumerate(accessions) }
+    
     try:
-        gids = await fetch_accession_gids(accessions)
+        uids = await esearch_uids(accessions)
     except Exception as e:
         raise e
 
     await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
+    if not uids:
+        return indexed_accessions
+
     try:
-        handle = Entrez.esummary(db="nucleotide", id=gids)
+        handle = Entrez.esummary(db="nucleotide", id=uids)
         record = Entrez.read(handle)
         handle.close()
     except Exception as e:
         raise e
 
-    indexed_accessions = {}
     for r in record:
-        indexed_accessions[r.get('Caption')] = int(r.get('Id'))
-        
-        # if 'AccessionVersion' in r:
-        #     indexed_accessions[gid] = r.get('AccessionVersion')
-        # else:
+        if r.get('Caption') in indexed_accessions.keys():
+            indexed_accessions[r.get('Caption')] = int(r.get('Id'))
+        elif r.get('AccessionVersion') in indexed_accessions.keys():
+            indexed_accessions[r.get('AccessionVersion')] = int(r.get('Id'))
     
     return indexed_accessions

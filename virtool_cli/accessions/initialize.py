@@ -5,7 +5,7 @@ import structlog
 from logging import INFO, DEBUG
 
 from virtool_cli.utils.ref import parse_otu, get_otu_paths
-from virtool_cli.utils.ncbi import fetch_taxid, fetch_primary_ids
+from virtool_cli.utils.ncbi import fetch_taxid, fetch_accession_uids
 from virtool_cli.accessions.helpers import get_otu_accessions
 
 base_logger = structlog.get_logger()
@@ -99,7 +99,7 @@ async def generate_listing(
     # Attempts to fetch the taxon id if none is found in the OTU metadata
     if taxid is None:
         logger.info('Taxon ID not found. Attempting to fetch from NCBI Taxonomy...')
-        taxid = asyncio.run(fetch_taxid(otu_data.get('name', None)))
+        taxid = await fetch_taxid(otu_data.get('name', None))
 
         if taxid is None:
             catalog_listing['taxid'] = 'none'
@@ -119,7 +119,12 @@ async def generate_listing(
     else:
         catalog_listing['multipartite'] = False
     
-    indexed_accessions = await fetch_primary_ids(accession_list)
+    try:
+        indexed_accessions = await fetch_accession_uids(accession_list)
+    except FileNotFoundError:
+        return {}
+    except RuntimeError as e:
+        logger.exception(e)
 
     catalog_listing['accessions'] = {}
     catalog_listing['accessions']['included'] = indexed_accessions
@@ -140,25 +145,14 @@ async def write_listing(
     :param indent: Indent flag
     """
 
-    logger = base_logger.bind(taxid=taxid)
-
     output_path = catalog_path / f"{taxid}--{listing['_id']}.json"
+    logger = base_logger.bind(
+        taxid=taxid, 
+        accession_path=str(output_path.relative_to(output_path.parents[1])))
 
-    logger.debug('Writing accession', accession_path=output_path)
+    logger.debug('Writing accession listing...')
 
     listing['accessions']['excluded'] = {}
 
     with open(output_path, "w") as f:
         json.dump(listing, f, indent=2 if indent else None)
-
-if __name__ == '__main__':
-    debug = True
-    
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    
-    project_path = Path(REPO_DIR) / 'ref-mini'
-    src_path = project_path / 'src'
-    catalog_path = project_path / '.cache/catalog'
-    # catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
-
-    run(src_path, catalog_path)

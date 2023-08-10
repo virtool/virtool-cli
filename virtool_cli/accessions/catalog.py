@@ -9,7 +9,7 @@ from virtool_cli.utils.ref import (
     get_otu_paths,
     get_sequence_paths
 )
-from virtool_cli.utils.ncbi import fetch_taxid, fetch_primary_ids
+# from virtool_cli.utils.ncbi import fetch_taxid, fetch_primary_ids
 from virtool_cli.accessions.helpers import get_otu_accessions
 from virtool_cli.accessions.initialize import initialize, generate_listing, write_listing
 
@@ -147,23 +147,43 @@ def check_listing(
             logger.debug('No changes found')
 
     else:
-        logger.info(f'No accession record for f{taxid}. Creating {listing_path.name}')
+        logger.info(f'No accession record for {taxid}. Creating {listing_path.name}...')
         
-        new_record = generate_listing(
-            otu_data=parse_otu(otu_path), 
-            accession_list=ref_accessions)
-        
-        write_listing(taxid, new_record, catalog_path=listing_path.parent)
+        asyncio.run(
+            initialize_listing(taxid, otu_path, ref_accessions, listing_path, logger)
+        )
         
         return True
     
     return False
 
+async def initialize_listing(
+    taxid, otu_path, ref_accessions, listing_path, logger
+):
+    """
+    """
+    otu_data = parse_otu(otu_path)
+    # otu_id = otu_data['_id']
+
+    # accessions = get_otu_accessions(otu_path)
+
+    new_record = await generate_listing(
+        otu_data=otu_data, accession_list=ref_accessions)
+    
+    if not new_record:
+        logger.error('Could not generate a listing for this OTU.')
+        return
+    
+    await write_listing(taxid, new_record, catalog_path=listing_path.parent)
+
+    return
+
 def update_listing(
         path: Path,
         accessions: list,
         listing: dict, 
-        indent: bool = True):
+        indent: bool = True
+):
     """
     Write accession file to cache directory
 
