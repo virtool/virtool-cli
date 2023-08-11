@@ -32,34 +32,6 @@ async def fetch_taxid(name: str) -> int:
 
     return taxid
 
-async def esearch_uids(accessions: list) -> list:
-    """
-    Queries Entrez esearch for a list of accessions
-
-    :param name: List of accession numbers
-    """
-    acc_stringed = []
-    for acc in accessions:
-        acc_stringed.append(f'{acc}[Accession]')
-    
-    deline_list = ' OR '.join(acc_stringed)
-    
-    try:
-        handle = Entrez.esearch(db="nucleotide", term=deline_list)
-        record = Entrez.read(handle)
-        handle.close()
-    except Exception as e:
-        return []
-    
-    if len(record) < 1:
-        return []
-
-    gids = []
-    for entrez_id in record['IdList']:
-        gids.append(entrez_id)
-    
-    return gids
-
 async def fetch_accession_uids(accessions: list) -> dict:
     """
     Creates a dictionary keyed by the input accessions,
@@ -71,23 +43,15 @@ async def fetch_accession_uids(accessions: list) -> dict:
     :return: Dictionary of Genbank UIDs keyed by corresponding accession number
     """
     indexed_accessions = { accession: None for index, accession in enumerate(accessions) }
-    
-    try:
-        uids = await esearch_uids(accessions)
-    except Exception as e:
-        raise e
-
-    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
-
-    if not uids:
-        return indexed_accessions
 
     try:
-        handle = Entrez.esummary(db="nucleotide", id=uids)
+        handle = Entrez.efetch(db="nucleotide", id=accessions, rettype="docsum")
         record = Entrez.read(handle)
         handle.close()
     except Exception as e:
         raise e
+    
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
     for r in record:
         if r.get('Caption') in indexed_accessions.keys():
@@ -96,3 +60,31 @@ async def fetch_accession_uids(accessions: list) -> dict:
             indexed_accessions[r.get('AccessionVersion')] = int(r.get('Id'))
     
     return indexed_accessions
+
+# async def esearch_uids(accessions: list) -> list:
+#     """
+#     Queries Entrez esearch for a list of accessions
+
+#     :param name: List of accession numbers
+#     """
+#     acc_stringed = []
+#     for acc in accessions:
+#         acc_stringed.append(f'{acc}[Accession]')
+    
+#     deline_list = ' OR '.join(acc_stringed)
+    
+#     try:
+#         handle = Entrez.esearch(db="nucleotide", term=deline_list)
+#         record = Entrez.read(handle)
+#         handle.close()
+#     except Exception as e:
+#         return []
+    
+#     if len(record) < 1:
+#         return []
+
+#     gids = []
+#     for entrez_id in record['IdList']:
+#         gids.append(entrez_id)
+    
+#     return gids

@@ -21,6 +21,8 @@ from virtool_cli.accessions.evaluate import evaluate
 
 base_logger = structlog.get_logger()
 
+DEFAULT_INTERVAL = 0.001
+
 
 def run(src: Path, catalog: Path, debugging: bool = False):
     """
@@ -122,11 +124,10 @@ async def fetcher_loop(
         logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
         try:
-            new_accessions = await fetch_upstream_accessions(taxid, acc_listing)
+            new_accessions = await fetch_upstream_accessions(
+                taxid, acc_listing, reqseq_only=True)
         except Exception as e:
             logger.exception(e)
-
-        # await asyncio.sleep(NCBI_REQUEST_INTERVAL)
         
         logger.debug('New accessions', new=new_accessions)
 
@@ -135,19 +136,21 @@ async def fetcher_loop(
             new_data = await fetch_upstream_records(accession, logger)
             record_data.append(new_data)
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+        
+        if not record_data:
+            continue
 
         packet = { 
             'taxid': taxid, 'otu_id': otu_id, 
             'listing': acc_listing,
             'data': record_data, 
-            'multipartite': acc_listing.get('multipartite')
         }
 
         await queue.put(packet)
         logger.info(
             f'Pushed {len(new_accessions)} requests to upstream queue', 
             accessions=new_accessions, n_requests=len(new_accessions), taxid=taxid)
-        await asyncio.sleep(0.7)
+        await asyncio.sleep(DEFAULT_INTERVAL)
 
 async def processor_loop(
     upstream_queue: asyncio.Queue, 
@@ -183,10 +186,9 @@ async def processor_loop(
                     logger.debug('Accession already exists', accession=seq_data.id)
                     continue
                 
-                # logger.debug('Unique accession found', accession=seq_data.id)
                 seq_qualifier_data = await get_qualifiers(seq_data.features)
 
-                if fetch_packet['multipartite']:
+                if len(listing.get('schema')) > 1:
                     if 'segment' not in seq_qualifier_data:
                         continue
 
@@ -196,6 +198,8 @@ async def processor_loop(
                 isolate_name = seq_qualifier_data.get(isolate_type)[0]
 
                 seq_dict = await format_sequence(seq_data, seq_qualifier_data)
+                if 'segment' not in seq_dict:
+                    seq_dict['segment'] = listing.get("schema")[0]
                 isolate = { 
                     'source_name': isolate_name, 
                     'source_type': isolate_type
@@ -203,12 +207,17 @@ async def processor_loop(
                 seq_dict['isolate'] = isolate
                 otu_updates.append(seq_dict)
 
+        if not otu_updates:
+            await asyncio.sleep(DEFAULT_INTERVAL)
+            upstream_queue.task_done()
+            continue
+
         processed_packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': otu_updates }
 
         await downstream_queue.put(processed_packet)
-        logger.debug(
-            f'Pushed new accessions to downstream queue')
-        await asyncio.sleep(0.7)
+        logger.info(
+            f'Pushed {len(otu_updates)} new accessions to downstream queue')
+        await asyncio.sleep(DEFAULT_INTERVAL)
         upstream_queue.task_done()
 
 async def writer_loop(
@@ -238,18 +247,13 @@ async def writer_loop(
         otu_path = search_otu_by_id(src_path, otu_id)
         ref_isolates = await label_isolates(otu_path)
 
-        # print_new(new_sequence_set)
-
         try:
             seq_hashes = generate_hashes(excluded=unique_seq, n=len(new_sequence_set))
         except Exception as e:
             log.exception(e)
             return e
         
-        if dry_run:
-            await asyncio.sleep(0.1)
-            queue.task_done()
-            return
+        log.info(f'Writing {len(new_sequence_set)} sequences...')
 
         for seq_data in new_sequence_set:
             
@@ -274,8 +278,9 @@ async def writer_loop(
                 log.debug('Assigning new isolate hash', 
                     iso_name=isolate_name,
                     iso_hash=iso_hash)
-                await store_isolate(isolate_name, isolate_type, iso_hash, otu_path)
+                new_isolate = await store_isolate(isolate_name, isolate_type, iso_hash, otu_path)
                 unique_iso.add(iso_hash)
+                ref_isolates[isolate_name] = new_isolate
             
             iso_path = otu_path / iso_hash
             
@@ -286,8 +291,8 @@ async def writer_loop(
             
             await store_sequence(seq_data, seq_hash, iso_path)
             unique_seq.add(seq_hash)
-
-        await asyncio.sleep(0.1)
+    
+        await asyncio.sleep(DEFAULT_INTERVAL)
         queue.task_done()
 
 async def label_isolates(otu_path: Path) -> dict:
@@ -311,7 +316,8 @@ async def label_isolates(otu_path: Path) -> dict:
 
 async def fetch_upstream_accessions(
     taxid: int, 
-    listing: dict
+    listing: dict,
+    reqseq_only: bool = True
 ) -> list:
     """
     :param taxid: OTU Taxon ID
@@ -325,31 +331,33 @@ async def fetch_upstream_accessions(
     filter_set.update(listing['accessions']['excluded'].values())
 
     logger = base_logger.bind(taxid=taxid)
-    logger.debug('Exclude catalogued accessions', catalogued=filter_set)
+    logger.debug('Exclude catalogued UIDs', catalogued=filter_set)
 
-    upstream_accessions = []
+    upstream_uids = []
 
-    entrez_accessions = Entrez.read(
-        Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
-            id=str(taxid), idtype="acc")
-    )
+    if reqseq_only:
+        otu_searchname = "+".join(listing.get("name").split(" "))
+        entrez_accessions = Entrez.read(
+            Entrez.esearch(
+                db="nucleotide", 
+                term=f"{otu_searchname}[Organism] AND RefSeq[keyword]"
+            )
+        )
 
-    for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
-        upstream_accessions.append(linksetdb["Id"])
+        for entrez_id in entrez_accessions['IdList']:
+            upstream_uids.append(entrez_id)
     
-    # otu_searchname = "+".join(listing.get("name").split(" "))
-    # entrez_accessions = Entrez.read(
-    #     Entrez.esearch(
-    #         db="nucleotide", term=f"{otu_searchname}[Organism] AND RefSeq[keyword]",
+    else:
+        entrez_accessions = Entrez.read(
+            Entrez.elink(
+                dbfrom="taxonomy", db="nucleotide", 
+                id=str(taxid), idtype="acc")
+        )
 
-    #     )
-    # )
+        for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
+            upstream_uids.append(linksetdb["Id"])
 
-    for entrez_id in entrez_accessions['IdList']:
-        upstream_accessions.append(entrez_id)
-
-    upstream_set = set(upstream_accessions)
+    upstream_set = set(upstream_uids)
 
     return list(upstream_set.difference(filter_set))
 
@@ -384,7 +392,7 @@ async def fetch_upstream_records(
         return accession_list
     except Exception as e:
         logger.exception(e)
-        return []
+        raise e
 
 def filter_catalog(
     src_path, catalog_path
@@ -489,7 +497,7 @@ async def store_isolate(
     async with aiofiles.open(iso_path / "isolate.json", "w") as f:
         await f.write(json.dumps(new_isolate, indent=4))
     
-    return iso_hash
+    return new_isolate
 
 async def store_sequence(
     sequence: dict, seq_hash: str, iso_path: Path

@@ -5,6 +5,8 @@ from logging import INFO, DEBUG
 
 from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname
 
+LISTING_KEYS = set(["_id", "accessions", "name", "schema", "schema", "taxid"])
+
 b_logger = structlog.get_logger()
 
 
@@ -35,10 +37,45 @@ def run(catalog: Path, debugging: bool = False):
             taxids=duplicates)
     
     if missing_uids := find_missing_uids(catalog):
-        b_logger.error(
-            'Found listings with malformed accession lists',
-            otu_ids=missing_uids
+        b_logger.warning(
+            'Found listings with missing uids',
+            taxids=missing_uids
         )
+    
+    for listing_path in get_catalog_paths(catalog):
+        with open(listing_path, "r") as f:
+            listing = json.load(f)
+
+        if missing_keys := check_keys(listing):
+            b_logger.warning(
+                'Entry is missing keys',
+                missing_keys=missing_keys,
+                path=str(listing_path.relative_to(catalog))
+            )
+        
+        if not check_schema(listing):
+            b_logger.warning('Schema is empty')
+
+def check_keys(listing: dict):
+    """
+    """
+    if not LISTING_KEYS.issubset(listing.keys()):
+        missing_keys = LISTING_KEYS.difference(listing.keys())
+        return list(missing_keys)
+    else:
+        return []
+
+def check_schema(listing: dict):
+    """
+    """
+    if type(listing['schema']) != list:
+        return False
+    
+    if not listing:
+        return False
+
+    return True
+
 
 def search_by_taxid(taxid, catalog_path: Path) -> list:
     """
@@ -47,6 +84,7 @@ def search_by_taxid(taxid, catalog_path: Path) -> list:
     :param otu_id: Unique taxon ID
     :param catalog_path: Path to an accession catalog directory
     """
+    
     matches = [str(listing.relative_to(catalog_path)) 
         for listing in catalog_path.glob(f'{taxid}--*.json')]
     
@@ -82,14 +120,23 @@ def find_missing_uids(catalog: Path):
     """
     missing_uids = set()
     for listing_path in get_catalog_paths(catalog):
+        relative_path = str(listing_path.relative_to(listing_path.parent))
         with open(listing_path, "r") as f:
             listing = json.load(f)
         
         if type(listing['accessions']['included']) is not dict:
-            missing_uids.add(listing['taxid'])
+            missing_uids.add(relative_path)
 
         if type(listing['accessions']['excluded']) is not dict:
-            missing_uids.add(listing['taxid'])
+            missing_uids.add(relative_path)
+
+        for accession in listing['accessions']['included']:
+            if listing['accessions']['included'][accession] is None:
+                missing_uids.add(relative_path)
+
+        for accession in listing['accessions']['excluded']:
+            if listing['accessions']['excluded'][accession] is None:
+                missing_uids.add(relative_path)
     
     return missing_uids
 

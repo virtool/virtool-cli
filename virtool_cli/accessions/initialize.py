@@ -112,12 +112,17 @@ async def generate_listing(
         catalog_listing['taxid'] = int(taxid)
 
     catalog_listing['name'] = otu_data.get('name')
-
-    schema = otu_data.get('schema', [])
-    if len(schema) > 1:
-        catalog_listing['multipartite'] = True
-    else:
-        catalog_listing['multipartite'] = False
+    
+    schema = []
+    for part in otu_data.get('schema'):
+        if part.get('required'):
+            schema.append(part.get('name'))
+    catalog_listing['schema'] = schema
+    
+    # if len(schema) > 1:
+    #     catalog_listing['multipartite'] = True
+    # else:
+    #     catalog_listing['multipartite'] = False
     
     try:
         indexed_accessions = await fetch_accession_uids(accession_list)
@@ -148,11 +153,11 @@ async def write_listing(
     output_path = catalog_path / f"{taxid}--{listing['_id']}.json"
     logger = base_logger.bind(
         taxid=taxid, 
-        accession_path=str(output_path.relative_to(output_path.parents[1])))
+        listing_path=str(output_path.relative_to(output_path.parent)))
 
     logger.debug('Writing accession listing...')
 
     listing['accessions']['excluded'] = {}
 
     with open(output_path, "w") as f:
-        json.dump(listing, f, indent=2 if indent else None)
+        json.dump(listing, f, indent=2 if indent else None, sort_keys=True)
