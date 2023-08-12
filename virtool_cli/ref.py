@@ -8,6 +8,7 @@ import virtool_cli.divide
 import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
+import virtool_cli.migrate
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
@@ -139,6 +140,25 @@ def repair(src_path):
 
     try:
         virtool_cli.repair.run(Path(src_path))
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
+        click.echo(e)
+
+@ref.command()
+@click.option(
+    "-src",
+    "--src_path",
+    required=True,
+    type=str,
+    help="the path to a reference directory",
+)
+def migrate(src_path):
+    """Convert a reference directory from v1.x to v2.x"""
+    if not Path(src_path).exists():
+        logger.critical('Source directory does not exist')
+
+    try:
+        virtool_cli.migrate.run(Path(src_path))
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
         click.echo(e)

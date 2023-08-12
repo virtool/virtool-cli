@@ -4,7 +4,7 @@ from typing import Tuple
 import arrow
 import structlog
 
-from virtool_cli.utils.legacy import get_otu_paths
+from virtool_cli.utils.ref import get_otu_paths
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
