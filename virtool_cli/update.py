@@ -16,7 +16,7 @@ from virtool_cli.utils.ref import (
     search_otu_by_id)
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions.helpers import search_by_id
+from virtool_cli.accessions.helpers import search_by_id, filter_catalog
 from virtool_cli.accessions.evaluate import evaluate
 
 base_logger = structlog.get_logger()
@@ -33,7 +33,8 @@ def run(src: Path, catalog: Path, debugging: bool = False):
     logger = base_logger.bind(command='update', src=str(src), catalog=str(catalog))
     filter_class = DEBUG if debugging else INFO
     structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(filter_class))
+        wrapper_class=structlog.make_filtering_bound_logger(filter_class)
+    )
 
     logger.info('Updating src directory accessions using catalog listings...')
 
@@ -248,7 +249,8 @@ async def writer_loop(
         ref_isolates = await label_isolates(otu_path)
 
         try:
-            seq_hashes = generate_hashes(excluded=unique_seq, n=len(new_sequence_set))
+            seq_hashes = generate_hashes(
+                excluded=unique_seq, n=len(new_sequence_set))
         except Exception as e:
             log.exception(e)
             return e
@@ -394,27 +396,27 @@ async def fetch_upstream_records(
         logger.exception(e)
         raise e
 
-def filter_catalog(
-    src_path, catalog_path
-) -> list:
-    """
-    Return paths for cached accession catalogues that are included in the source reference
+# def filter_catalog(
+#     src_path, catalog_path
+# ) -> list:
+#     """
+#     Return paths for cached accession catalogues that are included in the source reference
 
-    :param src_path: Path to a reference directory
-    :param catalog_path: Path to an accession record directory
-    :return: A list of paths to relevant listings in the accession catalog
-    """
-    otu_paths = get_otu_paths(src_path)
-    included_listings = []
+#     :param src_path: Path to a reference directory
+#     :param catalog_path: Path to an accession record directory
+#     :return: A list of paths to relevant listings in the accession catalog
+#     """
+#     otu_paths = get_otu_paths(src_path)
+#     included_listings = []
     
-    for path in otu_paths:
-        otu_id = (path.name).split('--')[1]
+#     for path in otu_paths:
+#         otu_id = (path.name).split('--')[1]
 
-        included_listings.append(
-            search_by_id(otu_id, catalog_path)
-        )
+#         included_listings.append(
+#             search_by_id(otu_id, catalog_path)
+#         )
     
-    return included_listings
+#     return included_listings
 
 async def get_qualifiers(seq: list) -> dict:
     """
@@ -424,11 +426,13 @@ async def get_qualifiers(seq: list) -> dict:
     :return: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
     """
     features = [feature for feature in seq if feature.type == "source"]
+    
     isolate_data = {}
 
     for feature in features:
         for qualifier in feature.qualifiers:
             isolate_data[qualifier] = feature.qualifiers.get(qualifier)
+
     return isolate_data
 
 async def find_isolate(isolate_data: dict) -> Optional[str]:
@@ -519,27 +523,3 @@ async def store_sequence(
         )
 
     return seq_hash
-
-def print_new(listing: dict) -> None:
-    """
-    """
-    for sequence in listing:
-        print(f"     {sequence['accession']}:") 
-        print(f"     {sequence['definition']}")
-        print(f"     {sequence['isolate']}")
-
-        print()
-    return
-
-
-if __name__ == '__main__':
-    debug = True
-    
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    
-    project_path = Path(REPO_DIR) / 'ref-mini'
-    src_path = project_path / 'src'
-    # catalog_path = project_path / '.cache/catalog'
-    catalog_path = Path(REPO_DIR) / 'ref-fetched-accessions/src'
-
-    run(src_path, catalog_path, debugging=True)

@@ -3,9 +3,35 @@ from pathlib import Path
 from virtool_cli.utils.ref import get_otu_paths, get_sequence_paths
 
 def get_catalog_paths(catalog):
-    return [listing for listing in catalog.glob('*.json')]
+    """
+    """
+    return list(catalog.glob('*.json'))
+
+def filter_catalog(
+    src_path, catalog_path
+) -> list:
+    """
+    Return paths for cached accession catalogues that are included in the source reference
+
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to an accession record directory
+    :return: A list of paths to relevant listings in the accession catalog
+    """
+    otu_paths = get_otu_paths(src_path)
+    included_listings = []
+    
+    for path in otu_paths:
+        otu_id = (path.name).split('--')[1]
+
+        included_listings.append(
+            search_by_id(otu_id, catalog_path)
+        )
+    
+    return included_listings
 
 def parse_listing(path: Path):
+    """
+    """
     with open(path, "r") as f:
         listing = json.load(f)
     return listing

@@ -17,28 +17,32 @@ def run(catalog: Path, debugging: bool = False):
     :param catalog: Path to an accession catalog directory
     :param debugging: Debugging flag
     """
+    logger = b_logger.bind(command='checkup')
 
     filter_class = DEBUG if debugging else INFO
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(filter_class))
     
     if not catalog.exists():
-        b_logger.critical('Catalog directory not found at path', path=str(catalog))
+        logger.critical('Catalog directory not found at path', path=str(catalog))
         return
     
     if unassigned := search_by_taxid('none', catalog):
-        b_logger.warning(
+        logger.warning(
             'Found listings without assigned NCBI taxon IDs.', 
+            test='no_taxid',
             unassigned=unassigned)
 
     if duplicates := find_duplicates(catalog):
-        b_logger.warning(
+        logger.warning(
             'Found non-unique taxon IDs in catalog.', 
+            test='duplicate_taxid',
             taxids=duplicates)
     
     if missing_uids := find_missing_uids(catalog):
-        b_logger.warning(
+        logger.warning(
             'Found listings with missing uids',
+            test='null_uid',
             taxids=missing_uids
         )
     
@@ -47,14 +51,14 @@ def run(catalog: Path, debugging: bool = False):
             listing = json.load(f)
 
         if missing_keys := check_keys(listing):
-            b_logger.warning(
+            logger.warning(
                 'Entry is missing keys',
                 missing_keys=missing_keys,
                 path=str(listing_path.relative_to(catalog))
             )
         
         if not check_schema(listing):
-            b_logger.warning('Schema is empty')
+            logger.warning('Schema is empty')
 
 def check_keys(listing: dict):
     """
