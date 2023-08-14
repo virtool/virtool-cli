@@ -11,7 +11,13 @@ from virtool_cli.accessions.initialize import generate_listing, write_listing
 
 base_logger = structlog.get_logger()
 
-def run(src: Path, catalog: Path):
+def run(src: Path, catalog: Path, debugging: bool = False):
+    """
+    """
+    filter_class = DEBUG if debugging else INFO
+    structlog.configure(
+        wrapper_class=structlog.make_filtering_bound_logger(filter_class))
+
     logger = base_logger.bind(task='update', catalog=str(catalog))
     
     logger.info(f"Starting catalog updater...")

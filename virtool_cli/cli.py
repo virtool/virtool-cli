@@ -2,7 +2,7 @@ import click
 
 from virtool_cli.ref import ref
 from virtool_cli.hmm import hmm
-
+from virtool_cli.accessions.cli import acc
 
 @click.group()
 def entry():
@@ -17,4 +17,5 @@ def entry():
 
 entry.add_command(ref)
 entry.add_command(hmm)
+entry.add_command(acc)
 entry()

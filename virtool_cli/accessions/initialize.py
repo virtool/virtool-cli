@@ -10,7 +10,13 @@ from virtool_cli.accessions.helpers import get_otu_accessions
 
 base_logger = structlog.get_logger()
 
-def run(src: Path, catalog: Path):
+def run(src: Path, catalog: Path, debugging: bool = False):
+    """
+    """
+    filter_class = DEBUG if debugging else INFO
+    structlog.configure(
+        wrapper_class=structlog.make_filtering_bound_logger(filter_class))
+
     asyncio.run(initialize(src, catalog))
 
 async def initialize(src: Path, catalog: Path):
