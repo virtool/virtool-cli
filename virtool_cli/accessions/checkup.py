@@ -1,14 +1,15 @@
 from pathlib import Path
 import json
 import structlog
-from logging import INFO, DEBUG
+import logging
+# from logging import INFO, DEBUG
 
+import virtool_cli.utils.logging
 from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname
 
 LISTING_KEYS = set(["_id", "accessions", "name", "schema", "schema", "taxid"])
 
 b_logger = structlog.get_logger()
-
 
 def run(catalog: Path, debugging: bool = False):
     """
@@ -17,11 +18,12 @@ def run(catalog: Path, debugging: bool = False):
     :param catalog: Path to an accession catalog directory
     :param debugging: Debugging flag
     """
-    logger = b_logger.bind(command='checkup')
-
-    filter_class = DEBUG if debugging else INFO
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(filter_class))
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
+    logger = structlog.get_logger()
     
     if not catalog.exists():
         logger.critical('Catalog directory not found at path', path=str(catalog))
@@ -144,15 +146,15 @@ def find_missing_uids(catalog: Path):
     
     return missing_uids
 
-if __name__ == '__main__':
-    debug = True
+# if __name__ == '__main__':
+#     debug = True
     
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
+#     REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
     
-    project_path = Path(REPO_DIR) / 'ref-plant-viruses'
-    src_path = project_path / 'src'
-    # catalog_path = project_path / '.cache/catalog'
-    catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
-    # catalog_path = Path('/Users/sygao/Development/UVic/Virtool/TestSets/cotton_dupe/.cache/catalog')
+#     project_path = Path(REPO_DIR) / 'ref-plant-viruses'
+#     src_path = project_path / 'src'
+#     # catalog_path = project_path / '.cache/catalog'
+#     catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
+#     # catalog_path = Path('/Users/sygao/Development/UVic/Virtool/TestSets/cotton_dupe/.cache/catalog')
 
-    run(catalog=catalog_path, debugging=False)
+#     run(catalog=catalog_path, debugging=False)

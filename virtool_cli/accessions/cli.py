@@ -7,7 +7,7 @@ from virtool_cli.accessions.checkup import run as run_checkup
 from virtool_cli.accessions.initialize import run as run_init
 from virtool_cli.accessions.update import run as run_update
 
-logger = structlog.get_logger()
+b_logger = structlog.get_logger()
 
 
 @click.group("acc")
@@ -36,6 +36,8 @@ def acc():
 @click.option('--debug/--no-debug', default=False)
 def init(src_path, catalog_path, debug):
     """Generate a catalog of all included accessions in a src directory"""
+    logger = b_logger.bind(command='acc init')
+
     if not Path(src_path).exists():
         logger.critical('Source directory does not exist')
         return
@@ -71,21 +73,25 @@ def init(src_path, catalog_path, debug):
     help="the path to a reference directory",
 )
 @click.option('--debug/--no-debug', default=False)
-def update(catalog_path, src_path, debug):
+def update(src_path, catalog_path, debug):
     """Generate a catalog of all included accessions in a src directory"""
-    if not Path(src_path).exists():
+    logger = b_logger.bind(command='acc update', src=src_path, catalog=catalog_path)
+    
+    src_dir = Path(src_path) 
+    catalog_dir = Path(catalog_path)
+
+    if not src_dir.exists():
         logger.critical('Source directory does not exist')
         return
     
-    catalog_dir = Path(catalog_path)
     if not catalog_dir.exists():
         logger.critical('Catalog directory does not exist')
         return
 
     try:
         run_update(
-            src_path=Path(src_path),
-            catalog_path=Path(catalog_path),
+            src=src_dir,
+            catalog=catalog_dir,
             debugging=debug
         )
     except (FileNotFoundError, NotADirectoryError) as e:
@@ -101,6 +107,8 @@ def update(catalog_path, src_path, debug):
 )
 @click.option('--debug/--no-debug', default=False)
 def checkup(catalog_path, debug):
+    logger = b_logger.bind(command='acc checkup')
+
     """Run a check on the accession catalogue for outstanding issues."""
 
     if not Path(catalog_path).exists():

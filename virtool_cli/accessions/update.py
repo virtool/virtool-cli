@@ -6,8 +6,11 @@ from logging import INFO, DEBUG
 
 from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
 from virtool_cli.utils.ncbi import fetch_accession_uids
-from virtool_cli.accessions.helpers import parse_listing, split_pathname, get_otu_accessions, get_catalog_paths, filter_catalog
 from virtool_cli.accessions.initialize import generate_listing, write_listing
+from virtool_cli.accessions.helpers import (
+    parse_listing, split_pathname, get_otu_accessions, 
+    get_catalog_paths, filter_catalog
+)
 
 base_logger = structlog.get_logger()
 
