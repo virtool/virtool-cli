@@ -1,0 +1,23 @@
+name: Build package
+on: 
+    workflow_call:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        container:
+            image: python:3.9-buster
+    
+        steps:
+            - name: Install Poetry
+              uses: snok/install-poetry@v1
+
+            - uses: actions/checkout@v3
+
+            - name: Build
+              run: poetry build
+    
+            - uses: actions/upload-artifact@v3
+              with:
+                name: virtool-wheel
+                path: dist
