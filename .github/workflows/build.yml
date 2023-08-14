@@ -27,4 +27,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: virtool-wheel
-          path: dist
+          path: dist/virtool_cli-2.0.0b1-py3-none-any.whl
