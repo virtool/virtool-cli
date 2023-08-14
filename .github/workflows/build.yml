@@ -1,28 +1,30 @@
 name: Build package
 on: 
-    workflow_call:
-        inputs:
-            branch:
-                required: true
-                type: string
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        container:
-            image: python:3.9-buster
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.9-buster
     
-        steps:
-            - name: Install Poetry
-              uses: snok/install-poetry@v1
+    steps:
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
 
-            - uses: actions/checkout@v3
-            
+      - uses: actions/checkout@v3
+        with:
+          repository: sygao/virtool_cli
+          ref: ${{ inputs.branch }}
 
-            - name: Build
-              run: poetry build
-    
-            - uses: actions/upload-artifact@v3
-              with:
-                name: virtool-wheel
-                path: dist
+      - name: Build
+        run: poetry build
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: virtool-wheel
+          path: dist
