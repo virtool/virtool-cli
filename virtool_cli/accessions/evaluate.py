@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-import pandas as pd
+# import pandas as pd
 import structlog
 
 from virtool_cli.utils.ref import get_otu_paths, parse_otu
