@@ -9,14 +9,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: python:3.10-buster
     
     steps:
       - uses: actions/checkout@v3
         with:
           repository: sygao/virtool-cli
           ref: ${{ inputs.branch }}
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
           
       - name: Install Poetry
         uses: snok/install-poetry@v1
