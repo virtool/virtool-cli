@@ -5,6 +5,8 @@ on:
       branch:
         required: true
         type: string
+  repository_dispatch:
+    types: [ build ]
 
 jobs:
   build:
