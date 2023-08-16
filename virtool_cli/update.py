@@ -9,6 +9,7 @@ from urllib.error import HTTPError
 
 from Bio import Entrez, SeqIO
 
+import virtool_cli.utils.logging
 from virtool_cli.utils.ref import (
     get_otu_paths, get_isolate_paths, 
     # parse_otu, parse_isolates, 
@@ -31,10 +32,6 @@ def run(src: Path, catalog: Path, debugging: bool = False):
     :param src: Path to a reference directory
     """
     logger = base_logger.bind(command='update', src=str(src), catalog=str(catalog))
-    filter_class = DEBUG if debugging else INFO
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(filter_class)
-    )
 
     logger.info('Updating src directory accessions using catalog listings...')
 
