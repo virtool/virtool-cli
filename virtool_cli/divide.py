@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
 import shutil
+import logging
 
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import generate_otu_dirname
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
@@ -19,14 +21,19 @@ SEQUENCE_KEYS = (
 )
 
 
-def run(src_path: Path, output: Path):
+def run(src_path: Path, output: Path, debugging: bool = False):
     """
     Divide a reference.json file from Virtool into a src tree.
 
     :param src_path: Path to a reference.json file
     :param output: Path to the where the src tree should be generated
     """
-
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
+    
     shutil.rmtree(output, ignore_errors=True)
     output.mkdir()
 

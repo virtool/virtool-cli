@@ -5,7 +5,7 @@ import arrow
 import structlog
 import logging
 
-import virtool_cli.utils.logging
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import get_otu_paths
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
@@ -31,9 +31,7 @@ def run(src_path: Path, output: Path,
         format="%(message)s",
         level=filter_class,
     )
-
-    logger = structlog.get_logger()
-    logger = logger.bind(src=str(src_path), output=str(output))
+    logger = base_logger.bind(src=str(src_path), output=str(output))
 
     meta = parse_meta(src_path)
 

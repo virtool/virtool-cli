@@ -4,14 +4,16 @@ import aiofiles
 from pathlib import Path
 from Bio import Entrez
 import structlog
+import logging
 
+import virtool_cli.utils.logging
 from virtool_cli.utils.ref import get_otu_paths, parse_otu
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
 logger = structlog.get_logger()
 
 
-def run(src_path: Path, force_update: bool = False):
+def run(src_path: Path, force_update: bool = False, debugging: bool = False):
     """
     Creates and runs the event loop to asynchronously find taxon ids for all OTU in a src directory
 
@@ -19,6 +21,12 @@ def run(src_path: Path, force_update: bool = False):
     :param force_update: Flag to force update all of the OTU's taxids in a reference
     :return:
     """
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
+
     asyncio.run(taxid(src_path, force_update))
 
 async def taxid(src_path: Path, force_update: bool = False):

@@ -2,8 +2,9 @@ from pathlib import Path
 import json
 import asyncio
 import structlog
-from logging import INFO, DEBUG
+import logging
 
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
 from virtool_cli.utils.ncbi import fetch_accession_uids
 from virtool_cli.accessions.initialize import generate_listing, write_listing
@@ -12,15 +13,14 @@ from virtool_cli.accessions.helpers import (
     get_catalog_paths, filter_catalog
 )
 
-base_logger = structlog.get_logger()
-
 def run(src: Path, catalog: Path, debugging: bool = False):
     """
     """
-    filter_class = DEBUG if debugging else INFO
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(filter_class))
-
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
     logger = base_logger.bind(task='update', catalog=str(catalog))
     
     logger.info(f"Starting catalog updater...")
@@ -175,6 +175,8 @@ async def add_listing(
     logger: structlog.BoundLogger = base_logger
 ):
     """
+    If no listing is found for a particular OTU, generate and write a new listing
+    to the catalog
     """
     otu_data = parse_otu(otu_path)
     

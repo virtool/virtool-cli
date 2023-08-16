@@ -1,26 +1,32 @@
 from pathlib import Path
 import structlog
+import logging
 
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import parse_otu, generate_otu_dirname
 
-logger = structlog.get_logger()
-
-def run(src_path):
+def run(src_path, debugging: bool = False):
     """
     :param src_path: Path to a src database directory
     """
-    log = logger.bind(src_path=str(src_path))
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
+
+    logger = base_logger.bind(src_path=str(src_path))
     
     if not [alpha for alpha in src_path.glob('[a-z]')]:
-        log.info("Reference in src_path is already v2")
+        logger.info("Reference in src_path is already v2")
         return
     
-    log.info("Converting reference in src_path to v2...")
+    logger.info("Converting reference in src_path to v2...")
     try:
         flatten_src(src_path)
     except Exception as e:
-        log.error('Error occured during conversion')
-        log.exception(f'Error: {e}')
+        logger.error('Error occured during conversion')
+        logger.exception(f'Error: {e}')
 
 def flatten_src(src_path: Path):
     """

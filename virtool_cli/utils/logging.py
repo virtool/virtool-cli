@@ -35,4 +35,4 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-b_logger = structlog.get_logger()
+base_logger = structlog.get_logger()
