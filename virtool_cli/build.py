@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import Tuple
 import arrow
 import structlog
+import logging
 
+import virtool_cli.utils.logging
 from virtool_cli.utils.ref import get_otu_paths
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
@@ -12,10 +14,10 @@ ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 
 SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
-logger = structlog.get_logger()
 
-
-def run(src_path: Path, output: Path, indent: bool, version: str):
+def run(src_path: Path, output: Path, 
+    indent: bool, version: str, 
+    debugging: bool = False):
     """
     Build a Virtool reference JSON file from a data directory.
 
@@ -24,6 +26,15 @@ def run(src_path: Path, output: Path, indent: bool, version: str):
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
+
+    logger = structlog.get_logger()
+    logger = logger.bind(src=str(src_path), output=str(output))
+
     meta = parse_meta(src_path)
 
     data = {
@@ -60,9 +71,10 @@ def run(src_path: Path, output: Path, indent: bool, version: str):
             )
 
             json.dump(data, f, indent=4 if indent else None, sort_keys=True)
-            logger.info('Reference file built', src=src_path, output=output)
+            logger.info('Reference file built')
     except:
-        logger.critical('Reference file build failed', src=src_path, output=output)
+        logger.critical(
+            'Reference file build failed')
 
 
 def parse_meta(src_path: Path) -> dict:

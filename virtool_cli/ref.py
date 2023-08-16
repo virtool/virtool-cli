@@ -47,7 +47,8 @@ def ref():
     type=str,
     help="the version string to include in the reference.json file",
 )
-def build(src_path, output, indent, version):
+@click.option('--debug/--no-debug', default=False)
+def build(src_path, output, indent, version, debug):
     """Build a Virtool reference JSON file from a source directory."""
     build_logger = logger.bind(command='build', src_path=src_path, out_path=output)
 
@@ -56,7 +57,9 @@ def build(src_path, output, indent, version):
         return
     
     try:
-        virtool_cli.build.run(Path(src_path), Path(output), indent, version)
+        virtool_cli.build.run(
+            Path(src_path), Path(output), indent, version, debug
+        )
     except (FileNotFoundError, NotADirectoryError):
         build_logger.exception('Source directory has critical errors')
     except:

@@ -1,0 +1,14 @@
+{
+  "_id": "407d8a21",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_013006": 254667440
+    }
+  },
+  "name": "Kalanchoe latent virus",
+  "schema": [
+    "Genome"
+  ],
+  "taxid": 132477
+}

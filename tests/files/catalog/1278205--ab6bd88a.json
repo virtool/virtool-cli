@@ -1,0 +1,14 @@
+{
+  "_id": "ab6bd88a",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_020160": 443608002
+    }
+  },
+  "name": "Dahlia latent viroid",
+  "schema": [
+    "Viroid"
+  ],
+  "taxid": 1278205
+}

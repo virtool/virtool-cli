@@ -6,7 +6,6 @@ from typing import Optional
 import structlog
 import logging
 from urllib.error import HTTPError
-
 from Bio import Entrez, SeqIO
 
 import virtool_cli.utils.logging

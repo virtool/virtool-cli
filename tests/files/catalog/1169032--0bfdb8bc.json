@@ -1,0 +1,18 @@
+{
+  "_id": "0bfdb8bc",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "B017504.1": null,
+      "KJ207375.1": 612340479,
+      "MH200607.1": 1482867054,
+      "MK431779.1": 1723345818,
+      "NC_003355": 18254496
+    }
+  },
+  "name": "Wasabi mottle virus",
+  "schema": [
+    "Genome"
+  ],
+  "taxid": 1169032
+}

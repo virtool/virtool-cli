@@ -1,0 +1,14 @@
+{
+  "_id": "v7r8gxav",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_043170.1": 1694997148
+    }
+  },
+  "name": "Vallota mosaic virus",
+  "schema": [
+    "Genome"
+  ],
+  "taxid": 430059
+}

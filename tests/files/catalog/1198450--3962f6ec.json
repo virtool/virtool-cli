@@ -1,0 +1,16 @@
+{
+  "_id": "3962f6ec",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "JQ821386": 391234033,
+      "JQ821387": 391234039
+    }
+  },
+  "name": "Jacquemontia mosaic Yucatan virus",
+  "schema": [
+    "DNA A",
+    "DNA B"
+  ],
+  "taxid": 1198450
+}

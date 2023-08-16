@@ -1,0 +1,14 @@
+{
+  "_id": "9da7c10d",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_010239": 164564320
+    }
+  },
+  "name": "Radish leaf curl betasatellite",
+  "schema": [
+    "Betasatellite"
+  ],
+  "taxid": 662596
+}

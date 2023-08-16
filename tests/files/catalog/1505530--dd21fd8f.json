@@ -1,0 +1,14 @@
+{
+  "_id": "dd21fd8f",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_024301": 655454939
+    }
+  },
+  "name": "Pagoda yellow mosaic associated virus",
+  "schema": [
+    "Genome"
+  ],
+  "taxid": 1505530
+}

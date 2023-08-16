@@ -1,0 +1,15 @@
+{
+  "_id": "ae0f2a35",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_005954": 49487495,
+      "NC_039079.1": 1464311266
+    }
+  },
+  "name": "Nanovirus-like particle",
+  "schema": [
+    "Alphasatellite"
+  ],
+  "taxid": 96892
+}

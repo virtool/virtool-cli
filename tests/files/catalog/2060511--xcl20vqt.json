@@ -1,0 +1,14 @@
+{
+  "_id": "xcl20vqt",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_036587": 1327848967
+    }
+  },
+  "name": "Babaco mosaic virus",
+  "schema": [
+    "Genome"
+  ],
+  "taxid": 2060511
+}

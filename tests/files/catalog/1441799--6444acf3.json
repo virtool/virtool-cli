@@ -1,0 +1,14 @@
+{
+  "_id": "6444acf3",
+  "accessions": {
+    "excluded": {},
+    "included": {
+      "NC_023881": 605039091
+    }
+  },
+  "name": "Faba bean necrotic stunt alphasatellite 1",
+  "schema": [
+    "Satellite"
+  ],
+  "taxid": 1441799
+}

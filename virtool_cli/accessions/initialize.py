@@ -2,8 +2,9 @@ from pathlib import Path
 import json
 import asyncio
 import structlog
-from logging import INFO, DEBUG
+import logging
 
+import virtool_cli.utils.logging
 from virtool_cli.utils.ref import parse_otu, get_otu_paths
 from virtool_cli.utils.ncbi import fetch_taxid, fetch_accession_uids
 from virtool_cli.accessions.helpers import get_otu_accessions
@@ -13,9 +14,11 @@ base_logger = structlog.get_logger()
 def run(src: Path, catalog: Path, debugging: bool = False):
     """
     """
-    filter_class = DEBUG if debugging else INFO
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(filter_class))
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
 
     asyncio.run(initialize(src, catalog))
 
@@ -25,7 +28,9 @@ async def initialize(src: Path, catalog: Path):
     if not catalog.exists():
         catalog.mkdir()
 
-    base_logger.debug(f"Starting catalog generation")
+    logger = base_logger.bind(src=str(src), catalog=str(catalog))
+
+    logger.debug(f"Starting catalog generation")
 
     queue = asyncio.Queue()
 
@@ -40,7 +45,7 @@ async def initialize(src: Path, catalog: Path):
 
     await queue.join()
 
-    base_logger.info(f"Catalog generated")
+    logger.info(f"Catalog generated")
 
 
 async def fetcher_loop(src, queue):

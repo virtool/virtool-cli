@@ -36,7 +36,9 @@ def acc():
 @click.option('--debug/--no-debug', default=False)
 def init(src_path, catalog_path, debug):
     """Generate a catalog of all included accessions in a src directory"""
-    logger = b_logger.bind(command='acc init')
+    logger = b_logger
+    
+    logger.info('Initializing catalog...')
 
     if not Path(src_path).exists():
         logger.critical('Source directory does not exist')
@@ -48,8 +50,8 @@ def init(src_path, catalog_path, debug):
 
     try:
         run_init(
-            src_path=Path(src_path),
-            catalog_path=Path(catalog_path),
+            src=Path(src_path),
+            catalog=Path(catalog_path),
             debugging=debug
         )
     except (FileNotFoundError, NotADirectoryError) as e:
