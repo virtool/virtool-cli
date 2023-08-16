@@ -4,17 +4,14 @@ import asyncio
 import aiofiles
 from typing import Optional
 import structlog
-from logging import INFO, DEBUG
+import logging
 from urllib.error import HTTPError
 
 from Bio import Entrez, SeqIO
 
 import virtool_cli.utils.logging
 from virtool_cli.utils.ref import (
-    get_otu_paths, get_isolate_paths, 
-    # parse_otu, parse_isolates, 
-    # map_otus, 
-    search_otu_by_id)
+    get_otu_paths, get_isolate_paths, search_otu_by_id)
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.helpers import search_by_id, filter_catalog
@@ -31,7 +28,13 @@ def run(src: Path, catalog: Path, debugging: bool = False):
 
     :param src: Path to a reference directory
     """
-    logger = base_logger.bind(command='update', src=str(src), catalog=str(catalog))
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
+    logger = structlog.get_logger()
+    logger = logger.bind(src=str(src), catalog=str(catalog))
 
     logger.info('Updating src directory accessions using catalog listings...')
 
@@ -126,6 +129,7 @@ async def fetcher_loop(
                 taxid, acc_listing, reqseq_only=True)
         except Exception as e:
             logger.exception(e)
+            continue
         
         logger.debug('New accessions', new=new_accessions)
 
@@ -145,9 +149,9 @@ async def fetcher_loop(
         }
 
         await queue.put(packet)
-        logger.info(
+        logger.debug(
             f'Pushed {len(new_accessions)} requests to upstream queue', 
-            accessions=new_accessions, n_requests=len(new_accessions), taxid=taxid)
+            uids=new_accessions, n_requests=len(new_accessions), taxid=taxid)
         await asyncio.sleep(DEFAULT_INTERVAL)
 
 async def processor_loop(
@@ -213,7 +217,7 @@ async def processor_loop(
         processed_packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': otu_updates }
 
         await downstream_queue.put(processed_packet)
-        logger.info(
+        logger.debug(
             f'Pushed {len(otu_updates)} new accessions to downstream queue')
         await asyncio.sleep(DEFAULT_INTERVAL)
         upstream_queue.task_done()
@@ -252,7 +256,7 @@ async def writer_loop(
             log.exception(e)
             return e
         
-        log.info(f'Writing {len(new_sequence_set)} sequences...')
+        log.debug(f'Writing {len(new_sequence_set)} sequences...')
 
         for seq_data in new_sequence_set:
             
@@ -277,19 +281,29 @@ async def writer_loop(
                 log.debug('Assigning new isolate hash', 
                     iso_name=isolate_name,
                     iso_hash=iso_hash)
-                new_isolate = await store_isolate(isolate_name, isolate_type, iso_hash, otu_path)
+                
+                new_isolate = await store_isolate(
+                    isolate_name, isolate_type, iso_hash, otu_path)
+                
                 unique_iso.add(iso_hash)
                 ref_isolates[isolate_name] = new_isolate
+                
+                log.info(
+                    'Created a new isolate directory', 
+                    path=str(otu_path.relative_to(src_path) / f'iso_hash'))
             
             iso_path = otu_path / iso_hash
             
             seq_hash = seq_hashes.pop()
             log.debug('Assigning new sequence', 
-                seq_name=isolate_name,
-                seq_hash=seq_hash)
+                seq_hash=seq_hash,
+            )
             
             await store_sequence(seq_data, seq_hash, iso_path)
             unique_seq.add(seq_hash)
+
+            log.info(f"Wrote new sequence '{seq_hash}'", 
+                path=str(iso_path.relative_to(src_path) / f'{seq_hash}.json'))
     
         await asyncio.sleep(DEFAULT_INTERVAL)
         queue.task_done()
@@ -378,7 +392,8 @@ async def fetch_upstream_records(
             db="nucleotide", id=fetch_list, rettype="gb", retmode="text"
         )
     except HTTPError as e:
-        logger.exception(e)
+        logger.error(f'{e}, moving on...')
+        # logger.exception(e)
         return []
     
     ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))

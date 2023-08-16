@@ -7,7 +7,6 @@ shared_processors = [
     structlog.stdlib.add_log_level,
     structlog.stdlib.PositionalArgumentsFormatter(),
     structlog.processors.StackInfoRenderer(),
-    structlog.processors.format_exc_info,
     structlog.processors.UnicodeDecoder(),
 ]
 if sys.stderr.isatty():
@@ -17,6 +16,7 @@ if sys.stderr.isatty():
 else:
     processors = shared_processors + [
         structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.format_exc_info,
         structlog.processors.CallsiteParameterAdder(
             {
                 structlog.processors.CallsiteParameter.FILENAME,
