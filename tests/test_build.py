@@ -18,13 +18,9 @@ def output(tmpdir):
 @pytest.fixture()
 def command(output):
     return [
-        "virtool",
-        "ref",
-        "build",
-        "-o",
-        str(output),
-        "-src",
-        TEST_SRC_PATH,
+        "virtool", "ref", "build",
+        "-o", str(output),
+        "-src", TEST_SRC_PATH,
     ]
 
 @pytest.mark.parametrize("version", [None, "v1.0.0", "v0.9.3"])

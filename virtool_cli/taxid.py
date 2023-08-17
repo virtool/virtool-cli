@@ -47,6 +47,8 @@ async def taxid(src_path: Path, force_update: bool = False):
     else:
         included_paths = filter_unidentified(src_path)
     
+    logger.debug('Fetching taxon IDs in following paths...', included_paths=included_paths)
+    
     if not included_paths:
         logger.info('No OTUs with missing taxon IDs to fetch', n_otus=len(included_paths))
         return
@@ -63,14 +65,14 @@ async def taxid(src_path: Path, force_update: bool = False):
         writer_loop(src_path, queue)
     )
 
-    [ counter ] = await asyncio.gather(fetcher, return_exceptions=True)
+    await asyncio.gather(fetcher, return_exceptions=True)
 
     await queue.join()
 
-    logger.info(
-        f"Retrieved {counter} taxids for {len(included_paths)} OTUs", 
-        n_updated=counter, n_otus=len(included_paths)
-    )
+    # logger.info(
+    #     f"Retrieved {counter} taxids for {len(included_paths)} OTUs", 
+    #     n_updated=counter, n_otus=len(included_paths)
+    # )
 
 async def fetcher_loop(
     included_paths: list, 
@@ -101,7 +103,6 @@ async def fetcher_loop(
         await log_results(name=otu_name, taxid=taxid)
         
         await queue.put({ 'path': path, 'name': otu_name, 'taxid': taxid})
-        counter += 1
 
         await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
@@ -115,8 +116,17 @@ async def writer_loop(src_path: Path, queue: asyncio.Queue) -> None:
     """
     while True:
         packet = await queue.get()
+        taxid = packet['taxid']
+        path = packet['path']
+        [ _, otu_id ] = path.name.split('--')
 
-        update_otu(packet['taxid'], packet['path'])
+        try:
+            update_otu(taxid, path)
+        except Exception as e:
+            logger.exception('e')
+        
+        logger.info(f"Wrote taxon id '{taxid}' to file", 
+            otu_id=otu_id, path=str(path.relative_to(src_path)))
 
         await asyncio.sleep(0.1)
         queue.task_done()

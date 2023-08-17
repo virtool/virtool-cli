@@ -1,36 +1,32 @@
 import pytest
-import os
 import json
 import subprocess
-
+import shutil
 from paths import TEST_FILES_PATH
 
-TEST_PATH = TEST_FILES_PATH / "src_a"
+TEST_PATH = TEST_FILES_PATH / "src_notaxid"
 
 
-@pytest.fixture(scope="session", autouse=True)
-def command():
-    command = ["virtool", "ref", "taxid", "-src", TEST_PATH, "-f"]
-    subprocess.call(command)
+@pytest.mark.parametrize("base_path", [TEST_PATH])
+def test_fetch_taxids(base_path, tmp_path):
+    """
+    """
+    fetch_path = tmp_path / 'src'
 
+    shutil.copytree(base_path, fetch_path)
+    assert len([fetch_path.glob('[a-z]')]) > 0
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        "h/hop_stunt_viroid",
-        "r/reovirus_tf1_(not_a_plant_virus)",
-        "t/tobacco_mosaic_virus",
-        "t/totivirus_tf1_(not_a_plant_virus)",
-    ],
-)
-def test_taxid(path, command):
-    path = os.path.join(TEST_PATH, path)
+    subprocess.call([
+        "virtool", "ref", "taxid",
+        "-src", str(fetch_path),
+        "--force_update"
+    ])
 
-    with open(os.path.join(path, "otu.json"), "r") as f:
-        otu = json.load(f)
+    for otu_path in fetch_path.iterdir():
+        if not otu_path.is_dir():
+            continue
 
-        if "not" in otu["name"]:
-            assert otu["taxid"] is None
-        else:
-            assert otu["taxid"] is not None
-            assert isinstance(otu["taxid"], int)
+        with open(otu_path / "otu.json", "r") as f:
+            otu = json.load(f)
+        
+        assert otu['taxid'] is not None

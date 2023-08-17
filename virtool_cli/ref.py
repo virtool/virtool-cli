@@ -103,11 +103,12 @@ def divide(src_path, output):
     help="the path to the input reference.json file",
 )
 @click.option("-f", "--force_update", is_flag=True)
-def taxid(src_path, force_update):
+@click.option('--debug/--no-debug', default=False)
+def taxid(src_path, force_update, debug):
     """Fetch taxid for all OTU in given reference directory."""
     try:
         click.echo("Scanning OTUs for taxon IDs...")
-        virtool_cli.taxid.run(Path(src_path), force_update)
+        virtool_cli.taxid.run(Path(src_path), force_update, debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
         click.echo(e)
