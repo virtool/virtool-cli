@@ -1,14 +1,17 @@
 name: Build package
 on: 
+  push: 
+    branches: [ alphabuild ]
   release:
     types: [ published ]
   workflow_call:
-    inputs:
-      branch:
-        required: true
-        type: string
+    # inputs:
+    #   branch:
+    #     required: true
+    #     type: string
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     
@@ -16,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: sygao/virtool-cli
-          ref: ${{ inputs.branch }}
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-python@v4
         with:
