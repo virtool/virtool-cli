@@ -3,7 +3,6 @@ import subprocess
 import filecmp
 
 from paths import TEST_FILES_PATH
-
 TEST_PATH = TEST_FILES_PATH / "reference.json"
 TEST_WITH_INDENT_PATH = TEST_FILES_PATH / "reference_with_indent.json"
 TEST_DIRECTORY_PATH = TEST_FILES_PATH / "src_test"
@@ -13,11 +12,9 @@ TEST_DIRECTORY_PATH = TEST_FILES_PATH / "src_test"
 def output(tmpdir):
     return tmpdir.join("src")
 
-
 @pytest.fixture()
 def command(output):
     return ["virtool", "ref", "divide", "-o", str(output), "-src"]
-
 
 @pytest.mark.parametrize("src", [TEST_PATH, TEST_WITH_INDENT_PATH])
 def test_divide(command, src, output, tmpdir):

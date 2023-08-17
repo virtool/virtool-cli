@@ -222,9 +222,9 @@ async def processor_loop(
 
 async def writer_loop(
     src_path: Path, 
-    storage: dict, 
+    # storage: dict, 
     queue: asyncio.Queue, 
-    dry_run: bool = False
+    # dry_run: bool = False
 ):
     """
     TO-DO: write changes back to local catalog?

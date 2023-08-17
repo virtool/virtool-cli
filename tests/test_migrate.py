@@ -3,14 +3,11 @@ from pathlib import Path
 import json
 import shutil
 import subprocess
-import logging
 
 from paths import TEST_FILES_PATH
 SRC_V1_PATH = TEST_FILES_PATH / "src_v1"
 REF_V1_PATH = TEST_FILES_PATH / "reference_v1.json"
 
-
-LOGGER = logging.getLogger(__name__)
 
 def convert_to_dict(otu_list: list):
     otu_dict = {}

@@ -2,8 +2,8 @@ import pytest
 import json
 import subprocess
 import shutil
-from paths import TEST_FILES_PATH
 
+from paths import TEST_FILES_PATH
 TEST_PATH = TEST_FILES_PATH / "src_notaxid"
 
 
