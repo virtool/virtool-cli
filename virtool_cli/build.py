@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from typing import Tuple
 import arrow
-import structlog
 import logging
 
 from virtool_cli.utils.logging import base_logger
@@ -62,6 +61,9 @@ def run(src_path: Path, output: Path,
             otu["isolates"].append(isolate)
 
         otus.append(otu)
+        logger.debug(
+            f"Added {otu['_id']}", 
+            otu={'_id': otu['_id'], 'path': str(otu_path.relative_to(src_path))})
 
     try:
         with open(output, "w") as f:
@@ -103,18 +105,22 @@ def parse_alpha(alpha: Path) -> list:
 
 def parse_otu(otu_path: Path) -> Tuple[dict, list]:
     """
-    Creates an list of isolate IDs for a given OTU
+    Loads OTU data from otu.json and creates an list of isolate IDs
 
     :param otu_path: Path to a OTU directory
     :return: The dictionary and list of isolate ids for a given OTU
     """
-    with open(otu_path / "otu.json", "r") as f:
-        otu = json.load(f)
+    try:
+        with open(otu_path / "otu.json", "r") as f:
+            otu = json.load(f)
+    except FileNotFoundError as e:
+        base_logger.error(e, path=otu_path)
 
     otu["isolates"] = list()
 
     isolate_ids = [
-        i for i in otu_path.iterdir() if i.name != "otu.json" and i.name[0] != "."
+        i for i in otu_path.iterdir() 
+        if i.name != "otu.json" and i.name[0] != "."
     ]
 
     return otu, isolate_ids
@@ -122,7 +128,7 @@ def parse_otu(otu_path: Path) -> Tuple[dict, list]:
 
 def parse_isolate(isolate_path: Path) -> Tuple[dict, list]:
     """
-    Creates a list of sequence IDs for a given sequence
+    Loads isolate data from isolate.json and creates an list of sequence IDs
 
     :param isolate_path: Path to a isolate directory
     :return: The dictionary and list of sequenece ids for a given isolate
@@ -133,8 +139,7 @@ def parse_isolate(isolate_path: Path) -> Tuple[dict, list]:
     isolate["sequences"] = list()
 
     sequence_ids = [
-        i
-        for i in isolate_path.glob('*.json')
+        i for i in isolate_path.glob('*.json')
         if i.name != "isolate.json" and i.name[0] != "."
     ]
 

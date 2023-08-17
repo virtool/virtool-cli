@@ -29,6 +29,8 @@ def run(src: Path, catalog: Path, debugging: bool = False):
 
 async def update(src: Path, catalog: Path):
     """
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
     """
     logger = base_logger.bind(task='update', catalog=str(catalog))
 
@@ -40,8 +42,7 @@ async def update(src: Path, catalog: Path):
         fetcher_loop(src, catalog, queue))
     
     asyncio.create_task(
-        writer_loop(catalog, queue)
-    )
+        writer_loop(catalog, queue))
     
     await asyncio.gather(fetcher, return_exceptions=True)
 
@@ -51,6 +52,8 @@ async def update(src: Path, catalog: Path):
 
 async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
     """
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
     """
     fetch_logger = base_logger.bind(
         loop='fetcher',

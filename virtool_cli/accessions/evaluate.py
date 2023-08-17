@@ -19,7 +19,7 @@ def evaluate(otu_path):
     )
     schema = otu_data.get('schema', [])
 
-    if len(schema) > 1:
+    if schema:
         parts = []
         
         for part in schema:

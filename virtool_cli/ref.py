@@ -81,12 +81,15 @@ def build(src_path, output, indent, version, debug):
     type=str,
     help="the output path for a divided reference directory tree",
 )
-def divide(src_path, output):
+@click.option('--debug/--no-debug', default=False)
+def divide(src_path, output, debug):
     """Divide a reference.json file from Virtool into a reference directory tree."""
     try:
         if not src_path.endswith(".json"):
             raise TypeError
-        virtool_cli.divide.run(Path(src_path), Path(output))
+        virtool_cli.divide.run(
+            Path(src_path), Path(output), 
+            debug)
     except (TypeError, FileNotFoundError) as e:
         click.echo(
             ERROR_MESSAGE + "Specified reference file either does not exist or is not a proper JSON file"
@@ -116,16 +119,16 @@ def taxid(src_path, force_update, debug):
 
 @ref.command()
 @click.option(
-    "-src",
-    "--src_path",
+    "-src", "--src_path",
     required=True,
     type=str,
     help="the path to a reference directory",
 )
-def isolate(src_path):
+@click.option('--debug/--no-debug', default=False)
+def isolate(src_path, debug):
     """Fetch new isolates for all OTU in a given reference directory."""
     try:
-        virtool_cli.isolate.run(Path(src_path))
+        virtool_cli.isolate.run(Path(src_path), debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory")
         click.echo(e)
@@ -166,7 +169,7 @@ def migrate(src_path, debug):
         logger.critical('Source directory does not exist')
 
     try:
-        run_migrate(Path(src_path))
+        run_migrate(Path(src_path), debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
         click.echo(e)

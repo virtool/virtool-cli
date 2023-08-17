@@ -4,9 +4,10 @@ from virtool_cli.utils.ref import get_otu_paths, get_sequence_paths
 
 def get_catalog_paths(catalog) -> list:
     """
-    Return a list of accession listings contained in a catalog.
+    Return a list of paths to accession listings contained in an accession catalog.
 
     :param catalog_path: Path to an accession catalog directory
+    :return: A list of paths representing the contents of the accession catalog.
     """
     return list(catalog.glob('*.json'))
 

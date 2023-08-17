@@ -1,7 +1,6 @@
 from pathlib import Path
 import structlog
 import click
-from logging import INFO, DEBUG
 
 from virtool_cli.accessions.checkup import run as run_checkup
 from virtool_cli.accessions.initialize import run as run_init

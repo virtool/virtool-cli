@@ -20,6 +20,7 @@ def get_otu_accessions(otu_dict: dict) -> set:
     Gets all accessions from an OTU directory and returns a list
 
     :param otu_path: Path to an OTU directory
+    :return: The accessions included under the OTU directory in a set
     """
     accessions = set()
     

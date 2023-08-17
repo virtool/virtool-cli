@@ -1,12 +1,11 @@
 from pathlib import Path
 import asyncio
 import structlog
-from logging import INFO, DEBUG
+import logging
 
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.accessions.initialize import initialize
 from virtool_cli.accessions.update import update
-
-base_logger = structlog.get_logger()
 
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
@@ -15,10 +14,11 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     :param catalog: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-
-    filter_class = DEBUG if debugging else INFO
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(filter_class))
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
     
     if not catalog_path.exists():
         base_logger.info('Initializing .cache/catalog directory...', catalog=str(catalog_path))
@@ -52,6 +52,8 @@ def generate_catalog(
     logger: structlog.BoundLogger = base_logger
 ):
     """
+    :param catalog: Path to an accession catalog directory
+    :param logger: Structlog logger
     """
     logger.info("Initializing listings...", task="initialize")
     asyncio.run(initialize(src_path, catalog_path))

@@ -98,7 +98,7 @@ async def update(src_path: Path, catalog_path: Path):
 async def fetcher_loop(
     listing_paths: list,
     queue: asyncio.Queue 
-) -> None:
+):
     """
     Loops through selected OTU listings from accession catalogue, 
     indexed by NCBI taxon ID, and:

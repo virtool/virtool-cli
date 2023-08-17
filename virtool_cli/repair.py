@@ -2,21 +2,27 @@ import json
 from typing import Optional
 from pathlib import Path
 import structlog
+import logging
 
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import (
     get_otu_paths, 
     generate_otu_dirname, 
     map_otus
 )
 
-logger = structlog.get_logger()
-
-def run(src_path: Path):
+def run(src_path: Path, debugging: bool = False):
     """
     Fixes any folder-JSON name mismatches and incorrect taxid types
 
     :param src_path: Path to a given reference directory
     """
+    filter_class = logging.DEBUG if debugging else logging.INFO
+    logging.basicConfig(
+        format="%(message)s",
+        level=filter_class,
+    )
+    
     paths = get_otu_paths(src_path)
     otus = map_otus(paths)
     otus_to_update = {}
@@ -87,7 +93,7 @@ def log_results(results: list, name: str):
     if not results:
         return
 
-    logger.info(f"Changed {name}", name=name, result=results)
+    base_logger.info(f"Changed {name}", name=name, result=results)
 
 
 def write_otus(otus: dict):
