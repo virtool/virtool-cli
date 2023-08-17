@@ -407,7 +407,7 @@ async def fetch_upstream_records(
         raise e
 
 def filter_catalog(
-    src_path, catalog_path
+    src_path: Path, catalog_path: Path
 ) -> list:
     """
     Return paths for cached accession catalogues that are included in the source reference
@@ -420,7 +420,10 @@ def filter_catalog(
     included_listings = []
     
     for path in otu_paths:
-        [ _, otu_id ] = (path.name).split('--')
+        try:
+            [ _, otu_id ] = (path.name).split('--')
+        except Exception as e:
+            base_logger.exception(f'{e}')
 
         included_listings.append(
             search_by_id(otu_id, catalog_path)
