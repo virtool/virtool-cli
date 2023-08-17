@@ -25,6 +25,7 @@ def run(src_path: Path, output: Path,
     :param output: The output path for the reference.json file
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(

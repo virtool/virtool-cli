@@ -2,26 +2,27 @@ import json
 from pathlib import Path
 from virtool_cli.utils.ref import get_otu_paths, get_sequence_paths
 
-def get_catalog_paths(catalog):
+def get_catalog_paths(catalog) -> list:
     """
+    Return a list of accession listings contained in a catalog.
+
+    :param catalog_path: Path to an accession catalog directory
     """
     return list(catalog.glob('*.json'))
 
-def filter_catalog(
-    src_path, catalog_path
-) -> list:
+def filter_catalog(src_path, catalog_path) -> list:
     """
     Return paths for cached accession catalogues that are included in the source reference
 
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to an accession record directory
+    :param catalog_path: Path to an accession catalog directory
     :return: A list of paths to relevant listings in the accession catalog
     """
     otu_paths = get_otu_paths(src_path)
     included_listings = []
     
     for path in otu_paths:
-        otu_id = (path.name).split('--')[1]
+        [ _, otu_id ] = (path.name).split('--')
 
         included_listings.append(
             search_by_id(otu_id, catalog_path)
@@ -31,6 +32,9 @@ def filter_catalog(
 
 def parse_listing(path: Path):
     """
+    Parse and return an accession listing.
+
+    :param path: Path to a listing in an accession catalog
     """
     with open(path, "r") as f:
         listing = json.load(f)

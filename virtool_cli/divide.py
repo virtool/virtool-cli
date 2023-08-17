@@ -27,6 +27,7 @@ def run(src_path: Path, output: Path, debugging: bool = False):
 
     :param src_path: Path to a reference.json file
     :param output: Path to the where the src tree should be generated
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(

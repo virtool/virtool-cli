@@ -8,15 +8,12 @@ import logging
 from urllib.error import HTTPError
 from Bio import Entrez, SeqIO
 
-import virtool_cli.utils.logging
-from virtool_cli.utils.ref import (
-    get_otu_paths, get_isolate_paths, search_otu_by_id)
+from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, search_otu_by_id
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.helpers import search_by_id, filter_catalog
 from virtool_cli.accessions.evaluate import evaluate
-
-base_logger = structlog.get_logger()
 
 DEFAULT_INTERVAL = 0.001
 
@@ -26,6 +23,8 @@ def run(src: Path, catalog: Path, debugging: bool = False):
     Calls the parent routine
 
     :param src: Path to a reference directory
+    :param catalog: Path to a catalog directory
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(

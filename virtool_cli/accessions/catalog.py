@@ -13,7 +13,7 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
     :param src: Path to a reference directory
     :param catalog: Path to an accession catalog directory
-    :param debugging: Debugging flag
+    :param debugging: Enables verbose logs for debugging purposes
     """
 
     filter_class = DEBUG if debugging else INFO

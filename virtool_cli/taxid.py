@@ -3,14 +3,11 @@ import asyncio
 import aiofiles
 from pathlib import Path
 from Bio import Entrez
-import structlog
 import logging
 
-import virtool_cli.utils.logging
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import get_otu_paths, parse_otu
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-
-logger = structlog.get_logger()
 
 
 def run(src_path: Path, force_update: bool = False, debugging: bool = False):
@@ -19,7 +16,7 @@ def run(src_path: Path, force_update: bool = False, debugging: bool = False):
 
     :param src_path: Path to a given reference directory
     :param force_update: Flag to force update all of the OTU's taxids in a reference
-    :return:
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -47,13 +44,13 @@ async def taxid(src_path: Path, force_update: bool = False):
     else:
         included_paths = filter_unidentified(src_path)
     
-    logger.debug('Fetching taxon IDs in following paths...', included_paths=included_paths)
+    base_logger.debug('Fetching taxon IDs in following paths...', included_paths=included_paths)
     
     if not included_paths:
-        logger.info('No OTUs with missing taxon IDs to fetch', n_otus=len(included_paths))
+        base_logger.info('No OTUs with missing taxon IDs to fetch', n_otus=len(included_paths))
         return
     
-    logger.info(f'Requesting taxon IDs for {len(included_paths)}/{len(otu_paths)} OTUs', n_otus=len(included_paths))
+    base_logger.info(f'Requesting taxon IDs for {len(included_paths)}/{len(otu_paths)} OTUs', n_otus=len(included_paths))
 
     # Requests and retrieves matching taxon IDs from NCBI Taxonomy
     # and pushes results to queue
@@ -123,9 +120,9 @@ async def writer_loop(src_path: Path, queue: asyncio.Queue) -> None:
         try:
             update_otu(taxid, path)
         except Exception as e:
-            logger.exception('e')
+            base_logger.exception('e')
         
-        logger.info(f"Wrote taxon id '{taxid}' to file", 
+        base_logger.info(f"Wrote taxon id '{taxid}' to file", 
             otu_id=otu_id, path=str(path.relative_to(src_path)))
 
         await asyncio.sleep(0.1)
@@ -179,7 +176,7 @@ async def log_results(name: str, taxid: int=None):
     :param name: Name of a given OTU
     :param taxid: Taxid for a given OTU if found, else None
     """
-    otu_log = logger.bind(name=name)
+    otu_log = base_logger.bind(name=name)
     if taxid:
         otu_log.info('Taxon ID found', taxid=taxid)
     else:

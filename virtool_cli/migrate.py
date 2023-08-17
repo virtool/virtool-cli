@@ -8,6 +8,7 @@ from virtool_cli.utils.ref import parse_otu, generate_otu_dirname
 def run(src_path, debugging: bool = False):
     """
     :param src_path: Path to a src database directory
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
