@@ -222,9 +222,9 @@ async def processor_loop(
 
 async def writer_loop(
     src_path: Path, 
-    # storage: dict, 
+    storage: dict, 
     queue: asyncio.Queue, 
-    # dry_run: bool = False
+    dry_run: bool = False
 ):
     """
     TO-DO: write changes back to local catalog?
@@ -406,27 +406,27 @@ async def fetch_upstream_records(
         logger.exception(e)
         raise e
 
-# def filter_catalog(
-#     src_path, catalog_path
-# ) -> list:
-#     """
-#     Return paths for cached accession catalogues that are included in the source reference
+def filter_catalog(
+    src_path, catalog_path
+) -> list:
+    """
+    Return paths for cached accession catalogues that are included in the source reference
 
-#     :param src_path: Path to a reference directory
-#     :param catalog_path: Path to an accession record directory
-#     :return: A list of paths to relevant listings in the accession catalog
-#     """
-#     otu_paths = get_otu_paths(src_path)
-#     included_listings = []
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to an accession record directory
+    :return: A list of paths to relevant listings in the accession catalog
+    """
+    otu_paths = get_otu_paths(src_path)
+    included_listings = []
     
-#     for path in otu_paths:
-#         otu_id = (path.name).split('--')[1]
+    for path in otu_paths:
+        [ _, otu_id ] = (path.name).split('--')
 
-#         included_listings.append(
-#             search_by_id(otu_id, catalog_path)
-#         )
+        included_listings.append(
+            search_by_id(otu_id, catalog_path)
+        )
     
-#     return included_listings
+    return included_listings
 
 async def get_qualifiers(seq: list) -> dict:
     """
