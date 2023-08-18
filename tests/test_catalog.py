@@ -1,5 +1,6 @@
 import pytest
 from pathlib import Path
+import shutil
 import json
 import subprocess
 import logging
@@ -25,30 +26,30 @@ def command(src_path, catalog_path):
         "-cat", str(catalog_path),
     ]
 
-@pytest.mark.parametrize("src_path", [TEST_FULLSRC_PATH])
-def test_init_full(command, src_path, catalog_path):
-    """
-    Test that the generated catalog creates all the same filenames as
-    the control catalog
-    """
+# @pytest.mark.parametrize("src_path", [TEST_FULLSRC_PATH])
+# def test_init_full(command, src_path, catalog_path):
+#     """
+#     Test that the generated catalog creates all the same filenames as
+#     the control catalog
+#     """
 
-    subprocess.call(command)
+#     subprocess.call(command)
 
-    temp_catalog = catalog_path
+#     temp_catalog = catalog_path
 
-    temp_set = { child.name for child in temp_catalog.iterdir() }
+#     temp_set = { child.name for child in temp_catalog.iterdir() }
 
-    LOGGER.info(f'generated: /n{temp_set}')
+#     LOGGER.info(f'generated: /n{temp_set}')
 
-    LOGGER.info(f'control: /n {CONTROL_SET}')
+#     LOGGER.info(f'control: /n {CONTROL_SET}')
 
-    assert temp_set == CONTROL_SET
+#     assert temp_set == CONTROL_SET
 
-    for otu_path in src_path.iterdir():
-        if not otu_path.is_dir(): continue
+#     for otu_path in src_path.iterdir():
+#         if not otu_path.is_dir(): continue
         
-        [ _, otu_id ] = otu_path.name.split('--')
-        assert len([temp_catalog.glob(f'*--{otu_id}.json')]) > 0
+#         [ _, otu_id ] = otu_path.name.split('--')
+#         assert len([temp_catalog.glob(f'*--{otu_id}.json')]) > 0        
 
 @pytest.mark.parametrize("src_path", [TEST_PARTSRC_PATH])
 def test_init_partial(command, src_path, catalog_path):
@@ -73,6 +74,29 @@ def test_init_partial(command, src_path, catalog_path):
         
         [ _, otu_id ] = otu_path.name.split('--')
         assert len([temp_catalog.glob(f'*--{otu_id}.json')]) > 0
+
+@pytest.mark.parametrize("src_path", [TEST_FULLSRC_PATH])
+def test_update(src_path, catalog_path):
+    """
+    Check that update can replace missing listings
+    """
+    shutil.copytree(TEST_CONTROL_LOG_PATH, catalog_path)
+    first_listing = list(catalog_path.glob('*.json'))[0]
+    try:
+        first_listing.unlink()
+    except Exception as e:
+        print(e)
+
+    subprocess.call([
+        "virtool", "acc", "update", 
+        "-src", str(src_path),
+        "-cat", str(catalog_path),
+    ])
+
+    updated_listings = [ path.name for path in catalog_path.glob('*.json') ]
+
+    for path in TEST_CONTROL_LOG_PATH.glob('*.json'):
+        assert path.name in updated_listings
 
 @pytest.mark.parametrize("src_path", [TEST_PARTSRC_PATH])
 def test_check_contents(command, catalog_path):

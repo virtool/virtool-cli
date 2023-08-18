@@ -9,7 +9,7 @@ from urllib.error import HTTPError
 from Bio import Entrez, SeqIO
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, search_otu_by_id
+from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, search_otu_by_id, is_v2
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.helpers import search_by_id, filter_catalog
@@ -31,16 +31,20 @@ def run(src: Path, catalog: Path, debugging: bool = False):
         format="%(message)s",
         level=filter_class,
     )
-    logger = structlog.get_logger()
+    logger = base_logger
     logger = logger.bind(src=str(src), catalog=str(catalog))
+
+    if not is_v2(src):
+        logger.critical('reference folder "src" is a deprecated v1 reference. Run "virtool ref migrate first."')
+        return
 
     logger.info('Updating src directory accessions using catalog listings...')
 
     asyncio.run(
-        update(src_path=src, catalog_path=catalog)
+        update_reference(src_path=src, catalog_path=catalog)
     )
 
-async def update(src_path: Path, catalog_path: Path):
+async def update_reference(src_path: Path, catalog_path: Path):
     """
     Creates 2 queues:
         1) upstream: Holds raw NCBI GenBank data,

@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 
+
 def get_otu_paths(src_path: Path) -> list:
     """
     Generates a list of paths to all OTUs in a src directory.
@@ -102,3 +103,13 @@ def map_otus(paths: list) -> dict:
         path_taxid_map[path] = parse_otu(path)
 
     return path_taxid_map
+
+def is_v2(src_path: Path) -> bool:
+    """
+    """
+    alpha_bins = list(src_path.glob('[a-z]'))
+    
+    if alpha_bins:
+        return False
+    
+    return True
