@@ -68,5 +68,6 @@ def otu(otu_path, catalog_path, debug):
         click.echo("Not a valid reference directory")
         click.echo(e)
 
+
 if __name__ == "__main__":
     update()
