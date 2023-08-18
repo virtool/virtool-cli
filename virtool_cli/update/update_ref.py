@@ -196,7 +196,7 @@ async def writer_loop(
         
         taxid = packet['taxid']
         otu_id = packet['otu_id']
-        new_sequence_set = packet['data']
+        sequence_data = packet['data']
 
         logger = base_logger.bind(otu_id=otu_id, taxid=taxid, src=str(src_path))
 
@@ -204,7 +204,7 @@ async def writer_loop(
 
         await write_records(
             otu_path,
-            new_sequence_set, 
+            sequence_data, 
             unique_iso, unique_seq,
             logger
         )

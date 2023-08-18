@@ -2,11 +2,11 @@ import json
 from pathlib import Path
 import asyncio
 import aiofiles
-from typing import Optional
-import structlog
-import logging
-from urllib.error import HTTPError
 from Bio import Entrez, SeqIO
+from typing import Optional
+import logging
+from structlog import BoundLogger
+from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths
@@ -27,7 +27,6 @@ def run(
         format="%(message)s",
         level=filter_class,
     )
-    logger = base_logger
     
     [ _, otu_id ] = otu_path.name.split('--')
     listing_path = search_by_id(otu_id, catalog)
@@ -62,7 +61,7 @@ async def update_otu(otu_path: Path, listing_path: Path):
     
 async def request_new_records(
     listing: dict, 
-    logger: structlog.BoundLogger = base_logger
+    logger: BoundLogger = base_logger
 ) -> list:
     """
     """
@@ -83,7 +82,7 @@ async def request_new_records(
 
 async def process_records(
     records, listing: dict,
-    logger: structlog.BoundLogger = base_logger
+    logger: BoundLogger = base_logger
 ):
     """
     """
@@ -253,7 +252,7 @@ async def fetch_upstream_accessions(
 
 async def fetch_upstream_records(
     fetch_list: list, 
-    logger: structlog.BoundLogger = base_logger
+    logger: BoundLogger = base_logger
 ) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank

@@ -1,6 +1,6 @@
 from pathlib import Path
 import asyncio
-import structlog
+from structlog import BoundLogger
 import logging
 
 from virtool_cli.utils.logging import base_logger
@@ -49,7 +49,7 @@ def get_catalog(src: Path, catalog: Path):
 
 def generate_catalog(
     src_path: Path, catalog_path: Path, 
-    logger: structlog.BoundLogger = base_logger
+    logger: BoundLogger = base_logger
 ):
     """
     :param catalog: Path to an accession catalog directory
@@ -60,7 +60,7 @@ def generate_catalog(
 
 def update_catalog(
     src_path: Path, catalog_path: Path, 
-    logger: structlog.BoundLogger = base_logger
+    logger: BoundLogger = base_logger
 ):
     """
     """

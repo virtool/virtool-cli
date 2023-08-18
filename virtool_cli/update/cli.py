@@ -1,6 +1,6 @@
 from pathlib import Path
 import click
-import structlog
+# import structlog
 
 from virtool_cli.update.update_ref import run as run_update_all
 from virtool_cli.update.update import run as run_update_single
