@@ -1,7 +1,7 @@
 import os
 import asyncio
 from urllib.error import HTTPError
-from Bio import Entrez
+from Bio import Entrez, SeqIO
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -61,30 +61,17 @@ async def fetch_accession_uids(accessions: list) -> dict:
     
     return indexed_accessions
 
-# async def esearch_uids(accessions: list) -> list:
+# async def process_records(records, listing: dict):
 #     """
-#     Queries Entrez esearch for a list of accessions
-
-#     :param name: List of accession numbers
 #     """
-#     acc_stringed = []
-#     for acc in accessions:
-#         acc_stringed.append(f'{acc}[Accession]')
-    
-#     deline_list = ' OR '.join(acc_stringed)
-    
-#     try:
-#         handle = Entrez.esearch(db="nucleotide", term=deline_list)
-#         record = Entrez.read(handle)
-#         handle.close()
-#     except Exception as e:
-#         return []
-    
-#     if len(record) < 1:
-#         return []
+#     otu_updates = []
+#     for seq_list in records:
+#         for seq_data in seq_list:
+#             [ accession, version ] = (seq_data.id).split('.')
+            
+#             if accession in filter_set:
+#                 continue
 
-#     gids = []
-#     for entrez_id in record['IdList']:
-#         gids.append(entrez_id)
-    
-#     return gids
+#             otu_updates.
+
+#     return otu_updates

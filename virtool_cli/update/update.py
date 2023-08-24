@@ -67,7 +67,7 @@ async def request_new_records(
     """
     try:
         new_accessions = await fetch_upstream_accessions(
-            listing['taxid'], listing, reqseq_only=True)
+            listing['taxid'], listing, reqseq_only=False)
     except Exception as e:
         logger.exception(e)
         return []
@@ -86,12 +86,14 @@ async def process_records(
 ):
     """
     """
-    filter_set = set(listing['accessions']['included'].keys())
+    filter_set = set()
+    filter_set.update(listing['accessions']['included'].keys())
+    filter_set.update(listing['accessions']['excluded'].keys())
 
     otu_updates = []
     for seq_list in records:
         for seq_data in seq_list:
-            [ accession, version ] = (seq_data.id).split('.')
+            [ accession, version_number ] = (seq_data.id).split('.')
             
             if accession in filter_set:
                 logger.debug('Accession already exists', accession=seq_data.id)
@@ -224,27 +226,14 @@ async def fetch_upstream_accessions(
 
     upstream_uids = []
 
-    if reqseq_only:
-        otu_searchname = "+".join(listing.get("name").split(" "))
-        entrez_accessions = Entrez.read(
-            Entrez.esearch(
-                db="nucleotide", 
-                term=f"{otu_searchname}[Organism] AND RefSeq[keyword]"
-            )
-        )
+    entrez_accessions = Entrez.read(
+        Entrez.elink(
+            dbfrom="taxonomy", db="nucleotide", 
+            id=str(taxid), idtype="acc")
+    )
 
-        for entrez_id in entrez_accessions['IdList']:
-            upstream_uids.append(entrez_id)
-    
-    else:
-        entrez_accessions = Entrez.read(
-            Entrez.elink(
-                dbfrom="taxonomy", db="nucleotide", 
-                id=str(taxid), idtype="acc")
-        )
-
-        for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
-            upstream_uids.append(linksetdb["Id"])
+    for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
+        upstream_uids.append(linksetdb["Id"])
 
     upstream_set = set(upstream_uids)
 

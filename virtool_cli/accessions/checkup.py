@@ -4,16 +4,15 @@ import structlog
 import logging
 # from logging import INFO, DEBUG
 
-import virtool_cli.utils.logging
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname
 
 LISTING_KEYS = set(["_id", "accessions", "name", "schema", "schema", "taxid"])
 
-b_logger = structlog.get_logger()
-
 def run(catalog: Path, debugging: bool = False):
     """
-    Check catalog for outstanding issues
+    Check catalog for outstanding issues. 
+    Can also be used to diagnose issues with the corresponding reference.
 
     :param catalog: Path to an accession catalog directory
     :param debugging: Debugging flag
@@ -23,30 +22,36 @@ def run(catalog: Path, debugging: bool = False):
         format="%(message)s",
         level=filter_class,
     )
-    logger = structlog.get_logger()
+    logger = base_logger.bind(catalog=str(catalog))
     
     if not catalog.exists():
         logger.critical('Catalog directory not found at path', path=str(catalog))
         return
     
     if unassigned := search_by_taxid('none', catalog):
-        logger.warning(
+        logger.debug(
             'Found listings without assigned NCBI taxon IDs.', 
             test='no_taxid',
             unassigned=unassigned)
 
-    if duplicates := find_duplicates(catalog):
+    if duplicate_otus := find_duplicate_otus(catalog, logger):
         logger.warning(
             'Found non-unique taxon IDs in catalog.', 
             test='duplicate_taxid',
-            taxids=duplicates)
+            taxids=duplicate_otus)
     
-    if missing_uids := find_missing_uids(catalog):
-        logger.warning(
-            'Found listings with missing uids',
+    if missing_uids := find_missing_uids(catalog, logger):
+        logger.error(
+            'Found listings with missing or malformed uids',
             test='null_uid',
             taxids=missing_uids
         )
+
+    if duplicate_accessions := find_duplicate_accessions(catalog, logger):
+        logger.error(
+            'Found non-unique accessions in listings', 
+            test='duplicate_accessions',
+            otus=duplicate_accessions)
     
     for listing_path in get_catalog_paths(catalog):
         with open(listing_path, "r") as f:
@@ -56,7 +61,7 @@ def run(catalog: Path, debugging: bool = False):
             logger.warning(
                 'Entry is missing keys',
                 missing_keys=missing_keys,
-                path=str(listing_path.relative_to(catalog))
+                path=str(listing_path.relative_to(catalog, logger))
             )
         
         if not check_schema(listing):
@@ -99,7 +104,7 @@ def search_by_taxid(taxid, catalog_path: Path) -> list:
     else:
         return []
 
-def find_duplicates(catalog: Path):
+def find_duplicate_otus(catalog: Path, logger = base_logger):
     """
     """
     duplicated_taxids = set()
@@ -107,7 +112,7 @@ def find_duplicates(catalog: Path):
     for listing_path in get_catalog_paths(catalog):
         [ taxid, otu_id ] = split_pathname(listing_path)
 
-        logger = b_logger.bind(
+        logger = logger.bind(
             path=str(listing_path.relative_to(catalog.parent)), 
             otu_id=otu_id
         )
@@ -116,12 +121,12 @@ def find_duplicates(catalog: Path):
             matches = search_by_taxid(taxid, catalog)
 
             if len(matches) > 1:
-                logger.debug(f"Duplicate found!", taxid=taxid)
+                logger.debug(f"Duplicate taxon id found!", taxid=taxid)
                 duplicated_taxids.add(taxid)
     
     return duplicated_taxids
 
-def find_missing_uids(catalog: Path):
+def find_missing_uids(catalog: Path, logger = base_logger):
     """
     """
     missing_uids = set()
@@ -143,18 +148,30 @@ def find_missing_uids(catalog: Path):
         for accession in listing['accessions']['excluded']:
             if listing['accessions']['excluded'][accession] is None:
                 missing_uids.add(relative_path)
+
+            
     
     return missing_uids
 
-# if __name__ == '__main__':
-#     debug = True
-    
-#     REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    
-#     project_path = Path(REPO_DIR) / 'ref-plant-viruses'
-#     src_path = project_path / 'src'
-#     # catalog_path = project_path / '.cache/catalog'
-#     catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
-#     # catalog_path = Path('/Users/sygao/Development/UVic/Virtool/TestSets/cotton_dupe/.cache/catalog')
+def find_duplicate_accessions(catalog: Path, logger = base_logger):
+    """
+    """
+    duplicate_accessions = []
+    for listing_path in get_catalog_paths(catalog):
+        with open(listing_path, "r") as f:
+            listing = json.load(f)
+        otu_id = listing['_id']
+        logger = logger.bind(otu_id=listing['_id'], taxid=listing['taxid'], name=listing['name'])
 
-#     run(catalog=catalog_path, debugging=False)
+        for alist_type in ['included', 'excluded']:
+            keys = listing['accessions'][alist_type].keys()
+
+            for key in keys:
+                key_split = key.split('.')
+                if len(key_split) > 1:
+                    [ accession, version ] = key_split
+                    if accession in keys:
+                        logger.debug('Duplicate accession number found')
+                        duplicate_accessions.append(otu_id)
+    
+    return duplicate_accessions

@@ -144,13 +144,14 @@ def isolate(src_path, debug):
     type=str,
     help="the path to a reference directory",
 )
-def repair(src_path):
+@click.option('--debug/--no-debug', default=False)
+def repair(src_path, debug):
     """Fix every OTU in a given reference directory."""
     if not Path(src_path).exists():
         logger.critical('Source directory does not exist')
 
     try:
-        virtool_cli.repair.run(Path(src_path))
+        virtool_cli.repair.run(Path(src_path), debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
         click.echo(e)

@@ -4,12 +4,10 @@ import asyncio
 import structlog
 import logging
 
-import virtool_cli.utils.logging
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import parse_otu, get_otu_paths
 from virtool_cli.utils.ncbi import fetch_taxid, fetch_accession_uids
 from virtool_cli.accessions.helpers import get_otu_accessions
-
-base_logger = structlog.get_logger()
 
 def run(src: Path, catalog: Path, debugging: bool = False):
     """
@@ -129,11 +127,6 @@ async def generate_listing(
         if part.get('required'):
             schema.append(part.get('name'))
     catalog_listing['schema'] = schema
-    
-    # if len(schema) > 1:
-    #     catalog_listing['multipartite'] = True
-    # else:
-    #     catalog_listing['multipartite'] = False
     
     try:
         indexed_accessions = await fetch_accession_uids(accession_list)

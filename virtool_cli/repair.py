@@ -1,12 +1,13 @@
 import json
 from typing import Optional
 from pathlib import Path
-import structlog
+# import structlog
 import logging
+import re
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import (
-    get_otu_paths, 
+    get_otu_paths, get_isolate_paths, get_sequence_paths,
     generate_otu_dirname, 
     map_otus
 )
@@ -22,31 +23,70 @@ def run(src_path: Path, debugging: bool = False):
         format="%(message)s",
         level=filter_class,
     )
+
+    repair_reference(src_path)
     
-    paths = get_otu_paths(src_path)
-    otus = map_otus(paths)
+def repair_reference(src_path):
+    otu_paths = get_otu_paths(src_path)
+    otus = map_otus(otu_paths)
     otus_to_update = {}
 
-    for path in paths:
+    for otu_path in otu_paths:
         results = []
 
-        new_path = fix_folder_name(path, otus.get(path))
+        logger = base_logger.bind(
+            otu_path=str(otu_path.relative_to(src_path))
+        )
+
+        new_path = fix_folder_name(otu_path, otus.get(otu_path))
         # if a folder name has been changed then a new path will return
         if new_path:
             results.append("Fixed folder name")
             # making sure to update the dictionary that maps paths to OTUs
-            otus[new_path] = otus.get(path)
-            path = new_path
+            otus[new_path] = otus.get(otu_path)
+            otu_path = new_path
 
-        otu = fix_taxid(otus[path])
+        otu = fix_taxid(otus[otu_path])
         # if a new otu is returned then it should be updated
         if otu:
-            otus_to_update[path] = otu
+            otus_to_update[otu_path] = otu
             results.append("Fixed taxid field")
 
-        log_results(results, otus[path]["name"])
+        log_results(results, otus[otu_path]["name"])
+
+        for isolate_path in get_isolate_paths(otu_path):
+            for sequence_path in get_sequence_paths(isolate_path):
+                with open(sequence_path, "r") as f:
+                    sequence = json.load(f)
+                logger.bind(
+                    seq_path=str(sequence_path.relative_to(src_path))
+                )
+
+                if re.match(r'/[^A-Z_.0-9]/g', sequence['accession']):
+                    formatted_accession = sequence['accession'].strip()
+                else:
+                    continue
+
+                if sequence['accession'] != formatted_accession:
+                    logger.debug('Formatting accession number')
+                    sequence['accession'] = formatted_accession
+                
+                    with open(sequence_path, "w") as f:
+                        json.dump(sequence, f, indent=4)
 
     write_otus(otus_to_update)
+
+def format_accession(original):
+    """
+    """
+    formatted_accession = original
+    formatted_accession = formatted_accession.strip()
+    formatted_accession = formatted_accession.upper()
+    formatted_accession = re.sub(r'-', r'_')
+    
+    return formatted_accession
+
+
 
 def fix_folder_name(path: Path, otu: dict) -> Optional[str]:
     """
