@@ -27,7 +27,39 @@ def run(src_path: Path, debugging: bool = False):
     repair_reference(src_path)
     
 def repair_reference(src_path):
+    """
+    """
     otu_paths = get_otu_paths(src_path)
+    for otu_path in otu_paths:
+        logger = base_logger.bind(
+            otu_path=str(otu_path.relative_to(src_path))
+        )
+
+        for isolate_path in get_isolate_paths(otu_path):
+            for sequence_path in get_sequence_paths(isolate_path):
+                with open(sequence_path, "r") as f:
+                    sequence = json.load(f)
+                logger = logger.bind(
+                    seq_path=str(sequence_path.relative_to(src_path)), 
+                    accession=f"'{sequence['accession']}'"
+                )
+
+                # logger.debug(re.search(r'([^A-Z_.0-9])', sequence['accession']))
+
+                if re.search(r'([^A-Z_.0-9])', sequence['accession']) is not None:
+                    logger.info('Malformed accession, running automatic formatter')
+                    formatted_accession = format_accession(sequence['accession'])
+                else:
+                    # logger.debug('Accession appears legitimate')
+                    continue
+
+                logger.info('Formatting accession number...', new_accession=formatted_accession)
+                if sequence['accession'] != formatted_accession:
+                    sequence['accession'] = formatted_accession
+                
+                    with open(sequence_path, "w") as f:
+                        json.dump(sequence, f, indent=4)
+
     otus = map_otus(otu_paths)
     otus_to_update = {}
 
@@ -51,30 +83,10 @@ def repair_reference(src_path):
         if otu:
             otus_to_update[otu_path] = otu
             results.append("Fixed taxid field")
-
+            
         log_results(results, otus[otu_path]["name"])
-
-        for isolate_path in get_isolate_paths(otu_path):
-            for sequence_path in get_sequence_paths(isolate_path):
-                with open(sequence_path, "r") as f:
-                    sequence = json.load(f)
-                logger.bind(
-                    seq_path=str(sequence_path.relative_to(src_path))
-                )
-
-                if re.match(r'/[^A-Z_.0-9]/g', sequence['accession']):
-                    formatted_accession = sequence['accession'].strip()
-                else:
-                    continue
-
-                if sequence['accession'] != formatted_accession:
-                    logger.debug('Formatting accession number')
-                    sequence['accession'] = formatted_accession
-                
-                    with open(sequence_path, "w") as f:
-                        json.dump(sequence, f, indent=4)
-
     write_otus(otus_to_update)
+
 
 def format_accession(original):
     """
@@ -82,7 +94,7 @@ def format_accession(original):
     formatted_accession = original
     formatted_accession = formatted_accession.strip()
     formatted_accession = formatted_accession.upper()
-    formatted_accession = re.sub(r'-', r'_')
+    formatted_accession = re.sub(r'-', r'_', formatted_accession)
     
     return formatted_accession
 

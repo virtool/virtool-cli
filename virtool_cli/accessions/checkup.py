@@ -29,7 +29,7 @@ def run(catalog: Path, debugging: bool = False):
         return
     
     if unassigned := search_by_taxid('none', catalog):
-        logger.debug(
+        logger.warning(
             'Found listings without assigned NCBI taxon IDs.', 
             test='no_taxid',
             unassigned=unassigned)
@@ -103,6 +103,7 @@ def search_by_taxid(taxid, catalog_path: Path) -> list:
         return matches
     else:
         return []
+
 
 def find_duplicate_otus(catalog: Path, logger = base_logger):
     """

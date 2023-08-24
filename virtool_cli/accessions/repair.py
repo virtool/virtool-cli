@@ -1,9 +1,12 @@
 from pathlib import Path
 import json
-# from Bio import Entrez, SeqIO
+from Bio import Entrez, SeqIO
 import asyncio
 import aiofiles
+from typing import Optional
+from structlog import BoundLogger
 import logging
+from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import fetch_accession_uids, NCBI_REQUEST_INTERVAL
@@ -24,6 +27,19 @@ def run(catalog: Path, debugging: bool = False):
 async def repair_catalog(catalog: Path):
     """
     """
+    logger = base_logger.bind(catalog=str(catalog))
+
+    for listing_path in catalog.glob('*.json'):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+        [ taxid, otu_id ] = listing_path.stem.split('--')
+
+        with open(listing_path, "r") as f:
+            listing = json.load(f)
+
+        if taxid != str(listing['taxid']):
+            logger.warning(
+                f"Misnamed listing found: {taxid} != {listing['taxid']}")
+
     queue = asyncio.Queue()
     
     fetcher = asyncio.create_task(fetch_loop(catalog, queue))
@@ -35,6 +51,25 @@ async def repair_catalog(catalog: Path):
     )
 
     await queue.join()
+
+    for listing_path in catalog.glob('none--*.json'):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+        extracted_taxid = await find_taxid_from_accession(listing_path, logger)
+        if extracted_taxid is not None:
+            logger.debug(f'Found taxon ID {extracted_taxid}')
+            
+            with open(listing_path, "r") as f:
+                listing = json.load(f)
+            listing['taxid'] = extracted_taxid
+            
+            try:
+                await update_listing(listing, listing_path)
+                logger.info('Wrote new taxon ID to path')
+            except Exception as e:
+                logger.exception(e)
+                continue
+
+            fix_listing_path(listing_path, extracted_taxid, otu_id)
 
     return
 
@@ -115,6 +150,59 @@ async def fetch_missing_uids(listing: dict):
     else:
         return {}
 
+async def find_taxid_from_accession(
+    listing_path: Path, logger = base_logger
+):
+    """
+    """
+    with open(listing_path, "r") as f:
+        listing = json.load(f)
+
+    logger = base_logger.bind(otu_id = listing['_id'])
+
+    indexed_accessions = list(listing['accessions']['included'].values())
+    
+    records = await fetch_upstream_record_taxids(indexed_accessions)
+
+    if not records:
+        logger.warning('No taxon IDs found', taxids=records)
+        return None
+
+    if len(records) > 1:
+        logger.warning('Found multiple taxon IDs in this OTU', taxids=records)
+        return None
+    else:
+        taxid = records.pop()
+        return taxid
+
+async def fetch_upstream_record_taxids(
+    fetch_list: list, 
+) -> list:
+    """
+    Take a list of accession numbers and request the records from NCBI GenBank
+    
+    :param fetch_list: List of accession numbers to fetch from GenBank
+    :param logger: Structured logger
+
+    :return: A list of GenBank data converted from XML to dicts if possible, 
+        else an empty list
+    """
+    try:
+        handle = Entrez.efetch(db="nucleotide", id=fetch_list, rettype="docsum")
+        record = Entrez.read(handle)
+        handle.close()
+    except Exception as e:
+        raise e
+    
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+
+    taxids = set()
+
+    for r in record:
+        taxids.add(int(r.get('TaxId')))
+    
+    return taxids
+
 async def update_listing(data, path):
     try:
         async with aiofiles.open(path, "w") as f: 
@@ -123,6 +211,20 @@ async def update_listing(data, path):
             )
     except Exception as e:
         return e
+
+def fix_listing_path(path: Path, taxon_id: int, otu_id: str) -> Optional[str]:
+    """
+    Fixes each OTU folder name by ensuring that it's the same as the "name" field in its otu.json file
+
+    :param path: Path to a given reference directory
+    :param otu: A deserialized otu.json
+    """
+    new_listing_name = f'{taxon_id}--{otu_id}.json'
+
+    if path.name != new_listing_name:
+        new_path = path.with_name(new_listing_name)
+        path.rename(new_path)
+        return new_path
 
 if __name__ == '__main__':
     debug = True

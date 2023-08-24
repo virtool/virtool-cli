@@ -64,7 +64,7 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
     update_count = 0
 
     for listing_path in filter_catalog(src, catalog):
-        fetch_logger.debug(f'{listing_path}')
+        # fetch_logger.debug(f'{listing_path}')
         
         [ taxid, otu_id ] = split_pathname(listing_path)
 
@@ -83,33 +83,40 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
             otu_id=otu_id,
             taxid=taxid
         )
+        not_in_reference = listed_accessions.difference(existing_accessions)
 
-        logger.debug('checking in')
+        not_in_listing = existing_accessions.difference(listed_accessions)
 
-        missing_accessions = existing_accessions.difference(listed_accessions)
-        
-        if missing_accessions:
-            logger.debug(f'difference = {missing_accessions}')
+        indexed_accessions = listing_data['accessions']['included']
+        indexed_excluded = listing_data['accessions']['excluded']
 
-            indexed_accessions = listing_data['accessions']['included']
+        if not_in_reference:
+            logger.debug(f'reference is missing accessions: {not_in_reference}')
+            for accession in not_in_reference:
+                if indexed_accessions[accession] is None:
+                    logger.debug(f"Removing deprecated accession '{accession}'")
+                    indexed_accessions.pop(accession)
+                else:
+                    logger.debug(f"Accession {accession} has value, awaiting manual intervention")
 
-            for accession in missing_accessions:
+        if not_in_listing:
+            logger.debug(f'listing is missing accessions: {not_in_listing}')
+
+            for accession in not_in_listing:
                 if accession in indexed_accessions.keys():
+                    logger.debug(f'Removing missing accession {accession}')
                     indexed_accessions.pop(accession)
                 else:
                     indexed_accessions[accession] = None
                 
-                # logger.debug(f'new_index={indexed_accessions}')
-                
                 try:
-                    missing_accessions = [key for (key, value) in indexed_accessions.items() if value is None]
-                    # logger.debug(f'fetchlist={missing_accessions}')
+                    not_in_listing = [key for (key, value) in indexed_accessions.items() if value is None]
                 except Exception as e:
                     logger.exception(e)
                     return
 
-                if missing_accessions:
-                    new_indexed_accessions = await fetch_accession_uids(missing_accessions)
+                if not_in_listing:
+                    new_indexed_accessions = await fetch_accession_uids(not_in_listing)
                     for accession in new_indexed_accessions:
                         indexed_accessions[accession] = new_indexed_accessions[accession]
                 
@@ -138,6 +145,13 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
 
     while True:
         packet = await queue.get()
+        listing_path = packet['path']
+        listing = packet['listing']
+        write_logger.bind(
+            listing_path=str(listing_path.relative_to(catalog))
+        )
+
+        write_logger.debug(f'New listing:\n{listing}')
 
         with open(packet['path'], "w") as f:
             json.dump(packet['listing'], f, indent=2, sort_keys=True)
