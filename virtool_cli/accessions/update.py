@@ -10,7 +10,8 @@ from virtool_cli.utils.ncbi import fetch_accession_uids
 from virtool_cli.accessions.initialize import generate_listing, write_listing
 from virtool_cli.accessions.helpers import (
     parse_listing, split_pathname, get_otu_accessions, 
-    get_catalog_paths, filter_catalog
+    get_catalog_paths, filter_catalog,
+    fix_listing_path
 )
 
 def run(src: Path, catalog: Path, debugging: bool = False):

@@ -61,6 +61,68 @@ async def fetch_accession_uids(accessions: list) -> dict:
     
     return indexed_accessions
 
+async def fetch_docsums(fetch_list: list) -> list:
+    """
+    Take a list of accession numbers and requests documents from NCBI GenBank
+    
+    :param fetch_list: List of accession numbers to fetch from GenBank
+    :param logger: Structured logger
+
+    :return: A list of GenBank data converted from XML to dicts if possible, 
+        else an empty list
+    """
+    try:
+        handle = Entrez.efetch(db="nucleotide", id=fetch_list, rettype="docsum")
+        record = Entrez.read(handle)
+        handle.close()
+    except Exception as e:
+        return []
+    
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+
+    return record
+
+async def fetch_taxonomy_rank(taxon_id):
+    """
+    """
+    try:
+        handle = Entrez.efetch(db="taxonomy", id=taxon_id, rettype="null")
+        record = Entrez.read(handle)
+        handle.close()
+    except Exception as e:
+        return []
+    
+    taxid = ''
+    for r in record:
+        taxid = r['Rank']
+    return taxid
+
+async def fetch_upstream_record_taxids(fetch_list: list) -> list:
+    """
+    Take a list of accession numbers and request the records from NCBI GenBank
+    
+    :param fetch_list: List of accession numbers to fetch from GenBank
+    :param logger: Structured logger
+
+    :return: A list of GenBank data converted from XML to dicts if possible, 
+        else an empty list
+    """
+    try:
+        handle = Entrez.efetch(db="nucleotide", id=fetch_list, rettype="docsum")
+        record = Entrez.read(handle)
+        handle.close()
+    except Exception as e:
+        return []
+    
+    taxids = set()
+
+    for r in record:
+        taxids.add(int(r.get('TaxId')))
+    
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+    
+    return list(taxids)
+
 # async def process_records(records, listing: dict):
 #     """
 #     """

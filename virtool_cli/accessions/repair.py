@@ -9,9 +9,10 @@ import logging
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ncbi import fetch_accession_uids, NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions.helpers import get_catalog_paths
-
+from virtool_cli.utils.ncbi import fetch_accession_uids, fetch_taxonomy_rank, NCBI_REQUEST_INTERVAL
+from virtool_cli.accessions.helpers import (
+    get_catalog_paths, fix_listing_path, update_listing
+)
 
 def run(catalog: Path, debugging: bool = False):
     filter_class = logging.DEBUG if debugging else logging.INFO
@@ -28,17 +29,6 @@ async def repair_catalog(catalog: Path):
     """
     """
     logger = base_logger.bind(catalog=str(catalog))
-
-    for listing_path in catalog.glob('*.json'):
-        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
-        [ taxid, otu_id ] = listing_path.stem.split('--')
-
-        with open(listing_path, "r") as f:
-            listing = json.load(f)
-
-        if taxid != str(listing['taxid']):
-            logger.warning(
-                f"Misnamed listing found: {taxid} != {listing['taxid']}")
 
     queue = asyncio.Queue()
     
@@ -69,7 +59,17 @@ async def repair_catalog(catalog: Path):
                 logger.exception(e)
                 continue
 
-            fix_listing_path(listing_path, extracted_taxid, otu_id)
+    for listing_path in catalog.glob('*.json'):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+        [ taxid, otu_id ] = listing_path.stem.split('--')
+
+        with open(listing_path, "r") as f:
+            listing = json.load(f)
+
+        if taxid != str(listing['taxid']):
+            logger.warning(
+                f"Misnamed listing found: {taxid} != {listing['taxid']}")
+            fix_listing_path(listing_path, listing['taxid'], otu_id)
 
     return
 
@@ -160,19 +160,33 @@ async def find_taxid_from_accession(
 
     logger = base_logger.bind(otu_id = listing['_id'])
 
-    indexed_accessions = list(listing['accessions']['included'].values())
-    
-    records = await fetch_upstream_record_taxids(indexed_accessions)
+    indexed_uids = list(listing['accessions']['included'].values())
+        
+    try:
+        records = await fetch_upstream_record_taxids(indexed_uids)
+    except Exception as e:
+        logger.exception (e)
+        return
 
     if not records:
         logger.warning('No taxon IDs found', taxids=records)
         return None
-
-    if len(records) > 1:
-        logger.warning('Found multiple taxon IDs in this OTU', taxids=records)
+    
+    otu_taxids = []
+    for taxid in records:
+        rank = await fetch_taxonomy_rank(taxid)
+        if rank == 'species':
+            otu_taxids.append(taxid)
+    
+    if not otu_taxids:
+        logger.warning('No taxon IDs found', taxids=records)
+        return None
+    
+    if len(otu_taxids) > 1:
+        logger.warning('Found multiple taxon IDs in this OTU', taxids=otu_taxids)
         return None
     else:
-        taxid = records.pop()
+        taxid = otu_taxids.pop()
         return taxid
 
 async def fetch_upstream_record_taxids(
@@ -211,20 +225,6 @@ async def update_listing(data, path):
             )
     except Exception as e:
         return e
-
-def fix_listing_path(path: Path, taxon_id: int, otu_id: str) -> Optional[str]:
-    """
-    Fixes each OTU folder name by ensuring that it's the same as the "name" field in its otu.json file
-
-    :param path: Path to a given reference directory
-    :param otu: A deserialized otu.json
-    """
-    new_listing_name = f'{taxon_id}--{otu_id}.json'
-
-    if path.name != new_listing_name:
-        new_path = path.with_name(new_listing_name)
-        path.rename(new_path)
-        return new_path
 
 if __name__ == '__main__':
     debug = True

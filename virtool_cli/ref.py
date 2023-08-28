@@ -8,6 +8,7 @@ import virtool_cli.divide
 import virtool_cli.isolate
 import virtool_cli.repair
 import virtool_cli.taxid
+from virtool_cli.doctor.cli import doc
 from virtool_cli.update.cli import update
 from virtool_cli.migrate import run as run_migrate
 from virtool_cli.update.update_ref import run as run_update
@@ -25,6 +26,7 @@ def ref():
     pass
 
 ref.add_command(update)
+ref.add_command(doc)
 
 @ref.command()
 @click.option(
