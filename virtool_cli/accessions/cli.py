@@ -5,6 +5,8 @@ import click
 from virtool_cli.accessions.checkup import run as run_checkup
 from virtool_cli.accessions.initialize import run as run_init
 from virtool_cli.accessions.update import run as run_update
+from virtool_cli.accessions.repair import run as run_repair
+from virtool_cli.accessions.exclude import run as run_exclude
 
 b_logger = structlog.get_logger()
 
@@ -118,4 +120,48 @@ def checkup(catalog_path, debug):
     try:
         run_checkup(Path(catalog_path), debugging=debug)
     except (FileNotFoundError, NotADirectoryError) as e:
+        logger.critical('Not a valid reference directory')
+
+@acc.command()
+@click.option(
+    "-cat",
+    "--catalog_path",
+    required=True,
+    type=str,
+    help="the path to a catalog directory",
+)
+@click.option('--debug/--no-debug', default=False)
+def repair(catalog_path, debug):
+    logger = b_logger.bind(command='acc checkup')
+
+    """Run a check on the accession catalogue for outstanding issues."""
+
+    if not Path(catalog_path).exists():
+        logger.critical('Source directory does not exist')
+
+    try:
+        run_repair(Path(catalog_path), debugging=debug)
+    except (FileNotFoundError, NotADirectoryError) as e:
+        logger.critical('Not a valid reference directory')
+
+@acc.command()
+@click.option(
+    "-cat",
+    "--catalog_path",
+    required=True,
+    type=str,
+    help="the path to a catalog directory",
+)
+@click.option('--debug/--no-debug', default=False)
+def exclude(catalog_path, debug):
+    logger = b_logger.bind(command='acc checkup')
+
+    """Run a check on the accession catalogue for outstanding issues."""
+
+    if not Path(catalog_path).exists():
+        logger.critical('Source directory does not exist')
+
+    try:
+        run_exclude(Path(catalog_path), debugging=debug)
+    except (FileNotFoundError, NotADirectoryError):
         logger.critical('Not a valid reference directory')

@@ -9,6 +9,34 @@ Entrez.api_key = os.environ.get("NCBI_API_KEY")
 NCBI_REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.8
 
 
+async def fetch_nuccore(fetch_list: list) -> list:
+    """
+    Take a list of accession numbers and request the corresponding records from NCBI Nucleotide
+    
+    :param fetch_list: List of accession numbers to fetch from GenBank
+
+    :return: A list of GenBank data converted from XML to dicts if possible, 
+        else an empty list
+    """
+    try:
+        handle = Entrez.efetch(
+            db="nucleotide", id=fetch_list, 
+            rettype="gb", retmode="text"
+        )
+        ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
+        handle.close()
+    except HTTPError as e:
+        raise e
+
+    if ncbi_records is None:
+        return []
+    
+    try:
+        accession_list = [record for record in ncbi_records.values() if record.seq]
+        return accession_list
+    except Exception as e:
+        raise e
+
 async def fetch_taxid(name: str) -> int:
     """
     Searches the NCBI taxonomy database for a given OTU name, 

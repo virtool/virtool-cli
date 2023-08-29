@@ -86,6 +86,23 @@ async def process_records(
 ):
     """
     """
+    if not listing.get('schema', []):
+        logger.debug('missing schema. moving on...')
+        return []
+
+    if len(listing['schema']) > 1:
+        logger.debug('multipartite', schema=listing.get('schema'))
+        multipartite = True
+        
+        required_parts = set()
+        for part in listing['schema']:
+            if part['required']:
+                required_parts.add(part['name'])
+    else:
+        multipartite = False
+
+    logger.debug('', schema=listing['schema'])
+
     filter_set = set(listing['accessions']['included'])
     # filter_set.update(listing['accessions']['included'].keys())
     filter_set.update(listing['accessions']['excluded'])
@@ -98,15 +115,39 @@ async def process_records(
             if accession in filter_set:
                 logger.debug('Accession already exists', accession=seq_data.id)
                 continue
-            
-            if 'NC_' in accession:
-                logger.debug('New RefSeq entry. Could already have an entry.')
+
+            if '_' in seq_data.id:
+                logger.warning('This is a RefSeq accession. This data may already exist under a different accession.', accession=seq_data.id)
 
             seq_qualifier_data = await get_qualifiers(seq_data.features)
 
-            if len(listing.get('schema')) > 1:
-                if 'segment' not in seq_qualifier_data:
+            if multipartite:
+                if segment_name := seq_qualifier_data.get("segment", None) is None:
+                    logger.debug('No segment name. Moving on...')
                     continue
+                
+                if segment_name not in required_parts:
+                    logger.debug('Required segment not found. Moving on...')
+                    continue
+
+            for i in range(len(listing['schema'])):
+                try:
+                    n_length = listing['schema'][i].get('length')
+                except Exception as e:
+                    logger.exception(e)
+                    continue
+                
+                seq_length = len(seq_data.seq)
+                max_length = n_length * 1.10
+                min_length = n_length * 0.9
+                
+                if seq_length > max_length or seq_length < min_length:
+                    logger.debug('Bad length. Moving on without pushing...', 
+                        seq_length=seq_length, listing_length=n_length)
+                    continue
+
+                logger.debug('Good length. Formatting sequence...', 
+                    seq_length=seq_length, listing_length=n_length)
 
             isolate_type = await find_isolate(seq_qualifier_data)
             if isolate_type is None:
@@ -114,8 +155,10 @@ async def process_records(
             isolate_name = seq_qualifier_data.get(isolate_type)[0]
 
             seq_dict = await format_sequence(seq_data, seq_qualifier_data)
+
             if 'segment' not in seq_dict:
                 seq_dict['segment'] = listing.get("schema")[0]['name']
+            
             isolate = { 
                 'source_name': isolate_name, 
                 'source_type': isolate_type
@@ -220,9 +263,7 @@ async def fetch_upstream_accessions(
     :return: A list of accessions from NCBI Genbank for the taxon ID, 
         sans included and excluded accessions
     """
-    # inclusion_set = set()
     included_set = set(listing['accessions']['included'])
-    # filter_set.update(listing['accessions']['included'].keys())
     excluded_set = set(listing['accessions']['excluded'])
 
     logger = base_logger.bind(taxid=taxid)
@@ -264,7 +305,6 @@ async def fetch_upstream_records(
         )
     except HTTPError as e:
         logger.error(f'{e}, moving on...')
-        # logger.exception(e)
         return []
     
     ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))

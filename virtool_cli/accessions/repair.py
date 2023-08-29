@@ -47,50 +47,50 @@ async def repair_catalog(catalog: Path):
 
     return
 
-async def fetch_loop(catalog: Path, queue: asyncio.Queue):
-    """
-    """
-    change_dict = {}
+# async def fetch_loop(catalog: Path, queue: asyncio.Queue):
+#     """
+#     """
+#     change_dict = {}
 
-    for listing_path in get_catalog_paths(catalog):
-        logger = base_logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+#     for listing_path in get_catalog_paths(catalog):
+#         logger = base_logger.bind(listing_path=str(listing_path.relative_to(catalog)))
 
-        with open(listing_path, "r") as f:
-            listing = json.load(f)
+#         with open(listing_path, "r") as f:
+#             listing = json.load(f)
 
-        new_accessions = await fetch_missing_uids(listing)
-        if new_accessions:
-            change_dict[listing_path] = new_accessions
-            logger.debug('Missing UIDs filled')
+#         new_accessions = await fetch_missing_uids(listing)
+#         if new_accessions:
+#             change_dict[listing_path] = new_accessions
+#             logger.debug('Missing UIDs filled')
 
-            await queue.put({ 'path': listing_path, 'listing': listing_path})
-            await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+#             await queue.put({ 'path': listing_path, 'listing': listing_path})
+#             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
-async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
-    """
-    Pulls packet dicts from the queue and calls the update function
+# async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
+#     """
+#     Pulls packet dicts from the queue and calls the update function
 
-    :param src_path: Path to a given reference directory
-    :param queue: Queue of parsed OTU data awaiting processing
-    """
-    while True:
-        packet = await queue.get()
-        path = packet['path']
-        listing = packet['listing']
-        [ taxid, otu_id ] = path.name.split('--')
-        logger = base_logger.bind(
-            otu_id=otu_id, taxid=taxid, listing_path=str(path.relative_to(catalog_path))
-        )
+#     :param src_path: Path to a given reference directory
+#     :param queue: Queue of parsed OTU data awaiting processing
+#     """
+#     while True:
+#         packet = await queue.get()
+#         path = packet['path']
+#         listing = packet['listing']
+#         [ taxid, otu_id ] = path.name.split('--')
+#         logger = base_logger.bind(
+#             otu_id=otu_id, taxid=taxid, listing_path=str(path.relative_to(catalog_path))
+#         )
 
-        try:
-            update_listing(listing, path)
-        except Exception as e:
-            base_logger.exception('e')
+#         try:
+#             update_listing(listing, path)
+#         except Exception as e:
+#             base_logger.exception('e')
         
-        logger.info(f"Wrote updated listing to file")
+#         logger.info(f"Wrote updated listing to file")
 
-        await asyncio.sleep(0.1)
-        queue.task_done()
+#         await asyncio.sleep(0.1)
+#         queue.task_done()
 
 async def fetch_missing_taxids(catalog: Path, logger: BoundLogger):
     """
@@ -145,10 +145,10 @@ async def find_taxid_from_accession(
 
     logger = base_logger.bind(otu_id = listing['_id'])
 
-    indexed_uids = list(listing['accessions']['included'].values())
+    indexed_accessions = list(listing['accessions']['included'])
         
     try:
-        records = await fetch_upstream_record_taxids(indexed_uids)
+        records = await fetch_upstream_record_taxids(indexed_accessions)
     except Exception as e:
         logger.exception (e)
         return
@@ -216,8 +216,9 @@ if __name__ == '__main__':
     
     REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
     
-    project_path = Path(REPO_DIR) / 'ref-plant-viruses'
+    project_path = Path(REPO_DIR) / 'ref-mini' #'ref-plant-viruses'
     src_path = project_path / 'src'
-    catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
+    # catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
+    catalog_path = project_path / '.cache/catalog'
 
     run(catalog_path, debug)

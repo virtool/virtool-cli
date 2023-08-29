@@ -15,7 +15,7 @@ from virtool_cli.accessions.helpers import (
     # get_catalog_paths, filter_catalog
 )
 
-def run(src: Path, catalog: Path, debugging: bool = False):
+def run(catalog: Path, debugging: bool = False):
     """
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
