@@ -6,7 +6,7 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import parse_otu, get_otu_paths
-from virtool_cli.utils.ncbi import fetch_taxid, fetch_accession_uids
+from virtool_cli.utils.ncbi import fetch_taxid, fetch_accession_uids, fetch_taxonomy_species
 from virtool_cli.accessions.helpers import get_otu_accessions
 
 def run(src: Path, catalog: Path, debugging: bool = False):
@@ -124,8 +124,8 @@ async def generate_listing(
     
     schema = []
     for part in otu_data.get('schema'):
-        if part.get('required'):
-            schema.append(part.get('name'))
+        # if part.get('required'):
+        schema.append(part)
     catalog_listing['schema'] = schema
     
     try:

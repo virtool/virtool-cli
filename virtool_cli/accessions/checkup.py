@@ -1,10 +1,12 @@
 from pathlib import Path
 import json
+import asyncio
 import structlog
 import logging
 # from logging import INFO, DEBUG
 
 from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.ncbi import get_spelling
 from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname
 
 LISTING_KEYS = set(["_id", "accessions", "name", "schema", "schema", "taxid"])
@@ -66,6 +68,8 @@ def run(catalog: Path, debugging: bool = False):
         
         if not check_schema(listing):
             logger.warning('Schema is empty')
+
+    asyncio.run(suggest_spellings(catalog))
 
 def check_keys(listing: dict):
     """
@@ -176,3 +180,24 @@ def find_duplicate_accessions(catalog: Path, logger = base_logger):
                         duplicate_accessions.append(otu_id)
     
     return duplicate_accessions
+
+async def suggest_spellings(catalog: Path, logger = base_logger):
+    for listing_path in catalog.glob('none--*.json'):
+        with open(listing_path, "r") as f:
+            listing = json.load(f)
+        
+        logger = logger.bind(
+            path = str(listing_path.relative_to(catalog)),
+            otu_id=listing['_id'], 
+            taxid=listing['taxid'], 
+            current_name=listing['name'])
+        
+        current_name = listing['name']
+        
+        if '-' in current_name:
+            current_name = current_name.split('-')[0]
+        
+        new_spelling = await get_spelling(current_name)
+
+        if new_spelling != current_name.lower():
+            logger.info(f'Try: {new_spelling}', potential_name=new_spelling)

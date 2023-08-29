@@ -99,6 +99,9 @@ async def process_records(
                 logger.debug('Accession already exists', accession=seq_data.id)
                 continue
             
+            if 'NC_' in accession:
+                logger.debug('New RefSeq entry. Could already have an entry.')
+
             seq_qualifier_data = await get_qualifiers(seq_data.features)
 
             if len(listing.get('schema')) > 1:
@@ -112,7 +115,7 @@ async def process_records(
 
             seq_dict = await format_sequence(seq_data, seq_qualifier_data)
             if 'segment' not in seq_dict:
-                seq_dict['segment'] = listing.get("schema")[0]
+                seq_dict['segment'] = listing.get("schema")[0]['name']
             isolate = { 
                 'source_name': isolate_name, 
                 'source_type': isolate_type
@@ -218,13 +221,13 @@ async def fetch_upstream_accessions(
         sans included and excluded accessions
     """
     filter_set = set()
-    filter_set.update(listing['accessions']['included'].values())
-    filter_set.update(listing['accessions']['excluded'].values())
+    filter_set.update(listing['accessions']['included'].keys())
+    exclusion_set = listing['accessions']['excluded'].keys()
 
     logger = base_logger.bind(taxid=taxid)
-    logger.debug('Exclude catalogued UIDs', catalogued=filter_set)
+    logger.debug('Exclude catalogued accessions', catalogued=filter_set)
 
-    upstream_uids = []
+    upstream_accessions = []
 
     entrez_accessions = Entrez.read(
         Entrez.elink(
@@ -233,9 +236,11 @@ async def fetch_upstream_accessions(
     )
 
     for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
-        upstream_uids.append(linksetdb["Id"])
+        accession = linksetdb["Id"]
+        if accession.split('.')[0] not in exclusion_set:
+            upstream_accessions.append(accession)
 
-    upstream_set = set(upstream_uids)
+    upstream_set = set(upstream_accessions)
 
     return list(upstream_set.difference(filter_set))
 

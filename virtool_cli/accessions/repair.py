@@ -6,7 +6,6 @@ import aiofiles
 from typing import Optional
 from structlog import BoundLogger
 import logging
-from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import fetch_accession_uids, fetch_taxonomy_rank, NCBI_REQUEST_INTERVAL
@@ -42,34 +41,9 @@ async def repair_catalog(catalog: Path):
 
     await queue.join()
 
-    for listing_path in catalog.glob('none--*.json'):
-        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
-        extracted_taxid = await find_taxid_from_accession(listing_path, logger)
-        if extracted_taxid is not None:
-            logger.debug(f'Found taxon ID {extracted_taxid}')
-            
-            with open(listing_path, "r") as f:
-                listing = json.load(f)
-            listing['taxid'] = extracted_taxid
-            
-            try:
-                await update_listing(listing, listing_path)
-                logger.info('Wrote new taxon ID to path')
-            except Exception as e:
-                logger.exception(e)
-                continue
+    await fetch_missing_taxids(catalog, logger)
 
-    for listing_path in catalog.glob('*.json'):
-        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
-        [ taxid, otu_id ] = listing_path.stem.split('--')
-
-        with open(listing_path, "r") as f:
-            listing = json.load(f)
-
-        if taxid != str(listing['taxid']):
-            logger.warning(
-                f"Misnamed listing found: {taxid} != {listing['taxid']}")
-            fix_listing_path(listing_path, listing['taxid'], otu_id)
+    await rename_listings(catalog, logger)
 
     return
 
@@ -118,6 +92,49 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         await asyncio.sleep(0.1)
         queue.task_done()
 
+async def fetch_missing_taxids(catalog: Path, logger: BoundLogger):
+    """
+    """
+    for listing_path in catalog.glob('none--*.json'):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+        extracted_taxid = await find_taxid_from_accession(listing_path, logger)
+        if extracted_taxid is not None:
+            logger.debug(f'Found taxon ID {extracted_taxid}')
+            
+            with open(listing_path, "r") as f:
+                listing = json.load(f)
+            listing['taxid'] = extracted_taxid
+            
+            try:
+                await update_listing(listing, listing_path)
+                logger.info('Wrote new taxon ID to path')
+            except Exception as e:
+                logger.exception(e)
+                continue
+
+async def rename_listings(catalog: Path, logger: BoundLogger):
+    """
+    Renames listings with improper 
+    """
+    # Rename misnamed listings
+    for listing_path in catalog.glob('*.json'):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+        [ taxid, otu_id ] = listing_path.stem.split('--')
+
+        with open(listing_path, "r") as f:
+            listing = json.load(f)
+
+        if taxid != str(listing['taxid']):
+            logger.warning(
+                f"Misnamed listing found: {taxid} != { listing['taxid'] }")
+            fix_listing_path(listing_path, listing['taxid'], otu_id)
+            taxid = listing['taxid']
+        
+        # if otu_id != listing['_id']:
+        #     logger.warning(
+        #         f"Misnamed listing found: {otu_id} != { listing['_id'] }")
+        #     fix_listing_path(listing_path, taxid, listing['_id'])
+
 async def fetch_missing_uids(listing: dict):
     """
     """    
@@ -151,7 +168,7 @@ async def fetch_missing_uids(listing: dict):
         return {}
 
 async def find_taxid_from_accession(
-    listing_path: Path, logger = base_logger
+    listing_path: Path, logger: BoundLogger = base_logger
 ):
     """
     """
@@ -179,7 +196,7 @@ async def find_taxid_from_accession(
             otu_taxids.append(taxid)
     
     if not otu_taxids:
-        logger.warning('No taxon IDs found', taxids=records)
+        logger.warning('No species-rank taxon IDs found', taxids=records)
         return None
     
     if len(otu_taxids) > 1:

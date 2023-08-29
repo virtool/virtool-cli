@@ -98,7 +98,7 @@ def fix_listing_path(path: Path, taxon_id: int, otu_id: str) -> Optional[str]:
         new_path = path.with_name(new_listing_name)
         path.rename(new_path)
         return new_path
-    
+
 async def update_listing(data, path):
     """
     """

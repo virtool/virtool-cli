@@ -28,9 +28,9 @@ def repair_data(src_path):
     """
     otu_paths = get_otu_paths(src_path)
     for otu_path in otu_paths:
-        logger = base_logger.bind(
-            otu_path=str(otu_path.relative_to(src_path))
-        )
+        logger = base_logger.bind(otu_path=str(otu_path.relative_to(src_path)))
+
+        repair_otu(otu_path, logger)
 
         for isolate_path in get_isolate_paths(otu_path):
             for sequence_path in get_sequence_paths(isolate_path):
@@ -59,17 +59,25 @@ def repair_sequence(sequence_path, logger = base_logger):
     logger = logger.bind(accession=f"'{sequence['accession']}'")
 
     # Automatically repair misspelled accessions where possible
-    if re.search(r'([^A-Z_.0-9])', sequence['accession']) is None:
-        return
+    verified_accession = verify_accession(sequence['accession'])
+    if '.' not in verified_accession:
+        # assume this is version 1 of the accession
+        verified_accession += '.1'
     
-    logger.info('Malformed accession. Formatting...')
-    formatted_accession = format_accession(sequence['accession'])
-
-    if sequence['accession'] != formatted_accession:
-        sequence['accession'] = formatted_accession
-    
+    if sequence['accession'] != verified_accession:
+        sequence['accession'] = verified_accession
         with open(sequence_path, "w") as f:
             json.dump(sequence, f, indent=4)
+
+def verify_accession(original):
+    # Automatically repair misspelled accessions where possible
+    if re.search(r'([^A-Z_.0-9])', original) is None:
+        return original
+    
+    formatted_accession = format_accession(original)
+
+    return formatted_accession
+
 
 def format_accession(original):
     """

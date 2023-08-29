@@ -13,7 +13,7 @@ from virtool_cli.utils.ncbi import (
     fetch_accession_uids, fetch_docsums, fetch_taxonomy_rank
 )
 from virtool_cli.accessions.helpers import (
-    get_catalog_paths, fix_listing_path, update_listing
+    get_catalog_paths, fix_listing_path, update_listing, find_taxid_from_accession
 )
 
 def run(catalog: Path, debugging: bool = False):
