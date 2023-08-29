@@ -6,12 +6,11 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
-from virtool_cli.utils.ncbi import fetch_accession_uids
 from virtool_cli.accessions.initialize import generate_listing, write_listing
 from virtool_cli.accessions.helpers import (
     parse_listing, split_pathname, get_otu_accessions, 
     get_catalog_paths, filter_catalog,
-    fix_listing_path
+    # fix_listing_path
 )
 
 def run(src: Path, catalog: Path, debugging: bool = False):
@@ -69,61 +68,47 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
         
         [ taxid, otu_id ] = split_pathname(listing_path)
 
-        logger = fetch_logger.bind(
-            listing=str(listing_path.relative_to(catalog))
-        )
+        logger = fetch_logger.bind(listing=listing_path.name)
         
         otu_path = search_otu_by_id(src, otu_id)
         existing_accessions = set(get_otu_accessions(otu_path))
 
-        listing_data = parse_listing(listing_path)
-        listed_accessions = set(listing_data['accessions']['included'].keys())
-        
+        listing = parse_listing(listing_path)
         logger = logger.bind(
-            otu_name=listing_data['name'],
+            otu_name=listing['name'],
             otu_id=otu_id,
             taxid=taxid
         )
+
+        listed_accessions = set(listing['accessions']['included'])
+        
         not_in_reference = listed_accessions.difference(existing_accessions)
-
         not_in_listing = existing_accessions.difference(listed_accessions)
-
-        indexed_accessions = listing_data['accessions']['included']
-        indexed_excluded = listing_data['accessions']['excluded']
+        indexed_accessions = listing['accessions']['included']
+        # indexed_excluded = listing['accessions']['excluded']
 
         if not_in_reference:
             logger.debug(f'reference is missing accessions: {not_in_reference}')
             for accession in not_in_reference:
-                if indexed_accessions[accession] is None:
-                    logger.debug(f"Removing deprecated accession '{accession}'")
-                    indexed_accessions.pop(accession)
-                else:
-                    logger.debug(f"Accession {accession} has value, awaiting manual intervention")
+                indexed_accessions.pop(accession)
 
         if not_in_listing:
             logger.debug(f'listing is missing accessions: {not_in_listing}')
 
             for accession in not_in_listing:
-                if accession in indexed_accessions.keys():
+                if accession in indexed_accessions:
                     logger.debug(f'Removing missing accession {accession}')
                     indexed_accessions.pop(accession)
                 else:
-                    indexed_accessions[accession] = None
-                
-                try:
-                    not_in_listing = [key for (key, value) in indexed_accessions.items() if value is None]
-                except Exception as e:
-                    logger.exception(e)
-                    return
+                    indexed_accessions.append(accession)
 
                 if not_in_listing:
-                    new_indexed_accessions = await fetch_accession_uids(not_in_listing)
-                    for accession in new_indexed_accessions:
-                        indexed_accessions[accession] = new_indexed_accessions[accession]
+                    for accession in not_in_listing:
+                        indexed_accessions.append(accession)
                 
-                # listing_data['accessions']['included'] = indexed_accessions
+                listing['accessions']['included'] = indexed_accessions
 
-            await queue.put({ 'path': listing_path, 'listing': listing_data } )
+            await queue.put({ 'path': listing_path, 'listing': listing } )
             logger.debug(f'Pushed updated listing to queue', updated_accessions=indexed_accessions)
             update_count += 1
 

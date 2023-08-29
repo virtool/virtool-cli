@@ -8,7 +8,7 @@ from structlog import BoundLogger
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ncbi import fetch_accession_uids, fetch_taxonomy_rank, NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.ncbi import fetch_taxonomy_rank, NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.helpers import (
     get_catalog_paths, fix_listing_path, update_listing
 )
@@ -29,17 +29,17 @@ async def repair_catalog(catalog: Path):
     """
     logger = base_logger.bind(catalog=str(catalog))
 
-    queue = asyncio.Queue()
+    # queue = asyncio.Queue()
     
-    fetcher = asyncio.create_task(fetch_loop(catalog, queue))
+    # fetcher = asyncio.create_task(fetch_loop(catalog, queue))
 
-    await asyncio.gather(*[fetcher], return_exceptions=True)
+    # await asyncio.gather(*[fetcher], return_exceptions=True)
 
-    asyncio.create_task(
-        writer_loop(catalog, queue)
-    )
+    # asyncio.create_task(
+    #     writer_loop(catalog, queue)
+    # )
 
-    await queue.join()
+    # await queue.join()
 
     await fetch_missing_taxids(catalog, logger)
 
@@ -134,38 +134,6 @@ async def rename_listings(catalog: Path, logger: BoundLogger):
         #     logger.warning(
         #         f"Misnamed listing found: {otu_id} != { listing['_id'] }")
         #     fix_listing_path(listing_path, taxid, listing['_id'])
-
-async def fetch_missing_uids(listing: dict):
-    """
-    """    
-    change_flag = False
-
-    for accession_list in ['included', 'excluded']:
-        fetchlist = []
-        for accession in listing['accessions'][accession_list]:
-            if listing['accessions'][accession_list][accession] is None:
-                fetchlist.append(accession)
-    
-        if not fetchlist:
-            continue
-        
-        try:
-            fetched_entries = await fetch_accession_uids(fetchlist)
-        except:
-            continue
-
-        if not fetched_entries:
-            continue
-        
-        for accession in fetched_entries:
-            if fetched_entries[accession] is not None:
-                listing['accessions'][accession_list][accession] = fetched_entries[accession]
-                change_flag = True
-            
-    if change_flag:
-        return listing
-    else:
-        return {}
 
 async def find_taxid_from_accession(
     listing_path: Path, logger: BoundLogger = base_logger

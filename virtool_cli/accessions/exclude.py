@@ -8,12 +8,11 @@ import logging
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
-from virtool_cli.utils.ncbi import fetch_accession_uids
+# from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
 from virtool_cli.accessions.initialize import generate_listing, write_listing
 from virtool_cli.accessions.helpers import (
     parse_listing, split_pathname, get_otu_accessions, 
-    get_catalog_paths, filter_catalog
+    # get_catalog_paths, filter_catalog
 )
 
 def run(src: Path, catalog: Path, debugging: bool = False):
@@ -38,8 +37,8 @@ async def filter_refseq_accessions(catalog: Path):
         
         logger = base_logger.bind(otu_id=listing['_id'], taxid=listing['taxid'], name=listing['name'])
 
-        if listing['accessions']['excluded']:
-            continue
+        # if listing['accessions']['excluded']:
+        #     continue
         
         # print(listing['accessions']['included'])
         refseq_accessions = []
@@ -73,19 +72,17 @@ async def filter_refseq_accessions(catalog: Path):
                     accession = part.strip().split()[-1:][0]
         
         if excluded_records:
-            try:
-                new_excluded_accessions = await fetch_accession_uids(excluded_records)
-            except Exception as e:
-                logger.exception(e)
+            excluded_set = set(listing['accessions']['excluded'])
 
-            logger.info('Adding accessions to exclusion list...', new=new_excluded_accessions)
+            logger.info('Adding accessions to exclusion list...', new=excluded_records)
 
-            listing['accessions']['excluded'].update(new_excluded_accessions)
+            excluded_set.update(excluded_records)
 
             async with aiofiles.open(listing_path, "w") as f: 
                 await f.write(
                     json.dumps(listing, indent=2, sort_keys=True)
                 )
+            logger.debug('Wrote listing to file', filename=listing_path.name)
 
 async def fetch_upstream_accessions(
     listing: dict,
@@ -99,8 +96,8 @@ async def fetch_upstream_accessions(
     taxid = listing['taxid']
 
     filter_set = set()
-    filter_set.update(listing['accessions']['included'].values())
-    filter_set.update(listing['accessions']['excluded'].values())
+    filter_set.update(listing['accessions']['included'])
+    filter_set.update(listing['accessions']['excluded'])
 
     logger = base_logger.bind(
         taxid=taxid, otu_id=listing['_id'])

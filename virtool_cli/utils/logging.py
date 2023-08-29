@@ -8,6 +8,13 @@ shared_processors = [
     structlog.stdlib.PositionalArgumentsFormatter(),
     structlog.processors.StackInfoRenderer(),
     structlog.processors.UnicodeDecoder(),
+    structlog.processors.CallsiteParameterAdder(
+            {
+                structlog.processors.CallsiteParameter.FILENAME,
+                structlog.processors.CallsiteParameter.FUNC_NAME,
+                structlog.processors.CallsiteParameter.LINENO,
+            }
+        ),
 ]
 if sys.stderr.isatty():
     processors = shared_processors + [
@@ -17,13 +24,6 @@ else:
     processors = shared_processors + [
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.format_exc_info,
-        structlog.processors.CallsiteParameterAdder(
-            {
-                structlog.processors.CallsiteParameter.FILENAME,
-                structlog.processors.CallsiteParameter.FUNC_NAME,
-                structlog.processors.CallsiteParameter.LINENO,
-            }
-        ),
         structlog.processors.dict_tracebacks,
         structlog.processors.JSONRenderer(),
     ]

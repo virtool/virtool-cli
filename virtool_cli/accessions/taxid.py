@@ -10,7 +10,7 @@ from urllib.error import HTTPError
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import (
     NCBI_REQUEST_INTERVAL,
-    fetch_accession_uids, fetch_docsums, fetch_taxonomy_rank
+    fetch_docsums, fetch_taxonomy_rank
 )
 from virtool_cli.accessions.helpers import (
     get_catalog_paths, fix_listing_path, update_listing, find_taxid_from_accession

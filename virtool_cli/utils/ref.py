@@ -104,6 +104,22 @@ def map_otus(paths: list) -> dict:
 
     return path_taxid_map
 
+def get_otu_accessions(otu_path: Path) -> list:
+    """
+    Gets all accessions from an OTU directory and returns a list
+
+    :param otu_path: Path to an OTU directory
+    """
+    accessions = []
+    
+    for isolate_path in get_otu_paths(otu_path):
+        for sequence_path in get_sequence_paths(isolate_path):
+            with open(sequence_path, "r") as f:
+                sequence = json.load(f)
+            accessions.append(sequence['accession'])
+
+    return accessions
+
 def is_v2(src_path: Path) -> bool:
     """
     """

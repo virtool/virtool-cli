@@ -32,41 +32,11 @@ async def fetch_taxid(name: str) -> int:
 
     return taxid
 
-async def fetch_accession_uids(accessions: list) -> dict:
-    """
-    Creates a dictionary keyed by the input accessions,
-    fetches the corresponding UIDs from NCBI Genbank and 
-    returns as many key-value pairs as possible.
-    If a UID cannot be found for an accession, value defaults to None.add()
-
-    :param name: List of accession numbers
-    :return: Dictionary of Genbank UIDs keyed by corresponding accession number
-    """
-    indexed_accessions = { accession: None for index, accession in enumerate(accessions) }
-
-    try:
-        handle = Entrez.efetch(db="nucleotide", id=accessions, rettype="docsum")
-        record = Entrez.read(handle)
-        handle.close()
-    except Exception as e:
-        raise e
-    
-    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
-
-    for r in record:
-        if r.get('Caption') in indexed_accessions.keys():
-            indexed_accessions[r.get('Caption')] = int(r.get('Id'))
-        elif r.get('AccessionVersion') in indexed_accessions.keys():
-            indexed_accessions[r.get('AccessionVersion')] = int(r.get('Id'))
-    
-    return indexed_accessions
-
 async def fetch_docsums(fetch_list: list) -> list:
     """
     Take a list of accession numbers and requests documents from NCBI GenBank
     
     :param fetch_list: List of accession numbers to fetch from GenBank
-    :param logger: Structured logger
 
     :return: A list of GenBank data converted from XML to dicts if possible, 
         else an empty list

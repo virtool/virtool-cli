@@ -86,9 +86,9 @@ async def process_records(
 ):
     """
     """
-    filter_set = set()
-    filter_set.update(listing['accessions']['included'].keys())
-    filter_set.update(listing['accessions']['excluded'].keys())
+    filter_set = set(listing['accessions']['included'])
+    # filter_set.update(listing['accessions']['included'].keys())
+    filter_set.update(listing['accessions']['excluded'])
 
     otu_updates = []
     for seq_list in records:
@@ -220,12 +220,13 @@ async def fetch_upstream_accessions(
     :return: A list of accessions from NCBI Genbank for the taxon ID, 
         sans included and excluded accessions
     """
-    filter_set = set()
-    filter_set.update(listing['accessions']['included'].keys())
-    exclusion_set = listing['accessions']['excluded'].keys()
+    # inclusion_set = set()
+    included_set = set(listing['accessions']['included'])
+    # filter_set.update(listing['accessions']['included'].keys())
+    excluded_set = set(listing['accessions']['excluded'])
 
     logger = base_logger.bind(taxid=taxid)
-    logger.debug('Exclude catalogued accessions', catalogued=filter_set)
+    logger.debug('Exclude catalogued accessions', included=included_set, excluded=excluded_set)
 
     upstream_accessions = []
 
@@ -237,12 +238,12 @@ async def fetch_upstream_accessions(
 
     for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
         accession = linksetdb["Id"]
-        if accession.split('.')[0] not in exclusion_set:
+        if accession.split('.')[0] not in excluded_set:
             upstream_accessions.append(accession)
 
     upstream_set = set(upstream_accessions)
 
-    return list(upstream_set.difference(filter_set))
+    return list(upstream_set.difference(included_set))
 
 async def fetch_upstream_records(
     fetch_list: list, 
@@ -267,6 +268,7 @@ async def fetch_upstream_records(
         return []
     
     ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
+    handle.close()
 
     if ncbi_records is None:
         return []
