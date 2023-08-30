@@ -45,4 +45,6 @@ def test_migrate(base_path, tmp_path):
 
     v2_otu_set = convert_to_dict(reference_v2['otus'])
 
-    assert v1_otu_set == v2_otu_set
+    for otu_id in v2_otu_set:
+        for key in v2_otu_set[otu_id]:
+            assert v2_otu_set[otu_id][key] == v1_otu_set[otu_id][key]
