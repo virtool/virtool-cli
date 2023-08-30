@@ -17,7 +17,7 @@ POLYP_LARGE = VFAM_INTERMEDIATES_PATH / "Large" / "polyprotein_ids"
         (LARGE_INPUT, POLYP_LARGE),
     ],
 )
-def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, catalog_path):
+def test_polyprotein_list(input_dir, expected_polyproteins, polyproteins, output):
     """Test that find_polyproteins catches same polyprotein sequences as original vfam."""
     result = polyproteins
 

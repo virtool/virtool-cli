@@ -12,7 +12,7 @@ from virtool_cli.vfam.polyprotein import find_polyproteins
 
 
 @pytest.fixture()
-def catalog_path(tmp_path):
+def output(tmp_path):
     output_path = tmp_path / "dir"
     output_path.mkdir()
     return output_path
@@ -29,7 +29,7 @@ def group_records(input_paths):
 
 
 @pytest.fixture()
-def curated_recs(group_records, catalog_path):
+def curated_recs(group_records, output):
     output_dir = output / Path("intermediate_files")
     if not output_dir.exists():
         output_dir.mkdir()
@@ -43,7 +43,7 @@ def curated_recs(group_records, catalog_path):
 
 
 @pytest.fixture()
-def clustered_result(catalog_path, curated_recs):
+def clustered_result(output, curated_recs):
     return generate_clusters(curated_recs, 1.0)
 
 
@@ -53,12 +53,12 @@ def blast_result(clustered_result):
 
 
 @pytest.fixture()
-def polyproteins(catalog_path, blast_result):
+def polyproteins(output, blast_result):
     return find_polyproteins(blast_result)
 
 
 @pytest.fixture()
-def mcl_results(catalog_path, blast_result, polyproteins):
+def mcl_results(output, blast_result, polyproteins):
     return blast_to_mcl(blast_result, polyproteins)
 
 
@@ -68,7 +68,7 @@ def abc_file(blast_result, polyproteins):
 
 
 @pytest.fixture()
-def fasta_files(catalog_path, mcl_results, clustered_result):
+def fasta_files(output, mcl_results, clustered_result):
     return mcl_to_fasta(mcl_results, clustered_result)
 
 
@@ -83,7 +83,7 @@ def filtered_on_num(filtered_on_cvg):
 
 
 @pytest.fixture()
-def filtered_msa(catalog_path, fasta_files):
+def filtered_msa(output, fasta_files):
     fasta_files = filter_on_coverage(fasta_files)
     fasta_files = filter_on_number(fasta_files, 2)
     return batch_muscle_call(fasta_files)

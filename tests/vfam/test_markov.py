@@ -23,7 +23,7 @@ LARGE_CLUSTERS = VFAM_INTERMEDIATES_PATH / "Large" / "fasta_files"
         (LARGE_INPUT, BLAST_LARGE),
     ],
 )
-def test_abc(input_dir, blast_path, catalog_path, abc_file):
+def test_abc(input_dir, blast_path, output, abc_file):
     """Test that write_abc produces an abc files to match original vfam output."""
     result = Path(str(blast_path) + ".abc")
 
@@ -38,7 +38,7 @@ def test_abc(input_dir, blast_path, catalog_path, abc_file):
         (LARGE_INPUT, BLAST_LARGE),
     ],
 )
-def test_blast_to_mcl(input_dir, blast_path, catalog_path, mcl_results):
+def test_blast_to_mcl(input_dir, blast_path, output, mcl_results):
     """Test that blast_to_mcl produces .mcl files that match original vfam output."""
     result = mcl_results
     expected = str(blast_path) + ".mcl"
@@ -53,7 +53,7 @@ def test_blast_to_mcl(input_dir, blast_path, catalog_path, mcl_results):
         (LARGE_INPUT, BLAST_LARGE),
     ],
 )
-def test_mci(input_dir, blast_path, catalog_path, mcl_results):
+def test_mci(input_dir, blast_path, output, mcl_results):
     """Test that blast_to_mcl produces .mci files that match original vfam output."""
     result = mcl_results.parent / "blast.mci"
     expected = str(blast_path) + ".mci"
@@ -64,7 +64,7 @@ def test_mci(input_dir, blast_path, catalog_path, mcl_results):
     "input_dir, cluster_dir",
     [(DUPES_INPUT, DUPES_CLUSTERS), (GENERIC_INPUT, GENERIC_CLUSTERS)],
 )
-def test_mcl_to_fasta(input_dir, cluster_dir, catalog_path, mcl_results, fasta_files):
+def test_mcl_to_fasta(input_dir, cluster_dir, output, mcl_results, fasta_files):
     """Test that mcl_to_fasta produces fasta files that match original vfam output."""
     result_files = fasta_files
     result_files.sort()
