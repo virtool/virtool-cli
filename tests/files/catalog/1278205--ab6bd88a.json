@@ -2,13 +2,17 @@
   "_id": "ab6bd88a",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_020160": 443608002
-    }
+    "included": [
+      "NC_020160.1"
+    ]
   },
   "name": "Dahlia latent viroid",
   "schema": [
-    "Viroid"
+    {
+      "molecule": "ssRNA+",
+      "name": "Viroid",
+      "required": true
+    }
   ],
   "taxid": 1278205
 }

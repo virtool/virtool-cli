@@ -2,19 +2,25 @@
   "_id": "d226290f",
   "accessions": {
     "excluded": {},
-    "included": {
-      "DQ178610": 75708928,
-      "DQ178611": 75708934,
-      "DQ178613": 75708943,
-      "DQ178614": 75708946,
-      "NC_038792.1": 1464309958,
-      "NC_038793.1": 1464309964
-    }
+    "included": [
+      "DQ178614.1",
+      "DQ178613.1",
+      "DQ178610.1",
+      "DQ178611.1"
+    ]
   },
   "name": "Cabbage leaf curl Jamaica virus",
   "schema": [
-    "DNA A",
-    "DNA B"
+    {
+      "molecule": "ssDNA",
+      "name": "DNA A",
+      "required": true
+    },
+    {
+      "molecule": "ssDNA",
+      "name": "DNA B",
+      "required": true
+    }
   ],
   "taxid": 345184
 }

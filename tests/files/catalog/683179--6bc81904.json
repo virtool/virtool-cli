@@ -2,13 +2,17 @@
   "_id": "6bc81904",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_013464": 262396919
-    }
+    "included": [
+      "NC_013464.1"
+    ]
   },
   "name": "Saccharum streak virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssDNA",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 683179
 }

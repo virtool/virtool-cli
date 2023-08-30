@@ -2,13 +2,17 @@
   "_id": "a89b6529",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_021786": 526118368
-    }
+    "included": [
+      "NC_021786.1"
+    ]
   },
   "name": "Habenaria mosaic virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 1324128
 }

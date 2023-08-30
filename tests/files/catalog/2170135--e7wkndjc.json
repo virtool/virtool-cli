@@ -2,13 +2,17 @@
   "_id": "e7wkndjc",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_030236.1": 1033320845
-    }
+    "included": [
+      "NC_030236.1"
+    ]
   },
   "name": "Impatiens flower break potyvirus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 2170135
 }

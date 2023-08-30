@@ -2,13 +2,17 @@
   "_id": "v7r8gxav",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_043170.1": 1694997148
-    }
+    "included": [
+      "NC_043170.1"
+    ]
   },
   "name": "Vallota mosaic virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 430059
 }

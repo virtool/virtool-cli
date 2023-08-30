@@ -2,13 +2,17 @@
   "_id": "4c9ddfb7",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_023641": 590428243
-    }
+    "included": [
+      "NC_023641.1"
+    ]
   },
   "name": "Lagenaria siceraria endornavirus-California",
   "schema": [
-    "Genome"
+    {
+      "molecule": "dsRNA",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 1468454
 }

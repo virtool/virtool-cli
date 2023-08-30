@@ -2,14 +2,17 @@
   "_id": "ae0f2a35",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_005954": 49487495,
-      "NC_039079.1": 1464311266
-    }
+    "included": [
+      "NC_005954.1"
+    ]
   },
   "name": "Nanovirus-like particle",
   "schema": [
-    "Alphasatellite"
+    {
+      "molecule": "ssDNA",
+      "name": "Alphasatellite",
+      "required": true
+    }
   ],
   "taxid": 96892
 }

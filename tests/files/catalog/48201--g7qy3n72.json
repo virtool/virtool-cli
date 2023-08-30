@@ -2,13 +2,17 @@
   "_id": "g7qy3n72",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_043133.1": 1694996966
-    }
+    "included": [
+      "NC_043133.1"
+    ]
   },
   "name": "Maclura mosaic virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 48201
 }

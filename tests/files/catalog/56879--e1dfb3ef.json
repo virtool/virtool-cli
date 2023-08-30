@@ -2,13 +2,17 @@
   "_id": "e1dfb3ef",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_001793": 9629255
-    }
+    "included": [
+      "NC_001793.1"
+    ]
   },
   "name": "Oat blue dwarf virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 56879
 }

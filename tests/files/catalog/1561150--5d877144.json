@@ -2,13 +2,17 @@
   "_id": "5d877144",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_026472": 757345397
-    }
+    "included": [
+      "NC_026472.1"
+    ]
   },
   "name": "Yacon necrotic mottle virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "dsDNA",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 1561150
 }

@@ -2,13 +2,17 @@
   "_id": "d86d0412",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_022745": 557307417
-    }
+    "included": [
+      "NC_022745.1"
+    ]
   },
   "name": "Tall oatgrass mosaic virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 1414644
 }

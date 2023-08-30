@@ -2,15 +2,23 @@
   "_id": "5aa4a083",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_004625": 29126595,
-      "NC_004630": 29135257
-    }
+    "included": [
+      "NC_004630.1",
+      "NC_004625.1"
+    ]
   },
   "name": "East African cassava mosaic Cameroon virus",
   "schema": [
-    "DNA A",
-    "DNA B"
+    {
+      "molecule": "ssDNA",
+      "name": "DNA A",
+      "required": true
+    },
+    {
+      "molecule": "ssDNA",
+      "name": "DNA B",
+      "required": true
+    }
   ],
   "taxid": 223262
 }

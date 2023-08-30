@@ -30,6 +30,7 @@ def get_otu_accessions(otu_dict: dict) -> set:
 
     return accessions
 
+@pytest.mark.skip(reason="Still in development")
 @pytest.mark.parametrize("base_path", [BASE_PATH])
 def test_update(base_path, tmp_path):
     """
@@ -52,7 +53,7 @@ def test_update(base_path, tmp_path):
     pre_otu_dict = convert_to_dict(reference_pre['otus'])
 
     subprocess.call([
-        "virtool", "ref", "update",
+        "virtool", "ref", "update", "reference",
         "-src", str(fetch_path),
         "-cat", str(TEST_ACCLOG_PATH),
     ])

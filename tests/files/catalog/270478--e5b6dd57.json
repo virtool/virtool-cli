@@ -2,13 +2,17 @@
   "_id": "e5b6dd57",
   "accessions": {
     "excluded": {},
-    "included": {
-      "NC_011560": 212525937
-    }
+    "included": [
+      "NC_011560.1"
+    ]
   },
   "name": "Zantedeschia mild mosaic virus",
   "schema": [
-    "Genome"
+    {
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
   ],
   "taxid": 270478
 }
