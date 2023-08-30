@@ -5,9 +5,9 @@ import structlog
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import parse_otu, get_otu_paths
+from virtool_cli.utils.ref import parse_otu, get_otu_paths, get_isolate_paths, get_sequence_paths
 from virtool_cli.utils.ncbi import fetch_taxid #, fetch_taxonomy_species
-from virtool_cli.accessions.helpers import get_otu_accessions
+from virtool_cli.accessions.helpers import get_sequence_metadata, get_required_parts, measure_monopartite, measure_multipartite
 
 def run(src: Path, catalog: Path, debugging: bool = False):
     """
@@ -28,7 +28,7 @@ async def initialize(src: Path, catalog: Path):
 
     logger = base_logger.bind(src=str(src), catalog=str(catalog))
 
-    logger.debug(f"Starting catalog generation")
+    logger.debug(f"Starting catalog generation...")
 
     queue = asyncio.Queue()
 
@@ -49,6 +49,9 @@ async def initialize(src: Path, catalog: Path):
 async def fetcher_loop(src, queue):
     """
     """
+    logger = base_logger.bind(src=str(src))
+    logger.debug(f"Starting fetcher...")
+    
     for otu_path in get_otu_paths(src):
         logger = base_logger.bind(
             otu_path=str(otu_path.relative_to(otu_path.parents[1]))
@@ -61,10 +64,20 @@ async def fetcher_loop(src, queue):
             otu_name=otu_data.get('name', ''),
             otu_id=otu_id,
         )
-
-        accessions = get_otu_accessions(otu_path)
-
-        listing = await generate_listing(otu_data, accessions, logger)
+        
+        accessions = []
+        sequences = {}
+        for isolate_path in get_isolate_paths(otu_path):
+            for sequence_path in get_sequence_paths(isolate_path):
+                sequence_metadata = get_sequence_metadata(sequence_path)
+                accession = sequence_metadata['accession']
+                accessions.append(accession)
+                sequences[accession] = sequence_metadata
+        
+        logger.debug(f'Sequence metadata: {sequence_metadata}')
+        
+        listing = await generate_listing(
+            otu_data, accessions, sequences, logger)
 
         await queue.put({ 'otu_id': otu_id, 'listing': listing } )
 
@@ -76,6 +89,7 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
     :param queue: Queue of parsed OTU data awaiting processing
     """
     while True:
+
         packet = await queue.get()
 
         otu_id = packet['otu_id']
@@ -90,6 +104,7 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
 async def generate_listing(
     otu_data: dict, 
     accession_list: list, 
+    sequence_metadata: dict = {},
     logger: structlog.BoundLogger = base_logger
 ) -> dict:
     """
@@ -108,7 +123,10 @@ async def generate_listing(
     # Attempts to fetch the taxon id if none is found in the OTU metadata
     if taxid is None:
         logger.info('Taxon ID not found. Attempting to fetch from NCBI Taxonomy...')
-        taxid = await fetch_taxid(otu_data.get('name', None))
+        try:
+            taxid = await fetch_taxid(otu_data.get('name', None))
+        except Exception as e:
+            logger.exception(e)
 
         if taxid is None:
             catalog_listing['taxid'] = 'none'
@@ -120,16 +138,35 @@ async def generate_listing(
     else:
         catalog_listing['taxid'] = int(taxid)
 
-    catalog_listing['name'] = otu_data.get('name')
-    
-    schema = []
-    for part in otu_data.get('schema'):
-        # if part.get('required'):
-        schema.append(part)
-    catalog_listing['schema'] = schema
+    catalog_listing['name'] = otu_data['name']
 
     catalog_listing['accessions'] = {}
     catalog_listing['accessions']['included'] = accession_list
+
+    schema = otu_data.get('schema', [])
+    logger.debug(f'{schema}')
+    
+    if schema:
+        if len(schema) > 1:
+            required_parts = get_required_parts(schema)
+            try:
+                length_dict = measure_multipartite(sequence_metadata, required_parts)
+            except Exception as e:
+                logger.exception(e)
+            
+            for part in schema:
+                if part['name'] in length_dict.keys():
+                    part['length'] = length_dict[part['name']]
+
+        else:
+            try:
+                average_length = measure_monopartite(sequence_metadata)
+                logger.debug(f'Average length is {average_length}')
+                schema[0]['length'] = average_length
+            except Exception as e:
+                logger.exception(e)
+    
+    catalog_listing['schema'] = schema
     
     return catalog_listing
 

@@ -9,6 +9,7 @@
   "name": "Radish leaf curl betasatellite",
   "schema": [
     {
+      "length": 1358,
       "molecule": "ssDNA",
       "name": "Betasatellite",
       "required": true

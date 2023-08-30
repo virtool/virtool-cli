@@ -9,6 +9,7 @@
   "name": "Nanovirus-like particle",
   "schema": [
     {
+      "length": 1377,
       "molecule": "ssDNA",
       "name": "Alphasatellite",
       "required": true

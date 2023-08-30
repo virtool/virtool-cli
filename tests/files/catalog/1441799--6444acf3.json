@@ -9,6 +9,7 @@
   "name": "Faba bean necrotic stunt alphasatellite 1",
   "schema": [
     {
+      "length": 1001,
       "molecule": "ssDNA",
       "name": "Satellite",
       "required": true

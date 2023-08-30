@@ -9,6 +9,7 @@
   "name": "Habenaria mosaic virus",
   "schema": [
     {
+      "length": 9499,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

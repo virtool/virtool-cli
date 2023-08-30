@@ -9,6 +9,7 @@
   "name": "Saccharum streak virus",
   "schema": [
     {
+      "length": 2744,
       "molecule": "ssDNA",
       "name": "Genome",
       "required": true

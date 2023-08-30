@@ -9,6 +9,7 @@
   "name": "Babaco mosaic virus",
   "schema": [
     {
+      "length": 6692,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

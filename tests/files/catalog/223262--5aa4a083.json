@@ -10,11 +10,13 @@
   "name": "East African cassava mosaic Cameroon virus",
   "schema": [
     {
+      "length": 2802,
       "molecule": "ssDNA",
       "name": "DNA A",
       "required": true
     },
     {
+      "length": 2741,
       "molecule": "ssDNA",
       "name": "DNA B",
       "required": true

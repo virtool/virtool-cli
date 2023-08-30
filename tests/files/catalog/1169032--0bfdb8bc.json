@@ -13,6 +13,7 @@
   "name": "Wasabi mottle virus",
   "schema": [
     {
+      "length": 6297,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

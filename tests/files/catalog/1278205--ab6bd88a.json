@@ -9,6 +9,7 @@
   "name": "Dahlia latent viroid",
   "schema": [
     {
+      "length": 342,
       "molecule": "ssRNA+",
       "name": "Viroid",
       "required": true

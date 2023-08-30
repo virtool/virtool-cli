@@ -10,11 +10,13 @@
   "name": "Jacquemontia mosaic Yucatan virus",
   "schema": [
     {
+      "length": 2602,
       "molecule": "ssDNA",
       "name": "DNA A",
       "required": true
     },
     {
+      "length": 2591,
       "molecule": "ssDNA",
       "name": "DNA B",
       "required": true

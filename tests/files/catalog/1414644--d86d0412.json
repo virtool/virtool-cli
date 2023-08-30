@@ -9,6 +9,7 @@
   "name": "Tall oatgrass mosaic virus",
   "schema": [
     {
+      "length": 9359,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

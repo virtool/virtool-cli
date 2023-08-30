@@ -9,6 +9,7 @@
   "name": "Lagenaria siceraria endornavirus-California",
   "schema": [
     {
+      "length": 15088,
       "molecule": "dsRNA",
       "name": "Genome",
       "required": true

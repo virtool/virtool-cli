@@ -9,6 +9,7 @@
   "name": "Zantedeschia mild mosaic virus",
   "schema": [
     {
+      "length": 9973,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

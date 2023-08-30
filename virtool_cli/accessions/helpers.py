@@ -85,6 +85,25 @@ def get_otu_accessions(otu_path: Path) -> list:
 
     return accessions
 
+def get_sequence_metadata(sequence_path: Path) -> list:
+    """
+    Gets accessions and sequence lengths from an OTU directory and returns a list
+
+    :param otu_path: Path to an OTU directory
+    """
+    with open(sequence_path, "r") as f:
+        sequence = json.load(f)
+
+    sequence_metadata = {
+        'accession': sequence['accession'],
+        'length': len(sequence['sequence'])
+    }
+    if segment := sequence.get('segment', None):
+        if segment is not None:
+            sequence_metadata['segment'] = segment
+
+    return sequence_metadata
+
 def fix_listing_path(path: Path, taxon_id: int, otu_id: str) -> Optional[str]:
     """
     Fixes each accession listing with the correct taxon ID as a label
@@ -146,3 +165,47 @@ async def find_taxid_from_accession(
     else:
         taxid = otu_taxids.pop()
         return taxid
+    
+def get_required_parts(schema: list):
+    required_parts = []
+    for part in schema:
+        if part['required']:
+            required_parts.append(part['name'])
+    
+    return required_parts
+
+def measure_monopartite(sequence_metadata: dict):
+    sequence_lengths = []
+    print(sequence_metadata)
+    for accession in sequence_metadata:
+        metadata = sequence_metadata[accession]
+        seq_length = metadata['length']
+        sequence_lengths.append(seq_length)
+    
+    average_length = sum(sequence_lengths)/len(sequence_lengths)
+
+    return int(average_length)
+
+def measure_multipartite(sequence_metadata, part_list):
+    part_total_dict = { element: [] for index, element in enumerate(part_list) }
+            
+    for accession in sequence_metadata:
+        metadata = sequence_metadata[accession]
+        seq_length = metadata['length']
+        
+        segment_name = metadata.get('segment', None)
+        if segment_name is None:
+            continue
+        if segment_name in part_total_dict.keys():
+            part_total_dict[segment_name].append(seq_length)
+    
+    length_dict = {}
+    for segment in part_total_dict:
+        if not part_total_dict[segment]:
+            length_dict[segment] = 0
+            continue
+        average_length = sum(part_total_dict[segment]) / len(part_total_dict[segment])
+        length_dict[segment] = int(average_length)
+
+    # return int(average_length)
+    return length_dict

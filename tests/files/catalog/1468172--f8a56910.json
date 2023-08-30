@@ -9,6 +9,7 @@
   "name": "Gaillardia latent virus",
   "schema": [
     {
+      "length": 8659,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

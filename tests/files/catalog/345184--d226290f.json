@@ -12,11 +12,13 @@
   "name": "Cabbage leaf curl Jamaica virus",
   "schema": [
     {
+      "length": 2576,
       "molecule": "ssDNA",
       "name": "DNA A",
       "required": true
     },
     {
+      "length": 2500,
       "molecule": "ssDNA",
       "name": "DNA B",
       "required": true

@@ -9,6 +9,7 @@
   "name": "Kalanchoe latent virus",
   "schema": [
     {
+      "length": 8517,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

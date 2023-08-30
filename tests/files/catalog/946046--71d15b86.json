@@ -9,6 +9,7 @@
   "name": "Ugandan cassava brown streak virus",
   "schema": [
     {
+      "length": 9070,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

@@ -9,6 +9,7 @@
   "name": "Impatiens flower break potyvirus",
   "schema": [
     {
+      "length": 9622,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

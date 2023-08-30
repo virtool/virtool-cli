@@ -9,6 +9,7 @@
   "name": "Yacon necrotic mottle virus",
   "schema": [
     {
+      "length": 7661,
       "molecule": "dsDNA",
       "name": "Genome",
       "required": true

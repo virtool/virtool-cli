@@ -20,31 +20,37 @@
   "name": "Abaca bunchy top virus",
   "schema": [
     {
+      "length": 1098,
       "molecule": "ssDNA",
       "name": "DNA-R",
       "required": true
     },
     {
+      "length": 1058,
       "molecule": "ssDNA",
       "name": "DNA-U3",
       "required": true
     },
     {
+      "length": 1081,
       "molecule": "ssDNA",
       "name": "DNA-N",
       "required": true
     },
     {
+      "length": 1082,
       "molecule": "ssDNA",
       "name": "DNA-S",
       "required": true
     },
     {
+      "length": 1081,
       "molecule": "ssDNA",
       "name": "DNA-M",
       "required": true
     },
     {
+      "length": 1014,
       "molecule": "ssDNA",
       "name": "DNA-C",
       "required": true

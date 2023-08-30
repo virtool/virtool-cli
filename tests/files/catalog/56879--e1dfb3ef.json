@@ -9,6 +9,7 @@
   "name": "Oat blue dwarf virus",
   "schema": [
     {
+      "length": 6509,
       "molecule": "ssRNA+",
       "name": "Genome",
       "required": true

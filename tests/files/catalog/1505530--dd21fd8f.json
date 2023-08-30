@@ -9,6 +9,7 @@
   "name": "Pagoda yellow mosaic associated virus",
   "schema": [
     {
+      "length": 7424,
       "molecule": "dsDNA",
       "name": "Genome",
       "required": true
