@@ -30,7 +30,7 @@ def get_otu_accessions(otu_dict: dict) -> set:
 
     return accessions
 
-@pytest.mark.skip(reason="Still in development")
+# @pytest.mark.skip(reason="Still in development")
 @pytest.mark.parametrize("base_path", [BASE_PATH])
 def test_update(base_path, tmp_path):
     """

@@ -8,11 +8,36 @@ from paths import TEST_FILES_PATH
 SRC_V1_PATH = TEST_FILES_PATH / "src_v1"
 REF_V1_PATH = TEST_FILES_PATH / "reference_v1.json"
 
+OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
+
+ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
+
+SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
+
 
 def convert_to_dict(otu_list: list):
+    
     otu_dict = {}
     for otu in otu_list:
-        otu_dict[otu['_id']] = otu
+        otu_id = otu['_id']
+        isolates = otu.pop('isolates')
+
+        iso_dict = {}
+        for isolate in isolates:
+            iso_id = isolate['id']
+            
+            sequences = isolate.pop('sequences')
+            seq_dict = {}
+            for sequence in sequences:
+                seq_id = sequence['_id']
+                seq_dict[seq_id] = sequence
+            
+            isolate['sequences'] = seq_dict
+            iso_dict[iso_id] = isolate
+        
+        otu['isolates'] = iso_dict
+        otu_dict[otu_id] = otu
+
     return otu_dict
 
 @pytest.mark.parametrize("base_path", [SRC_V1_PATH])
@@ -45,6 +70,4 @@ def test_migrate(base_path, tmp_path):
 
     v2_otu_set = convert_to_dict(reference_v2['otus'])
 
-    for otu_id in v2_otu_set:
-        for key in v2_otu_set[otu_id]:
-            assert v2_otu_set[otu_id][key] == v1_otu_set[otu_id][key]
+    assert v1_otu_set == v2_otu_set
