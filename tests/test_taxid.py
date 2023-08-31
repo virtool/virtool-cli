@@ -17,7 +17,7 @@ def test_fetch_taxids(base_path, tmp_path):
     assert len([fetch_path.glob('[a-z]')]) > 0
 
     subprocess.call([
-        "virtool", "ref", "taxid",
+        "virtool", "ref", "doc", "taxid",
         "-src", str(fetch_path),
         "--force_update"
     ])

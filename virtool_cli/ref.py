@@ -5,14 +5,14 @@ import structlog
 
 import virtool_cli.build
 import virtool_cli.divide
-import virtool_cli.isolate
-import virtool_cli.repair
-import virtool_cli.taxid
 from virtool_cli.doctor.cli import doc
 from virtool_cli.update.cli import update
 from virtool_cli.migrate import run as run_migrate
 from virtool_cli.update.update_ref import run as run_update
 from virtool_cli.accessions.catalog import run as run_catalog
+# import virtool_cli.taxid
+# import virtool_cli.update.isolate
+# import virtool_cli.doctor.repair
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
@@ -107,64 +107,6 @@ def divide(src_path, output, debug):
     "--src_path",
     required=True,
     type=str,
-    help="the path to the input reference.json file",
-)
-@click.option("-f", "--force_update", is_flag=True)
-@click.option('--debug/--no-debug', default=False)
-def taxid(src_path, force_update, debug):
-    """Fetch taxid for all OTU in given reference directory."""
-    try:
-        click.echo("Scanning OTUs for taxon IDs...")
-        virtool_cli.taxid.run(Path(src_path), force_update, debug)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
-        click.echo(e)
-
-
-@ref.command()
-@click.option(
-    "-src", "--src_path",
-    required=True,
-    type=str,
-    help="the path to a reference directory",
-)
-@click.option('--debug/--no-debug', default=False)
-def isolate(src_path, debug):
-    """Fetch new isolates for all OTU in a given reference directory."""
-    try:
-        virtool_cli.isolate.run(Path(src_path), debug)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo("Not a valid reference directory")
-        click.echo(e)
-
-
-@ref.command()
-@click.option(
-    "-src",
-    "--src_path",
-    required=True,
-    type=str,
-    help="the path to a reference directory",
-)
-@click.option('--debug/--no-debug', default=False)
-def repair(src_path, debug):
-    """Fix every OTU in a given reference directory."""
-    if not Path(src_path).exists():
-        logger.critical('Source directory does not exist')
-
-    try:
-        virtool_cli.repair.run(Path(src_path), debug)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
-        click.echo(e)
-
-
-@ref.command()
-@click.option(
-    "-src",
-    "--src_path",
-    required=True,
-    type=str,
     help="the path to a reference directory",
 )
 @click.option('--debug/--no-debug', default=False)
@@ -180,47 +122,10 @@ def migrate(src_path, debug):
         click.echo(e)
 
 
-@ref.command()
-@click.option(
-    "-src",
-    "--src_path",
-    required=True,
-    type=str,
-    help="the path to a reference directory",
-)
-@click.option(
-    "-cat",
-    "--catalog_path",
-    required=True,
-    type=str,
-    default='.cache/catalog',
-    help="the path to a catalog directory",
-)
-@click.option('--debug/--no-debug', default=False)
-def catalog(src_path, catalog_path, debug):
-    """Update or generate a catalog of all included accessions in a src directory"""
-    if not Path(src_path).exists():
-        click.echo(ERROR_MESSAGE + 'Source directory does not exist')
-        return
-    
-    catalog_dir = Path(catalog_path)
-    if not catalog_dir.exists():
-        catalog_dir.mkdir(parents=True)
-
-    try:
-        run_catalog(
-            src_path=Path(src_path),
-            catalog_path=Path(catalog_path),
-            debugging=debug
-        )
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
-        logger.exception(e)
-
-
 # @ref.command()
 # @click.option(
-#     "-src", "--src_path",
+#     "-src",
+#     "--src_path",
 #     required=True,
 #     type=str,
 #     help="the path to a reference directory",
@@ -234,17 +139,25 @@ def catalog(src_path, catalog_path, debug):
 #     help="the path to a catalog directory",
 # )
 # @click.option('--debug/--no-debug', default=False)
-# def updater(src_path, catalog_path, debug):
-#     """Fetch new isolates for all OTU in a given reference directory."""
-#     if not Path(catalog_path).exists():
-#         click.echo("Not a valid catalog directory")
+# def catalog(src_path, catalog_path, debug):
+#     """Update or generate a catalog of all included accessions in a src directory"""
+#     if not Path(src_path).exists():
+#         click.echo(ERROR_MESSAGE + 'Source directory does not exist')
 #         return
+    
+#     catalog_dir = Path(catalog_path)
+#     if not catalog_dir.exists():
+#         catalog_dir.mkdir(parents=True)
 
 #     try:
-#         run_update(Path(src_path), Path(catalog_path), debugging=debug)
+#         run_catalog(
+#             src_path=Path(src_path),
+#             catalog_path=Path(catalog_path),
+#             debugging=debug
+#         )
 #     except (FileNotFoundError, NotADirectoryError) as e:
-#         click.echo("Not a valid reference directory")
-#         click.echo(e)
+#         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
+#         logger.exception(e)
 
 if __name__ == "__main__":
     ref()

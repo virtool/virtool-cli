@@ -4,9 +4,7 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import (
-    get_otu_paths, get_isolate_paths, get_sequence_paths,
-    generate_otu_dirname, 
-    map_otus
+    get_otu_paths
 )
 
 def run(src_path: Path, debugging: bool = False):
@@ -23,6 +21,8 @@ def run(src_path: Path, debugging: bool = False):
 
     
 def check_taxonomy(src_path):
+    """
+    """
     for otu_path in get_otu_paths(src_path):
         logger = base_logger.bind(
             otu_path=str(otu_path.relative_to(src_path))

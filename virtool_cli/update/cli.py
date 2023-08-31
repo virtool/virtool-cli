@@ -4,6 +4,7 @@ import click
 
 from virtool_cli.update.update_ref import run as run_update_all
 from virtool_cli.update.update import run as run_update_single
+from virtool_cli.update.isolate import run as run_isolate
 
 @click.group("update")
 def update():
@@ -64,6 +65,22 @@ def otu(otu_path, catalog_path, debug):
 
     try:
         run_update_single(Path(otu_path), Path(catalog_path), debugging=debug)
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo("Not a valid reference directory")
+        click.echo(e)
+
+@update.command()
+@click.option(
+    "-src", "--src_path",
+    required=True,
+    type=str,
+    help="the path to a reference directory",
+)
+@click.option('--debug/--no-debug', default=False)
+def legacy(src_path, debug):
+    """Formerly `virtool ref isolate`. Use for quick retrival."""
+    try:
+        run_isolate(Path(src_path))
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory")
         click.echo(e)
