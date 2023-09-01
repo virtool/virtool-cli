@@ -3,7 +3,6 @@ import re
 from pathlib import Path
 
 
-
 def get_otu_paths(src_path: Path) -> list:
     """
     Generates a list of paths to all OTUs in a src directory.

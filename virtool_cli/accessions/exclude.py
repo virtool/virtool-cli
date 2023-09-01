@@ -3,17 +3,12 @@ import json
 import asyncio
 import aiofiles
 from Bio import Entrez, SeqIO
-import structlog
 import logging
+from structlog import BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
-# from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
-from virtool_cli.accessions.initialize import generate_listing, write_listing
-from virtool_cli.accessions.helpers import (
-    parse_listing, split_pathname, get_otu_accessions, 
-    # get_catalog_paths, filter_catalog
-)
+from virtool_cli.accessions.helpers import parse_listing
 
 def run(catalog: Path, debugging: bool = False):
     """
@@ -31,98 +26,105 @@ def run(catalog: Path, debugging: bool = False):
 
 async def filter_refseq_accessions(catalog: Path):
     """
+    Runs RefSeq filter and exclusion on all listings in an accession catalog
+
+    :param catalog_path: Path to a catalog directory
     """
-    for listing_path in catalog.glob('*.json'):
-        listing = parse_listing(listing_path)
+    for listing_path in catalog.glob('*--*.json'):
+        logger = base_logger.bind(listing_path=listing_path.name)
         
-        logger = base_logger.bind(otu_id=listing['_id'], taxid=listing['taxid'], name=listing['name'])
+        await filter_refseq_otu(listing_path, logger)
 
-        # if listing['accessions']['excluded']:
-        #     continue
-        
-        # print(listing['accessions']['included'])
-        refseq_accessions = []
-        for accession in listing['accessions']['included']:
-            # Only RefSeq accessions include underscores
-            if '_' in accession:
-                refseq_accessions.append(accession)
-
-        if not refseq_accessions:
-            continue
-        
-        logger.debug('RefSeq accessions found', refseq=refseq_accessions)
-        try:
-            included_records = await fetch_upstream_records(refseq_accessions)
-        except Exception as e:
-            logger.exception(e)
-            continue
-        
-        excluded_records = []
-        for record in included_records:
-            # if 'RefSeq' in record.annotations['keywords']:
-            comment_list = record.annotations['comment'].split('.')
-
-            # print(comment_list)
-            for part in comment_list:
-                if 'identical' in part or 'derived from' in part:
-                    accession = part.strip().split()[-1:][0]
-                    if accession not in listing['accessions']['excluded']:
-                        excluded_records.append(accession)
-                if 'derived from' in part:
-                    accession = part.strip().split()[-1:][0]
-        
-        if excluded_records:
-            excluded_set = set(listing['accessions']['excluded'])
-
-            logger.info('Adding accessions to exclusion list...', new=excluded_records)
-
-            excluded_set.update(excluded_records)
-
-            async with aiofiles.open(listing_path, "w") as f: 
-                await f.write(
-                    json.dumps(listing, indent=2, sort_keys=True)
-                )
-            logger.debug('Wrote listing to file', filename=listing_path.name)
-
-async def fetch_upstream_accessions(
-    listing: dict,
-) -> list:
+async def filter_refseq_otu(
+    listing_path: Path, 
+    logger: BoundLogger = base_logger
+):
     """
-    :param taxid: OTU Taxon ID
-    :param listing: Corresponding listing from the accession catalog for this OTU in dict form
-    :return: A list of accessions from NCBI Genbank for the taxon ID, 
-        sans included and excluded accessions
+    Parses a catalog listing, checks the included accession list 
+    for RefSeq-formatted accessions and requests GenBank for data.
+    Checks the GenBank Comment data for a duplicate accession,
+    then adds that accession to the excluded accession list.
+
+    :param listing_path: Path to an individual listing in an accession catalog directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
-    taxid = listing['taxid']
+    listing = json.loads(listing_path.read_text())
 
-    filter_set = set()
-    filter_set.update(listing['accessions']['included'])
-    filter_set.update(listing['accessions']['excluded'])
-
-    logger = base_logger.bind(
-        taxid=taxid, otu_id=listing['_id'])
-    logger.debug('Exclude catalogued UIDs', catalogued=filter_set)
-
-    upstream_uids = []
+    logger = logger.bind(name=listing['name'])
     
-    entrez_accessions = Entrez.read(
-        Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
-            id=str(taxid), idtype="acc")
-    )
+    refseq_accessions = []
+    for accession in listing['accessions']['included']:
+        # Only RefSeq accessions include underscores
+        if '_' in accession:
+            refseq_accessions.append(accession)
 
-    for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
-        upstream_uids.append(linksetdb["Id"])
+    if not refseq_accessions:
+        return False
+    
+    logger.debug('RefSeq accessions found', refseq=refseq_accessions)
+    try:
+        included_records = await fetch_upstream_records(refseq_accessions)
+    except Exception as e:
+        logger.exception(e)
+        return False
+    
+    excluded_set = set(listing['accessions']['excluded'])
+    new_exclusions = []
+    for record in included_records:
+        redundant_accession = in_refseq(
+            comments=record.annotations['comment'], 
+            excluded=excluded_set)
+        
+        if redundant_accession:
+            logger.debug(f"Equivalent accession '{redundant_accession}' found for {accession}")
+            new_exclusions.append(redundant_accession)
+    
+    if new_exclusions:
+        logger.info('Adding accessions to exclusion list...', new=new_exclusions)
 
-    upstream_set = set(upstream_uids)
+        excluded_set.update(new_exclusions)
+        
+        listing['accessions']['excluded'] = list(excluded_set)
 
-    return list(upstream_set.difference(filter_set))
+        async with aiofiles.open(listing_path, "w") as f: 
+            await f.write(
+                json.dumps(listing, indent=2, sort_keys=True)
+            )
 
-async def fetch_upstream_records(fetch_list: list, logger = base_logger) -> list:
+        logger.debug('Wrote listing to file', filename=listing_path.name)
+    
+    return True
+
+def in_refseq(comments: str, excluded: set):
+    """
+    Inspects text from the GenBank Comment field of a RefSeq record and retrieves
+    an accession that this RefSeq record is "identical" or "derived from".
+
+    :param comments: A string retrieved from a RefSeq record's Comment field
+    :param excluded: A set of excluded listings already present in the catalog listing
+    :return: If found, returns the duplicate accession, otherwise returns an empty string
+    """
+    comment_list = comments.split('.')
+
+    for part in comment_list:
+        if 'identical' in part or 'derived from' in part:
+            # retrieves the last "word" from the sentence and 
+            # removes the last character
+            redundant_accession = part.strip().split()[-1:][0]
+            
+            if redundant_accession not in excluded:
+                return redundant_accession
+    
+    return ''
+
+async def fetch_upstream_records(
+    fetch_list: list, logger = base_logger
+) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank
     
     :param fetch_list: List of accession numbers to fetch from GenBank
+    :param logger: Optional entry point for an existing BoundLogger
 
     :return: A list of GenBank data converted from XML to dicts if possible, 
         else an empty list
@@ -140,7 +142,7 @@ async def fetch_upstream_records(fetch_list: list, logger = base_logger) -> list
     try:
         record_dict = SeqIO.to_dict(parsed)
     except ValueError:
-        base_logger.error(
+        logger.error(
             'Found two copies of the same record. Remove duplicate from this.'
         )
         return []
@@ -157,16 +159,3 @@ async def fetch_upstream_records(fetch_list: list, logger = base_logger) -> list
     except Exception as e:
         base_logger.exception(e)
         return []
-
-if __name__ == '__main__':
-    debug = True
-    
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    
-    project_path = Path(REPO_DIR) / 'ref-plant-viruses'
-    src_path = project_path / 'src'
-    # catalog_path = project_path / '.cache/catalog'
-    catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
-    # catalog_path = Path('/Users/sygao/Development/UVic/Virtool/TestSets/cotton_dupe/.cache/catalog')
-
-    run(src_path, catalog_path, debug)

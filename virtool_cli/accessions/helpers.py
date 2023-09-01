@@ -7,6 +7,7 @@ from structlog import BoundLogger
 from virtool_cli.utils.ref import get_otu_paths, get_sequence_paths
 from virtool_cli.utils.ncbi import fetch_taxonomy_rank, fetch_upstream_record_taxids
 
+
 def get_catalog_paths(catalog) -> list:
     """
     Return a list of paths to accession listings contained in an accession catalog.
@@ -18,20 +19,19 @@ def get_catalog_paths(catalog) -> list:
 
 def filter_catalog(src_path, catalog_path) -> list:
     """
-    Return paths for cached accession catalogues that are included in the source reference
+    Return all paths to accession listings relevant to the source reference.
+    Uses the unique Virtool OTU ID to match between reference metadata and catalog listing.
 
     :param src_path: Path to a reference directory
     :param catalog_path: Path to an accession catalog directory
     :return: A list of paths to relevant listings in the accession catalog
-    """
-    otu_paths = get_otu_paths(src_path)
+    """    
     included_listings = []
-    
-    for path in otu_paths:
+    for path in get_otu_paths(src_path):
         [ _, otu_id ] = (path.name).split('--')
 
         included_listings.append(
-            search_by_id(otu_id, catalog_path)
+            search_by_otu_id(otu_id, catalog_path)
         )
     
     return included_listings
@@ -56,7 +56,7 @@ def split_pathname(path: Path):
 
     return taxid, otu_id
 
-def search_by_id(otu_id: str, catalog_path: Path):
+def search_by_otu_id(otu_id: str, catalog_path: Path):
     """
     Searches records for a matching id and returns the first matching path in the accession records
 
@@ -68,7 +68,23 @@ def search_by_id(otu_id: str, catalog_path: Path):
         return matches[0]
     else:
         return FileNotFoundError
+
+def search_by_taxid(taxid, catalog_path: Path) -> list:
+    """
+    Searches records for a matching taxon id and returns all matching paths in the accession records
+
+    :param otu_id: Unique taxon ID
+    :param catalog_path: Path to an accession catalog directory
+    """
     
+    matches = [str(listing.relative_to(catalog_path)) 
+        for listing in catalog_path.glob(f'{taxid}--*.json')]
+    
+    if matches:
+        return matches
+    else:
+        return []
+
 def get_otu_accessions(otu_path: Path) -> list:
     """
     Gets all accessions from an OTU directory and returns a list
@@ -131,20 +147,16 @@ async def find_taxid_from_accession(
     listing_path: Path, logger: BoundLogger
 ):
     """
+    Checks each accession on the accession listing and requests metadata
+    for each associated taxonomy ID.
     """
     with open(listing_path, "r") as f:
         listing = json.load(f)
-    logger = logger.bind(otu_id = listing['_id'], listing=listing_path.name)
 
-    indexed_uids = list(listing['accessions']['included'].values())
-    logger.debug('Searching uids:', uids=indexed_uids)
+    accessions = listing['accessions']['included']
+    logger.debug('Searching uids:', uids=accessions)
     
-    try:
-        records = await fetch_upstream_record_taxids(indexed_uids)
-    except Exception as e:
-        logger.exception (e)
-        return
-
+    records = await fetch_upstream_record_taxids(fetch_list=accessions)
     if not records:
         logger.warning('No taxon IDs found', taxids=records)
         return None

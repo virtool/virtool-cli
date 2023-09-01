@@ -1,7 +1,7 @@
 {
   "_id": "e7wkndjc",
   "accessions": {
-    "excluded": {},
+    "excluded": [],
     "included": [
       "NC_030236.1"
     ]

@@ -8,9 +8,7 @@ from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
 from virtool_cli.accessions.initialize import generate_listing, write_listing
 from virtool_cli.accessions.helpers import (
-    parse_listing, split_pathname, get_otu_accessions, 
-    get_catalog_paths, filter_catalog,
-    # fix_listing_path
+    split_pathname, get_otu_accessions, get_catalog_paths, filter_catalog
 )
 
 def run(src: Path, catalog: Path, debugging: bool = False):
@@ -29,12 +27,15 @@ def run(src: Path, catalog: Path, debugging: bool = False):
 
 async def update(src: Path, catalog: Path):
     """
+    Checks reference directory src for data not accounted for by the accession catalog
+    and updates the corresponding catalog listing accordingly.
+
     :param src_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
     """
     logger = base_logger.bind(task='update', catalog=str(catalog))
 
-    await check_catalog(src, catalog, logger)
+    await complete_catalog(src, catalog, logger)
 
     queue = asyncio.Queue()
 
@@ -55,11 +56,8 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
     :param src_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
     """
-    fetch_logger = base_logger.bind(
-        loop='fetcher',
-        # catalog=str(catalog)
-    )
-    fetch_logger.debug("Starting fetcher...", catalog_size=len(get_catalog_paths(catalog)))
+    fetch_logger = base_logger.bind(loop='fetcher')
+    fetch_logger.debug("Starting fetcher...")
 
     update_count = 0
 
@@ -73,7 +71,10 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
         otu_path = search_otu_by_id(src, otu_id)
         existing_accessions = set(get_otu_accessions(otu_path))
 
-        listing = parse_listing(listing_path)
+        listing = json.loads(listing_path.read_text())
+        # with open(listing_path, "r") as f:
+        #     listing = json.load(f)
+
         logger = logger.bind(
             otu_name=listing['name'],
             otu_id=otu_id,
@@ -145,23 +146,26 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
         await asyncio.sleep(0.1)
         queue.task_done()
 
-async def check_catalog(
+async def complete_catalog(
     src_path: Path, catalog_path: Path,
     logger: structlog.BoundLogger = base_logger
-) -> list:
+):
     """
+    Check reference directory src contents against accession catalog contents for missing OTUs.
+    If the reference contains an OTU that is not in the catalog, adds a new listing to the catalog.
+
     :param src_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
     try:
-        otu_ids = set([ (otu_path.name).split('--')[1] for otu_path in get_otu_paths(src_path)])
+        otu_ids = set([ (otu_path.name).split('--')[1] for otu_path in get_otu_paths(src_path) ])
         catalog_ids = set([ split_pathname(listing_path)[1] for listing_path in get_catalog_paths(catalog_path)])
     except Exception as e:
         logger.exception(e)
 
     if otu_ids.issubset(catalog_ids):
         logger.info("All OTUs present in catalog")
-        return True
 
     # If if we're missing OTUs, keep going
     missing_otus = otu_ids.difference(catalog_ids)
@@ -170,16 +174,17 @@ async def check_catalog(
     for otu_id in missing_otus:
         otu_path = [ path for path in src_path.glob(f'*--{otu_id}') ][0]
         await add_listing(otu_path, catalog_path, logger=logger)
-    
-    return False
 
 async def add_listing(
     otu_path: Path, catalog: Path, 
     logger: structlog.BoundLogger = base_logger
 ):
     """
-    If no listing is found for a particular OTU, generate and write a new listing
-    to the catalog
+    Generate and write a new listing to the catalog based on a given OTU
+
+    :param otu_path: Path to an OTU directory in a reference directory
+    :param catalog: Path to a catalog directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
     otu_data = parse_otu(otu_path)
     
@@ -198,27 +203,25 @@ async def add_listing(
 
     return
 
-def update_listing(
-        path: Path,
-        accessions: list,
-        listing: dict, 
-        indent: bool = True
-):
-    """
-    Write accession file to catalog directory
+# def update_listing(
+#         path: Path,
+#         accessions: list,
+#         listing: dict, 
+#         indent: bool = True
+# ):
+#     """
+#     Write an accession listing to catalog directory
 
-    :param taxid: OTU taxon id
-    :param accessions: List of OTU's accessions
-    :param listing: 
-    :param indent: Indent flag
-    """
-    taxid_log = base_logger.bind(taxid=path.stem)
+#     :param taxid: OTU taxon id
+#     :param accessions: List of OTU's accessions
+#     :param listing: 
+#     :param indent: Indent flag
+#     """
+#     taxid_log = base_logger.bind(taxid=path.stem)
 
-    taxid_log.debug('Updating accession', accession_path=path)
+#     taxid_log.debug('Updating accession', accession_path=path)
 
-    listing['accessions']['included'] = accessions
+#     listing['accessions']['included'] = accessions
 
-    with open(path, "w") as f:
-        json.dump(listing, f, indent=2 if indent else None)
-    
-    return
+#     with open(path, "w") as f:
+#         json.dump(listing, f, indent=2 if indent else None)

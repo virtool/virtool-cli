@@ -6,7 +6,7 @@ import shutil
 from paths import TEST_FILES_PATH
 TEST_PATH = TEST_FILES_PATH / "src_notaxid"
 
-
+@pytest.mark.skip(reason="Moved to accession catalog")
 @pytest.mark.parametrize("base_path", [TEST_PATH])
 def test_fetch_taxids(base_path, tmp_path):
     """

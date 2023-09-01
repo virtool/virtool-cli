@@ -6,11 +6,17 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import parse_otu, get_otu_paths, get_isolate_paths, get_sequence_paths
-from virtool_cli.utils.ncbi import fetch_taxid #, fetch_taxonomy_species
-from virtool_cli.accessions.helpers import get_sequence_metadata, get_required_parts, measure_monopartite, measure_multipartite
+from virtool_cli.utils.ncbi import fetch_taxid
+from virtool_cli.accessions.helpers import (
+    get_sequence_metadata, get_required_parts, 
+    measure_monopartite, measure_multipartite
+)
 
 def run(src: Path, catalog: Path, debugging: bool = False):
     """
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
+    :param debugging: Debugging flag
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -20,23 +26,27 @@ def run(src: Path, catalog: Path, debugging: bool = False):
 
     asyncio.run(initialize(src, catalog))
 
-async def initialize(src: Path, catalog: Path):
+async def initialize(src_path: Path, catalog_path: Path):
     """
-    """
-    if not catalog.exists():
-        catalog.mkdir()
+    Initialize a new catalog at catalog_path using data from reference directory src
 
-    logger = base_logger.bind(src=str(src), catalog=str(catalog))
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
+    """
+    if not catalog_path.exists():
+        catalog_path.mkdir()
+
+    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
 
     logger.debug(f"Starting catalog generation...")
 
     queue = asyncio.Queue()
 
     fetcher = asyncio.create_task(
-        fetcher_loop(src, queue))
+        fetcher_loop(src_path, queue))
     
     asyncio.create_task(
-        writer_loop(catalog, queue)
+        writer_loop(catalog_path, queue)
     )
     
     await asyncio.gather(fetcher, return_exceptions=True)
@@ -46,15 +56,17 @@ async def initialize(src: Path, catalog: Path):
     logger.info(f"Catalog generated")
 
 
-async def fetcher_loop(src, queue):
+async def fetcher_loop(src: Path, queue: asyncio.Queue):
     """
+    :param src_path: Path to a reference directory
+    :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
     logger = base_logger.bind(src=str(src))
     logger.debug(f"Starting fetcher...")
     
     for otu_path in get_otu_paths(src):
         logger = base_logger.bind(
-            otu_path=str(otu_path.relative_to(otu_path.parents[1]))
+            otu_path=str(otu_path.name)
         )
 
         otu_data = parse_otu(otu_path)
@@ -112,6 +124,8 @@ async def generate_listing(
 
     :param otu_data: OTU data in dict form
     :param accession_list: list of included accesssions
+    :param sequence_metadata: dict of sequence metadata, including average length
+    :param logger: Optional entry point for an existing BoundLogger
     """
     catalog_listing = {}
     
@@ -123,6 +137,7 @@ async def generate_listing(
     # Attempts to fetch the taxon id if none is found in the OTU metadata
     if taxid is None:
         logger.info('Taxon ID not found. Attempting to fetch from NCBI Taxonomy...')
+        
         try:
             taxid = await fetch_taxid(otu_data.get('name', None))
         except Exception as e:
@@ -130,18 +145,17 @@ async def generate_listing(
 
         if taxid is None:
             catalog_listing['taxid'] = 'none'
-            logger.info(f'Taxon ID not found. Setting taxid={taxid}')
-            
+            logger.debug(f'Matching ID not found in NCBI Taxonomy. Setting taxid={taxid}')    
         else:
             catalog_listing['taxid'] = int(taxid)
-            logger.info(f'Taxon ID found. Setting taxid={taxid}')
+            logger.debug(f'Matching ID found in NCBI Taxonomy. Setting taxid={taxid}')
+
     else:
         catalog_listing['taxid'] = int(taxid)
 
     catalog_listing['name'] = otu_data['name']
 
-    catalog_listing['accessions'] = {}
-    catalog_listing['accessions']['included'] = accession_list
+    catalog_listing['accessions'] = { 'included': accession_list }
 
     schema = otu_data.get('schema', [])
     logger.debug(f'{schema}')

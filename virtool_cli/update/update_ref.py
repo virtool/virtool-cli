@@ -12,7 +12,11 @@ from virtool_cli.update.update import request_new_records, process_records, writ
 DEFAULT_INTERVAL = 0.001
 
 
-def run(src: Path, catalog: Path, debugging: bool = False):
+def run(
+    src: Path, catalog: Path, 
+    auto_evaluate: bool = False, 
+    debugging: bool = False
+):
     """
     Searches and requests all OTUs in a source reference.
 
@@ -34,10 +38,15 @@ def run(src: Path, catalog: Path, debugging: bool = False):
     logger.info('Updating src directory accessions using catalog listings...')
 
     asyncio.run(
-        update_reference(src_path=src, catalog_path=catalog)
+        update_reference(
+            src_path=src, catalog_path=catalog, 
+            auto_evaluate=auto_evaluate)
     )
 
-async def update_reference(src_path: Path, catalog_path: Path):
+async def update_reference(
+    src_path: Path, catalog_path: Path, 
+    auto_evaluate: bool = False
+):
     """
     Creates 2 queues:
         1) upstream: Holds raw NCBI GenBank data,
@@ -77,7 +86,7 @@ async def update_reference(src_path: Path, catalog_path: Path):
     # Pulls Genbank data from upstream queue, formats into dict form 
     # and pushes to write queue
     asyncio.create_task(
-        processor_loop(upstream_queue, write_queue))
+        processor_loop(upstream_queue, write_queue, auto_evaluate=auto_evaluate))
     
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
@@ -137,7 +146,8 @@ async def fetcher_loop(
 
 async def processor_loop(
     upstream_queue: asyncio.Queue, 
-    downstream_queue: asyncio.Queue
+    downstream_queue: asyncio.Queue,
+    auto_evaluate: bool = True
 ):
     """
     Awaits fetched sequence data from the fetcher:
@@ -160,6 +170,7 @@ async def processor_loop(
         otu_updates = await process_records(
             records=fetch_packet['data'], 
             listing=fetch_packet['listing'],
+            auto_evaluate=auto_evaluate,
             logger=logger
         )
 

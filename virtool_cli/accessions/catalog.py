@@ -21,7 +21,10 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     )
     
     if not catalog_path.exists():
-        base_logger.info('Initializing .cache/catalog directory...', catalog=str(catalog_path))
+        base_logger.info(
+            'Initializing .cache/catalog directory...', 
+            catalog=str(catalog_path)
+        )
         catalog_path.mkdir()
 
     get_catalog(src_path, catalog_path)
@@ -52,6 +55,7 @@ def generate_catalog(
     logger: BoundLogger = base_logger
 ):
     """
+    :param src: Path to a reference directory
     :param catalog: Path to an accession catalog directory
     :param logger: Structlog logger
     """
@@ -63,6 +67,9 @@ def update_catalog(
     logger: BoundLogger = base_logger
 ):
     """
+    :param src: Path to a reference directory
+    :param catalog: Path to an accession catalog directory
+    :param logger: Structlog logger
     """
     logger.info("Updating listings...", task="initialize")
     asyncio.run(update(src_path, catalog_path))

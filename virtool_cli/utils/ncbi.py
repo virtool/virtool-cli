@@ -2,12 +2,81 @@ import os
 import asyncio
 from urllib.error import HTTPError
 from Bio import Entrez, SeqIO
+from structlog import BoundLogger
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
 NCBI_REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.8
 
+
+async def fetch_upstream_accessions(
+    taxid: int, listing: dict,
+    logger: BoundLogger
+) -> list:
+    """
+    :param taxid: OTU Taxon ID
+    :param listing: Corresponding listing from the accession catalog for this OTU in dict form
+    :return: A list of accessions from NCBI Genbank for the taxon ID, 
+        sans included and excluded accessions
+    """
+    included_set = set(listing['accessions']['included'])
+    excluded_set = set(listing['accessions']['excluded'])
+
+    logger = logger.bind(taxid=taxid)
+    logger.debug(
+        'Exclude catalogued accessions', 
+        included=included_set, excluded=excluded_set)
+
+    upstream_accessions = []
+
+    entrez_acclist = Entrez.read(
+        Entrez.elink(
+            dbfrom="taxonomy", db="nucleotide", 
+            id=str(taxid), idtype="acc"))
+
+    for linksetdb in entrez_acclist[0]["LinkSetDb"][0]["Link"]:
+        accession = linksetdb["Id"]
+        if accession.split('.')[0] not in excluded_set:
+            upstream_accessions.append(accession)
+
+    upstream_set = set(upstream_accessions)
+
+    return list(upstream_set.difference(included_set))
+
+async def fetch_upstream_records(
+    fetch_list: list, 
+    logger: BoundLogger
+) -> list:
+    """
+    Take a list of accession numbers and request the records from NCBI GenBank
+    
+    :param fetch_list: List of accession numbers to fetch from GenBank
+    :param logger: Structured logger
+
+    :return: A list of GenBank data converted from XML to dicts if possible, 
+        else an empty list
+    """
+    try:
+        handle = Entrez.efetch(
+            db="nucleotide", id=fetch_list, rettype="gb", retmode="text"
+        )
+    except HTTPError as e:
+        logger.error(f'{e}, moving on...')
+        return []
+    
+    ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
+    handle.close()
+
+    if ncbi_records is None:
+        return []
+    
+    try:
+        accession_list = [record for record in ncbi_records.values() if record.seq]
+        return accession_list
+    except Exception as e:
+        logger.exception(e)
+        raise e
 
 async def fetch_nuccore(fetch_list: list) -> list:
     """
@@ -80,7 +149,7 @@ async def fetch_docsums(fetch_list: list) -> list:
 
     return record
 
-async def fetch_taxonomy_species(taxon_id):
+async def fetch_taxonomy_species(taxon_id: str):
     """
     """
     try:
@@ -180,6 +249,7 @@ async def fetch_records(fetch_list: list) -> list:
     except Exception as e:
         return []
 
+
 async def get_spelling(name, db='taxonomy'):
     urlsafe_name = name.replace(' ', '+')
     try:
@@ -190,18 +260,3 @@ async def get_spelling(name, db='taxonomy'):
         return e
     
     return record['CorrectedQuery']
-
-# async def process_records(records, listing: dict):
-#     """
-#     """
-#     otu_updates = []
-#     for seq_list in records:
-#         for seq_data in seq_list:
-#             [ accession, version ] = (seq_data.id).split('.')
-            
-#             if accession in filter_set:
-#                 continue
-
-#             otu_updates.
-
-#     return otu_updates

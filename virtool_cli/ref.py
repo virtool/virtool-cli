@@ -1,22 +1,18 @@
 import sys
 from pathlib import Path
 import click
-import structlog
+# import structlog
 
 import virtool_cli.build
 import virtool_cli.divide
-from virtool_cli.doctor.cli import doc
+from virtool_cli.doctor.cli import doctor
 from virtool_cli.update.cli import update
 from virtool_cli.migrate import run as run_migrate
-from virtool_cli.update.update_ref import run as run_update
-from virtool_cli.accessions.catalog import run as run_catalog
-# import virtool_cli.taxid
-# import virtool_cli.update.isolate
-# import virtool_cli.doctor.repair
+# from virtool_cli.update.update_ref import run as run_update
+# from virtool_cli.accessions.catalog import run as run_catalog
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
-logger = structlog.get_logger()
     
 @click.group("ref")
 def ref():
@@ -26,7 +22,7 @@ def ref():
     pass
 
 ref.add_command(update)
-ref.add_command(doc)
+ref.add_command(doctor)
 
 @ref.command()
 @click.option(
@@ -54,10 +50,9 @@ ref.add_command(doc)
 @click.option('--debug/--no-debug', default=False)
 def build(src_path, output, indent, version, debug):
     """Build a Virtool reference JSON file from a source directory."""
-    build_logger = logger.bind(command='build', src_path=src_path, out_path=output)
-
     if not Path(src_path).exists():
-        build_logger.error('Directory not found at src_path')
+        # build_logger.error('Directory not found at src_path')
+        click.echo(ERROR_MESSAGE + f'No directory found at {src_path}')
         return
     
     try:
@@ -65,9 +60,9 @@ def build(src_path, output, indent, version, debug):
             Path(src_path), Path(output), indent, version, debug
         )
     except (FileNotFoundError, NotADirectoryError):
-        build_logger.exception('Source directory has critical errors')
+        click.echo(ERROR_MESSAGE + f'Source directory has critical errors')
     except:
-        build_logger.exception('Unexpected exception')
+        click.echo(ERROR_MESSAGE + f'Unexpected exception')
 
 
 @ref.command()
@@ -96,7 +91,7 @@ def divide(src_path, output, debug):
             debug)
     except (TypeError, FileNotFoundError) as e:
         click.echo(
-            ERROR_MESSAGE + "Specified reference file either does not exist or is not a proper JSON file"
+            ERROR_MESSAGE + f"{src_path} either does not exist or is not a proper JSON file"
         )
         click.echo(e)
 
@@ -113,12 +108,12 @@ def divide(src_path, output, debug):
 def migrate(src_path, debug):
     """Convert a reference directory from v1.x to v2.x"""
     if not Path(src_path).exists():
-        logger.critical('Source directory does not exist')
+        click.echo(ERROR_MESSAGE + f'No directory found at {src_path}')
 
     try:
         run_migrate(Path(src_path), debug)
     except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(ERROR_MESSAGE + "Not a valid reference directory")
+        click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
         click.echo(e)
 
 

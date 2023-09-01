@@ -1,20 +1,19 @@
 from pathlib import Path
 import json
 import asyncio
-import structlog
+from structlog import BoundLogger
 import logging
-# from logging import INFO, DEBUG
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import get_spelling
-from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname
+from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname, search_by_taxid
 
-LISTING_KEYS = set(["_id", "accessions", "name", "schema", "schema", "taxid"])
+LISTING_KEYS = set(["_id", "accessions", "name", "schema", "taxid"])
+
 
 def run(catalog: Path, debugging: bool = False):
     """
-    Check catalog for outstanding issues. 
-    Can also be used to diagnose issues with the corresponding reference.
+    Entry point for CLI. Sets logging levels.
 
     :param catalog: Path to an accession catalog directory
     :param debugging: Debugging flag
@@ -24,40 +23,63 @@ def run(catalog: Path, debugging: bool = False):
         format="%(message)s",
         level=filter_class,
     )
+    run_tests(catalog)
+
+def run_tests(catalog: Path):
+    """
+    Check catalog for outstanding issues. 
+    Can also be used to diagnose issues with the corresponding reference.
+
+    :param catalog: Path to an accession catalog directory
+    """
     logger = base_logger.bind(catalog=str(catalog))
     
-    if not catalog.exists():
-        logger.critical('Catalog directory not found at path', path=str(catalog))
-        return
-    
+    logger.info('Checking for missing data within all listings...')
+    check_missing_data(catalog, logger)
+
+    logger.info('Checking for listings without taxon IDs...', test='no_taxid')
     if unassigned := search_by_taxid('none', catalog):
         logger.warning(
             'Found listings without assigned NCBI taxon IDs.', 
             test='no_taxid',
             unassigned=unassigned)
 
+    logger.info('Checking for duplicate OTUs...', test='duplicate_taxid')
     if duplicate_otus := find_duplicate_otus(catalog, logger):
         logger.warning(
             'Found non-unique taxon IDs in catalog.', 
             test='duplicate_taxid',
             taxids=duplicate_otus)
-    
-    if missing_uids := find_missing_uids(catalog, logger):
-        logger.error(
-            'Found listings with missing or malformed uids',
-            test='null_uid',
-            taxids=missing_uids
-        )
 
+    logger.info(
+        'Checking for listings containing duplicate accessions...', 
+        test='duplicate_accessions')
     if duplicate_accessions := find_duplicate_accessions(catalog, logger):
-        logger.error(
+        logger.warning(
             'Found non-unique accessions in listings', 
             test='duplicate_accessions',
             otus=duplicate_accessions)
-    
+
+    logger.info(
+        'Requesting spelling suggestions for unmatchable listings...',
+        test='suggest_spellings')
+    asyncio.run(suggest_spellings(catalog))
+
+def check_missing_data(
+    catalog: Path, 
+    logger: BoundLogger = base_logger
+):
+    """
+    Checks all catalog listings for missing keys and schema data.
+
+    :param catalog: Path to a catalog directory
+    :param logger: Optional entry point for a shared BoundLogger
+    """
     for listing_path in get_catalog_paths(catalog):
-        with open(listing_path, "r") as f:
-            listing = json.load(f)
+        logger = logger.bind(listing=listing_path.stem)
+        # logger.debug(f'Checking {listing_path.name} for missing data...')
+
+        listing = json.loads(listing_path.read_text())
 
         if missing_keys := check_keys(listing):
             logger.warning(
@@ -67,12 +89,15 @@ def run(catalog: Path, debugging: bool = False):
             )
         
         if not check_schema(listing):
-            logger.warning('Schema is empty')
-
-    asyncio.run(suggest_spellings(catalog))
+            logger.warning('Schema field is empty.')
 
 def check_keys(listing: dict):
     """
+    Checks a listing to ensure that all necessary keys are present.
+    Returns an empty list if all keys are present. 
+
+    :param listing: Catalog listing data in dictionary form
+    :returns: A list of all missing keys
     """
     if not LISTING_KEYS.issubset(listing.keys()):
         missing_keys = LISTING_KEYS.difference(listing.keys())
@@ -82,6 +107,10 @@ def check_keys(listing: dict):
 
 def check_schema(listing: dict):
     """
+    Checks a listing to ensure that the schema field has data in it and returns a boolean
+
+    :param listing: Catalog listing data in dictionary form
+    :returns: A boolean confirming the existence of a filled-out schema
     """
     if type(listing['schema']) != list:
         return False
@@ -92,96 +121,80 @@ def check_schema(listing: dict):
     return True
 
 
-def search_by_taxid(taxid, catalog_path: Path) -> list:
+def find_duplicate_otus(
+    catalog_path: Path, 
+    logger: BoundLogger = base_logger
+) -> list:
     """
-    Searches records for a matching taxon id and returns all matching paths in the accession records
+    Find OTUs that share a taxon ID and return them in a list
 
-    :param otu_id: Unique taxon ID
-    :param catalog_path: Path to an accession catalog directory
-    """
-    
-    matches = [str(listing.relative_to(catalog_path)) 
-        for listing in catalog_path.glob(f'{taxid}--*.json')]
-    
-    if matches:
-        return matches
-    else:
-        return []
-
-
-def find_duplicate_otus(catalog: Path, logger = base_logger):
-    """
+    :param catalog: Path to a catalog directory
+    :param logger: Optional entry point for a shared BoundLogger
+    :return: A list of taxon IDs that have multiple OTUs under them
     """
     duplicated_taxids = set()
 
-    for listing_path in get_catalog_paths(catalog):
+    for listing_path in catalog_path.glob('*--*.json'):
         [ taxid, otu_id ] = split_pathname(listing_path)
 
         logger = logger.bind(
-            path=str(listing_path.relative_to(catalog.parent)), 
+            path=str(listing_path.relative_to(catalog_path.parent)), 
             otu_id=otu_id
         )
 
         if taxid != 'none':
-            matches = search_by_taxid(taxid, catalog)
+            matches = search_by_taxid(taxid, catalog_path)
 
             if len(matches) > 1:
                 logger.debug(f"Duplicate taxon id found!", taxid=taxid)
                 duplicated_taxids.add(taxid)
     
-    return duplicated_taxids
-
-def find_missing_uids(catalog: Path, logger = base_logger):
-    """
-    """
-    missing_uids = set()
-    for listing_path in get_catalog_paths(catalog):
-        relative_path = str(listing_path.relative_to(listing_path.parent))
-        with open(listing_path, "r") as f:
-            listing = json.load(f)
-        
-        if type(listing['accessions']['included']) is not dict:
-            missing_uids.add(relative_path)
-
-        if type(listing['accessions']['excluded']) is not dict:
-            missing_uids.add(relative_path)
-
-        for accession in listing['accessions']['included']:
-            if listing['accessions']['included'][accession] is None:
-                missing_uids.add(relative_path)
-
-        for accession in listing['accessions']['excluded']:
-            if listing['accessions']['excluded'][accession] is None:
-                missing_uids.add(relative_path)
-
-            
-    
-    return missing_uids
+    return list(duplicated_taxids)
 
 def find_duplicate_accessions(catalog: Path, logger = base_logger):
     """
+    Checks catalog listings for accessions that have been listed twice.
+    Can be used to identify redundant sequences in the reference directory.
+
+    :param catalog: Path to a catalog directory
+    :param logger: Optional entry point for a shared BoundLogger
     """
     duplicate_accessions = []
-    for listing_path in get_catalog_paths(catalog):
-        with open(listing_path, "r") as f:
-            listing = json.load(f)
-        otu_id = listing['_id']
-        logger = logger.bind(otu_id=listing['_id'], taxid=listing['taxid'], name=listing['name'])
 
+    for listing_path in catalog.glob('*--*.json'):
+        listing = json.loads(listing_path.read_text())
+            
+        logger = logger.bind(
+            listing=listing_path.name, name=listing['name'])
+               
+        logger.debug('Checking for non-unique accessions within included/excluded lists...')
         for alist_type in ['included', 'excluded']:
-            keys = listing['accessions'][alist_type].keys()
+            accession_list = listing['accessions'][alist_type]
+            accession_set = set(accession_list)
 
-            for key in keys:
-                key_split = key.split('.')
-                if len(key_split) > 1:
-                    [ accession, version ] = key_split
-                    if accession in keys:
-                        logger.debug('Duplicate accession number found')
-                        duplicate_accessions.append(otu_id)
+            if len(accession_set) < len(accession_list):
+                logger.warning('Contains non-unique accessions')
+                duplicate_accessions.append(listing_path.name)
+        
+        logger.debug('Checking included list against excluded list for eliminations...')
+        for versioned_accession in listing['accessions']['included']:
+            [ accession, version ] = versioned_accession.split('.')
+            if accession in accession_set:
+                logger.warning(
+                    f"Included accession '{versioned_accession}' is on the exclusion list."
+                )
+                duplicate_accessions.append(listing_path.name)
     
     return duplicate_accessions
 
 async def suggest_spellings(catalog: Path, logger = base_logger):
+    """
+    Evaluates the names of OTUs without retrievable taxon IDs
+    and queries Entrez ESpell for alternatives.
+
+    :param catalog: Path to a catalog directory
+    :param logger: Optional entry point for a shared BoundLogger
+    """
     for listing_path in catalog.glob('none--*.json'):
         with open(listing_path, "r") as f:
             listing = json.load(f)

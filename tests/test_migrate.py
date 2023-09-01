@@ -16,7 +16,6 @@ SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def convert_to_dict(otu_list: list):
-    
     otu_dict = {}
     for otu in otu_list:
         otu_id = otu['_id']

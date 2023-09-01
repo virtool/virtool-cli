@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 import asyncio
 import aiofiles
-from Bio import Entrez, SeqIO
 from typing import Optional
 import logging
 from structlog import BoundLogger
@@ -11,8 +10,10 @@ from urllib.error import HTTPError
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
-from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions.helpers import search_by_id
+from virtool_cli.utils.ncbi import fetch_upstream_accessions, fetch_upstream_records, NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.evaluate import evaluate_sequence, get_qualifiers
+from virtool_cli.utils.format import format_sequence
+from virtool_cli.accessions.helpers import search_by_otu_id
 
 DEFAULT_INTERVAL = 0.001
 
@@ -29,7 +30,7 @@ def run(
     )
     
     [ _, otu_id ] = otu_path.name.split('--')
-    listing_path = search_by_id(otu_id, catalog)
+    listing_path = search_by_otu_id(otu_id, catalog)
 
     asyncio.run(update_otu(otu_path, listing_path))
 
@@ -47,7 +48,9 @@ async def update_otu(otu_path: Path, listing_path: Path):
     if not record_data:
         return
     
-    otu_updates = await process_records(record_data, listing, logger)
+    otu_updates = await process_records(
+        records=record_data, listing=listing, 
+        auto_evaluate=True, logger=logger)
     if not otu_updates:
         return
     
@@ -67,109 +70,122 @@ async def request_new_records(
     """
     try:
         new_accessions = await fetch_upstream_accessions(
-            listing['taxid'], listing, reqseq_only=False)
+            listing['taxid'], listing, logger=logger)
+        
+        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+
+        record_data = await fetch_upstream_records(new_accessions, logger)
+        
+        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+    
+    except HTTPError as e:
+        logger.error(e)
+        return
+    
     except Exception as e:
         logger.exception(e)
         return []
-
-    record_data = []
-    for accession in new_accessions:
-        new_data = await fetch_upstream_records(accession, logger)
-        record_data.append(new_data)
-        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
     
     return record_data
 
 async def process_records(
     records, listing: dict,
+    auto_evaluate: bool = True, 
     logger: BoundLogger = base_logger
 ):
     """
+    Evaluates whether the record should be included
     """
-    if not listing.get('schema', []):
-        logger.debug('missing schema. moving on...')
-        return []
-
-    if len(listing['schema']) > 1:
-        logger.debug('multipartite', schema=listing.get('schema'))
-        multipartite = True
-        
-        required_parts = set()
-        for part in listing['schema']:
-            if part['required']:
-                required_parts.add(part['name'])
-    else:
-        multipartite = False
-
-    logger.debug('', schema=listing['schema'])
-
     filter_set = set(listing['accessions']['included'])
-    # filter_set.update(listing['accessions']['included'].keys())
     filter_set.update(listing['accessions']['excluded'])
 
+    if auto_evaluate:
+        
+        if not listing.get('schema', []):
+            logger.warning('Missing schema. moving on...')
+            return False
+        
+        required_parts = dict()
+        if len(listing['schema']) < 1:
+            for part in listing['schema']:
+                if part['required']:
+                    part_length = part.get('length', -1)
+                    if part_length < 0:
+                        logger.warning(
+                            f"{part['name']} lacks a length listing.")
+                        
+                    required_parts[part['name']] = part_length
+                    
+        else:
+            part = listing['schema'][0]
+            if (part_name := part.get('name', None)) is None:
+                part_name = 'unlabelled'
+            
+            part_length = part.get('length', -1)
+            if part_length < 0:
+                logger.warning(
+                    f"{part['name']} lacks a length listing.")
+            
+            required_parts[part_name] = part_length
+
+        logger = logger.bind(required_parts=required_parts)
+    
+    auto_excluded = []
     otu_updates = []
-    for seq_list in records:
-        for seq_data in seq_list:
-            [ accession, version_number ] = (seq_data.id).split('.')
-            
-            if accession in filter_set:
-                logger.debug('Accession already exists', accession=seq_data.id)
-                continue
+    for seq_data in records:
+        [ accession, _ ] = (seq_data.id).split('.')
+        seq_qualifier_data = get_qualifiers(seq_data.features)
 
+        if accession in filter_set:
+            logger.debug('Accession already exists', accession=seq_data.id)
+            return False
+        
+        if auto_evaluate:
             if '_' in seq_data.id:
-                logger.warning('This is a RefSeq accession. This data may already exist under a different accession.', accession=seq_data.id)
+                logger.warning(
+                    'This is a RefSeq accession. This data may already exist under a different accession.', 
+                    accession=seq_data.id)
 
-            seq_qualifier_data = await get_qualifiers(seq_data.features)
-
-            if multipartite:
-                if segment_name := seq_qualifier_data.get("segment", None) is None:
-                    logger.debug('No segment name. Moving on...')
-                    continue
-                
-                if segment_name not in required_parts:
-                    logger.debug('Required segment not found. Moving on...')
-                    continue
-
-            for i in range(len(listing['schema'])):
-                try:
-                    n_length = listing['schema'][i].get('length')
-                except Exception as e:
-                    logger.exception(e)
-                    continue
-                
-                seq_length = len(seq_data.seq)
-                max_length = n_length * 1.10
-                min_length = n_length * 0.9
-                
-                if seq_length > max_length or seq_length < min_length:
-                    logger.debug('Bad length. Moving on without pushing...', 
-                        seq_length=seq_length, listing_length=n_length)
-                    continue
-
-                logger.debug('Good length. Formatting sequence...', 
-                    seq_length=seq_length, listing_length=n_length)
-
-            isolate_type = await find_isolate(seq_qualifier_data)
-            if isolate_type is None:
+            inclusion_passed = evaluate_sequence(
+                seq_data=seq_data, 
+                seq_qualifier_data=seq_qualifier_data,
+                required_parts=required_parts, 
+                logger=logger
+            )
+        
+            if not inclusion_passed:
+                logger.debug(f'GenBank #{accession} did not pass the curation test...', 
+                    accession=accession, including=False
+                )
+                auto_excluded.append(accession)
                 continue
-            isolate_name = seq_qualifier_data.get(isolate_type)[0]
 
-            seq_dict = await format_sequence(seq_data, seq_qualifier_data)
+        isolate_type = find_isolate(seq_qualifier_data)
+        if isolate_type is None:
+            continue
+        isolate_name = seq_qualifier_data.get(isolate_type)[0]
 
-            if 'segment' not in seq_dict:
-                seq_dict['segment'] = listing.get("schema")[0]['name']
-            
-            isolate = { 
-                'source_name': isolate_name, 
-                'source_type': isolate_type
-            }
-            seq_dict['isolate'] = isolate
-            otu_updates.append(seq_dict)
+        seq_dict = await format_sequence(seq_data, seq_qualifier_data)
+
+        if 'segment' not in seq_dict:
+            seq_dict['segment'] = listing.get("schema")[0]['name']
+        
+        isolate = { 
+            'source_name': isolate_name, 
+            'source_type': isolate_type
+        }
+        seq_dict['isolate'] = isolate
+        otu_updates.append(seq_dict)
+    
+    if auto_excluded:
+        logger.info(
+            'Consider adding these accessions to the catalog exclusion list',
+             auto_excluded=auto_excluded)
 
     return otu_updates
 
 async def write_records(
-    otu_path, 
+    otu_path: Path, 
     new_sequences,
     unique_iso, unique_seq, 
     logger = base_logger
@@ -232,7 +248,7 @@ async def write_records(
 
         logger.info(f"Wrote new sequence '{seq_hash}'", 
             path=str(iso_path / f'{seq_hash}.json'))
-
+        
 async def label_isolates(otu_path: Path) -> dict:
     """
     Return all isolates present in an OTU directory
@@ -252,117 +268,7 @@ async def label_isolates(otu_path: Path) -> dict:
     
     return isolates
 
-async def fetch_upstream_accessions(
-    taxid: int, 
-    listing: dict,
-    reqseq_only: bool = True
-) -> list:
-    """
-    :param taxid: OTU Taxon ID
-    :param listing: Corresponding listing from the accession catalog for this OTU in dict form
-    :return: A list of accessions from NCBI Genbank for the taxon ID, 
-        sans included and excluded accessions
-    """
-    included_set = set(listing['accessions']['included'])
-    excluded_set = set(listing['accessions']['excluded'])
-
-    logger = base_logger.bind(taxid=taxid)
-    logger.debug('Exclude catalogued accessions', included=included_set, excluded=excluded_set)
-
-    upstream_accessions = []
-
-    entrez_accessions = Entrez.read(
-        Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
-            id=str(taxid), idtype="acc")
-    )
-
-    for linksetdb in entrez_accessions[0]["LinkSetDb"][0]["Link"]:
-        accession = linksetdb["Id"]
-        if accession.split('.')[0] not in excluded_set:
-            upstream_accessions.append(accession)
-
-    upstream_set = set(upstream_accessions)
-
-    return list(upstream_set.difference(included_set))
-
-async def fetch_upstream_records(
-    fetch_list: list, 
-    logger: BoundLogger = base_logger
-) -> list:
-    """
-    Take a list of accession numbers and request the records from NCBI GenBank
-    
-    :param fetch_list: List of accession numbers to fetch from GenBank
-    :param logger: Structured logger
-
-    :return: A list of GenBank data converted from XML to dicts if possible, 
-        else an empty list
-    """
-    try:
-        handle = Entrez.efetch(
-            db="nucleotide", id=fetch_list, rettype="gb", retmode="text"
-        )
-    except HTTPError as e:
-        logger.error(f'{e}, moving on...')
-        return []
-    
-    ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
-    handle.close()
-
-    if ncbi_records is None:
-        return []
-    
-    try:
-        accession_list = [record for record in ncbi_records.values() if record.seq]
-        return accession_list
-    except Exception as e:
-        logger.exception(e)
-        raise e
-
-def filter_catalog(
-    src_path: Path, catalog_path: Path
-) -> list:
-    """
-    Return paths for cached accession catalogues that are included in the source reference
-
-    :param src_path: Path to a reference directory
-    :param catalog_path: Path to an accession record directory
-    :return: A list of paths to relevant listings in the accession catalog
-    """
-    otu_paths = get_otu_paths(src_path)
-    included_listings = []
-    
-    for path in otu_paths:
-        try:
-            [ _, otu_id ] = (path.name).split('--')
-        except Exception as e:
-            base_logger.exception(f'{e}')
-
-        included_listings.append(
-            search_by_id(otu_id, catalog_path)
-        )
-    
-    return included_listings
-
-async def get_qualifiers(seq: list) -> dict:
-    """
-    Get relevant qualifiers in a Genbank record
-
-    :param seq: SeqIO features object for a particular accession
-    :return: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
-    """
-    features = [feature for feature in seq if feature.type == "source"]
-    
-    isolate_data = {}
-
-    for feature in features:
-        for qualifier in feature.qualifiers:
-            isolate_data[qualifier] = feature.qualifiers.get(qualifier)
-
-    return isolate_data
-
-async def find_isolate(isolate_data: dict) -> Optional[str]:
+def find_isolate(isolate_data: dict) -> Optional[str]:
     """
     Determine the source type in a Genbank record
 
@@ -374,33 +280,6 @@ async def find_isolate(isolate_data: dict) -> Optional[str]:
             return qualifier
 
     return None
-
-async def format_sequence(record: SeqIO.SeqRecord, qualifiers: dict) -> dict:
-    """
-    Creates a new sequence file for a given isolate
-
-    :param path: Path to a isolate folder
-    :param record: Genbank record object for a given accession
-    :param qualifiers: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
-    :return: A new sequence dictionary if possible, else an empty dict if not
-    """
-    logger = base_logger.bind(accession=record.id)
-    # logger.debug(f"{qualifiers}")
-    try:
-        seq_dict = {
-            "accession": record.id,
-            "definition": record.description,
-            "host": qualifiers.get("host")[0] if qualifiers.get("host") is not None else None,
-            "sequence": str(record.seq),
-        }
-        if 'segment' in qualifiers:
-            seq_dict['segment'] = qualifiers.get("segment")[0] if qualifiers.get("segment") is not None else None
-
-        return seq_dict
-    
-    except Exception as e:
-        logger.exception(e)
-        return {}
 
 async def store_isolate(
     source_name: str, source_type: str, 

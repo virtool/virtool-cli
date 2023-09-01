@@ -8,15 +8,14 @@ import logging
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ncbi import (
-    NCBI_REQUEST_INTERVAL,
-    fetch_docsums, fetch_taxonomy_rank
-)
+from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.helpers import (
     get_catalog_paths, fix_listing_path, update_listing, find_taxid_from_accession
 )
 
 def run(catalog: Path, debugging: bool = False):
+    """
+    """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
         format="%(message)s",
@@ -29,6 +28,8 @@ def run(catalog: Path, debugging: bool = False):
     asyncio.run(fetch_taxids(catalog))
 
 async def fetch_taxids(catalog: Path):
+    """
+    """
     queue = asyncio.Queue()
     
     fetcher = asyncio.create_task(fetch_loop(catalog, queue))
@@ -43,16 +44,21 @@ async def fetch_taxids(catalog: Path):
 
 async def fetch_loop(catalog: Path, queue: asyncio.Queue):
     """
+    :param catalog_path: Path to a catalog directory
+    :param queue: Queue containing the listing path and all taxon IDs extracted from the included accessions
     """
     base_logger.debug("Starting fetcher...", n_catalog=len(get_catalog_paths(catalog)))
 
-    for listing_path in get_catalog_paths(catalog):
+    for listing_path in catalog.glob('*.json'):
         logger = base_logger.bind(
             listing_path=str(listing_path.relative_to(catalog))
         )
+
         # logger.debug('Fetching taxon IDs from included accessions')
         try:
-            extracted_taxid = await find_taxid_from_accession(listing_path, logger)
+            extracted_taxid = await find_taxid_from_accession(
+                listing_path, logger)
+            
         except Exception as e:
             logger.exception(e)
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)

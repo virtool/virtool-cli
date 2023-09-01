@@ -1,6 +1,7 @@
 import json
 from typing import Optional
 from pathlib import Path
+from structlog import BoundLogger
 import logging
 import re
 
@@ -25,7 +26,7 @@ def run(otu_path: Path, src_path: Path, debugging: bool = False):
 
     repair_otu_data(otu_path, logger)
 
-def repair_otu_data(otu_path, logger = base_logger):
+def repair_otu_data(otu_path, logger: BoundLogger = base_logger):
     """
     """
     repair_otu(otu_path, logger)
@@ -37,7 +38,7 @@ def repair_otu_data(otu_path, logger = base_logger):
             
             repair_sequence(sequence_path=sequence_path, logger=logger)
 
-def repair_otu(otu_path, logger = base_logger):
+def repair_otu(otu_path, logger: BoundLogger = base_logger):
     """
     """
     with open(otu_path / 'otu.json', "r") as f:
@@ -46,6 +47,9 @@ def repair_otu(otu_path, logger = base_logger):
     if type(otu.get('taxid')) != int:
         otu['taxid'] = None
     
+    if 'schema' not in otu:
+        otu['schema'] = []
+        
     return otu
 
 def repair_sequence(
@@ -72,6 +76,8 @@ def repair_sequence(
             json.dump(sequence, f, indent=4)
 
 def verify_accession(original):
+    """
+    """
     # Automatically repair misspelled accessions where possible
     if re.search(r'([^A-Z_.0-9])', original) is None:
         return original
