@@ -8,19 +8,21 @@ from structlog import BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.accessions.helpers import parse_listing
 
 def run(catalog: Path, debugging: bool = False):
     """
+    Automatically excludes the former accession numbers of RefSeq sequences
+    
+    :param catalog: Path to an accession catalog directory
+    :param debugging: Debugging flag
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
         format="%(message)s",
         level=filter_class,
     )
-    logger = base_logger.bind(catalog=str(catalog))
     
-    logger.info(f"Starting RefSeq filter...")
+    base_logger.info(f"Starting RefSeq filter...", catalog=str(catalog))
     
     asyncio.run(filter_refseq_accessions(catalog))
 
@@ -118,14 +120,14 @@ def in_refseq(comments: str, excluded: set):
     return ''
 
 async def fetch_upstream_records(
-    fetch_list: list, logger = base_logger
+    fetch_list: list, 
+    logger = base_logger
 ) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank
     
     :param fetch_list: List of accession numbers to fetch from GenBank
     :param logger: Optional entry point for an existing BoundLogger
-
     :return: A list of GenBank data converted from XML to dicts if possible, 
         else an empty list
     """

@@ -12,8 +12,6 @@ from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
 def run(src_path: Path, force_update: bool = False, debugging: bool = False):
     """
-    Creates and runs the event loop to asynchronously find taxon ids for all OTU in a src directory
-
     :param src_path: Path to a given reference directory
     :param force_update: Flag to force update all of the OTU's taxids in a reference
     :param debugging: Enables verbose logs for debugging purposes

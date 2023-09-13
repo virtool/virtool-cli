@@ -3,6 +3,21 @@ import re
 from pathlib import Path
 
 
+def is_v1(src_path: Path) -> bool:
+    """
+    Returns True if the given reference directory is formatted under version 1 guidelines.
+    Determines if virtool ref migrate should be run before using this version of virtool-cli
+    
+    :param src_path: Path to a src database directory
+    :return: Boolean value depending on whether alphabetized bins are found.
+    """
+    alpha_bins = list(src_path.glob('[a-z]'))
+    
+    if alpha_bins:
+        return True
+    
+    return False
+
 def get_otu_paths(src_path: Path) -> list:
     """
     Generates a list of paths to all OTUs in a src directory.
@@ -29,9 +44,7 @@ def get_sequence_paths(isolate_path: Path) -> list:
     :return: List of paths to all OTU in a src directory
     """
     sequence_ids = [
-        i
-        for i in isolate_path.glob('*.json')
-        if i.name != "isolate.json" and i.name[0] != "."
+        i for i in isolate_path.glob('*.json') if i.stem != "isolate"
     ]
 
     return sequence_ids
@@ -56,17 +69,25 @@ def generate_otu_dirname(name: str, id: str = ''):
     return dirname
 
 def search_otu_by_id(src_path: Path, otu_id: str):
-    matches = [otu for otu in src_path.glob(f'*--{otu_id}')]
-    if matches:
-        return matches[0]
-    else:
-        return FileNotFoundError
+    """
+    """
+    for path in src_path.glob(f'*--{otu_id}'):
+        if path.is_dir():
+            return path
+    
+    return FileNotFoundError
+
+    # matches = [otu for otu in src_path.glob(f'*--{otu_id}') if otu.is_dir()]
+    # if matches:
+    #     return matches[0]
+    # else:
+    #     return FileNotFoundError
 
 def parse_otu(path: Path) -> dict:
     """
     Returns a json file in dict form
 
-    :param paths: Path to an OTU in a reference
+    :param path: Path to an OTU directory in a reference source
     :return: OTU data in dict form
     """
     with open(path / "otu.json", "r") as f:
@@ -76,10 +97,11 @@ def parse_otu(path: Path) -> dict:
 
 def parse_isolates(otu_path: Path) -> dict:
     """
-    Returns a json file in dict form
+    Returns a dictionary of all isolate data under an OTU,
+    keyed by isolate hash ID
 
     :param paths: Path to an OTU in a reference
-    :return: OTU data in dict form
+    :return: Isolate data in dict form
     """
     isolates = {}
     for iso_path in get_isolate_paths(otu_path):
@@ -96,7 +118,7 @@ def map_otus(paths: list) -> dict:
     :param paths: List of paths to all OTU in a reference
     :return: A mapping of every OTU path to its OTU dictionary
     """
-    path_taxid_map = dict()
+    path_taxid_map = {}
 
     for path in paths:
         path_taxid_map[path] = parse_otu(path)
@@ -108,6 +130,7 @@ def get_otu_accessions(otu_path: Path) -> list:
     Gets all accessions from an OTU directory and returns a list
 
     :param otu_path: Path to an OTU directory
+    :return: A list of all accessions under an OTU
     """
     accessions = []
     
@@ -118,13 +141,3 @@ def get_otu_accessions(otu_path: Path) -> list:
             accessions.append(sequence['accession'])
 
     return accessions
-
-def is_v2(src_path: Path) -> bool:
-    """
-    """
-    alpha_bins = list(src_path.glob('[a-z]'))
-    
-    if alpha_bins:
-        return False
-    
-    return True

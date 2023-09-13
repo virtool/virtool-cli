@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
-from typing import Tuple
 import arrow
 import logging
+from structlog import BoundLogger
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import get_otu_paths
+from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, get_sequence_paths, is_v1
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -31,53 +31,78 @@ def run(src_path: Path, output: Path,
         format="%(message)s",
         level=filter_class,
     )
+    
+    if is_v1(src_path):
+        base_logger.critical(
+            'This reference database is a deprecated v1 reference.' + \
+            'Run "virtool ref migrate" before trying again.',
+            src=str(src_path))
+        return
 
+    try:
+        build_from_src(src_path, output, indent, version)
+    except FileNotFoundError as e:
+        base_logger.exception(e)
+    except Exception as e:
+        base_logger.exception(e)
+
+def build_from_src(src_path, output, indent, version):
+    """
+    Build a Virtool reference JSON file from a data directory.
+
+    :param src_path: Path to database src directory
+    :param output: The output path for the reference.json file
+    :param indent: A flag to indicate whether the output file should be indented
+    :param version: The version string to include in the reference.json file
+    """
     logger = base_logger.bind(src=str(src_path), output=str(output))
 
-    meta = parse_meta(src_path)
+    data = { 'data_type': 'genome', 'organism': '' }
 
-    data = {
-        "data_type": meta.get("data_type", "genome"),
-        "organism": meta.get("organism", ""),
-    }
+    if meta := parse_meta(src_path):
+        logger.debug(
+            'Metadata parsed', 
+            meta=meta, 
+            metadata_path=str(src_path / "meta.json")
+        )
+        
+        data['data_type'] = meta.get("data_type", "genome")
+        data['organism'] = meta.get("organism", ""),
+    
+    else:
+        logger.warning(f'Metadata file not found at {src_path / "meta.json"}', 
+            metadata_path=str(src_path / "meta.json"))
 
     otus = []
 
-    otu_paths = get_otu_paths(src_path)
-
-    for otu_path in otu_paths:
-
-        otu, isolate_ids = parse_otu(otu_path)
-
-        for isolate_path in isolate_ids:
-
-            isolate, sequence_ids = parse_isolate(isolate_path)
-
-            for sequence_path in sequence_ids:
-                with open(sequence_path, "r") as f:
-                    sequence = json.load(f)
-
-                isolate["sequences"].append(sequence)
-
-            otu["isolates"].append(isolate)
+    for otu_path in get_otu_paths(src_path):
+        
+        try:
+            otu = parse_otu(otu_path)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.critical('Reference data at src_path is invalid.')
+            logger.exception(e)
+            return
+        except Exception as e:
+            logger.exception(e)
+            return
 
         otus.append(otu)
+
         logger.debug(
-            f"Added {otu['_id']}", 
+            f"Added {otu['_id']} to reference data", 
             path=str(otu_path.relative_to(src_path)))
 
-    data.update(
-        {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
-    )
+    data.update({
+        "otus": otus, 
+        "name": version, 
+        "created_at": arrow.utcnow().isoformat()
+    })
 
-    try:
-        with open(output, "w") as f:
-            json.dump(data, f, indent=4 if indent else None, sort_keys=True)
-        logger.info('Reference file built')
+    with open(output, "w") as f:
+        json.dump(data, f, indent=4 if indent else None, sort_keys=True)
 
-    except Exception as e:
-        logger.critical('Reference file build failed')
-        logger.exception(e)
+    logger.info('Reference file built at output')
 
 def parse_meta(src_path: Path) -> dict:
     """
@@ -103,45 +128,40 @@ def parse_alpha(alpha: Path) -> list:
     """
     return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
-
-def parse_otu(otu_path: Path) -> Tuple[dict, list]:
+def parse_otu(
+    otu_path: Path, logger: BoundLogger = base_logger
+) -> dict:
     """
-    Loads OTU data from otu.json and creates an list of isolate IDs
+    Traverses, deserializes and returns all data under an OTU directory.
 
     :param otu_path: Path to a OTU directory
     :return: The dictionary and list of isolate ids for a given OTU
     """
-    try:
-        with open(otu_path / "otu.json", "r") as f:
-            otu = json.load(f)
-    except FileNotFoundError as e:
-        base_logger.error(e, path=otu_path)
+    with open(otu_path / "otu.json", "r") as f:
+        otu = json.load(f)
+    
+    logger = logger.bind(path=otu_path, otu_id=otu['_id'])
+    
+    isolates = []
+    for isolate_path in get_isolate_paths(otu_path):
 
-    otu["isolates"] = []
+        with open(isolate_path / "isolate.json", "r") as f:
+            isolate = json.load(f)
+        
+        logger = logger.bind(isolate_id=isolate['id'])
 
-    isolate_ids = [
-        i for i in otu_path.iterdir() 
-        if i.name != "otu.json" and i.name[0] != "."
-    ]
+        sequences = []
+        for sequence_path in get_sequence_paths(isolate_path):
 
-    return otu, isolate_ids
+            sequence = json.loads(sequence_path.read_text())
 
+            sequences.append(sequence)            
+            logger.debug(f"Added sequence {sequence.get('accession')} under id={sequence.get('_id')}")
+        
+        isolate['sequences'] = sequences
 
-def parse_isolate(isolate_path: Path) -> Tuple[dict, list]:
-    """
-    Loads isolate data from isolate.json and creates an list of sequence IDs
+        isolates.append(isolate)
+        
+    otu["isolates"] = isolates
 
-    :param isolate_path: Path to a isolate directory
-    :return: The dictionary and list of sequenece ids for a given isolate
-    """
-    with open(isolate_path / "isolate.json", "r") as f:
-        isolate = json.load(f)
-
-    isolate["sequences"] = []
-
-    sequence_ids = [
-        i for i in isolate_path.glob('*.json')
-        if i.name != "isolate.json" and i.name[0] != "."
-    ]
-
-    return isolate, sequence_ids
+    return otu

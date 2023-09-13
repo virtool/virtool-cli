@@ -6,7 +6,7 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import get_spelling
-from virtool_cli.accessions.helpers import get_catalog_paths, split_pathname, search_by_taxid
+from virtool_cli.accessions.helpers import get_catalog_paths, search_by_taxid
 
 LISTING_KEYS = set(["_id", "accessions", "name", "schema", "taxid"])
 
@@ -45,7 +45,7 @@ def run_tests(catalog: Path):
             unassigned=unassigned)
 
     logger.info('Checking for duplicate OTUs...', test='duplicate_taxid')
-    if duplicate_otus := find_duplicate_otus(catalog, logger):
+    if duplicate_otus := find_shared_taxids(catalog, logger):
         logger.warning(
             'Found non-unique taxon IDs in catalog.', 
             test='duplicate_taxid',
@@ -77,7 +77,6 @@ def check_missing_data(
     """
     for listing_path in get_catalog_paths(catalog):
         logger = logger.bind(listing=listing_path.stem)
-        # logger.debug(f'Checking {listing_path.name} for missing data...')
 
         listing = json.loads(listing_path.read_text())
 
@@ -121,7 +120,7 @@ def check_schema(listing: dict):
     return True
 
 
-def find_duplicate_otus(
+def find_shared_taxids(
     catalog_path: Path, 
     logger: BoundLogger = base_logger
 ) -> list:
@@ -135,7 +134,7 @@ def find_duplicate_otus(
     duplicated_taxids = set()
 
     for listing_path in catalog_path.glob('*--*.json'):
-        [ taxid, otu_id ] = split_pathname(listing_path)
+        [ taxid, otu_id ] = listing_path.stem('--')
 
         logger = logger.bind(
             path=str(listing_path.relative_to(catalog_path.parent)), 
@@ -146,7 +145,7 @@ def find_duplicate_otus(
             matches = search_by_taxid(taxid, catalog_path)
 
             if len(matches) > 1:
-                logger.debug(f"Duplicate taxon id found!", taxid=taxid)
+                logger.debug("Duplicate taxon id found", taxid=taxid)
                 duplicated_taxids.add(taxid)
     
     return list(duplicated_taxids)

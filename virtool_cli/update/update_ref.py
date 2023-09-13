@@ -4,9 +4,9 @@ import asyncio
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import get_otu_paths, search_otu_by_id, is_v2
-from virtool_cli.utils.hashing import get_unique_ids #, generate_hashes
-from virtool_cli.accessions.helpers import filter_catalog #, search_by_id
+from virtool_cli.utils.ref import get_otu_paths, search_otu_by_id, is_v1
+from virtool_cli.utils.hashing import get_unique_ids
+from virtool_cli.accessions.helpers import filter_catalog
 from virtool_cli.update.update import request_new_records, process_records, write_records
 
 DEFAULT_INTERVAL = 0.001
@@ -31,8 +31,10 @@ def run(
     )
     logger = base_logger.bind(src=str(src), catalog=str(catalog))
 
-    if not is_v2(src):
-        logger.critical('reference folder "src" is a deprecated v1 reference. Run "virtool ref migrate first."')
+    if is_v1(src):
+        logger.critical(
+            'reference folder "src" is a deprecated v1 reference.' + \
+            'Run "virtool ref migrate" before trying again.')
         return
 
     logger.info('Updating src directory accessions using catalog listings...')
@@ -91,7 +93,7 @@ async def update_reference(
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
     asyncio.create_task(
-        writer_loop(src_path, storage, write_queue, dry_run=False))
+        writer_loop(src_path, write_queue))
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 
@@ -189,14 +191,14 @@ async def processor_loop(
 
 async def writer_loop(
     src_path: Path, 
-    storage: dict, 
     queue: asyncio.Queue, 
-    dry_run: bool = False
 ):
     """
-    TO-DO: write changes back to local catalog?
+    Awaits new sequence data for each OTU and 
+    writes new data into JSON files with unique Virtool IDs
 
     :param src_path: Path to a reference directory
+    :param downstream_queue: Queue holding formatted sequence and isolate data processed by this loop
     """
     base_logger.debug("Starting writer...")
 

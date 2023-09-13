@@ -8,7 +8,6 @@ import virtool_cli.divide
 from virtool_cli.doctor.cli import doctor
 from virtool_cli.update.cli import update
 from virtool_cli.migrate import run as run_migrate
-# from virtool_cli.update.update_ref import run as run_update
 # from virtool_cli.accessions.catalog import run as run_catalog
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
@@ -60,9 +59,9 @@ def build(src_path, output, indent, version, debug):
             Path(src_path), Path(output), indent, version, debug
         )
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + f'Source directory has critical errors')
+        click.echo(ERROR_MESSAGE + 'Source directory has critical errors')
     except:
-        click.echo(ERROR_MESSAGE + f'Unexpected exception')
+        click.echo(ERROR_MESSAGE + 'Unexpected exception')
 
 
 @ref.command()
@@ -112,6 +111,7 @@ def migrate(src_path, debug):
 
     try:
         run_migrate(Path(src_path), debug)
+        
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
         click.echo(e)

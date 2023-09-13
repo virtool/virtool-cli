@@ -19,9 +19,10 @@ DEFAULT_INTERVAL = 0.001
 
 
 def run(
-    otu_path: Path, catalog: Path, debugging = False
+    otu_path: Path, catalog: Path, debugging: bool = False
 ):
     """
+    :param otu_path: Path to a OTU directory
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -36,7 +37,13 @@ def run(
 
 async def update_otu(otu_path: Path, listing_path: Path):
     """
+    Requests new records for a single taxon ID
+    and writes new data under the corresponding path.
+
+    :param otu_path: Path to a OTU directory
+    :param listing_path: Path to an individual listing in an accession catalog directory
     """
+    src_path = otu_path.parent
     listing = json.loads(listing_path.read_text())
 
     # extract taxon ID and _id hash from listing filename
@@ -54,7 +61,7 @@ async def update_otu(otu_path: Path, listing_path: Path):
     if not otu_updates:
         return
     
-    unique_iso, unique_seq = await get_unique_ids([otu_path])
+    unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
     
     await write_records(
         otu_path, otu_updates, 
@@ -70,7 +77,7 @@ async def request_new_records(
     """
     try:
         new_accessions = await fetch_upstream_accessions(
-            listing['taxid'], listing, logger=logger)
+            listing=listing, logger=logger)
         
         await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
@@ -94,7 +101,10 @@ async def process_records(
     logger: BoundLogger = base_logger
 ):
     """
-    Evaluates whether the record should be included
+    Takes sequence records and:
+        1) Evaluates whether those records should be added to the database,
+        2) Formats the records into a smaller dictionary
+        3) Returns new formatted dicts in a list
     """
     filter_set = set(listing['accessions']['included'])
     filter_set.update(listing['accessions']['excluded'])
@@ -105,7 +115,7 @@ async def process_records(
             logger.warning('Missing schema. moving on...')
             return False
         
-        required_parts = dict()
+        required_parts = {}
         if len(listing['schema']) < 1:
             for part in listing['schema']:
                 if part['required']:
@@ -165,7 +175,10 @@ async def process_records(
             continue
         isolate_name = seq_qualifier_data.get(isolate_type)[0]
 
-        seq_dict = await format_sequence(seq_data, seq_qualifier_data)
+        seq_dict = format_sequence(
+            record=seq_data, qualifiers=seq_qualifier_data, 
+            logger=logger
+        )
 
         if 'segment' not in seq_dict:
             seq_dict['segment'] = listing.get("schema")[0]['name']
@@ -234,7 +247,7 @@ async def write_records(
             ref_isolates[isolate_name] = new_isolate
             
             logger.info('Created a new isolate directory', 
-                path=str(otu_path / f'iso_hash'))
+                path=str(otu_path / iso_hash))
         
         iso_path = otu_path / iso_hash
         

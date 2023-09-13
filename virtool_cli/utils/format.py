@@ -14,7 +14,7 @@ def format_sequence(
     :return: A new sequence dictionary if possible, else an empty dict if not
     """
     logger = logger.bind(accession=record.id)
-    # logger.debug(f"{qualifiers}")
+    
     try:
         seq_dict = {
             "accession": record.id,

@@ -4,7 +4,7 @@ from structlog import BoundLogger
 def evaluate_sequence(
     seq_data, 
     seq_qualifier_data, 
-    required_parts, 
+    required_parts: dict, 
     logger: BoundLogger
 ):
     """
