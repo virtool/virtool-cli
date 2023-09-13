@@ -87,7 +87,7 @@ def build_otu(src_path: Path, otu: dict) -> str:
 
     with open(otu_path / "otu.json", "w") as f:
         if "schema" not in otu:
-            otu["schema"] = list()
+            otu["schema"] = []
 
         json.dump({key: otu.get(key) for key in OTU_KEYS}, f, indent=4)
 
@@ -119,9 +119,8 @@ def build_sequence(isolate_path: Path, sequence: dict):
     :param isolate_path: A path to a specified isolate
     :param sequence: A dictionary containing information on one of the isolates' sequences
     """
-    with open(isolate_path / "{}.json".format(sequence["_id"]), "w") as f:
+    with open(isolate_path / f"{sequence.get('_id')}.json", "w") as f:
         json.dump(
-            {key: sequence[key] for key in SEQUENCE_KEYS if key in sequence},
-            f,
-            indent=4,
+            { key: sequence[key] for key in SEQUENCE_KEYS if key in sequence },
+            f, indent=4,
         )

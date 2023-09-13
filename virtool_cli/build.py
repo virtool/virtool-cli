@@ -31,6 +31,7 @@ def run(src_path: Path, output: Path,
         format="%(message)s",
         level=filter_class,
     )
+
     logger = base_logger.bind(src=str(src_path), output=str(output))
 
     meta = parse_meta(src_path)
@@ -40,7 +41,7 @@ def run(src_path: Path, output: Path,
         "organism": meta.get("organism", ""),
     }
 
-    otus = list()
+    otus = []
 
     otu_paths = get_otu_paths(src_path)
 
@@ -63,20 +64,20 @@ def run(src_path: Path, output: Path,
         otus.append(otu)
         logger.debug(
             f"Added {otu['_id']}", 
-            otu={'_id': otu['_id'], 'path': str(otu_path.relative_to(src_path))})
+            path=str(otu_path.relative_to(src_path)))
+
+    data.update(
+        {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
+    )
 
     try:
         with open(output, "w") as f:
-            data.update(
-                {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
-            )
-
             json.dump(data, f, indent=4 if indent else None, sort_keys=True)
-            logger.info('Reference file built')
-    except:
-        logger.critical(
-            'Reference file build failed')
+        logger.info('Reference file built')
 
+    except Exception as e:
+        logger.critical('Reference file build failed')
+        logger.exception(e)
 
 def parse_meta(src_path: Path) -> dict:
     """
@@ -89,7 +90,7 @@ def parse_meta(src_path: Path) -> dict:
         with open(src_path / "meta.json", "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        return dict()
+        return {}
 
 
 def parse_alpha(alpha: Path) -> list:
@@ -116,7 +117,7 @@ def parse_otu(otu_path: Path) -> Tuple[dict, list]:
     except FileNotFoundError as e:
         base_logger.error(e, path=otu_path)
 
-    otu["isolates"] = list()
+    otu["isolates"] = []
 
     isolate_ids = [
         i for i in otu_path.iterdir() 
@@ -136,7 +137,7 @@ def parse_isolate(isolate_path: Path) -> Tuple[dict, list]:
     with open(isolate_path / "isolate.json", "r") as f:
         isolate = json.load(f)
 
-    isolate["sequences"] = list()
+    isolate["sequences"] = []
 
     sequence_ids = [
         i for i in isolate_path.glob('*.json')
