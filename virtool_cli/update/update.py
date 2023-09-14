@@ -8,7 +8,7 @@ from structlog import BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths
+from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
 from virtool_cli.utils.ncbi import fetch_upstream_accessions, fetch_upstream_records, NCBI_REQUEST_INTERVAL
 from virtool_cli.utils.evaluate import evaluate_sequence, get_qualifiers

@@ -5,7 +5,7 @@ import structlog
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import parse_otu, get_otu_paths, search_otu_by_id
+from virtool_cli.utils.reference import read_otu, get_otu_paths, search_otu_by_id
 from virtool_cli.accessions.initialize import generate_listing, write_listing
 from virtool_cli.accessions.helpers import (
     get_otu_accessions, get_catalog_paths, filter_catalog
@@ -190,7 +190,7 @@ async def add_listing(
     :param catalog: Path to a catalog directory
     :param logger: Optional entry point for an existing BoundLogger
     """
-    otu_data = parse_otu(otu_path)
+    otu_data = read_otu(otu_path)
     
     logger.info(f"No accession record for {otu_data['taxid']}.")
 

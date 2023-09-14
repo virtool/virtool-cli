@@ -5,7 +5,7 @@ import structlog
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import parse_otu, get_otu_paths, get_isolate_paths, get_sequence_paths
+from virtool_cli.utils.reference import read_otu, get_otu_paths, get_isolate_paths, get_sequence_paths
 from virtool_cli.utils.ncbi import fetch_taxid
 from virtool_cli.accessions.helpers import (
     get_sequence_metadata, get_required_parts, 
@@ -69,7 +69,7 @@ async def fetcher_loop(src: Path, queue: asyncio.Queue):
             otu_path=str(otu_path.name)
         )
 
-        otu_data = parse_otu(otu_path)
+        otu_data = read_otu(otu_path)
         otu_id = otu_data['_id']
         
         logger = logger.bind(

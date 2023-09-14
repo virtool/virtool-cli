@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 from structlog import BoundLogger
 
-from virtool_cli.utils.ref import get_otu_paths, get_sequence_paths
+from virtool_cli.utils.reference import get_otu_paths, get_sequence_paths
 from virtool_cli.utils.ncbi import fetch_taxonomy_rank, fetch_upstream_record_taxids
 
 

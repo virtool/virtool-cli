@@ -3,10 +3,12 @@ from pathlib import Path
 import click
 # import structlog
 
-import virtool_cli.build
-import virtool_cli.divide
+# import virtool_cli.build
+# import virtool_cli.divide
 from virtool_cli.doctor.cli import doctor
 from virtool_cli.update.cli import update
+from virtool_cli.build import run as run_build
+from virtool_cli.divide import run as run_divide
 from virtool_cli.migrate import run as run_migrate
 # from virtool_cli.accessions.catalog import run as run_catalog
 
@@ -55,7 +57,7 @@ def build(src_path, output, indent, version, debug):
         return
     
     try:
-        virtool_cli.build.run(
+        run_build(
             Path(src_path), Path(output), indent, version, debug
         )
     except (FileNotFoundError, NotADirectoryError):
@@ -85,9 +87,8 @@ def divide(src_path, output, debug):
     try:
         if not src_path.endswith(".json"):
             raise TypeError
-        virtool_cli.divide.run(
-            Path(src_path), Path(output), 
-            debug)
+        run_divide(
+            Path(src_path), Path(output), debug)
     except (TypeError, FileNotFoundError) as e:
         click.echo(
             ERROR_MESSAGE + f"{src_path} either does not exist or is not a proper JSON file"

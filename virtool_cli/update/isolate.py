@@ -12,7 +12,7 @@ import aiojobs
 from Bio import Entrez, SeqIO
 import structlog
 
-from virtool_cli.utils.ref import get_otu_paths, map_otus
+from virtool_cli.utils.reference import get_otu_paths, map_otus
 from virtool_cli.utils.hashing import get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 

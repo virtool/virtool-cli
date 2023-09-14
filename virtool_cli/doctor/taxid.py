@@ -6,7 +6,7 @@ from Bio import Entrez
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import get_otu_paths, parse_otu
+from virtool_cli.utils.reference import get_otu_paths, read_otu
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
 
@@ -83,7 +83,7 @@ async def fetcher_loop(
     """
 
     for path in included_paths:
-        otu_data = parse_otu(path)
+        otu_data = read_otu(path)
 
         if not force_update:
             taxid = otu_data.get('taxid', None)
@@ -136,7 +136,7 @@ def filter_unidentified(src_path: Path) -> list:
     included_otus = []
     
     for path in get_otu_paths(src_path):
-        otu_data = parse_otu(path)
+        otu_data = read_otu(path)
 
         taxid = otu_data.get('taxid', None)
         

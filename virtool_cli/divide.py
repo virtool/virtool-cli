@@ -4,7 +4,7 @@ import shutil
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import generate_otu_dirname
+from virtool_cli.utils.reference import generate_otu_dirname
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 

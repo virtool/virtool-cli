@@ -52,7 +52,7 @@ def get_sequence_paths(isolate_path: Path) -> list:
 def generate_otu_dirname(name: str, id: str = ''):
     """
     Takes in a human-readable string, replaces whitespace and symbols
-    and adds the hash id
+    and adds the Virtool hash id as a suffix
     
     :param name: Human-readable, searchable name of the OTU
     :param id: ID hash of OTU 
@@ -70,6 +70,11 @@ def generate_otu_dirname(name: str, id: str = ''):
 
 def search_otu_by_id(src_path: Path, otu_id: str):
     """
+    Searches filenames in the database by unique id and
+    returns the path if it finds a match
+
+    :param src_path: Path to a reference database directory
+    :param src_path: Path to an OTU directory under a reference source
     """
     for path in src_path.glob(f'*--{otu_id}'):
         if path.is_dir():
@@ -83,19 +88,19 @@ def search_otu_by_id(src_path: Path, otu_id: str):
     # else:
     #     return FileNotFoundError
 
-def parse_otu(path: Path) -> dict:
+def read_otu(path: Path) -> dict:
     """
     Returns a json file in dict form
 
-    :param path: Path to an OTU directory in a reference source
-    :return: OTU data in dict form
+    :param path: Path to an OTU directory under a reference source
+    :return: Deserialized OTU data in dict form
     """
     with open(path / "otu.json", "r") as f:
         otu = json.load(f)
 
     return otu
 
-def parse_isolates(otu_path: Path) -> dict:
+def read_isolates(otu_path: Path) -> dict:
     """
     Returns a dictionary of all isolate data under an OTU,
     keyed by isolate hash ID
@@ -121,7 +126,7 @@ def map_otus(paths: list) -> dict:
     path_taxid_map = {}
 
     for path in paths:
-        path_taxid_map[path] = parse_otu(path)
+        path_taxid_map[path] = read_otu(path)
 
     return path_taxid_map
 
@@ -136,8 +141,7 @@ def get_otu_accessions(otu_path: Path) -> list:
     
     for isolate_path in get_otu_paths(otu_path):
         for sequence_path in get_sequence_paths(isolate_path):
-            with open(sequence_path, "r") as f:
-                sequence = json.load(f)
+            sequence = json.loads(sequence_path.read_text())
             accessions.append(sequence['accession'])
 
     return accessions

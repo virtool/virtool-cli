@@ -6,7 +6,7 @@ import logging
 import re
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import (
+from virtool_cli.utils.reference import (
     get_otu_paths, get_isolate_paths, get_sequence_paths,
 )
 from virtool_cli.doctor.fix_otu import repair_otu_data

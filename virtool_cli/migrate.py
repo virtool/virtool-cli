@@ -2,7 +2,7 @@ from pathlib import Path
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import parse_otu, generate_otu_dirname, is_v1
+from virtool_cli.utils.reference import read_otu, generate_otu_dirname, is_v1
 
 
 def run(src_path: Path, debugging: bool = False):
@@ -51,7 +51,7 @@ def flatten_src(src_path: Path):
         )
         
         for otu_path in otu_paths:
-            otu = parse_otu(otu_path)
+            otu = read_otu(otu_path)
             new_name = generate_otu_dirname(
                 otu.get('name'), 
                 otu.get('_id')

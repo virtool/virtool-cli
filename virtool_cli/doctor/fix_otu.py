@@ -6,7 +6,7 @@ import logging
 import re
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import get_isolate_paths, get_sequence_paths
+from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 
 
 def run(otu_path: Path, src_path: Path, debugging: bool = False):

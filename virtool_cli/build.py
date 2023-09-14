@@ -5,7 +5,7 @@ import logging
 from structlog import BoundLogger
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import get_otu_paths, get_isolate_paths, get_sequence_paths, is_v1
+from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths, get_sequence_paths, is_v1
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -78,7 +78,7 @@ def build_from_src(src_path, output, indent, version):
     for otu_path in get_otu_paths(src_path):
         
         try:
-            otu = parse_otu(otu_path)
+            otu = parse_otu_contents(otu_path)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.critical('Reference data at src_path is invalid.')
             logger.exception(e)
@@ -128,14 +128,15 @@ def parse_alpha(alpha: Path) -> list:
     """
     return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
-def parse_otu(
+def parse_otu_contents(
     otu_path: Path, logger: BoundLogger = base_logger
 ) -> dict:
     """
     Traverses, deserializes and returns all data under an OTU directory.
 
     :param otu_path: Path to a OTU directory
-    :return: The dictionary and list of isolate ids for a given OTU
+    :return: All isolate and sequence data under an OTU,
+        deserialized and compiled in a dict
     """
     with open(otu_path / "otu.json", "r") as f:
         otu = json.load(f)

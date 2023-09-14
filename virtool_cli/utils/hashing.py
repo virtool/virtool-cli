@@ -2,7 +2,7 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Iterable, Optional, Tuple
 
-from virtool_cli.utils.ref import get_isolate_paths, get_sequence_paths
+from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 
 def generate_random_alphanumeric(
     length: int = 8,

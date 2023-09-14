@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
+import re
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.ref import (
-    get_otu_paths
-)
+from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths, get_sequence_paths
 
 def run(src_path: Path, debugging: bool = False):
     """
@@ -20,8 +19,9 @@ def run(src_path: Path, debugging: bool = False):
     check_taxonomy(src_path)
 
     
-def check_taxonomy(src_path):
+def check_taxonomy(src_path: Path):
     """
+
     """
     for otu_path in get_otu_paths(src_path):
         logger = base_logger.bind(
@@ -29,34 +29,38 @@ def check_taxonomy(src_path):
         )
         check_otu(otu_path, logger)
 
-        # for isolate_path in get_isolate_paths(otu_path):
-        #     for sequence_path in get_sequence_paths(isolate_path):
-        #         check_sequence(sequence_path, logger)
+        for isolate_path in get_isolate_paths(otu_path):
+            for sequence_path in get_sequence_paths(isolate_path):
+                check_sequence(sequence_path, logger)
 
-def check_otu(otu_path, logger):
+def check_otu(otu_path: Path, logger):
+    """
+    """
     with open(otu_path / 'otu.json', "r") as f:
         otu = json.load(f)
     
-    if 'schema' not in otu:
-        logger.warning('missing schema')
-    if not otu['schema']:
-        logger.warning('missing schema')
+    if not otu.get('schema', []):
+        logger.warning(f"{otu['_id']}: missing schema")
                 
-def check_sequence(sequence_path, logger = base_logger):
-    with open(sequence_path, "r") as f:
-        sequence = json.load(f)
-    
-    if '.' not in sequence['accession']:
-        logger.warning('Version not in accession')
+def check_sequence(sequence_path: Path, logger = base_logger):
+    """
 
-
-if __name__ == '__main__':
-    debug = True
+    """
+    logger = logger.bind(sequence_id=sequence_path.stem)
+    sequence = json.loads(sequence_path.read_text())
     
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    
-    project_path = Path(REPO_DIR) / 'ref-plant-viruses'
-    src_path = project_path / 'src'
-    catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
+    accession = sequence['accession']
 
-    run(src_path, debug)
+    if not verify_accession(accession):
+        logger.error(f"Accession '{accession}' contains invalid characters or capitalization")
+
+    if '.' not in accession:
+        logger.warning(f"Version not included in accession={accession}")
+
+def verify_accession(accession: str):
+    """
+    """
+    if re.search(r'([^A-Z_.0-9])', accession) is None:
+        return True
+    
+    return False
