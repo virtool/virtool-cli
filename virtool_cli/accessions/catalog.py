@@ -10,6 +10,8 @@ from virtool_cli.accessions.update import update
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
+    CLI entry point for accession.catalog.run()
+
     :param src: Path to a reference directory
     :param catalog: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
@@ -31,6 +33,9 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
 
 def get_catalog(src: Path, catalog: Path):
     """
+    Runs accession.catalog.update if a catalog directory is found, 
+    else runs accession.catalog.update
+
     :param src: Path to a reference directory
     :param catalog: Path to an accession catalog directory
     """
@@ -42,34 +47,12 @@ def get_catalog(src: Path, catalog: Path):
         logger.info(
             'Catalog is already populated.', catalogued=True)
         
-        update_catalog(src, catalog, logger)
+        logger.info("Updating listings...", task="update")
+        asyncio.run(update(src, catalog))
         
     else:
         logger.info(
             'Catalog is empty.', catalogued=False)
 
-        generate_catalog(src, catalog, logger)
-
-def generate_catalog(
-    src_path: Path, catalog_path: Path, 
-    logger: BoundLogger = base_logger
-):
-    """
-    :param src: Path to a reference directory
-    :param catalog: Path to an accession catalog directory
-    :param logger: Structlog logger
-    """
-    logger.info("Initializing listings...", task="initialize")
-    asyncio.run(initialize(src_path, catalog_path))
-
-def update_catalog(
-    src_path: Path, catalog_path: Path, 
-    logger: BoundLogger = base_logger
-):
-    """
-    :param src: Path to a reference directory
-    :param catalog: Path to an accession catalog directory
-    :param logger: Structlog logger
-    """
-    logger.info("Updating listings...", task="initialize")
-    asyncio.run(update(src_path, catalog_path))
+        logger.info("Initializing listings...", task="initialize")
+        asyncio.run(initialize(src, catalog))

@@ -13,7 +13,7 @@ def convert_to_dict(otu_list: list) -> dict:
     """
     Converts a list of OTUs to a dict keyed by Virtool ID
     
-    :param otu_list: A list of OTU data
+    :param otu_list: A list of deserialized OTU data
     :return: The contents of otu_list keyed by OTU id 
     """
     otu_dict = {}
@@ -25,7 +25,7 @@ def get_otu_accessions(otu_dict: dict) -> set:
     """
     Gets all accessions from an OTU directory and returns a list
 
-    :param otu_dict: OTU data
+    :param otu_dict: Deserialized OTU data
     :return: The accessions included under the OTU directory in a set
     """
     accessions = set()

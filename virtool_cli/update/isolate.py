@@ -12,7 +12,7 @@ import aiojobs
 from Bio import Entrez, SeqIO
 import structlog
 
-from virtool_cli.utils.reference import get_otu_paths, map_otus
+from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.utils.hashing import get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
@@ -408,6 +408,20 @@ async def get_sequences(path: Path) -> dict:
                 sequences[sequence.get("accession")] = sequence_id.name
 
     return sequences
+
+def map_otus(paths: list) -> dict:
+    """
+    Returns a mapping of every OTU path to their deserialized OTU dictionary.
+
+    :param paths: List of paths to all OTU in a reference
+    :return: A mapping of every OTU path to its OTU dictionary
+    """
+    path_taxid_map = {}
+
+    for path in paths:
+        path_taxid_map[path] = json.loads((path / "otu.json").read_text())
+
+    return path_taxid_map
 
 def run(src: str):
     """

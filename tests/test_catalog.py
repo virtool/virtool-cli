@@ -26,30 +26,30 @@ def command(src_path, catalog_path):
         "-cat", str(catalog_path),
     ]
 
-# @pytest.mark.parametrize("src_path", [TEST_FULLSRC_PATH])
-# def test_init_full(command, src_path, catalog_path):
-#     """
-#     Test that the generated catalog creates all the same filenames as
-#     the control catalog
-#     """
+@pytest.mark.parametrize("src_path", [TEST_FULLSRC_PATH])
+def test_init_full(command, src_path, catalog_path):
+    """
+    Test that the generated catalog creates all the same filenames as
+    the control catalog
+    """
 
-#     subprocess.call(command)
+    subprocess.call(command)
 
-#     temp_catalog = catalog_path
+    temp_catalog = catalog_path
 
-#     temp_set = { child.name for child in temp_catalog.iterdir() }
+    temp_set = { child.name for child in temp_catalog.iterdir() }
 
-#     LOGGER.info(f'generated: /n{temp_set}')
+    LOGGER.info(f'generated: /n{temp_set}')
 
-#     LOGGER.info(f'control: /n {CONTROL_SET}')
+    LOGGER.info(f'control: /n {CONTROL_SET}')
 
-#     assert temp_set == CONTROL_SET
+    assert temp_set == CONTROL_SET
 
-#     for otu_path in src_path.iterdir():
-#         if not otu_path.is_dir(): continue
+    for otu_path in src_path.iterdir():
+        if not otu_path.is_dir(): continue
         
-#         [ _, otu_id ] = otu_path.name.split('--')
-#         assert len([temp_catalog.glob(f'*--{otu_id}.json')]) > 0        
+        [ _, otu_id ] = otu_path.name.split('--')
+        assert len([temp_catalog.glob(f'*--{otu_id}.json')]) > 0
 
 @pytest.mark.parametrize("src_path", [TEST_PARTSRC_PATH])
 def test_init_partial(command, src_path, catalog_path):

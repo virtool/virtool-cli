@@ -1,6 +1,7 @@
 import json
 import re
 from pathlib import Path
+from typing import Optional
 
 
 def is_v1(src_path: Path) -> bool:
@@ -18,6 +19,15 @@ def is_v1(src_path: Path) -> bool:
     
     return False
 
+def get_subdir(path: Path) -> list:
+    """
+    Generates a list of all subdirectories under a path
+
+    :param path: Path to a src database directory
+    :return: List of paths to all OTU in a src directory
+    """
+    return [subdir for subdir in path.iterdir() if subdir.is_dir()]
+
 def get_otu_paths(src_path: Path) -> list:
     """
     Generates a list of paths to all OTUs in a src directory.
@@ -31,17 +41,33 @@ def get_isolate_paths(otu_path: Path) -> list:
     """
     Generates a list of paths to all isolates in an OTU directory.
 
-    :param src_path: Path to a src database directory
+    :param otu_path: Path to an OTU directory under a reference directory
     :return: List of paths to all OTU in a src directory
     """
     return [iso_path for iso_path in otu_path.iterdir() if iso_path.is_dir()]
+
+def get_otu_accessions(otu_path: Path) -> list:
+    """
+    Gets all accessions from an OTU directory and returns a list
+
+    :param otu_path: Path to an OTU directory under a reference directory
+    :return: A list of all accessions under an OTU
+    """
+    accessions = []
+    
+    for isolate_path in get_isolate_paths(otu_path):
+        for sequence_path in get_sequence_paths(isolate_path):
+            sequence = json.loads(sequence_path.read_text())
+            accessions.append(sequence['accession'])
+
+    return accessions
 
 def get_sequence_paths(isolate_path: Path) -> list:
     """
     Generates a list of paths to all sequences in an isolate directory.
 
-    :param src_path: Path to a src database directory
-    :return: List of paths to all OTU in a src directory
+    :param isolate_path: Path to an isolate directory under an OTU directory
+    :return: A list of paths to all sequence files in an isolate directory
     """
     sequence_ids = [
         i for i in isolate_path.glob('*.json') if i.stem != "isolate"
@@ -49,7 +75,33 @@ def get_sequence_paths(isolate_path: Path) -> list:
 
     return sequence_ids
 
-def generate_otu_dirname(name: str, id: str = ''):
+def search_otu_by_id(src_path: Path, id: str) -> Optional[Path]:
+    """
+    Searches filenames in the database by unique id and
+    returns the path if it finds a match
+
+    :param src_path: Path to a reference database directory
+    :param otu_id: ID hash of OTU
+    """
+    for path in src_path.glob(f'*--{id}'):
+        if path.is_dir():
+            return path
+    
+    return None
+
+def read_otu(path: Path) -> dict:
+    """
+    Returns a json file in dict form
+
+    :param path: Path to an OTU directory under a reference source
+    :return: Deserialized OTU data in dict form
+    """
+    with open(path / "otu.json", "r") as f:
+        otu = json.load(f)
+
+    return otu
+
+def generate_otu_dirname(name: str, id: str = '') -> str:
     """
     Takes in a human-readable string, replaces whitespace and symbols
     and adds the Virtool hash id as a suffix
@@ -68,80 +120,40 @@ def generate_otu_dirname(name: str, id: str = ''):
 
     return dirname
 
-def search_otu_by_id(src_path: Path, otu_id: str):
+def get_sequence_metadata(sequence_path: Path) -> dict:
     """
-    Searches filenames in the database by unique id and
-    returns the path if it finds a match
+    Gets the accession length and segment name from a sequence file
+    and returns it in a dict
 
-    :param src_path: Path to a reference database directory
-    :param src_path: Path to an OTU directory under a reference source
+    :param sequence_path: Path to a sequence file
+    :return: A dict containing the sequence accession, sequence length and segment name if present
     """
-    for path in src_path.glob(f'*--{otu_id}'):
-        if path.is_dir():
-            return path
-    
-    return FileNotFoundError
+    sequence = json.loads(sequence_path.read_text())
 
-    # matches = [otu for otu in src_path.glob(f'*--{otu_id}') if otu.is_dir()]
-    # if matches:
-    #     return matches[0]
-    # else:
-    #     return FileNotFoundError
+    sequence_metadata = {
+        'accession': sequence['accession'],
+        'length': len(sequence['sequence'])
+    }
 
-def read_otu(path: Path) -> dict:
+    segment = sequence.get('segment', None)
+    if segment is not None:
+        sequence_metadata['segment'] = segment
+
+    return sequence_metadata
+
+def get_otu_accessions_metadata(otu_path) -> dict:
     """
-    Returns a json file in dict form
+    Returns sequence metadata for all sequences present under an OTU
 
-    :param path: Path to an OTU directory under a reference source
-    :return: Deserialized OTU data in dict form
+    :param otu_path: Path to an OTU directory under a reference directory
+    :return: An accession-keyed dict containing all constituent sequence metadata
     """
-    with open(path / "otu.json", "r") as f:
-        otu = json.load(f)
-
-    return otu
-
-def read_isolates(otu_path: Path) -> dict:
-    """
-    Returns a dictionary of all isolate data under an OTU,
-    keyed by isolate hash ID
-
-    :param paths: Path to an OTU in a reference
-    :return: Isolate data in dict form
-    """
-    isolates = {}
-    for iso_path in get_isolate_paths(otu_path):
-        with open(iso_path / "isolate.json", "r") as f:
-            isolate = json.load(f)
-        isolates[iso_path.name] = isolate
-
-    return isolates
-
-def map_otus(paths: list) -> dict:
-    """
-    Returns a mapping of every OTU path to their deserialized OTU dictionary.
-
-    :param paths: List of paths to all OTU in a reference
-    :return: A mapping of every OTU path to its OTU dictionary
-    """
-    path_taxid_map = {}
-
-    for path in paths:
-        path_taxid_map[path] = read_otu(path)
-
-    return path_taxid_map
-
-def get_otu_accessions(otu_path: Path) -> list:
-    """
-    Gets all accessions from an OTU directory and returns a list
-
-    :param otu_path: Path to an OTU directory
-    :return: A list of all accessions under an OTU
-    """
-    accessions = []
-    
-    for isolate_path in get_otu_paths(otu_path):
+    # get length and segment metadata from sequences
+    all_metadata = {}
+    for isolate_path in get_isolate_paths(otu_path):
         for sequence_path in get_sequence_paths(isolate_path):
-            sequence = json.loads(sequence_path.read_text())
-            accessions.append(sequence['accession'])
-
-    return accessions
+            sequence_metadata = get_sequence_metadata(sequence_path)
+            accession = sequence_metadata['accession']
+            all_metadata[accession] = sequence_metadata
+    
+    return all_metadata

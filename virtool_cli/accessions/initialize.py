@@ -1,22 +1,25 @@
+# import json
 from pathlib import Path
-import json
 import asyncio
-import structlog
+# from structlog import BoundLogger
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.reference import read_otu, get_otu_paths, get_isolate_paths, get_sequence_paths
-from virtool_cli.utils.ncbi import fetch_taxid
-from virtool_cli.accessions.helpers import (
-    get_sequence_metadata, get_required_parts, 
-    measure_monopartite, measure_multipartite
+from virtool_cli.utils.reference import (
+    get_otu_paths, read_otu, 
+    get_otu_accessions, get_otu_accessions_metadata
+)
+from virtool_cli.accessions.listings import (
+    generate_listing, write_listing
 )
 
 def run(src: Path, catalog: Path, debugging: bool = False):
     """
+    CLI entry point for accession.initialize.run()
+
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
-    :param debugging: Debugging flag
+    :param catalog_path: Path to an accession catalog directory
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -77,19 +80,15 @@ async def fetcher_loop(src: Path, queue: asyncio.Queue):
             otu_id=otu_id,
         )
         
-        accessions = []
-        sequences = {}
-        for isolate_path in get_isolate_paths(otu_path):
-            for sequence_path in get_sequence_paths(isolate_path):
-                sequence_metadata = get_sequence_metadata(sequence_path)
-                accession = sequence_metadata['accession']
-                accessions.append(accession)
-                sequences[accession] = sequence_metadata
-        
-        logger.debug(f'Sequence metadata: {sequence_metadata}')
+        sequences = get_otu_accessions_metadata(otu_path)
+        accessions = list(sequences.keys())
         
         listing = await generate_listing(
-            otu_data, accessions, sequences, logger)
+            otu_data=otu_data, 
+            accession_list=accessions, 
+            sequence_metadata=sequences, 
+            logger=logger
+        )
 
         await queue.put({ 'otu_id': otu_id, 'listing': listing } )
 
@@ -101,111 +100,17 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
     :param queue: Queue of parsed OTU data awaiting processing
     """
     while True:
-
         packet = await queue.get()
 
         otu_id = packet['otu_id']
         listing = packet['listing']
         taxid = listing['taxid']
 
-        await write_listing(taxid, listing, catalog)
+        await write_listing(
+            taxid=taxid, 
+            listing=listing, 
+            catalog_path=catalog,
+            logger=base_logger)
 
         await asyncio.sleep(0.1)
         queue.task_done()
-
-async def generate_listing(
-    otu_data: dict, 
-    accession_list: list, 
-    sequence_metadata: dict = {},
-    logger: structlog.BoundLogger = base_logger
-) -> dict:
-    """
-    Generates a new listing for a given OTU and returns it as a dict
-
-    :param otu_data: OTU data in dict form
-    :param accession_list: list of included accesssions
-    :param sequence_metadata: dict of sequence metadata, including average length
-    :param logger: Optional entry point for an existing BoundLogger
-    """
-    catalog_listing = {}
-    
-    otu_id = otu_data.get('_id')
-    taxid = otu_data.get('taxid', None)
-
-    catalog_listing['_id'] = otu_id
-
-    # Attempts to fetch the taxon id if none is found in the OTU metadata
-    if taxid is None:
-        logger.info('Taxon ID not found. Attempting to fetch from NCBI Taxonomy...')
-        
-        try:
-            taxid = await fetch_taxid(otu_data.get('name', None))
-        except Exception as e:
-            logger.exception(e)
-
-        if taxid is None:
-            catalog_listing['taxid'] = 'none'
-            logger.debug(f'Matching ID not found in NCBI Taxonomy. Setting taxid={taxid}')    
-        else:
-            catalog_listing['taxid'] = int(taxid)
-            logger.debug(f'Matching ID found in NCBI Taxonomy. Setting taxid={taxid}')
-
-    else:
-        catalog_listing['taxid'] = int(taxid)
-
-    catalog_listing['name'] = otu_data['name']
-
-    catalog_listing['accessions'] = { 'included': accession_list }
-
-    schema = otu_data.get('schema', [])
-    logger.debug(f'{schema}')
-    
-    if schema:
-        if len(schema) > 1:
-            required_parts = get_required_parts(schema)
-            try:
-                length_dict = measure_multipartite(sequence_metadata, required_parts)
-            except Exception as e:
-                logger.exception(e)
-            
-            for part in schema:
-                if part['name'] in length_dict.keys():
-                    part['length'] = length_dict[part['name']]
-
-        else:
-            try:
-                average_length = measure_monopartite(sequence_metadata)
-                logger.debug(f'Average length is {average_length}')
-                schema[0]['length'] = average_length
-            except Exception as e:
-                logger.exception(e)
-    
-    catalog_listing['schema'] = schema
-    
-    return catalog_listing
-
-async def write_listing(
-        taxid: int, 
-        listing: dict, 
-        catalog_path: Path,
-        indent: bool = True):
-    """
-    Write accession file to cache directory
-
-    :param taxid: OTU taxon id
-    :param accessions: List of OTU's accessions
-    :param catalog: Path to an accession catalog
-    :param indent: Indent flag
-    """
-
-    output_path = catalog_path / f"{taxid}--{listing['_id']}.json"
-    logger = base_logger.bind(
-        taxid=taxid, 
-        listing_path=str(output_path.relative_to(output_path.parent)))
-
-    logger.debug('Writing accession listing...')
-
-    listing['accessions']['excluded'] = {}
-
-    with open(output_path, "w") as f:
-        json.dump(listing, f, indent=2 if indent else None, sort_keys=True)

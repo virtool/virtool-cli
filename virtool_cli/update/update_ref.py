@@ -18,10 +18,13 @@ def run(
     debugging: bool = False
 ):
     """
-    Searches and requests all OTUs in a source reference.
+    CLI entry point for update.update_ref.run()
+
+    Requests updates for all OTU directories under a source reference
 
     :param src: Path to a reference directory
     :param catalog: Path to a catalog directory
+    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
@@ -36,6 +39,11 @@ def run(
             'reference folder "src" is a deprecated v1 reference.' + \
             'Run "virtool ref migrate" before trying again.')
         return
+    
+    if auto_evaluate:
+        logger.warning(
+            'Auto-evaluation is in active development and may produce false negatives.'
+        )
 
     logger.info('Updating src directory accessions using catalog listings...')
 
@@ -68,6 +76,7 @@ async def update_reference(
 
     :param src_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
+    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
 
     # Filter out cached listings that are not present in this src directory
@@ -149,7 +158,7 @@ async def fetcher_loop(
 async def processor_loop(
     upstream_queue: asyncio.Queue, 
     downstream_queue: asyncio.Queue,
-    auto_evaluate: bool = True
+    auto_evaluate: bool = False
 ):
     """
     Awaits fetched sequence data from the fetcher:
@@ -159,6 +168,7 @@ async def processor_loop(
 
     :param upstream_queue: Queue holding NCBI GenBank data pushed by the fetcher,
     :param downstream_queue: Queue holding formatted sequence and isolate data processed by this loop
+    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
     base_logger.debug("Starting processor...")
 

@@ -17,7 +17,6 @@ async def fetch_upstream_accessions(
     """
     Requests a list of all uninspected accessions associated with an OTU's taxon ID
     
-    :param taxid: NCBI Taxonomy UID
     :param listing: Corresponding catalog listing for this OTU
     :return: A list of accessions from NCBI Genbank for the taxon ID, 
         sans included and excluded accessions
@@ -58,7 +57,6 @@ async def fetch_upstream_records(
     
     :param fetch_list: List of accession numbers to fetch from GenBank
     :param logger: Structured logger
-
     :return: A list of GenBank data converted from XML to dicts if possible, 
         else an empty list
     """

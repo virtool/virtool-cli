@@ -1,11 +1,12 @@
 import json
-import aiofiles
 from pathlib import Path
 from typing import Optional
 from structlog import BoundLogger
 
-from virtool_cli.utils.reference import get_otu_paths, get_sequence_paths
-from virtool_cli.utils.ncbi import fetch_taxonomy_rank, fetch_upstream_record_taxids
+from virtool_cli.utils.reference import get_otu_paths
+from virtool_cli.utils.ncbi import (
+    fetch_taxonomy_rank, fetch_upstream_record_taxids
+)
 
 
 def get_catalog_paths(catalog) -> list:
@@ -15,7 +16,7 @@ def get_catalog_paths(catalog) -> list:
     :param catalog_path: Path to an accession catalog directory
     :return: A list of paths representing the contents of the accession catalog.
     """
-    return list(catalog.glob('*.json'))
+    return list(catalog.glob('*--*.json'))
 
 def filter_catalog(src_path, catalog_path) -> list:
     """
@@ -29,34 +30,14 @@ def filter_catalog(src_path, catalog_path) -> list:
     included_listings = []
     for path in get_otu_paths(src_path):
         [ _, otu_id ] = (path.name).split('--')
-
-        included_listings.append(
-            search_by_otu_id(otu_id, catalog_path)
-        )
+        
+        listing_path = search_by_otu_id(otu_id, catalog_path)
+        if listing_path is not None:
+            included_listings.append(listing_path)
     
     return included_listings
 
-def parse_listing(path: Path):
-    """
-    Parse and return an accession listing.
-
-    :param path: Path to a listing in an accession catalog
-    """
-    with open(path, "r") as f:
-        listing = json.load(f)
-    return listing
-
-def split_pathname(path: Path):
-    """
-    Split a filename formatted as 'taxid--otu_id.json' into (taxid, otu_id)
-
-    :param path: Path to a listing in an accession catalog
-    """
-    [ taxid, otu_id ] = (path.stem).split('--')
-
-    return taxid, otu_id
-
-def search_by_otu_id(otu_id: str, catalog_path: Path):
+def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
     """
     Searches records for a matching id and returns the first matching path in the accession records
 
@@ -67,7 +48,7 @@ def search_by_otu_id(otu_id: str, catalog_path: Path):
     if matches:
         return matches[0]
     else:
-        return FileNotFoundError
+        return None
 
 def search_by_taxid(taxid, catalog_path: Path) -> list:
     """
@@ -76,7 +57,6 @@ def search_by_taxid(taxid, catalog_path: Path) -> list:
     :param otu_id: Unique taxon ID
     :param catalog_path: Path to an accession catalog directory
     """
-    
     matches = [str(listing.relative_to(catalog_path)) 
         for listing in catalog_path.glob(f'{taxid}--*.json')]
     
@@ -85,70 +65,30 @@ def search_by_taxid(taxid, catalog_path: Path) -> list:
     else:
         return []
 
-def get_otu_accessions(otu_path: Path) -> list:
+def fix_listing_path(path: Path, taxon_id: int, otu_id: str) -> Path:
     """
-    Gets all accessions from an OTU directory and returns a list
+    Renames a listing file and returns the new path
 
-    :param otu_path: Path to an OTU directory
+    :param path: Path to a listing
+    :param taxon_id: The correct taxon ID
+    :param otu_id: The correct otu ID
+    :return: New path to a listing file
     """
-    accessions = []
+    new_path = path.with_name(f'{taxon_id}--{otu_id}.json')
     
-    for isolate_path in get_otu_paths(otu_path):
-        for sequence_path in get_sequence_paths(isolate_path):
-            with open(sequence_path, "r") as f:
-                sequence = json.load(f)
-            accessions.append(sequence['accession'])
-
-    return accessions
-
-def get_sequence_metadata(sequence_path: Path) -> list:
-    """
-    Gets accessions and sequence lengths from an OTU directory and returns a list
-
-    :param otu_path: Path to an OTU directory
-    """
-    with open(sequence_path, "r") as f:
-        sequence = json.load(f)
-
-    sequence_metadata = {
-        'accession': sequence['accession'],
-        'length': len(sequence['sequence'])
-    }
-    if segment := sequence.get('segment', None):
-        if segment is not None:
-            sequence_metadata['segment'] = segment
-
-    return sequence_metadata
-
-def fix_listing_path(path: Path, taxon_id: int, otu_id: str) -> Optional[str]:
-    """
-    Fixes each accession listing with the correct taxon ID as a label
-
-    :param path: Path to a given reference directory
-    :param otu: A deserialized otu.json
-    """
-    new_listing_name = f'{taxon_id}--{otu_id}.json'
-
-    if path.name != new_listing_name:
-        new_path = path.with_name(new_listing_name)
-        path.rename(new_path)
-        return new_path
-
-async def update_listing(data, path):
-    """
-    """
-    try:
-        async with aiofiles.open(path, "w") as f: 
-            await f.write(json.dumps(data, indent=2, sort_keys=True))
-    except Exception as e:
-        return e
+    path.rename(new_path)
     
-async def find_taxid_from_accession(
+    return new_path
+    
+async def find_taxid_from_accessions(
     listing_path: Path, logger: BoundLogger
-):
+) -> str:
     """
     Checks each accession on the accession listing and requests metadata
     for each associated taxonomy ID.
+
+    :param listing_path: Path to a listing in an accession catalog directory
+
     """
     with open(listing_path, "r") as f:
         listing = json.load(f)
@@ -177,47 +117,3 @@ async def find_taxid_from_accession(
     else:
         taxid = otu_taxids.pop()
         return taxid
-    
-def get_required_parts(schema: list):
-    required_parts = []
-    for part in schema:
-        if part['required']:
-            required_parts.append(part['name'])
-    
-    return required_parts
-
-def measure_monopartite(sequence_metadata: dict):
-    sequence_lengths = []
-    print(sequence_metadata)
-    for accession in sequence_metadata:
-        metadata = sequence_metadata[accession]
-        seq_length = metadata['length']
-        sequence_lengths.append(seq_length)
-    
-    average_length = sum(sequence_lengths)/len(sequence_lengths)
-
-    return int(average_length)
-
-def measure_multipartite(sequence_metadata, part_list):
-    part_total_dict = { element: [] for index, element in enumerate(part_list) }
-            
-    for accession in sequence_metadata:
-        metadata = sequence_metadata[accession]
-        seq_length = metadata['length']
-        
-        segment_name = metadata.get('segment', None)
-        if segment_name is None:
-            continue
-        if segment_name in part_total_dict.keys():
-            part_total_dict[segment_name].append(seq_length)
-    
-    length_dict = {}
-    for segment in part_total_dict:
-        if not part_total_dict[segment]:
-            length_dict[segment] = 0
-            continue
-        average_length = sum(part_total_dict[segment]) / len(part_total_dict[segment])
-        length_dict[segment] = int(average_length)
-
-    # return int(average_length)
-    return length_dict

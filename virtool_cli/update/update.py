@@ -19,29 +19,52 @@ DEFAULT_INTERVAL = 0.001
 
 
 def run(
-    otu_path: Path, catalog: Path, debugging: bool = False
+    otu_path: Path, catalog: Path, 
+    auto_evaluate: bool = False, 
+    debugging: bool = False
 ):
     """
+    CLI entry point for update.update.run()
+    
+    Requests updates for a single OTU directory
+    Searches the catalog for a matching catalog listing and requests new updates if it finds one.
+
     :param otu_path: Path to a OTU directory
+    :param catalog: Path to a catalog directory
+    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
         format="%(message)s",
         level=filter_class,
     )
+
+    if auto_evaluate:
+        base_logger.warning(
+            'Auto-evaluation is in active development and may produce false negatives.'
+        )
     
     [ _, otu_id ] = otu_path.name.split('--')
     listing_path = search_by_otu_id(otu_id, catalog)
+    
+    if listing_path:
+        asyncio.run(update_otu(otu_path, listing_path, auto_evaluate))
 
-    asyncio.run(update_otu(otu_path, listing_path))
+    else:
+        base_logger.critical('Listing not found for this OTU.')
+        base_logger.info('Use virtool acc init to create a new accession catalog.')
 
-async def update_otu(otu_path: Path, listing_path: Path):
+async def update_otu(
+    otu_path: Path, listing_path: Path, 
+    auto_evaluate: bool = False
+):
     """
     Requests new records for a single taxon ID
     and writes new data under the corresponding path.
 
     :param otu_path: Path to a OTU directory
-    :param listing_path: Path to an individual listing in an accession catalog directory
+    :param listing_path: Path to a listing in an accession catalog directory
     """
     src_path = otu_path.parent
     listing = json.loads(listing_path.read_text())
@@ -57,10 +80,11 @@ async def update_otu(otu_path: Path, listing_path: Path):
     
     otu_updates = await process_records(
         records=record_data, listing=listing, 
-        auto_evaluate=True, logger=logger)
+        auto_evaluate=auto_evaluate, logger=logger)
     if not otu_updates:
         return
     
+    # List all isolate and sequence IDs presently in src
     unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
     
     await write_records(
@@ -74,6 +98,8 @@ async def request_new_records(
     logger: BoundLogger = base_logger
 ) -> list:
     """
+    :param listing_path: Path to a listing in an accession catalog directory
+    :param logger: Optional entry point for a shared BoundLogger
     """
     try:
         new_accessions = await fetch_upstream_accessions(
@@ -105,43 +131,33 @@ async def process_records(
         1) Evaluates whether those records should be added to the database,
         2) Formats the records into a smaller dictionary
         3) Returns new formatted dicts in a list
+    
+    WARNING: Auto-evaluation is still under active development, especially multipartite filtering
+    
+    :param listing_path: Path to a listing in an accession catalog directory
+    :param auto_evaluate: Boolean flag for whether automatic evaluation functions
+        should be run
+    :param logger: Optional entry point for a shared BoundLogger
     """
     filter_set = set(listing['accessions']['included'])
     filter_set.update(listing['accessions']['excluded'])
 
     if auto_evaluate:
-        
         if not listing.get('schema', []):
             logger.warning('Missing schema. moving on...')
             return False
         
-        required_parts = {}
         if len(listing['schema']) < 1:
-            for part in listing['schema']:
-                if part['required']:
-                    part_length = part.get('length', -1)
-                    if part_length < 0:
-                        logger.warning(
-                            f"{part['name']} lacks a length listing.")
-                        
-                    required_parts[part['name']] = part_length
+            required_parts = get_lengthdict_monopartite(listing['schema'], logger)
                     
         else:
-            part = listing['schema'][0]
-            if (part_name := part.get('name', None)) is None:
-                part_name = 'unlabelled'
-            
-            part_length = part.get('length', -1)
-            if part_length < 0:
-                logger.warning(
-                    f"{part['name']} lacks a length listing.")
-            
-            required_parts[part_name] = part_length
+            required_parts = get_lengthdict_monopartite(listing['schema'], logger)
 
         logger = logger.bind(required_parts=required_parts)
     
     auto_excluded = []
     otu_updates = []
+
     for seq_data in records:
         [ accession, _ ] = (seq_data.id).split('.')
         seq_qualifier_data = get_qualifiers(seq_data.features)
@@ -162,7 +178,6 @@ async def process_records(
                 required_parts=required_parts, 
                 logger=logger
             )
-        
             if not inclusion_passed:
                 logger.debug(f'GenBank #{accession} did not pass the curation test...', 
                     accession=accession, including=False
@@ -199,11 +214,15 @@ async def process_records(
 
 async def write_records(
     otu_path: Path, 
-    new_sequences,
-    unique_iso, unique_seq, 
-    logger = base_logger
+    new_sequences: dict,
+    unique_iso: set, unique_seq: set, 
+    logger: BoundLogger = base_logger
 ):
     """
+    :param unique_iso: Set of all unique isolate IDs present in the reference
+    :param unique_seq: Set of all unique sequence IDs present in the reference
+    :param otu_path: A path to an OTU directory under a src reference directory
+    :param logger: Optional entry point for a shared BoundLogger
     """
     ref_isolates = await label_isolates(otu_path)
 
@@ -281,15 +300,15 @@ async def label_isolates(otu_path: Path) -> dict:
     
     return isolates
 
-def find_isolate(isolate_data: dict) -> Optional[str]:
+def find_isolate(record_features: dict) -> Optional[str]:
     """
     Determine the source type in a Genbank record
 
-    :param isolate_data: Dictionary containing qualifiers in a features section of a Genbank record
-    :return:
+    :param record_features: Dictionary containing qualifiers in a features section of a Genbank record
+    :return: "isolate" or "strain" if listed as such in the qualifiers, else None
     """
     for qualifier in ["isolate", "strain"]:
-        if qualifier in isolate_data:
+        if qualifier in record_features:
             return qualifier
 
     return None
@@ -299,13 +318,14 @@ async def store_isolate(
     iso_hash: str, otu_path: Path
 ) -> str:
     """
-    Creates a new isolate folder for an OTU
+    Creates a new isolate directory and metadata file under an OTU directory,
+    then returns the metadata in dict form
 
     :param source_name: Assigned source name for an accession
     :param source_type: Assigned source type for an accession
     :param iso_hash: Unique ID number for this new isolate
     :param otu_path: Path to the parent OTU
-    :return: The unique isolate id (aka iso_hash)
+    :return: The unique isolate id
     """
     iso_path = otu_path / iso_hash
     iso_path.mkdir()
@@ -342,3 +362,35 @@ async def store_sequence(
         )
 
     return seq_hash
+
+def get_lengthdict_multipartite(schema: list, logger: BoundLogger = base_logger):
+    """
+    """
+    required_parts = {}
+
+    for part in schema:
+        
+        if part['required']:
+            part_length = part.get('length', -1)
+            if part_length < 0:
+                logger.warning(
+                    f"{part['name']} lacks a length listing.")
+                
+            required_parts[part['name']] = part_length
+    
+    return required_parts
+
+def get_lengthdict_monopartite(schema: list, logger: BoundLogger = base_logger):
+    """
+    """
+    part = schema[0]
+
+    if (part_name := part.get('name', None)) is None:
+        part_name = 'unlabelled'
+    
+    part_length = part.get('length', -1)
+    if part_length < 0:
+        logger.warning(
+            f"{part['name']} lacks a length listing.")
+    
+    return { part_name: part_length }

@@ -13,10 +13,10 @@ LISTING_KEYS = set(["_id", "accessions", "name", "schema", "taxid"])
 
 def run(catalog: Path, debugging: bool = False):
     """
-    Entry point for CLI. Sets logging levels.
+    CLI entry point for accession.checkup.run()
 
     :param catalog: Path to an accession catalog directory
-    :param debugging: Debugging flag
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -125,7 +125,8 @@ def find_shared_taxids(
     logger: BoundLogger = base_logger
 ) -> list:
     """
-    Find OTUs that share a taxon ID and return them in a list
+    Go through a catalog path and find listings that share a taxon ID 
+    and return those taxon IDs as a list
 
     :param catalog: Path to a catalog directory
     :param logger: Optional entry point for a shared BoundLogger
@@ -134,7 +135,7 @@ def find_shared_taxids(
     duplicated_taxids = set()
 
     for listing_path in catalog_path.glob('*--*.json'):
-        [ taxid, otu_id ] = listing_path.stem('--')
+        [ taxid, otu_id ] = (listing_path.stem).split('--')
 
         logger = logger.bind(
             path=str(listing_path.relative_to(catalog_path.parent)), 

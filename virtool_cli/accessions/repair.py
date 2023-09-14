@@ -9,12 +9,15 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions.helpers import fix_listing_path, find_taxid_from_accession, update_listing
+from virtool_cli.accessions.listings import update_listing
+from virtool_cli.accessions.helpers import fix_listing_path, find_taxid_from_accessions
 
 def run(catalog: Path, debugging: bool = False):
     """
+    CLI entry point for accession.repair.run()
+
     :param catalog: Path to an accession catalog directory
-    :param debugging: Debugging flag
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -51,7 +54,7 @@ async def fetch_missing_taxids(
     for listing_path in catalog.glob('none--*.json'):
         logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
 
-        extracted_taxid = await find_taxid_from_accession(listing_path, logger)
+        extracted_taxid = await find_taxid_from_accessions(listing_path, logger)
 
         if extracted_taxid is not None:
             logger.debug(f'Found taxon ID {extracted_taxid}')
@@ -75,7 +78,7 @@ async def rename_listings(
     Renames listings where the taxon ID or OTU ID in the listing data 
     no longer matches the listing's filename.
     
-    :param listing: Catalog listing data in dictionary form
+    :param catalog: Catalog listing data in dictionary form
     :param logger: Optional entry point for a shared BoundLogger
     """
     for listing_path in catalog.glob('*.json'):
@@ -85,19 +88,16 @@ async def rename_listings(
 
         [ taxid, otu_id ] = listing_path.stem.split('--')
 
-        with open(listing_path, "r") as f:
-            listing = json.load(f)
+        listing = json.loads(listing_path.read_text())
 
-        if taxid != str(listing['taxid']):
-            logger.warning(
-                f"Misnamed listing found: {taxid} != { listing['taxid'] }")
-            fix_listing_path(listing_path, listing['taxid'], otu_id)
-            taxid = listing['taxid']
-        
-        if otu_id != listing['_id']:
-            logger.warning(
-                f"Misnamed listing found: {otu_id} != { listing['_id'] }")
-            fix_listing_path(listing_path, taxid, listing['_id'])
+        if taxid != str(listing['taxid']) or otu_id != listing['_id']:
+            old_name = listing_path.name
+            
+            new_path = fix_listing_path(listing_path, listing['taxid'], listing['_id'])
+
+            logger.info(f"Renamed {old_name} to {new_path.name}", listing=new_path.name)
+            
+
 
 async def fetch_upstream_record_taxids(
     fetch_list: list, 

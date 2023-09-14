@@ -11,9 +11,11 @@ from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 
 def run(otu_path: Path, src_path: Path, debugging: bool = False):
     """
-    Fixes incorrect reference data
+    CLI entry point for doctor.fix_otu.run()
 
+    :param otu_path: Path to a OTU directory under a reference directory
     :param src_path: Path to a given reference directory
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -24,71 +26,96 @@ def run(otu_path: Path, src_path: Path, debugging: bool = False):
     logger = base_logger.bind(otu_path=otu_path.name)
     logger.info('Inspecting OTU for repairs...', src=str(src_path))
 
-    repair_otu_data(otu_path, logger)
-
-def repair_otu_data(otu_path, logger: BoundLogger = base_logger):
-    """
-    """
     repair_otu(otu_path, logger)
-
-    for isolate_path in get_isolate_paths(otu_path):
-        for sequence_path in get_sequence_paths(isolate_path):
-            logger = logger.bind(sequence_path=str(sequence_path.relative_to(otu_path)))
-            logger.debug(f"Inspecting sequence '{sequence_path.stem}'...")
-            
-            repair_sequence(sequence_path=sequence_path, logger=logger)
 
 def repair_otu(otu_path, logger: BoundLogger = base_logger):
     """
+    Inspects an OTU and its contents for repairable issues and corrects them if found
+
+    :param otu_path: Path to a OTU directory under a reference directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
     with open(otu_path / 'otu.json', "r") as f:
         otu = json.load(f)
 
+    checked_otu = repair_otu_data(otu)
+    if otu != checked_otu:
+        with open(otu_path / 'otu.json', 'w') as f:
+            json.dumps(otu, f, indent=4, sort_keys=True)
+
+    for isolate_path in get_isolate_paths(otu_path):
+
+        for sequence_path in get_sequence_paths(isolate_path):
+
+            logger = logger.bind(sequence_path=str(sequence_path.relative_to(otu_path)))
+            
+            logger.debug(f"Inspecting sequence '{sequence_path.stem}'...")
+            
+            repair_sequence(sequence_path=sequence_path, logger=logger)
+
+def repair_otu_data(otu_path, logger: BoundLogger = base_logger):
+    """
+    Deserializes an OTU's otu.json and updates the dictionary if issues are found
+    and returns the dictionary
+
+    :param otu_path: Path to a OTU directory under a reference directory
+    :param logger: Optional entry point for an existing BoundLogger
+    """
+    with open(otu_path / 'otu.json', "r") as f:
+        otu = json.load(f)
+    
+    verified_otu = otu.copy()
+
     if type(otu.get('taxid')) != int:
-        otu['taxid'] = None
+        verified_otu['taxid'] = None
     
     if 'schema' not in otu:
-        otu['schema'] = []
+        verified_otu['schema'] = []
         
-    return otu
+    if otu != verified_otu:
+        logger.debug('Changes made, writing changes to otu.json...')
+        with open(otu_path / 'otu.json', 'w') as f:
+            json.dumps(verified_otu, f, indent=4, sort_keys=True)
 
 def repair_sequence(
     sequence_path, sequence: dict = {},
     logger = base_logger
 ):
     """
+    :param logger: Optional entry point for an existing BoundLogger
     """
     if not sequence:
-        with open(sequence_path, "r") as f:
-            sequence = json.load(f)
-        
-    # logger = logger.bind(accession=f{sequence['accession']}")
+        sequence = json.loads(sequence_path.read_text())
 
     # Automatically repair misspelled accessions where possible
-    verified_accession = verify_accession(sequence['accession'])
+    verified_accession = correct_accession(sequence['accession'])
     if '.' not in verified_accession:
         # assume this is version 1 of the accession
         verified_accession += '.1'
     
     if sequence['accession'] != verified_accession:
+        logger.debug(f'Changes made, writing changes to {sequence_path.name}...')
+
         sequence['accession'] = verified_accession
         with open(sequence_path, "w") as f:
             json.dump(sequence, f, indent=4)
 
-def verify_accession(original):
+def correct_accession(accession: str) -> str:
     """
+    :param accession: The accession to be corrected
     """
     # Automatically repair misspelled accessions where possible
-    if re.search(r'([^A-Z_.0-9])', original) is None:
-        return original
+    if re.search(r'([^A-Z_.0-9])', accession) is None:
+        return accession
     
-    formatted_accession = format_accession(original)
+    corrected_accession = format_accession(accession)
 
-    return formatted_accession
+    return corrected_accession
 
 
-def format_accession(original):
+def format_accession(original: str) -> str:
     """
+    :param accession: The accession to be formatted
     """
     formatted_accession = original
     formatted_accession = formatted_accession.strip()
@@ -101,7 +128,7 @@ def fix_taxid(otu: dict) -> Optional[dict]:
     """
     Ensures that each taxid inside every OTU's otu.json is of type int
 
-    :param otu: A deserialized otu.json
+    :param otu: A deserialized otu.json OTU
     :return: The modified otu parameter if it needs to be updated, else None
     """
     try:

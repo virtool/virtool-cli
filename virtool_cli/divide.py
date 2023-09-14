@@ -94,7 +94,7 @@ def build_isolate(otu_path: Path, isolate: dict) -> str:
     Creates a directory for a given isolate and generates
     a isolate.json with key information about it.
 
-    :param otu_path: A path to a specified OTU
+    :param otu_path: A path to an OTU directory under a src reference directory
     :param isolate: A dictionary containing isolate information
     :return: A path to a newly generated isolate directory
     """
@@ -112,7 +112,7 @@ def build_sequence(isolate_path: Path, sequence: dict):
     """
     Generates a JSON file for a sequence under an isolate directory
 
-    :param isolate_path: A path to a specified isolate
+    :param isolate_path: A path to a specified isolate directory under an OTU directory
     :param sequence: A dictionary containing sequence information
     """
     with open(isolate_path / f"{sequence.get('_id')}.json", "w") as f:

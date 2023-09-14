@@ -12,7 +12,7 @@ def evaluate_sequence(
     """
 
     record_segment_list = seq_qualifier_data.get("segment", None)
-    logger.debug(record_segment_list)
+    logger.debug(f'segments={record_segment_list}')
 
     segment_name = ''
     if len(required_parts) > 1:

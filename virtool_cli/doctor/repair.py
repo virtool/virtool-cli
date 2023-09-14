@@ -6,11 +6,8 @@ import logging
 import re
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.utils.reference import (
-    get_otu_paths, get_isolate_paths, get_sequence_paths,
-    generate_otu_dirname, 
-    map_otus
-)
+from virtool_cli.utils.reference import get_otu_paths, generate_otu_dirname
+
 
 def run(src_path: Path, debugging: bool = False):
     """
@@ -115,3 +112,17 @@ def write_otus(otus: dict):
     for path in otus.keys():
         with open(path / "otu.json", "w") as f:
             json.dump(otus.get(path), f, indent=4)
+
+def map_otus(paths: list) -> dict:
+    """
+    Returns a mapping of every OTU path to their deserialized OTU dictionary.
+
+    :param paths: List of paths to all OTU in a reference
+    :return: A mapping of every OTU path to its OTU dictionary
+    """
+    path_taxid_map = {}
+
+    for path in paths:
+        path_taxid_map[path] = json.loads((path / "otu.json").read_text())
+
+    return path_taxid_map

@@ -9,12 +9,13 @@ from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
 
+
 def run(catalog: Path, debugging: bool = False):
     """
-    Automatically excludes the former accession numbers of RefSeq sequences
-    
+    CLI entry point for accession.exclude.run()
+
     :param catalog: Path to an accession catalog directory
-    :param debugging: Debugging flag
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -28,6 +29,7 @@ def run(catalog: Path, debugging: bool = False):
 
 async def filter_refseq_accessions(catalog: Path):
     """
+    Automatically excludes the former accession numbers of RefSeq sequences
     Runs RefSeq filter and exclusion on all listings in an accession catalog
 
     :param catalog_path: Path to a catalog directory

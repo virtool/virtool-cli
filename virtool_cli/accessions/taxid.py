@@ -1,20 +1,21 @@
 from pathlib import Path
 import json
-from Bio import Entrez, SeqIO
 import asyncio
-import aiofiles
-from structlog import BoundLogger
 import logging
-from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.helpers import (
-    get_catalog_paths, fix_listing_path, update_listing, find_taxid_from_accession
+    get_catalog_paths, update_listing, find_taxid_from_accessions
 )
+
 
 def run(catalog: Path, debugging: bool = False):
     """
+    CLI entry point for accession.taxid.run()
+
+    :param catalog_path: Path to an accession catalog directory
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -29,10 +30,14 @@ def run(catalog: Path, debugging: bool = False):
 
 async def fetch_taxids(catalog: Path):
     """
+    Extracts taxon IDs from the included accessions.
+    Runs the taxon ID request fetcher and the listing writer. 
+
+    :param catalog_path: Path to an accession catalog directory
     """
     queue = asyncio.Queue()
     
-    fetcher = asyncio.create_task(fetch_loop(catalog, queue))
+    fetcher = asyncio.create_task(fetcher_loop(catalog, queue))
 
     asyncio.create_task(writer_loop(catalog, queue))
     
@@ -40,10 +45,11 @@ async def fetch_taxids(catalog: Path):
 
     await queue.join()
 
-    return
-
-async def fetch_loop(catalog: Path, queue: asyncio.Queue):
+async def fetcher_loop(catalog: Path, queue: asyncio.Queue):
     """
+    Iterates through all listings in a catalog directory, reads the included accessions 
+    and requests the taxon ID data from NCBI
+
     :param catalog_path: Path to a catalog directory
     :param queue: Queue containing the listing path and all taxon IDs extracted from the included accessions
     """
@@ -56,7 +62,7 @@ async def fetch_loop(catalog: Path, queue: asyncio.Queue):
 
         # logger.debug('Fetching taxon IDs from included accessions')
         try:
-            extracted_taxid = await find_taxid_from_accession(
+            extracted_taxid = await find_taxid_from_accessions(
                 listing_path, logger)
             
         except Exception as e:
@@ -74,7 +80,7 @@ async def fetch_loop(catalog: Path, queue: asyncio.Queue):
 
 async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     """
-    Pulls packet dicts from the queue and calls the update function
+    Pulls packet dicts from the queue and updates the listing file accordingly
 
     :param src_path: Path to a given reference directory
     :param queue: Queue of parsed OTU data awaiting processing
@@ -122,14 +128,3 @@ def wipe_taxids(catalog):
 
         with open(listing_path, "w") as f: 
             f.write(json.dumps(listing, indent=2, sort_keys=True))
-
-if __name__ == '__main__':
-    debug = True
-    
-    REPO_DIR = '/Users/sygao/Development/UVic/Virtool/Repositories'
-    
-    project_path = Path(REPO_DIR) / 'ref-plant-viruses'
-    src_path = project_path / 'src'
-    catalog_path = Path(REPO_DIR) / 'ref-accession-catalog/catalog'
-
-    run(catalog_path, debug)
