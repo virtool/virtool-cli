@@ -9,7 +9,7 @@ from virtool_cli.utils.ncbi import (
 )
 
 
-def get_catalog_paths(catalog) -> list:
+def get_catalog_paths(catalog: Path) -> list:
     """
     Return a list of paths to accession listings contained in an accession catalog.
 
@@ -18,7 +18,7 @@ def get_catalog_paths(catalog) -> list:
     """
     return list(catalog.glob('*--*.json'))
 
-def filter_catalog(src_path, catalog_path) -> list:
+def filter_catalog(src_path: Path, catalog_path: Path) -> list:
     """
     Return all paths to accession listings relevant to the source reference.
     Uses the unique Virtool OTU ID to match between reference metadata and catalog listing.
@@ -49,36 +49,6 @@ def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
         return matches[0]
     else:
         return None
-
-def search_by_taxid(taxid, catalog_path: Path) -> list:
-    """
-    Searches records for a matching taxon id and returns all matching paths in the accession records
-
-    :param otu_id: Unique taxon ID
-    :param catalog_path: Path to an accession catalog directory
-    """
-    matches = [str(listing.relative_to(catalog_path)) 
-        for listing in catalog_path.glob(f'{taxid}--*.json')]
-    
-    if matches:
-        return matches
-    else:
-        return []
-
-def fix_listing_path(path: Path, taxon_id: int, otu_id: str) -> Path:
-    """
-    Renames a listing file and returns the new path
-
-    :param path: Path to a listing
-    :param taxon_id: The correct taxon ID
-    :param otu_id: The correct otu ID
-    :return: New path to a listing file
-    """
-    new_path = path.with_name(f'{taxon_id}--{otu_id}.json')
-    
-    path.rename(new_path)
-    
-    return new_path
     
 async def find_taxid_from_accessions(
     listing_path: Path, logger: BoundLogger

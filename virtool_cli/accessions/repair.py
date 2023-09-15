@@ -2,7 +2,6 @@ from pathlib import Path
 import json
 from Bio import Entrez, SeqIO
 import asyncio
-# import aiofiles
 from typing import Optional
 from structlog import BoundLogger
 import logging
@@ -10,7 +9,7 @@ import logging
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.listings import update_listing
-from virtool_cli.accessions.helpers import fix_listing_path, find_taxid_from_accessions
+from virtool_cli.accessions.helpers import find_taxid_from_accessions
 
 def run(catalog: Path, debugging: bool = False):
     """
@@ -37,17 +36,20 @@ async def repair_catalog(catalog: Path):
     """
     logger = base_logger.bind(catalog=str(catalog))
 
-    await fetch_missing_taxids(catalog, logger)
+    await fill_missing_taxids(catalog, logger)
 
     await rename_listings(catalog, logger)
 
     return
 
-async def fetch_missing_taxids(
+async def fill_missing_taxids(
     catalog: Path, 
     logger: BoundLogger = base_logger
 ):
     """
+    Iterate through unmatched listings and run taxon ID extraction function.
+    If a valid taxon ID is found, write to the listing.
+
     :param listing: Catalog listing data in dictionary form
     :param logger: Optional entry point for a shared BoundLogger
     """
@@ -93,11 +95,14 @@ async def rename_listings(
         if taxid != str(listing['taxid']) or otu_id != listing['_id']:
             old_name = listing_path.name
             
-            new_path = fix_listing_path(listing_path, listing['taxid'], listing['_id'])
+            new_path = listing_path.with_name(f'{taxid}--{otu_id}.json')
+    
+            listing_path.rename(new_path)
 
-            logger.info(f"Renamed {old_name} to {new_path.name}", listing=new_path.name)
-            
-
+            logger.info(
+                f"Renamed {old_name} to {new_path.name}", 
+                listing=new_path.name
+            )
 
 async def fetch_upstream_record_taxids(
     fetch_list: list, 

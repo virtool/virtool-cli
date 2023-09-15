@@ -116,8 +116,12 @@ async def write_listing(
     with open(output_path, "w") as f:
         json.dump(listing, f, indent=2 if indent else None, sort_keys=True)
 
-def get_required_parts(schema: list) -> dict:
+def get_required_parts(schema: list) -> list:
     """
+    Takes a schema list and returns a list containing the names of required parts only
+
+    :param schema: Schema from the catalog listing, originally taken from the reference data
+    :return: List of segment names that are listed as "required" 
     """
     required_parts = []
     for part in schema:
@@ -128,9 +132,13 @@ def get_required_parts(schema: list) -> dict:
 
 def measure_monopartite(sequence_metadata: dict) -> int:
     """
+    Takes a dict containing all sequence lengths and returns the average length
+
+    :param sequence_metadata: Dict containing segment data
+    :return: Average length of all sequences
     """
     sequence_lengths = []
-    print(sequence_metadata)
+    
     for accession in sequence_metadata:
         metadata = sequence_metadata[accession]
         seq_length = metadata['length']
@@ -142,6 +150,11 @@ def measure_monopartite(sequence_metadata: dict) -> int:
 
 def measure_multipartite(sequence_metadata, part_list) -> dict:
     """
+    Takes a dict containing all sequence lengths and a list of segments, 
+    and returns the average length of each constituent segment.
+
+    :param sequence_metadata: Dict containing segment data
+    :return: A dict keyed by segment name containing the average length of each segment
     """
     part_total_dict = { element: [] for index, element in enumerate(part_list) }
             
@@ -163,5 +176,4 @@ def measure_multipartite(sequence_metadata, part_list) -> dict:
         average_length = sum(part_total_dict[segment]) / len(part_total_dict[segment])
         length_dict[segment] = int(average_length)
 
-    # return int(average_length)
     return length_dict

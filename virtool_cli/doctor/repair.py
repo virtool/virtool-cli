@@ -14,6 +14,7 @@ def run(src_path: Path, debugging: bool = False):
     Fixes any folder-JSON name mismatches and incorrect taxid types
 
     :param src_path: Path to a given reference directory
+    :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
     logging.basicConfig(
@@ -25,6 +26,9 @@ def run(src_path: Path, debugging: bool = False):
     
 def repair_reference(src_path):
     """
+    Runs legacy reference repair functions
+
+    :param src_path: Path to a given reference directory
     """
     otu_paths = get_otu_paths(src_path)
     # Rename OTU folders
@@ -32,10 +36,6 @@ def repair_reference(src_path):
     otus_to_update = {}
     for otu_path in otu_paths:
         results = []
-
-        logger = base_logger.bind(
-            otu_path=str(otu_path.relative_to(src_path))
-        )
 
         new_path = fix_folder_name(otu_path, otus.get(otu_path))
         # if a folder name has been changed then a new path will return

@@ -7,7 +7,7 @@ from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id, is_v1
 from virtool_cli.utils.hashing import get_unique_ids
 from virtool_cli.accessions.helpers import filter_catalog
-from virtool_cli.update.update import request_new_records, process_records, write_records
+from virtool_cli.update.update import request_new_records, process_records, write_data
 
 DEFAULT_INTERVAL = 0.001
 
@@ -204,8 +204,7 @@ async def writer_loop(
     queue: asyncio.Queue, 
 ):
     """
-    Awaits new sequence data for each OTU and 
-    writes new data into JSON files with unique Virtool IDs
+    Awaits new sequence data for each OTU and writes new data into JSON files with unique Virtool IDs
 
     :param src_path: Path to a reference directory
     :param downstream_queue: Queue holding formatted sequence and isolate data processed by this loop
@@ -225,7 +224,7 @@ async def writer_loop(
 
         otu_path = search_otu_by_id(src_path, otu_id)
 
-        await write_records(
+        await write_data(
             otu_path,
             sequence_data, 
             unique_iso, unique_seq,

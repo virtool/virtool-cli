@@ -41,7 +41,7 @@ def repair_otu(otu_path, logger: BoundLogger = base_logger):
     checked_otu = repair_otu_data(otu)
     if otu != checked_otu:
         with open(otu_path / 'otu.json', 'w') as f:
-            json.dumps(otu, f, indent=4, sort_keys=True)
+            json.dump(otu, f, indent=4, sort_keys=True)
 
     for isolate_path in get_isolate_paths(otu_path):
 
@@ -53,7 +53,7 @@ def repair_otu(otu_path, logger: BoundLogger = base_logger):
             
             repair_sequence(sequence_path=sequence_path, logger=logger)
 
-def repair_otu_data(otu_path, logger: BoundLogger = base_logger):
+def repair_otu_data(otu_path):
     """
     Deserializes an OTU's otu.json and updates the dictionary if issues are found
     and returns the dictionary
@@ -63,23 +63,17 @@ def repair_otu_data(otu_path, logger: BoundLogger = base_logger):
     """
     with open(otu_path / 'otu.json', "r") as f:
         otu = json.load(f)
-    
-    verified_otu = otu.copy()
 
     if type(otu.get('taxid')) != int:
-        verified_otu['taxid'] = None
+        otu['taxid'] = None
     
     if 'schema' not in otu:
-        verified_otu['schema'] = []
+        otu['schema'] = []
         
-    if otu != verified_otu:
-        logger.debug('Changes made, writing changes to otu.json...')
-        with open(otu_path / 'otu.json', 'w') as f:
-            json.dumps(verified_otu, f, indent=4, sort_keys=True)
+    return otu
 
 def repair_sequence(
-    sequence_path, sequence: dict = {},
-    logger = base_logger
+    sequence_path: Path, logger: BoundLogger = base_logger
 ):
     """
     :param logger: Optional entry point for an existing BoundLogger
@@ -98,31 +92,25 @@ def repair_sequence(
 
         sequence['accession'] = verified_accession
         with open(sequence_path, "w") as f:
-            json.dump(sequence, f, indent=4)
+            json.dump(sequence, f, indent=4, sort_keys=True)
 
 def correct_accession(accession: str) -> str:
     """
     :param accession: The accession to be corrected
+    :return: Corrected accession
     """
     # Automatically repair misspelled accessions where possible
     if re.search(r'([^A-Z_.0-9])', accession) is None:
         return accession
     
-    corrected_accession = format_accession(accession)
-
-    return corrected_accession
-
-
-def format_accession(original: str) -> str:
-    """
-    :param accession: The accession to be formatted
-    """
-    formatted_accession = original
+    formatted_accession = accession
     formatted_accession = formatted_accession.strip()
     formatted_accession = formatted_accession.upper()
     formatted_accession = re.sub(r'-', r'_', formatted_accession)
-    
-    return formatted_accession
+
+    corrected_accession = formatted_accession
+
+    return corrected_accession
 
 def fix_taxid(otu: dict) -> Optional[dict]:
     """

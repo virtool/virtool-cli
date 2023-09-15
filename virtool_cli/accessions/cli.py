@@ -1,5 +1,4 @@
 from pathlib import Path
-import structlog
 import click
 
 from virtool_cli.accessions.checkup import run as run_checkup
@@ -93,7 +92,10 @@ def update(src_path, catalog_path, debug):
             debugging=debug
         )
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory OR {catalog_path} is not a valid catalog directory")
+        click.echo(
+            ERROR_MESSAGE + \
+            f"{src_path} is not a valid reference directory" + \
+            f"OR {catalog_path} is not a valid catalog directory")
 
 @acc.command()
 @click.option(

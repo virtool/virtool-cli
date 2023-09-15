@@ -112,8 +112,7 @@ def in_refseq(comments: str, excluded: set):
 
     for part in comment_list:
         if 'identical' in part or 'derived from' in part:
-            # retrieves the last "word" from the sentence and 
-            # removes the last character
+            # retrieves the last "word" from the sentence and removes the last character
             redundant_accession = part.strip().split()[-1:][0]
             
             if redundant_accession not in excluded:

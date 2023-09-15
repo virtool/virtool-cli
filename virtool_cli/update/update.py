@@ -87,7 +87,7 @@ async def update_otu(
     # List all isolate and sequence IDs presently in src
     unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
     
-    await write_records(
+    await write_data(
         otu_path, otu_updates, 
         unique_iso, unique_seq,
         logger=logger
@@ -212,7 +212,7 @@ async def process_records(
 
     return otu_updates
 
-async def write_records(
+async def write_data(
     otu_path: Path, 
     new_sequences: dict,
     unique_iso: set, unique_seq: set, 
@@ -363,10 +363,15 @@ async def store_sequence(
 
     return seq_hash
 
-def get_lengthdict_multipartite(schema: list, logger: BoundLogger = base_logger):
+def get_lengthdict_multipartite(schema: list, logger: BoundLogger = base_logger) -> dict:
     """
+    Returns a dict of each required segment and its average length.
+
+    :param schema: Augmented schema from the catalog listing, contains average length data
+    :param logger: Optional entry point for an existing BoundLogger
+    :return: A dict of required segments and their average lengths
     """
-    required_parts = {}
+    required_part_lengths = {}
 
     for part in schema:
         
@@ -376,12 +381,18 @@ def get_lengthdict_multipartite(schema: list, logger: BoundLogger = base_logger)
                 logger.warning(
                     f"{part['name']} lacks a length listing.")
                 
-            required_parts[part['name']] = part_length
+            required_part_lengths[part['name']] = part_length
     
-    return required_parts
+    return required_part_lengths
 
-def get_lengthdict_monopartite(schema: list, logger: BoundLogger = base_logger):
+def get_lengthdict_monopartite(schema: list, logger: BoundLogger = base_logger) -> dict:
     """
+    Returns a dict of the segment name and its average length.
+    Given that the OTU is monopartite, a filler segment name can be used if none is found.
+
+    :param schema: Augmented schema from the catalog listing, contains average length data
+    :param logger: Optional entry point for an existing BoundLogger
+    :return: A dict of the single segment and its average length
     """
     part = schema[0]
 

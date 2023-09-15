@@ -1,7 +1,5 @@
-# import json
 from pathlib import Path
 import asyncio
-# from structlog import BoundLogger
 import logging
 
 from virtool_cli.utils.logging import base_logger
@@ -61,6 +59,9 @@ async def initialize(src_path: Path, catalog_path: Path):
 
 async def fetcher_loop(src: Path, queue: asyncio.Queue):
     """
+    Iterates through all OTUs in the src directory and generates listings for each,
+    then pushes the new listing to the write queue
+
     :param src_path: Path to a reference directory
     :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
@@ -94,7 +95,7 @@ async def fetcher_loop(src: Path, queue: asyncio.Queue):
 
 async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
     """
-    Pulls packet dicts from the queue and calls the update function
+    Pulls packet dicts from the queue and calls the write function
 
     :param src_path: Path to a given reference directory
     :param queue: Queue of parsed OTU data awaiting processing
@@ -102,7 +103,13 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
     while True:
         packet = await queue.get()
 
-        otu_id = packet['otu_id']
+        logger = base_logger.bind(
+            catalog=str(catalog),
+            otu_id=packet['otu_id']
+        )
+
+        logger.debug(f"Got listing data for {packet['otu_id']} from the queue")
+
         listing = packet['listing']
         taxid = listing['taxid']
 
@@ -110,7 +117,7 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
             taxid=taxid, 
             listing=listing, 
             catalog_path=catalog,
-            logger=base_logger)
+            logger=logger)
 
         await asyncio.sleep(0.1)
         queue.task_done()

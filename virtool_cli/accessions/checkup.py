@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import asyncio
+from typing import Union
 from structlog import BoundLogger
 import logging
 
@@ -214,3 +215,23 @@ async def suggest_spellings(catalog: Path, logger = base_logger):
 
         if new_spelling != current_name.lower():
             logger.info(f'Try: {new_spelling}', potential_name=new_spelling)
+
+def search_by_taxid(
+    taxid: Union[int, str], 
+    catalog_path: Path
+) -> list:
+    """
+    Searches records for a matching taxon id and returns all matching paths in the accession records as strings
+    (for logging purposes)
+
+    :param otu_id: Unique taxon ID
+    :param catalog_path: Path to an accession catalog directory
+    :return: List of listings matching this taxon ID
+    """
+    matches = [str(listing.relative_to(catalog_path)) 
+        for listing in catalog_path.glob(f'{taxid}--*.json')]
+    
+    if matches:
+        return matches
+    else:
+        return []

@@ -15,4 +15,3 @@ def test_utils_is_v2():
 @pytest.mark.parametrize("otu_id", ['f8a56910', '3962f6ec'])
 def test_utils_search_by_id(otu_id):
     assert search_otu_by_id(SRC_PATH, otu_id) is not None
-
