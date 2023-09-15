@@ -123,7 +123,7 @@ async def fetch_taxid(name: str) -> int:
         record = Entrez.read(handle)
         handle.close()
     except Exception as e:
-        return e
+        raise e
 
     try:
         taxid = int(record["IdList"][0])

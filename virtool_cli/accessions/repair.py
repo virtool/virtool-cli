@@ -95,7 +95,10 @@ async def rename_listings(
         if taxid != str(listing['taxid']) or otu_id != listing['_id']:
             old_name = listing_path.name
             
-            new_path = listing_path.with_name(f'{taxid}--{otu_id}.json')
+            if listing['taxid'] < 0:
+                new_path = listing_path.with_name(f'none--{otu_id}.json')
+            else:
+                new_path = listing_path.with_name(f'{taxid}--{otu_id}.json')
     
             listing_path.rename(new_path)
 
