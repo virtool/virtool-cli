@@ -7,7 +7,7 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import get_spelling
-from virtool_cli.accessions.helpers import get_catalog_paths, search_by_taxid
+from virtool_cli.accessions.helpers import get_catalog_paths
 
 LISTING_KEYS = set(["_id", "accessions", "name", "schema", "taxid"])
 
