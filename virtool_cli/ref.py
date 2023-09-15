@@ -1,16 +1,12 @@
 import sys
 from pathlib import Path
 import click
-# import structlog
 
-# import virtool_cli.build
-# import virtool_cli.divide
 from virtool_cli.doctor.cli import doctor
 from virtool_cli.update.cli import update
 from virtool_cli.build import run as run_build
 from virtool_cli.divide import run as run_divide
 from virtool_cli.migrate import run as run_migrate
-# from virtool_cli.accessions.catalog import run as run_catalog
 
 ERROR_MESSAGE = click.style("ERROR: ", fg='red')
 
@@ -116,44 +112,6 @@ def migrate(src_path, debug):
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
         click.echo(e)
-
-
-# @ref.command()
-# @click.option(
-#     "-src",
-#     "--src_path",
-#     required=True,
-#     type=str,
-#     help="the path to a reference directory",
-# )
-# @click.option(
-#     "-cat",
-#     "--catalog_path",
-#     required=True,
-#     type=str,
-#     default='.cache/catalog',
-#     help="the path to a catalog directory",
-# )
-# @click.option('--debug/--no-debug', default=False)
-# def catalog(src_path, catalog_path, debug):
-#     """Update or generate a catalog of all included accessions in a src directory"""
-#     if not Path(src_path).exists():
-#         click.echo(ERROR_MESSAGE + 'Source directory does not exist')
-#         return
-    
-#     catalog_dir = Path(catalog_path)
-#     if not catalog_dir.exists():
-#         catalog_dir.mkdir(parents=True)
-
-#     try:
-#         run_catalog(
-#             src_path=Path(src_path),
-#             catalog_path=Path(catalog_path),
-#             debugging=debug
-#         )
-#     except (FileNotFoundError, NotADirectoryError) as e:
-#         click.echo(ERROR_MESSAGE + "Not a valid reference directory")
-#         logger.exception(e)
 
 if __name__ == "__main__":
     ref()

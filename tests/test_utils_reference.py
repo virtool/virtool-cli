@@ -1,6 +1,6 @@
 import pytest
 
-from virtool_cli.utils.reference import *
+from virtool_cli.utils.reference import is_v1, search_otu_by_id
 from paths import TEST_FILES_PATH
 SRC_PATH = TEST_FILES_PATH / "src_test"
 SRC_V1_PATH = TEST_FILES_PATH / "src_v1"

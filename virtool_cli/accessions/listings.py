@@ -62,7 +62,7 @@ async def generate_listing(
                 logger.exception(e)
             
             for part in schema:
-                if part['name'] in length_dict.keys():
+                if part['name'] in length_dict:
                     part['length'] = length_dict[part['name']]
 
         else:

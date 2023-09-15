@@ -39,7 +39,7 @@ async def initialize(src_path: Path, catalog_path: Path):
 
     logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
 
-    logger.debug(f"Starting catalog generation...")
+    logger.debug("Starting catalog generation...")
 
     queue = asyncio.Queue()
 
@@ -54,7 +54,7 @@ async def initialize(src_path: Path, catalog_path: Path):
 
     await queue.join()
 
-    logger.info(f"Catalog generated")
+    logger.info("Catalog generated")
 
 
 async def fetcher_loop(src: Path, queue: asyncio.Queue):
@@ -66,7 +66,7 @@ async def fetcher_loop(src: Path, queue: asyncio.Queue):
     :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
     logger = base_logger.bind(src=str(src))
-    logger.debug(f"Starting fetcher...")
+    logger.debug("Starting fetcher...")
     
     for otu_path in get_otu_paths(src):
         logger = base_logger.bind(

@@ -95,7 +95,6 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
         not_in_reference = listed_accessions.difference(existing_accessions)
         not_in_listing = existing_accessions.difference(listed_accessions)
         indexed_accessions = listing['accessions']['included']
-        # indexed_excluded = listing['accessions']['excluded']
 
         if not_in_reference:
             logger.debug(f'reference is missing accessions: {not_in_reference}')

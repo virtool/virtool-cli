@@ -81,8 +81,7 @@ def otu(otu_path, catalog_path, filter, debug):
     type=str,
     help="the path to a reference directory",
 )
-@click.option('--debug/--no-debug', default=False)
-def legacy(src_path, debug):
+def legacy(src_path):
     """Formerly `virtool ref isolate`. Use for quick retrival."""
     try:
         run_isolate(Path(src_path))

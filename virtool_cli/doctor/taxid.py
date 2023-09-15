@@ -64,11 +64,6 @@ async def taxid(src_path: Path, force_update: bool = False):
 
     await queue.join()
 
-    # logger.info(
-    #     f"Retrieved {counter} taxids for {len(included_paths)} OTUs", 
-    #     n_updated=counter, n_otus=len(included_paths)
-    # )
-
 async def fetcher_loop(
     included_paths: list, 
     queue: asyncio.Queue, 

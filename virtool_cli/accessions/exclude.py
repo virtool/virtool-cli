@@ -23,7 +23,7 @@ def run(catalog: Path, debugging: bool = False):
         level=filter_class,
     )
     
-    base_logger.info(f"Starting RefSeq filter...", catalog=str(catalog))
+    base_logger.info("Starting RefSeq filter...", catalog=str(catalog))
     
     asyncio.run(filter_refseq_accessions(catalog))
 
@@ -73,8 +73,11 @@ async def filter_refseq_otu(
         return False
     
     excluded_set = set(listing['accessions']['excluded'])
+    
     new_exclusions = []
+
     for record in included_records:
+        accession = record['id']
         redundant_accession = in_refseq(
             comments=record.annotations['comment'], 
             excluded=excluded_set)
@@ -137,7 +140,7 @@ async def fetch_upstream_records(
         handle = Entrez.efetch(
             db="nucleotide", id=fetch_list, rettype="gb"
         )
-    except HTTPError as e:
+    except HTTPError:
         return []
     
     parsed = SeqIO.parse(handle, "gb")
@@ -149,8 +152,8 @@ async def fetch_upstream_records(
             'Found two copies of the same record. Remove duplicate from this.'
         )
         return []
-    except:
-        base_logger.exception(e)
+    except Exception as e:
+        logger.exception(e)
         return []
 
     if record_dict is None:

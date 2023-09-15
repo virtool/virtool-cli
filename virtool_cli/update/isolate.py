@@ -383,11 +383,11 @@ async def get_isolates(path: Path) -> dict:
 
     for folder in path.iterdir():
         # ignore the otu.json file in the OTU folder and parse through isolate folders
-        if folder.is_dir(): 
-            if folder / "isolate.json" in folder.iterdir():
-                async with aiofiles.open(folder / "isolate.json", "r") as f:
-                    isolate = json.loads(await f.read())
-                    isolates[isolate["source_name"]] = folder.name
+        if folder.is_dir() and folder / "isolate.json" in folder.iterdir():
+            async with aiofiles.open(folder / "isolate.json", "r") as f:
+                isolate = json.loads(await f.read())
+            
+            isolates[isolate["source_name"]] = folder.name
 
     return isolates
 

@@ -148,7 +148,7 @@ async def process_records(
             return False
         
         if len(listing['schema']) < 1:
-            required_parts = get_lengthdict_monopartite(listing['schema'], logger)
+            required_parts = get_lengthdict_multipartite(listing['schema'], logger)
                     
         else:
             required_parts = get_lengthdict_monopartite(listing['schema'], logger)

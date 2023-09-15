@@ -60,7 +60,6 @@ async def fetcher_loop(catalog: Path, queue: asyncio.Queue):
             listing_path=str(listing_path.relative_to(catalog))
         )
 
-        # logger.debug('Fetching taxon IDs from included accessions')
         try:
             extracted_taxid = await find_taxid_from_accessions(
                 listing_path, logger)
@@ -99,7 +98,10 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         logger.debug(f'{packet}')
 
         if fetched_taxid != old_taxid:
-            logger.error(f"All accessions are under taxon ID={fetched_taxid}, but current taxon ID is {old_taxid}")
+            logger.error(
+                f"All accessions are under taxon ID={fetched_taxid}," + \
+                f"but current taxon ID is {old_taxid}"
+            )
         
         with open(path, "r") as f:
             listing = json.load(f)
@@ -108,7 +110,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
 
         try:
             await update_listing(listing, path)
-            logger.info(f"Wrote updated listing to file")
+            logger.info("Wrote updated listing to file")
         except Exception as e:
             base_logger.exception(e)
         
