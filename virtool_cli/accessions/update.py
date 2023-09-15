@@ -73,15 +73,14 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
 
     update_count = 0
 
-    for listing_path in filter_catalog(src, catalog):
-        # fetch_logger.debug(f'{listing_path}')
-        
-        [ taxid, otu_id ] = listing_path.stem('--')
+    for listing_path in filter_catalog(src, catalog):        
+        [ taxid, otu_id ] = listing_path.stem.split('--')
 
         logger = fetch_logger.bind(listing=listing_path.name)
         
         otu_path = search_otu_by_id(src, otu_id)
         existing_accessions = set(get_otu_accessions(otu_path))
+        fetch_logger.debug(f'current accessions: {existing_accessions}')
 
         listing = json.loads(listing_path.read_text())
 
