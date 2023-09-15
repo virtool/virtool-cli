@@ -1,9 +1,7 @@
 import json
 from typing import Optional
 from pathlib import Path
-# import structlog
 import logging
-import re
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths, generate_otu_dirname

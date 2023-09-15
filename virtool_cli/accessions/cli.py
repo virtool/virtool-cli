@@ -134,7 +134,7 @@ def repair(catalog_path, debug):
 
     try:
         run_repair(Path(catalog_path), debugging=debug)
-    except (FileNotFoundError, NotADirectoryError) as e:
+    except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
 
 @acc.command()

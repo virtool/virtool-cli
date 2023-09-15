@@ -43,7 +43,7 @@ async def isolate(src: Path):
         name = otu_path_map[path].get("name", '')
 
         if taxid is None:
-            logger.info(f"No taxid assigned to OTU", taxid=taxid, name=name)
+            logger.info("No taxid assigned to OTU", taxid=taxid, name=name)
             continue
 
         accessions = existing_accessions.get(str(taxid))

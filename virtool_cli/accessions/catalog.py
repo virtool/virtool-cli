@@ -1,6 +1,5 @@
 from pathlib import Path
 import asyncio
-from structlog import BoundLogger
 import logging
 
 from virtool_cli.utils.logging import base_logger
@@ -41,7 +40,7 @@ def get_catalog(src: Path, catalog: Path):
     """
     logger = base_logger.bind(catalog=str(catalog))
 
-    catalog_paths = [record for record in catalog.glob('*.json')]
+    catalog_paths = list(catalog.glob('*--*.json'))
     
     if catalog_paths:
         logger.info(

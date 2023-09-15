@@ -176,7 +176,7 @@ async def fetch_taxonomy_rank(taxon_id) -> str:
         handle = Entrez.efetch(db="taxonomy", id=taxon_id, rettype="null")
         record = Entrez.read(handle)
         handle.close()
-    except Exception as e:
+    except Exception:
         return []
     
     rank = ''
@@ -226,7 +226,7 @@ async def fetch_records(fetch_list: list) -> list:
         )
         ncbi_records = Entrez.parse(handle)
         handle.close()
-    except HTTPError as e:
+    except HTTPError:
         return []
 
     if ncbi_records is None:
@@ -235,7 +235,7 @@ async def fetch_records(fetch_list: list) -> list:
     try:
         record_list = [record for record in ncbi_records.values() if record.seq]
         return record_list
-    except Exception as e:
+    except Exception:
         return []
 
 
@@ -254,6 +254,6 @@ async def get_spelling(name: str, db: str = 'taxonomy') -> str:
         record = Entrez.read(handle)
         handle.close()
     except Exception as e:
-        return e
+        raise e
     
     return record['CorrectedQuery']

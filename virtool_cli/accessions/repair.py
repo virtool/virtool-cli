@@ -1,8 +1,7 @@
 from pathlib import Path
 import json
-from Bio import Entrez, SeqIO
+from Bio import Entrez
 import asyncio
-from typing import Optional
 from structlog import BoundLogger
 import logging
 

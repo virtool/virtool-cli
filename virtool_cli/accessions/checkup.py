@@ -179,7 +179,7 @@ def find_duplicate_accessions(catalog: Path, logger = base_logger):
         
         logger.debug('Checking included list against excluded list for eliminations...')
         for versioned_accession in listing['accessions']['included']:
-            [ accession, version ] = versioned_accession.split('.')
+            [ accession, _ ] = versioned_accession.split('.')
             if accession in accession_set:
                 logger.warning(
                     f"Included accession '{versioned_accession}' is on the exclusion list."

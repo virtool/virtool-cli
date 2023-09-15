@@ -2,7 +2,6 @@ import pytest
 import shutil
 import json
 import subprocess
-from pathlib import Path
 
 from paths import TEST_FILES_PATH
 BASE_PATH = TEST_FILES_PATH / "src_test_partial"

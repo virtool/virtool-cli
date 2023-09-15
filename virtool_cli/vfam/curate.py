@@ -46,7 +46,8 @@ def get_genbank_files(output: Path) -> List[Path]:
                 f"{viral_release_url}/{file_name}"
             ) as gpff_file:
 
-                open(output_path, "wb").write(gpff_file.read())
+                with open(output_path, "wb") as f:
+                    f.write(gpff_file.read())
 
                 genbank_file_paths.append(output_path)
 

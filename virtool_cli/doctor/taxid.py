@@ -81,8 +81,7 @@ async def fetcher_loop(
         otu_data = read_otu(path)
 
         if not force_update:
-            taxid = otu_data.get('taxid', None)
-            if taxid is not None:
+            if otu_data.get('taxid', None) is not None:
                 continue
 
         # Search for taxon id
@@ -113,7 +112,7 @@ async def writer_loop(src_path: Path, queue: asyncio.Queue) -> None:
         try:
             update_otu(taxid, path)
         except Exception as e:
-            base_logger.exception('e')
+            base_logger.exception(e)
         
         base_logger.info(f"Wrote taxon id '{taxid}' to file", 
             otu_id=otu_id, path=str(path.relative_to(src_path)))

@@ -5,7 +5,7 @@ import logging
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import (
     get_otu_paths, read_otu, 
-    get_otu_accessions, get_otu_accessions_metadata
+    get_otu_accessions_metadata
 )
 from virtool_cli.accessions.listings import (
     generate_listing, write_listing

@@ -81,7 +81,6 @@ async def update_reference(
 
     # Filter out cached listings that are not present in this src directory
     included_listings = filter_catalog(src_path, catalog_path)
-    storage = {}
 
     # Holds raw NCBI GenBank data
     upstream_queue = asyncio.Queue()

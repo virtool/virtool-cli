@@ -44,7 +44,7 @@ def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
     :param otu_id: Unique OTU ID string
     :param catalog_path: Path to an accession catalog directory
     """
-    matches = [listing for listing in catalog_path.glob(f'*--{otu_id}.json')]
+    matches = list(catalog_path.glob(f'*--{otu_id}.json'))
     if matches:
         return matches[0]
     else:
@@ -58,7 +58,7 @@ async def find_taxid_from_accessions(
     for each associated taxonomy ID.
 
     :param listing_path: Path to a listing in an accession catalog directory
-
+    :return: Taxon ID as string
     """
     with open(listing_path, "r") as f:
         listing = json.load(f)

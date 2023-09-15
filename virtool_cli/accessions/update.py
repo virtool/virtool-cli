@@ -118,7 +118,11 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
                 listing['accessions']['included'] = indexed_accessions
 
             await queue.put({ 'path': listing_path, 'listing': listing } )
-            logger.debug(f'Pushed updated listing to queue', updated_accessions=indexed_accessions)
+            
+            logger.debug(
+                'Pushed updated listing to queue', 
+                updated_accessions=indexed_accessions)
+            
             update_count += 1
 
     base_logger.debug(
