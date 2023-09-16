@@ -28,6 +28,4 @@ def repair_data(src_path: Path):
     """
     otu_paths = get_otu_paths(src_path)
     for otu_path in otu_paths:
-        logger = base_logger.bind(otu_path=str(otu_path.relative_to(src_path)))
-
-        repair_otu_data(otu_path, logger)
+        repair_otu_data(otu_path)

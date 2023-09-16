@@ -198,7 +198,7 @@ async def fetch_upstream_record_taxids(fetch_list: list) -> list:
         handle = Entrez.efetch(db="nucleotide", id=fetch_list, rettype="docsum")
         record = Entrez.read(handle)
         handle.close()
-    except Exception as e:
+    except Exception:
         return []
     
     taxids = set()

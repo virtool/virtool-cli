@@ -51,7 +51,7 @@ def init(src_path, catalog_path, debug):
             catalog=Path(catalog_path),
             debugging=debug
         )
-    except (FileNotFoundError, NotADirectoryError) as e:
+    except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
 
 

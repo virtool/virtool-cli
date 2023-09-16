@@ -175,7 +175,7 @@ async def log_results(name: str, taxid: int=None):
         otu_log.debug('Taxon ID not found', taxid=None)
 
 
-def update_otu(taxid: int, path: Path):
+def update_otu(taxid, path: Path):
     """
     Updates a otu.json's taxid key with either a taxon id or None
     depending on whether an id was able to be retrieved.
@@ -186,7 +186,7 @@ def update_otu(taxid: int, path: Path):
     try:
         with open(path / "otu.json", "r+") as f:
             otu = json.load(f)
-            otu["taxid"] = taxid if taxid else taxid
+            otu["taxid"] = taxid
             f.seek(0)
             json.dump(otu, f, indent=4)
 
