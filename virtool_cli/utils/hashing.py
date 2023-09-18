@@ -7,7 +7,7 @@ from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 def generate_random_alphanumeric(
     length: int = 8,
     mixed_case: bool = False,
-    excluded: Optional[Iterable[str]] = None
+    excluded: list = []
 ) -> str:
     """
     Generates a random string composed of letters and numbers.
@@ -17,28 +17,33 @@ def generate_random_alphanumeric(
     :param excluded: strings that may not be returned.
     :return: a random alphanumeric string.
     """
-    excluded = set(excluded or list())
+    excluded_set = set(excluded)
 
     characters = digits + (ascii_letters if mixed_case else ascii_lowercase)
 
     candidate = "".join([choice(characters) for _ in range(length)])
 
-    if candidate not in excluded:
+    if candidate not in excluded_set:
         return candidate
 
-    return generate_random_alphanumeric(length=length, excluded=excluded)
+    return generate_random_alphanumeric(length=length, excluded=list(excluded_set))
 
 def generate_hashes(
-    excluded: list,
     n: int = 1,
     length: int = 8,
-    mixed_case: bool = False
-):
+    mixed_case: bool = False,
+    excluded: list = []
+) -> hash:
     """
+    :param excluded: List of alphanumeric strings that should be excluded from generation
+    :param n: The number of strings to be generated
+    :param length: The length of each string
     """
     new_uniques = set()
     while len(new_uniques) < n:
-        new_uniques.add(generate_random_alphanumeric(length, mixed_case, excluded))
+        new_uniques.add(
+            generate_random_alphanumeric(length, mixed_case, excluded)
+        )
     
     return new_uniques
     

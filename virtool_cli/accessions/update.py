@@ -211,7 +211,6 @@ async def add_listing(
     
     logger.info(f"No accession record for {otu_data['taxid']}.")
 
-    # accessions = get_otu_accessions(otu_path)
     sequences = get_otu_accessions_metadata(otu_path)
     accessions = list(sequences.keys())
     
