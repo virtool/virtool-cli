@@ -21,7 +21,8 @@ def run(src_path: Path, debugging: bool = False):
     )
 
     repair_reference(src_path)
-    
+
+
 def repair_reference(src_path):
     """
     Runs legacy reference repair functions
@@ -48,7 +49,7 @@ def repair_reference(src_path):
         if otu:
             otus_to_update[otu_path] = otu
             results.append("Fixed taxid field")
-            
+
         log_results(results, otus[otu_path]["name"])
     write_otus(otus_to_update)
 
@@ -60,7 +61,7 @@ def fix_folder_name(path: Path, otu: dict) -> Optional[str]:
     :param path: Path to a given reference directory
     :param otu: A deserialized otu.json
     """
-    new_folder_name = generate_otu_dirname(otu['name'], otu['_id'])
+    new_folder_name = generate_otu_dirname(otu["name"], otu["_id"])
 
     if path.name != new_folder_name:
         new_path = path.with_name(new_folder_name)
@@ -110,6 +111,7 @@ def write_otus(otus: dict):
     for path in otus.keys():
         with open(path / "otu.json", "w") as f:
             json.dump(otus.get(path), f, indent=4)
+
 
 def map_otus(paths: list) -> dict:
     """

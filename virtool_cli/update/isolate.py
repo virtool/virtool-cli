@@ -18,6 +18,7 @@ from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
 logger = structlog.get_logger()
 
+
 async def isolate(src: Path):
     """
     Runs routines to find new isolates for OTU in a reference directory and writes newfound accessions to local cache
@@ -40,7 +41,7 @@ async def isolate(src: Path):
 
     for path in paths:
         taxid = otu_path_map[path].get("taxid", None)
-        name = otu_path_map[path].get("name", '')
+        name = otu_path_map[path].get("name", "")
 
         if taxid is None:
             logger.info("No taxid assigned to OTU", taxid=taxid, name=name)
@@ -106,9 +107,7 @@ async def fetch_otu_isolates(
     isolate_ids, sequence_ids = await get_unique_ids(paths)
 
     if records is None:
-        otu_log.info(
-            "Found 0 isolates, could not link taxid to nucleotide records"
-        )
+        otu_log.info("Found 0 isolates, could not link taxid to nucleotide records")
         return
 
     new_isolates = dict()
@@ -198,7 +197,9 @@ def fetch_records(accessions: list) -> Optional[dict]:
     return SeqIO.to_dict(SeqIO.parse(handle, "gb"))
 
 
-async def log_results(name: str, taxid: str, new_isolates: dict, console: structlog.BoundLogger):
+async def log_results(
+    name: str, taxid: str, new_isolates: dict, console: structlog.BoundLogger
+):
     """
     Log isolate discovery results to console
 
@@ -212,6 +213,7 @@ async def log_results(name: str, taxid: str, new_isolates: dict, console: struct
     console.info(
         f"Found {new_isolate_count} new isolates", n_isolates=new_isolate_count
     )
+
 
 async def get_qualifiers(seq: list) -> dict:
     """
@@ -372,6 +374,7 @@ def random_alphanumeric(
 
     return random_alphanumeric(length=length, excluded=excluded)
 
+
 async def get_isolates(path: Path) -> dict:
     """
     Returns a mapping to every isolate and their folder name.
@@ -386,7 +389,7 @@ async def get_isolates(path: Path) -> dict:
         if folder.is_dir() and folder / "isolate.json" in folder.iterdir():
             async with aiofiles.open(folder / "isolate.json", "r") as f:
                 isolate = json.loads(await f.read())
-            
+
             isolates[isolate["source_name"]] = folder.name
 
     return isolates
@@ -401,13 +404,14 @@ async def get_sequences(path: Path) -> dict:
     """
     sequences = dict()
 
-    for sequence_id in path.glob('*.json'):
+    for sequence_id in path.glob("*.json"):
         if sequence_id.name != "isolate.json":
             async with aiofiles.open(sequence_id, "r") as f:
                 sequence = json.loads(await f.read())
                 sequences[sequence.get("accession")] = sequence_id.name
 
     return sequences
+
 
 def map_otus(paths: list) -> dict:
     """
@@ -422,6 +426,7 @@ def map_otus(paths: list) -> dict:
         path_taxid_map[path] = json.loads((path / "otu.json").read_text())
 
     return path_taxid_map
+
 
 def run(src: str):
     """

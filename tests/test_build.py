@@ -5,6 +5,7 @@ import pytest
 import subprocess
 
 from paths import TEST_FILES_PATH
+
 TEST_SRC_PATH = TEST_FILES_PATH / "src_test"
 TEST_BUILD_PATH = TEST_FILES_PATH / "reference.json"
 TEST_WITH_INDENT_PATH = TEST_FILES_PATH / "reference_with_indent.json"
@@ -18,10 +19,15 @@ def output(tmpdir):
 @pytest.fixture()
 def command(output):
     return [
-        "virtool", "ref", "build",
-        "-o", str(output),
-        "-src", TEST_SRC_PATH,
+        "virtool",
+        "ref",
+        "build",
+        "-o",
+        str(output),
+        "-src",
+        TEST_SRC_PATH,
     ]
+
 
 @pytest.mark.parametrize("version", [None, "v1.0.0", "v0.9.3"])
 def test_version(version, command, output):

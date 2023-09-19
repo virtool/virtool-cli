@@ -24,6 +24,7 @@ def run(src_path: Path, force_update: bool = False, debugging: bool = False):
 
     asyncio.run(taxid(src_path, force_update))
 
+
 async def taxid(src_path: Path, force_update: bool = False):
     """
     Asynchronously finds taxon ids for all OTU in a given src directory and
@@ -35,42 +36,45 @@ async def taxid(src_path: Path, force_update: bool = False):
     queue = asyncio.Queue()
 
     otu_paths = get_otu_paths(src_path)
-    
+
     if force_update:
         included_paths = otu_paths
-    
+
     else:
         included_paths = filter_unidentified(src_path)
-    
-    base_logger.debug('Fetching taxon IDs in following paths...', included_paths=included_paths)
-    
+
+    base_logger.debug(
+        "Fetching taxon IDs in following paths...", included_paths=included_paths
+    )
+
     if not included_paths:
-        base_logger.info('No OTUs with missing taxon IDs to fetch', n_otus=len(included_paths))
+        base_logger.info(
+            "No OTUs with missing taxon IDs to fetch", n_otus=len(included_paths)
+        )
         return
-    
-    base_logger.info(f'Requesting taxon IDs for {len(included_paths)}/{len(otu_paths)} OTUs', n_otus=len(included_paths))
+
+    base_logger.info(
+        f"Requesting taxon IDs for {len(included_paths)}/{len(otu_paths)} OTUs",
+        n_otus=len(included_paths),
+    )
 
     # Requests and retrieves matching taxon IDs from NCBI Taxonomy
     # and pushes results to queue
-    fetcher = asyncio.create_task(
-        fetcher_loop(included_paths, queue, force_update))
-    
+    fetcher = asyncio.create_task(fetcher_loop(included_paths, queue, force_update))
+
     # Pulls taxon id from queue and writes to otu.json
-    asyncio.create_task(
-        writer_loop(src_path, queue)
-    )
+    asyncio.create_task(writer_loop(src_path, queue))
 
     await asyncio.gather(fetcher, return_exceptions=True)
 
     await queue.join()
 
+
 async def fetcher_loop(
-    included_paths: list, 
-    queue: asyncio.Queue, 
-    force_update: bool = False
+    included_paths: list, queue: asyncio.Queue, force_update: bool = False
 ):
     """
-    Loops through a list of specified OTU directories, 
+    Loops through a list of specified OTU directories,
     parses the data and pushes the name and taxon ID to the queue
 
     :param included_paths: List of paths to relevant OTUs
@@ -81,17 +85,17 @@ async def fetcher_loop(
         otu_data = read_otu(path)
 
         if not force_update:
-            if otu_data.get('taxid', None) is not None:
+            if otu_data.get("taxid", None) is not None:
                 continue
 
         # Search for taxon id
-        otu_name = otu_data.get('name')
+        otu_name = otu_data.get("name")
 
         taxid = await fetch_by_taxid(name=otu_name)
 
         await log_results(name=otu_name, taxid=taxid)
-        
-        await queue.put({ 'path': path, 'name': otu_name, 'taxid': taxid})
+
+        await queue.put({"path": path, "name": otu_name, "taxid": taxid})
 
         await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
@@ -105,20 +109,24 @@ async def writer_loop(src_path: Path, queue: asyncio.Queue) -> None:
     """
     while True:
         packet = await queue.get()
-        taxid = packet['taxid']
-        path = packet['path']
-        [ _, otu_id ] = path.name.split('--')
+        taxid = packet["taxid"]
+        path = packet["path"]
+        [_, otu_id] = path.name.split("--")
 
         try:
             update_otu(taxid, path)
         except Exception as e:
             base_logger.exception(e)
-        
-        base_logger.info(f"Wrote taxon id '{taxid}' to file", 
-            otu_id=otu_id, path=str(path.relative_to(src_path)))
+
+        base_logger.info(
+            f"Wrote taxon id '{taxid}' to file",
+            otu_id=otu_id,
+            path=str(path.relative_to(src_path)),
+        )
 
         await asyncio.sleep(0.1)
         queue.task_done()
+
 
 def filter_unidentified(src_path: Path) -> list:
     """
@@ -128,19 +136,20 @@ def filter_unidentified(src_path: Path) -> list:
     :return: List of OTUs without assigned taxon ids
     """
     included_otus = []
-    
+
     for path in get_otu_paths(src_path):
         otu_data = read_otu(path)
 
-        taxid = otu_data.get('taxid', None)
-        
+        taxid = otu_data.get("taxid", None)
+
         if taxid is None:
             included_otus.append(path)
-        
+
         else:
             continue
-    
+
     return included_otus
+
 
 async def fetch_by_taxid(name: str) -> int:
     """
@@ -161,7 +170,8 @@ async def fetch_by_taxid(name: str) -> int:
 
     return taxid
 
-async def log_results(name: str, taxid: int=None):
+
+async def log_results(name: str, taxid: int = None):
     """
     Logs results of the taxid fetch from the NCBI taxonomy database
 
@@ -170,9 +180,9 @@ async def log_results(name: str, taxid: int=None):
     """
     otu_log = base_logger.bind(name=name)
     if taxid:
-        otu_log.info('Taxon ID found', taxid=taxid)
+        otu_log.info("Taxon ID found", taxid=taxid)
     else:
-        otu_log.debug('Taxon ID not found', taxid=None)
+        otu_log.debug("Taxon ID not found", taxid=None)
 
 
 def update_otu(taxid, path: Path):
@@ -193,15 +203,16 @@ def update_otu(taxid, path: Path):
     except Exception as e:
         return e
 
+
 async def get_name_from_path(path: Path, force_update: bool) -> str:
     """
-    Given a path to an OTU, returns the name of the OTU. 
+    Given a path to an OTU, returns the name of the OTU.
     If a taxon id already exists for the OTU, returns an empty string.
 
     :param path: Path to a given OTU
-    :param force_update: Boolean flag used to determine if the function 
+    :param force_update: Boolean flag used to determine if the function
         should return the name of the OTU even if it already has a taxid
-    :return: The OTU's name if it doesn't have a taxid assigned or force_update is True, 
+    :return: The OTU's name if it doesn't have a taxid assigned or force_update is True,
         else an empty string
     """
     async with aiofiles.open(path / "otu.json", "r") as f:

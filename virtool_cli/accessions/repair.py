@@ -10,6 +10,7 @@ from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.listings import update_listing
 from virtool_cli.accessions.helpers import find_taxid_from_accessions
 
+
 def run(catalog: Path, debugging: bool = False):
     """
     CLI entry point for accession.repair.run()
@@ -23,9 +24,10 @@ def run(catalog: Path, debugging: bool = False):
         level=filter_class,
     )
 
-    base_logger.info('Repairing catalog...')
-    
+    base_logger.info("Repairing catalog...")
+
     asyncio.run(repair_catalog(catalog))
+
 
 async def repair_catalog(catalog: Path):
     """
@@ -41,10 +43,8 @@ async def repair_catalog(catalog: Path):
 
     return
 
-async def fill_missing_taxids(
-    catalog: Path, 
-    logger: BoundLogger = base_logger
-):
+
+async def fill_missing_taxids(catalog: Path, logger: BoundLogger = base_logger):
     """
     Iterate through unmatched listings and run taxon ID extraction function.
     If a valid taxon ID is found, write to the listing.
@@ -52,69 +52,63 @@ async def fill_missing_taxids(
     :param listing: Catalog listing data in dictionary form
     :param logger: Optional entry point for a shared BoundLogger
     """
-    for listing_path in catalog.glob('none--*.json'):
+    for listing_path in catalog.glob("none--*.json"):
         logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
 
         extracted_taxid = await find_taxid_from_accessions(listing_path, logger)
 
         if extracted_taxid is not None:
-            logger.debug(f'Found taxon ID {extracted_taxid}')
-            
+            logger.debug(f"Found taxon ID {extracted_taxid}")
+
             with open(listing_path, "r") as f:
                 listing = json.load(f)
-            listing['taxid'] = extracted_taxid
-            
+            listing["taxid"] = extracted_taxid
+
             try:
                 await update_listing(listing, listing_path)
-                logger.info('Wrote new taxon ID to path')
+                logger.info("Wrote new taxon ID to path")
             except Exception as e:
                 logger.exception(e)
                 continue
 
-async def rename_listings(
-    catalog: Path, 
-    logger: BoundLogger = base_logger
-):
+
+async def rename_listings(catalog: Path, logger: BoundLogger = base_logger):
     """
-    Renames listings where the taxon ID or OTU ID in the listing data 
+    Renames listings where the taxon ID or OTU ID in the listing data
     no longer matches the listing's filename.
-    
+
     :param catalog: Catalog listing data in dictionary form
     :param logger: Optional entry point for a shared BoundLogger
     """
-    for listing_path in catalog.glob('*.json'):
-        logger = logger.bind(
-            listing_path=str(listing_path.relative_to(catalog))
-        )
+    for listing_path in catalog.glob("*.json"):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
 
-        [ taxid, otu_id ] = listing_path.stem.split('--')
+        [taxid, otu_id] = listing_path.stem.split("--")
 
         listing = json.loads(listing_path.read_text())
 
-        if taxid != str(listing['taxid']) or otu_id != listing['_id']:
+        if taxid != str(listing["taxid"]) or otu_id != listing["_id"]:
             old_name = listing_path.name
-            
-            if listing['taxid'] < 0:
-                new_path = listing_path.with_name(f'none--{otu_id}.json')
+
+            if listing["taxid"] < 0:
+                new_path = listing_path.with_name(f"none--{otu_id}.json")
             else:
-                new_path = listing_path.with_name(f'{taxid}--{otu_id}.json')
-    
+                new_path = listing_path.with_name(f"{taxid}--{otu_id}.json")
+
             listing_path.rename(new_path)
 
-            logger.info(
-                f"Renamed {old_name} to {new_path.name}", 
-                listing=new_path.name
-            )
+            logger.info(f"Renamed {old_name} to {new_path.name}", listing=new_path.name)
+
 
 async def fetch_upstream_record_taxids(
-    fetch_list: list, 
+    fetch_list: list,
 ) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank
-    
+
     :param fetch_list: List of accession numbers to fetch from GenBank
     :param logger: Structured logger
-    :return: A list of GenBank data converted from XML to dicts if possible, 
+    :return: A list of GenBank data converted from XML to dicts if possible,
         else an empty list
     """
     try:
@@ -123,12 +117,12 @@ async def fetch_upstream_record_taxids(
         handle.close()
     except Exception as e:
         raise e
-    
+
     await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
     taxids = set()
 
     for r in record:
-        taxids.add(int(r.get('TaxId')))
-    
+        taxids.add(int(r.get("TaxId")))
+
     return taxids

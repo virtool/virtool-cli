@@ -22,10 +22,11 @@ def run(catalog: Path, debugging: bool = False):
         format="%(message)s",
         level=filter_class,
     )
-    
+
     base_logger.info("Starting RefSeq filter...", catalog=str(catalog))
-    
+
     asyncio.run(filter_refseq_accessions(catalog))
+
 
 async def filter_refseq_accessions(catalog: Path):
     """
@@ -34,17 +35,15 @@ async def filter_refseq_accessions(catalog: Path):
 
     :param catalog_path: Path to a catalog directory
     """
-    for listing_path in catalog.glob('*--*.json'):
+    for listing_path in catalog.glob("*--*.json"):
         logger = base_logger.bind(listing_path=listing_path.name)
-        
+
         await filter_refseq_otu(listing_path, logger)
 
-async def filter_refseq_otu(
-    listing_path: Path, 
-    logger: BoundLogger = base_logger
-):
+
+async def filter_refseq_otu(listing_path: Path, logger: BoundLogger = base_logger):
     """
-    Parses a catalog listing, checks the included accession list 
+    Parses a catalog listing, checks the included accession list
     for RefSeq-formatted accessions and requests GenBank for data.
     Checks the GenBank Comment data for a duplicate accession,
     then adds that accession to the excluded accession list.
@@ -54,53 +53,54 @@ async def filter_refseq_otu(
     """
     listing = json.loads(listing_path.read_text())
 
-    logger = logger.bind(name=listing['name'])
-    
+    logger = logger.bind(name=listing["name"])
+
     refseq_accessions = []
-    for accession in listing['accessions']['included']:
+    for accession in listing["accessions"]["included"]:
         # Only RefSeq accessions include underscores
-        if '_' in accession:
+        if "_" in accession:
             refseq_accessions.append(accession)
 
     if not refseq_accessions:
         return False
-    
-    logger.debug('RefSeq accessions found', refseq=refseq_accessions)
+
+    logger.debug("RefSeq accessions found", refseq=refseq_accessions)
     try:
         included_records = await fetch_upstream_records(refseq_accessions)
     except Exception as e:
         logger.exception(e)
         return False
-    
-    excluded_set = set(listing['accessions']['excluded'])
-    
+
+    excluded_set = set(listing["accessions"]["excluded"])
+
     new_exclusions = []
 
     for record in included_records:
-        accession = record['id']
+        accession = record["id"]
         redundant_accession = in_refseq(
-            comments=record.annotations['comment'], 
-            excluded=excluded_set)
-        
+            comments=record.annotations["comment"], excluded=excluded_set
+        )
+
         if redundant_accession:
-            logger.debug(f"Equivalent accession '{redundant_accession}' found for {accession}")
+            logger.debug(
+                f"Equivalent accession '{redundant_accession}' found for {accession}"
+            )
             new_exclusions.append(redundant_accession)
-    
+
     if new_exclusions:
-        logger.info('Adding accessions to exclusion list...', new=new_exclusions)
+        logger.info("Adding accessions to exclusion list...", new=new_exclusions)
 
         excluded_set.update(new_exclusions)
-        
-        listing['accessions']['excluded'] = list(excluded_set)
 
-        async with aiofiles.open(listing_path, "w") as f: 
-            await f.write(
-                json.dumps(listing, indent=2, sort_keys=True)
-            )
+        listing["accessions"]["excluded"] = list(excluded_set)
 
-        logger.debug('Wrote listing to file', filename=listing_path.name)
-    
+        async with aiofiles.open(listing_path, "w") as f:
+            await f.write(json.dumps(listing, indent=2, sort_keys=True))
+
+        logger.debug("Wrote listing to file", filename=listing_path.name)
+
     return True
+
 
 def in_refseq(comments: str, excluded: set):
     """
@@ -111,46 +111,40 @@ def in_refseq(comments: str, excluded: set):
     :param excluded: A set of excluded listings already present in the catalog listing
     :return: If found, returns the duplicate accession, otherwise returns an empty string
     """
-    comment_list = comments.split('.')
+    comment_list = comments.split(".")
 
     for part in comment_list:
-        if 'identical' in part or 'derived from' in part:
+        if "identical" in part or "derived from" in part:
             # retrieves the last "word" from the sentence and removes the last character
             redundant_accession = part.strip().split()[-1:][0]
-            
+
             if redundant_accession not in excluded:
                 return redundant_accession
-    
-    return ''
 
-async def fetch_upstream_records(
-    fetch_list: list, 
-    logger = base_logger
-) -> list:
+    return ""
+
+
+async def fetch_upstream_records(fetch_list: list, logger=base_logger) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank
-    
+
     :param fetch_list: List of accession numbers to fetch from GenBank
     :param logger: Optional entry point for an existing BoundLogger
-    :return: A list of GenBank data converted from XML to dicts if possible, 
+    :return: A list of GenBank data converted from XML to dicts if possible,
         else an empty list
     """
 
     try:
-        handle = Entrez.efetch(
-            db="nucleotide", id=fetch_list, rettype="gb"
-        )
+        handle = Entrez.efetch(db="nucleotide", id=fetch_list, rettype="gb")
     except HTTPError:
         return []
-    
+
     parsed = SeqIO.parse(handle, "gb")
-    
+
     try:
         record_dict = SeqIO.to_dict(parsed)
     except ValueError:
-        logger.error(
-            'Found two copies of the same record. Remove duplicate from this.'
-        )
+        logger.error("Found two copies of the same record. Remove duplicate from this.")
         return []
     except Exception as e:
         logger.exception(e)
@@ -158,7 +152,7 @@ async def fetch_upstream_records(
 
     if record_dict is None:
         return []
-    
+
     try:
         accession_list = [record for record in record_dict.values() if record.seq]
         return accession_list

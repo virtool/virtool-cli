@@ -12,11 +12,7 @@ from virtool_cli.update.update import request_new_records, process_records, writ
 DEFAULT_INTERVAL = 0.001
 
 
-def run(
-    src: Path, catalog: Path, 
-    auto_evaluate: bool = False, 
-    debugging: bool = False
-):
+def run(src: Path, catalog: Path, auto_evaluate: bool = False, debugging: bool = False):
     """
     CLI entry point for update.update_ref.run()
 
@@ -36,42 +32,43 @@ def run(
 
     if is_v1(src):
         logger.critical(
-            'reference folder "src" is a deprecated v1 reference.' + \
-            'Run "virtool ref migrate" before trying again.')
+            'reference folder "src" is a deprecated v1 reference.'
+            + 'Run "virtool ref migrate" before trying again.'
+        )
         return
-    
+
     if auto_evaluate:
         logger.warning(
-            'Auto-evaluation is in active development and may produce false negatives.'
+            "Auto-evaluation is in active development and may produce false negatives."
         )
 
-    logger.info('Updating src directory accessions using catalog listings...')
+    logger.info("Updating src directory accessions using catalog listings...")
 
     asyncio.run(
         update_reference(
-            src_path=src, catalog_path=catalog, 
-            auto_evaluate=auto_evaluate)
+            src_path=src, catalog_path=catalog, auto_evaluate=auto_evaluate
+        )
     )
 
+
 async def update_reference(
-    src_path: Path, catalog_path: Path, 
-    auto_evaluate: bool = False
+    src_path: Path, catalog_path: Path, auto_evaluate: bool = False
 ):
     """
     Creates 2 queues:
         1) upstream: Holds raw NCBI GenBank data,
         2) write: Holds formatted sequence data and isolate data
-    
+
     Monitors 3 asynchrononous processes:
-        1) fetcher: 
+        1) fetcher:
             Requests and retrieves new accessions from NCBI GenBank
             and pushes results to upstream queue
-        2) processor: 
-            Pulls Genbank data from upstream queue, 
+        2) processor:
+            Pulls Genbank data from upstream queue,
             formats into dict form and pushes to write queue
-        3) writer: 
+        3) writer:
             Pulls formatted sequences from write queue
-            and writes json to the correct location in the 
+            and writes json to the correct location in the
             src directory
 
     :param src_path: Path to a reference directory
@@ -90,41 +87,38 @@ async def update_reference(
 
     # Requests and retrieves new accessions from NCBI GenBank
     # and pushes results to upstream queue
-    fetcher = asyncio.create_task(
-        fetcher_loop(included_listings, queue=upstream_queue))
-    
-    # Pulls Genbank data from upstream queue, formats into dict form 
+    fetcher = asyncio.create_task(fetcher_loop(included_listings, queue=upstream_queue))
+
+    # Pulls Genbank data from upstream queue, formats into dict form
     # and pushes to write queue
     asyncio.create_task(
-        processor_loop(upstream_queue, write_queue, auto_evaluate=auto_evaluate))
-    
+        processor_loop(upstream_queue, write_queue, auto_evaluate=auto_evaluate)
+    )
+
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
-    asyncio.create_task(
-        writer_loop(src_path, write_queue))
+    asyncio.create_task(writer_loop(src_path, write_queue))
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 
-    await upstream_queue.join() # wait until the consumer has processed all items
-    
+    await upstream_queue.join()  # wait until the consumer has processed all items
+
     await write_queue.join()
 
     return
 
-async def fetcher_loop(
-    listing_paths: list,
-    queue: asyncio.Queue 
-):
+
+async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
     """
-    Loops through selected OTU listings from accession catalogue, 
+    Loops through selected OTU listings from accession catalogue,
     indexed by NCBI taxon ID, and:
         1) requests NCBI Genbank for accession numbers not extant
             in catalog,
-        2) loops through retrieved new accession numbers and 
+        2) loops through retrieved new accession numbers and
             requests relevant record data from NCBI Genbank
         3) Pushes new records and corresponding OTU information
             to a queue for formatting
-    
+
     :param listing_paths: A list of paths to listings from the accession catalog
     :param queue: Queue holding fetched NCBI GenBank data
     """
@@ -134,30 +128,34 @@ async def fetcher_loop(
         acc_listing = json.loads(path.read_text())
 
         # extract taxon ID and _id hash from listing filename
-        [ taxid, otu_id ] = (path.stem).split('--')
-        
+        [taxid, otu_id] = (path.stem).split("--")
+
         logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
         record_data = await request_new_records(acc_listing, logger)
         if not record_data:
             continue
 
-        packet = { 
-            'taxid': taxid, 'otu_id': otu_id, 
-            'listing': acc_listing,
-            'data': record_data, 
+        packet = {
+            "taxid": taxid,
+            "otu_id": otu_id,
+            "listing": acc_listing,
+            "data": record_data,
         }
 
         await queue.put(packet)
         logger.debug(
-            f'Pushed {len(record_data)} requests to upstream queue', 
-            n_requests=len(record_data), taxid=taxid)
+            f"Pushed {len(record_data)} requests to upstream queue",
+            n_requests=len(record_data),
+            taxid=taxid,
+        )
         await asyncio.sleep(DEFAULT_INTERVAL)
 
+
 async def processor_loop(
-    upstream_queue: asyncio.Queue, 
+    upstream_queue: asyncio.Queue,
     downstream_queue: asyncio.Queue,
-    auto_evaluate: bool = False
+    auto_evaluate: bool = False,
 ):
     """
     Awaits fetched sequence data from the fetcher:
@@ -173,16 +171,16 @@ async def processor_loop(
 
     while True:
         fetch_packet = await upstream_queue.get()
-        
-        taxid = fetch_packet['taxid']
-        otu_id = fetch_packet['otu_id']
+
+        taxid = fetch_packet["taxid"]
+        otu_id = fetch_packet["otu_id"]
         logger = base_logger.bind(taxid=taxid)
 
         otu_updates = await process_records(
-            records=fetch_packet['data'], 
-            listing=fetch_packet['listing'],
+            records=fetch_packet["data"],
+            listing=fetch_packet["listing"],
             auto_evaluate=auto_evaluate,
-            logger=logger
+            logger=logger,
         )
 
         if not otu_updates:
@@ -190,17 +188,17 @@ async def processor_loop(
             upstream_queue.task_done()
             continue
 
-        processed_packet = { 'taxid': taxid, 'otu_id': otu_id, 'data': otu_updates }
+        processed_packet = {"taxid": taxid, "otu_id": otu_id, "data": otu_updates}
 
         await downstream_queue.put(processed_packet)
-        logger.debug(
-            f'Pushed {len(otu_updates)} new accessions to downstream queue')
+        logger.debug(f"Pushed {len(otu_updates)} new accessions to downstream queue")
         await asyncio.sleep(DEFAULT_INTERVAL)
         upstream_queue.task_done()
 
+
 async def writer_loop(
-    src_path: Path, 
-    queue: asyncio.Queue, 
+    src_path: Path,
+    queue: asyncio.Queue,
 ):
     """
     Awaits new sequence data for each OTU and writes new data into JSON files with unique Virtool IDs
@@ -214,21 +212,16 @@ async def writer_loop(
 
     while True:
         packet = await queue.get()
-        
-        taxid = packet['taxid']
-        otu_id = packet['otu_id']
-        sequence_data = packet['data']
+
+        taxid = packet["taxid"]
+        otu_id = packet["otu_id"]
+        sequence_data = packet["data"]
 
         logger = base_logger.bind(otu_id=otu_id, taxid=taxid, src=str(src_path))
 
         otu_path = search_otu_by_id(src_path, otu_id)
 
-        await write_data(
-            otu_path,
-            sequence_data, 
-            unique_iso, unique_seq,
-            logger
-        )
-    
+        await write_data(otu_path, sequence_data, unique_iso, unique_seq, logger)
+
         await asyncio.sleep(DEFAULT_INTERVAL)
         queue.task_done()

@@ -1,6 +1,6 @@
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Iterable, Optional, Tuple
+from typing import Tuple
 
 from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 
@@ -28,12 +28,12 @@ def generate_random_alphanumeric(
 
     return generate_random_alphanumeric(length=length, excluded=list(excluded_set))
 
-def generate_hashes(
+def generate_unique_ids(
     n: int = 1,
     length: int = 8,
     mixed_case: bool = False,
     excluded: list = []
-) -> hash:
+) -> set:
     """
     :param excluded: List of alphanumeric strings that should be excluded from generation
     :param n: The number of strings to be generated

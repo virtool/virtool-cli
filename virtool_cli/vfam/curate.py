@@ -45,7 +45,6 @@ def get_genbank_files(output: Path) -> List[Path]:
             with urllib.request.urlopen(
                 f"{viral_release_url}/{file_name}"
             ) as gpff_file:
-
                 with open(output_path, "wb") as f:
                     f.write(gpff_file.read())
 
@@ -112,7 +111,6 @@ def group_input_paths(
     phage_count = 0
 
     for input_path in input_paths:
-
         if str(input_path).endswith(".gz"):
             handle = gzip.open(input_path, "rt")
         else:
@@ -122,7 +120,6 @@ def group_input_paths(
             record_count += 1
 
             if record.seq not in record_seqs and len(record.seq) > sequence_min_length:
-
                 if no_named_phages:
                     if "phage" in record.description:
                         phage_count += 1
@@ -189,7 +186,6 @@ def get_taxonomy(curated_records_path: Path) -> dict:
 
     with curated_records_path.open("r") as handle:
         for record in SeqIO.parse(handle, "genbank"):
-
             record_taxonomy[record.id] = record.annotations["taxonomy"][-2:]
 
     return record_taxonomy

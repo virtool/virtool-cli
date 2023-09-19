@@ -90,7 +90,6 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
 
     for line in stat_data:
         if not line.startswith("#") and not line.startswith("CompletedProcess"):
-
             line = line.strip().split()
             mean_positional_relative_entropy = float(line[-2])
             kullback_leibler_divergence = float(line[-1])

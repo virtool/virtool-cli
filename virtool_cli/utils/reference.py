@@ -150,8 +150,10 @@ def get_otu_accessions_metadata(otu_path) -> dict:
     """
     # get length and segment metadata from sequences
     all_metadata = {}
+
     for isolate_path in get_isolate_paths(otu_path):
         for sequence_path in get_sequence_paths(isolate_path):
+            
             sequence_metadata = get_sequence_metadata(sequence_path)
             accession = sequence_metadata['accession']
             all_metadata[accession] = sequence_metadata

@@ -5,6 +5,7 @@ from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.doctor.fix_otu import repair_otu_data
 
+
 def run(src_path: Path, debugging: bool = False):
     """
     CLI entry point for doctor.fix_reference.run()
@@ -19,6 +20,7 @@ def run(src_path: Path, debugging: bool = False):
     )
 
     repair_data(src_path)
+
 
 def repair_data(src_path: Path):
     """

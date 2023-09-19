@@ -7,7 +7,7 @@ from virtool_cli.accessions.update import run as run_update
 from virtool_cli.accessions.repair import run as run_repair
 from virtool_cli.accessions.exclude import run as run_exclude
 
-ERROR_MESSAGE = click.style("ERROR: ", fg='red')
+ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
 
 @click.group("acc")
@@ -17,40 +17,37 @@ def acc():
     """
     pass
 
+
 @acc.command()
 @click.option(
     "-src",
     "--src_path",
     required=True,
-    type=str,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a reference directory",
 )
 @click.option(
     "-cat",
     "--catalog_path",
     required=True,
-    type=str,
-    default='.cache/catalog',
+    type=click.Path(file_okay=False, path_type=Path),
+    default=".cache/catalog",
     help="the path to a catalog directory",
 )
-@click.option('--debug/--no-debug', default=False)
+@click.option("--debug/--no-debug", default=False)
 def init(src_path, catalog_path, debug):
     """Generate a catalog of all included accessions in a src directory"""
 
     if not Path(src_path).exists():
         click.echo(ERROR_MESSAGE + f"Source directory does not exist at {src_path}")
         return
-    
+
     catalog_dir = Path(catalog_path)
     if not catalog_dir.exists():
         catalog_dir.mkdir(parents=True)
 
     try:
-        run_init(
-            src=Path(src_path),
-            catalog=Path(catalog_path),
-            debugging=debug
-        )
+        run_init(src=Path(src_path), catalog=Path(catalog_path), debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
 
@@ -60,99 +57,82 @@ def init(src_path, catalog_path, debug):
     "-cat",
     "--catalog_path",
     required=True,
-    type=str,
-    default='.cache/catalog',
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=".cache/catalog",
     help="the path to a catalog directory",
 )
 @click.option(
     "-src",
     "--src_path",
     required=True,
-    type=str,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a reference directory",
 )
-@click.option('--debug/--no-debug', default=False)
+@click.option("--debug/--no-debug", default=False)
 def update(src_path, catalog_path, debug):
-    """Generate a catalog of all included accessions in a src directory"""    
-    src_dir = Path(src_path) 
-    catalog_dir = Path(catalog_path)
-
-    if not src_dir.exists():
-        click.echo(ERROR_MESSAGE + f"Source directory does not exist at {src_path}")
-        return
-    
-    if not catalog_dir.exists():
-        click.echo(ERROR_MESSAGE + f"Catalog directory does not exist at {catalog_path}")
-        return
+    """Generate a catalog of all included accessions in a src directory"""
 
     try:
-        run_update(
-            src=src_dir,
-            catalog=catalog_dir,
-            debugging=debug
-        )
+        run_update(src=src_path, catalog=catalog_path, debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(
-            ERROR_MESSAGE + \
-            f"{src_path} is not a valid reference directory" + \
-            f"OR {catalog_path} is not a valid catalog directory")
+            ERROR_MESSAGE
+            + f"{str(src_path)} is not a valid reference directory"
+            + f"OR {str(catalog_path)} is not a valid catalog directory"
+        )
+
 
 @acc.command()
 @click.option(
     "-cat",
     "--catalog_path",
     required=True,
-    type=str,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a catalog directory",
 )
-@click.option('--debug/--no-debug', default=False)
+@click.option("--debug/--no-debug", default=False)
 def checkup(catalog_path, debug):
     """Run a check on the accession catalogue for outstanding issues."""
-
-    if not Path(catalog_path).exists():
-        click.echo(ERROR_MESSAGE + f"Catalog directory does not exist at {catalog_path}")
 
     try:
         run_checkup(Path(catalog_path), debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
 
+
 @acc.command()
 @click.option(
     "-cat",
     "--catalog_path",
     required=True,
-    type=str,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a catalog directory",
 )
-@click.option('--debug/--no-debug', default=False)
+@click.option("--debug/--no-debug", default=False)
 def repair(catalog_path, debug):
     """Run a check on the accession catalogue for outstanding issues."""
-
-    if not Path(catalog_path).exists():
-        click.echo(ERROR_MESSAGE + f"Catalog directory does not exist at {catalog_path}")
 
     try:
         run_repair(Path(catalog_path), debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
 
+
 @acc.command()
 @click.option(
     "-cat",
     "--catalog_path",
     required=True,
-    type=str,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a catalog directory",
 )
-@click.option('--debug/--no-debug', default=False)
+@click.option("--debug/--no-debug", default=False)
 def exclude(catalog_path, debug):
     """Run a check on the accession catalogue for outstanding issues."""
 
-    if not Path(catalog_path).exists():
-        click.echo(ERROR_MESSAGE + f"Catalog directory does not exist at {catalog_path}")
-
     try:
-        run_exclude(Path(catalog_path), debugging=debug)
+        run_exclude(catalog_path, debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
+        click.echo(
+            ERROR_MESSAGE + f"{str(catalog_path)} is not a valid catalog directory"
+        )

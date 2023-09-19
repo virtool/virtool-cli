@@ -27,7 +27,6 @@ def write_abc(
     abc_path = blast_results_path.parent / Path(abc_name)
 
     with abc_path.open("w") as abc_file:
-
         for query_result in SearchIO.parse(blast_results_path, "blast-tab"):
             for hit in query_result.hits:
                 q_id = query_result.id
@@ -132,7 +131,6 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
                 open(mcl_path_dict[record_id], "w").close()
 
     for record in SeqIO.parse(clustered_fasta_path, "fasta"):
-
         if record.id in mcl_path_dict:
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
