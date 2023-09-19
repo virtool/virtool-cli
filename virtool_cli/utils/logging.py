@@ -12,17 +12,13 @@ shared_processors = [
             {
                 structlog.processors.CallsiteParameter.FILENAME,
                 structlog.processors.CallsiteParameter.FUNC_NAME,
+                structlog.processors.CallsiteParameter.LINENO,
             }
         ),
 ]
 if sys.stderr.isatty():
     processors = shared_processors + [
-        structlog.dev.ConsoleRenderer(),
-        structlog.processors.CallsiteParameterAdder(
-            {
-                structlog.processors.CallsiteParameter.LINENO,
-            }
-        )
+        structlog.dev.ConsoleRenderer()
     ]
 else:
     processors = shared_processors + [

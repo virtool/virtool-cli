@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths
 from virtool_cli.utils.hashing import generate_hashes, get_unique_ids
-from virtool_cli.utils.ncbi import request_linked_accessions, request_accessions_nucleotide, NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.ncbi import request_linked_accessions, request_from_nucleotide, NCBI_REQUEST_INTERVAL
 from virtool_cli.utils.evaluate import evaluate_sequence, get_qualifiers
 from virtool_cli.utils.format import format_sequence
 from virtool_cli.accessions.helpers import search_by_otu_id
@@ -105,16 +105,23 @@ async def request_new_records(
     try:
         new_accessions = await fetch_upstream_accessions(
             listing=listing, logger=logger)
-        
-        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
-
-        record_data = await fetch_upstream_records(new_accessions, logger)
-        
         await asyncio.sleep(NCBI_REQUEST_INTERVAL)
     
     except HTTPError as e:
         logger.error(e)
-        return
+        return []
+    
+    except Exception as e:
+        logger.exception(e)
+        return []
+    
+    try:
+        record_data = await request_from_nucleotide(new_accessions)
+        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
+    
+    except HTTPError as e:
+        logger.error(e)
+        return []
     
     except Exception as e:
         logger.exception(e)
@@ -335,39 +342,14 @@ async def fetch_upstream_accessions(
         'Exclude catalogued accessions', 
         included=included_set, excluded=excluded_set)
 
-    upstream_accessions = []
-
     try: 
-        links = await request_linked_accessions(taxon_id=taxid)
+        upstream_accessions = await request_linked_accessions(taxon_id=taxid)
     except Exception:
         return []
-
-    for linksetdb in links:
-        accession = linksetdb["Id"]
-        if accession.split('.')[0] not in excluded_set:
-            upstream_accessions.append(accession)
 
     upstream_set = set(upstream_accessions)
 
     return list(upstream_set.difference(included_set))
-
-async def fetch_upstream_records(
-    fetch_list: list, 
-    logger: BoundLogger
-) -> list:
-    """
-    Take a list of accession numbers and request the records from NCBI GenBank
-    
-    :param fetch_list: List of accession numbers to fetch from GenBank
-    :param logger: Structured logger
-    :return: A list of GenBank data converted from XML to dicts if possible, 
-        else an empty list
-    """
-    try:
-        return await request_accessions_nucleotide(fetch_list)
-    except HTTPError as e:
-        logger.error(f'{e}, moving on...')
-        return []
 
 async def store_isolate(
     source_name: str, source_type: str, 

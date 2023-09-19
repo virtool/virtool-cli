@@ -9,22 +9,32 @@ Entrez.api_key = os.environ.get("NCBI_API_KEY")
 NCBI_REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.8
 
 
-async def request_linked_accessions(taxon_id: int):
+async def request_linked_accessions(taxon_id: int) -> list:
+    """
+    Take an NCBI Taxonomy UID and return a list of linked accessions from the Nucleotide database
+    
+    :param taxon_id: NCBI Taxonomy UID
+    :return: List of accessions that are linked to the input taxon ID
+    """
+    upstream_accessions = []
+
     # Request results as accessions, not UIDs
     entrez_acclist = Entrez.read(
         Entrez.elink(
             dbfrom="taxonomy", db="nucleotide", 
             id=str(taxon_id), idtype="acc")
         )
+    
+    for linksetdb in entrez_acclist[0]["LinkSetDb"][0]["Link"]:
+        upstream_accessions.append(str(linksetdb["Id"]))
 
-    return entrez_acclist[0]["LinkSetDb"][0]["Link"]
+    return upstream_accessions
 
-async def request_accessions_nucleotide(fetch_list: list) -> list:
+async def request_from_nucleotide(fetch_list: list) -> list:
     """
     Take a list of accession numbers and request the corresponding records from NCBI Nucleotide
     
     :param fetch_list: List of accession numbers to fetch from GenBank
-
     :return: A list of GenBank data converted from GenBank entries to dicts if possible, 
         else an empty list
     """
@@ -72,7 +82,7 @@ async def fetch_taxid(name: str) -> int:
 
     return taxid
 
-async def fetch_taxonomy_species(taxon_id: str):
+async def fetch_taxonomy_species(taxon_id: str) -> int:
     """
     Fetches a record from NCBI Taxonomy and extracts the species taxid
     from its lineage list.
@@ -116,10 +126,12 @@ async def fetch_taxonomy_rank(taxon_id) -> str:
         handle = Entrez.efetch(db="taxonomy", id=taxon_id, rettype="null")
         record = Entrez.read(handle)
         handle.close()
+    except HTTPError:
+        return 'http_error'
     except Exception:
-        return []
+        return 'unknown_error'
     
-    rank = ''
+    rank = 'unassigned'
     for r in record:
         rank = r['Rank']
     return rank
@@ -149,35 +161,6 @@ async def fetch_upstream_record_taxids(fetch_list: list) -> list:
     await asyncio.sleep(NCBI_REQUEST_INTERVAL)
     
     return list(taxids)
-
-async def fetch_records(fetch_list: list) -> list:
-    """
-    Take a list of accession numbers and request the records from NCBI GenBank
-    
-    :param fetch_list: List of accession numbers to fetch from GenBank
-    :param logger: Structured logger
-
-    :return: A list of GenBank data converted from XML to dicts if possible, 
-        else an empty list
-    """
-    try:
-        handle = Entrez.efetch(
-            db="nucleotide", id=fetch_list, rettype="gb", retmode="xml"
-        )
-        ncbi_records = Entrez.parse(handle)
-        handle.close()
-    except HTTPError:
-        return []
-
-    if ncbi_records is None:
-        return []
-    
-    try:
-        record_list = [record for record in ncbi_records.values() if record.seq]
-        return record_list
-    except Exception:
-        return []
-
 
 async def get_spelling(name: str, db: str = 'taxonomy') -> str:
     """
