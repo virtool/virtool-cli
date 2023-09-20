@@ -29,15 +29,19 @@ def run(otu_path: Path, src_path: Path, debugging: bool = False):
     repair_otu(otu_path, logger)
 
 
-def repair_otu(otu_path, logger: BoundLogger = base_logger):
+def repair_otu(otu_path: Path, logger: BoundLogger = base_logger):
     """
     Inspects an OTU and its contents for repairable issues and corrects them if found
 
     :param otu_path: Path to a OTU directory under a reference directory
     :param logger: Optional entry point for an existing BoundLogger
     """
-    with open(otu_path / "otu.json", "r") as f:
-        otu = json.load(f)
+    logger.debug("Getting OTU data...")
+    try:
+        with open(otu_path / "otu.json", "r") as f:
+            otu = json.load(f)
+    except Exception as e:
+        logger.exception(e)
 
     checked_otu = repair_otu_data(otu)
     if otu != checked_otu:
@@ -53,21 +57,19 @@ def repair_otu(otu_path, logger: BoundLogger = base_logger):
             repair_sequence(sequence_path=sequence_path, logger=logger)
 
 
-def repair_otu_data(otu_path):
+def repair_otu_data(otu: dict):
     """
     Deserializes an OTU's otu.json and updates the dictionary if issues are found
     and returns the dictionary
 
     :param otu_path: Path to a OTU directory under a reference directory
     """
-    with open(otu_path / "otu.json", "r") as f:
-        otu = json.load(f)
-
+    new_otu = otu.copy()
     if type(otu.get("taxid")) != int:
-        otu["taxid"] = None
+        new_otu["taxid"] = None
 
     if "schema" not in otu:
-        otu["schema"] = []
+        new_otu["schema"] = []
 
     return otu
 

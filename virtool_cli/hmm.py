@@ -112,7 +112,6 @@ def vfam(
         )
     except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE, "Not a valid reference directory.")
-        click.echo(e)
 
 
 def check_vfam_dependencies():

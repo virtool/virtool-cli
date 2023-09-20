@@ -3,7 +3,7 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths
-from virtool_cli.doctor.fix_otu import repair_otu_data
+from virtool_cli.doctor.fix_otu import repair_otu
 
 
 def run(src_path: Path, debugging: bool = False):
@@ -19,6 +19,8 @@ def run(src_path: Path, debugging: bool = False):
         level=filter_class,
     )
 
+    base_logger.info("Repairing data...")
+
     repair_data(src_path)
 
 
@@ -28,6 +30,5 @@ def repair_data(src_path: Path):
 
     :param src_path: Path to a given reference directory
     """
-    otu_paths = get_otu_paths(src_path)
-    for otu_path in otu_paths:
-        repair_otu_data(otu_path)
+    for otu_path in get_otu_paths(src_path):
+        repair_otu(otu_path, base_logger.bind(otu=otu_path.relative_to(src_path)))

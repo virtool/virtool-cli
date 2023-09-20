@@ -27,7 +27,7 @@ async def test_utils_fetch_taxonomy_rank(index):
     taxon_id = TAXON_IDS[index]
     print(taxon_id)
 
-    if taxon_id is "none":
+    if taxon_id == "none":
         return
 
     rank = await fetch_taxonomy_rank(taxon_id)
