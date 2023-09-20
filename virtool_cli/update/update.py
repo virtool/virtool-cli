@@ -3,7 +3,6 @@ from pathlib import Path
 import asyncio
 import aiofiles
 from typing import Optional
-from Bio import Entrez, SeqIO
 import logging
 from structlog import BoundLogger
 from urllib.error import HTTPError
@@ -16,7 +15,7 @@ from virtool_cli.utils.ncbi import (
     request_from_nucleotide,
     NCBI_REQUEST_INTERVAL,
 )
-from virtool_cli.utils.evaluate import evaluate_sequence, get_qualifiers
+from virtool_cli.update.evaluate import evaluate_sequence, get_qualifiers
 from virtool_cli.utils.format import format_sequence
 from virtool_cli.accessions.helpers import search_by_otu_id
 
