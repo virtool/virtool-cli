@@ -103,29 +103,4 @@ def correct_accession(accession: str) -> str:
     if re.search(r"([^A-Z_.0-9])", accession) is None:
         return accession
 
-    formatted_accession = accession
-    formatted_accession = formatted_accession.strip()
-    formatted_accession = formatted_accession.upper()
-    formatted_accession = re.sub(r"-", r"_", formatted_accession)
-
-    corrected_accession = formatted_accession
-
-    return corrected_accession
-
-
-def fix_taxid(otu: dict) -> Optional[dict]:
-    """
-    Ensures that each taxid inside every OTU's otu.json is of type int
-
-    :param otu: A deserialized otu.json OTU
-    :return: The modified otu parameter if it needs to be updated, else None
-    """
-    try:
-        taxid = otu.get("taxid", None)
-        if isinstance(taxid, str):
-            return {**otu, "taxid": int(taxid)}
-    except KeyError:
-        # assure that taxid field is set to None
-        return {**otu, "taxid": None}
-
-    return None
+    return accession.strip().upper().replace("-", "_")
