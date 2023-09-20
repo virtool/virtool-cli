@@ -6,9 +6,9 @@ from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import (
     get_otu_paths,
     read_otu,
-    get_otu_accessions_metadata,
 )
 from virtool_cli.accessions.listings import generate_listing, write_listing
+from virtool_cli.accessions.helpers import get_otu_accessions_metadata
 
 
 def run(src: Path, catalog: Path, debugging: bool = False):

@@ -76,8 +76,7 @@ def repair_sequence(sequence_path: Path, logger: BoundLogger = base_logger):
     """
     :param logger: Optional entry point for an existing BoundLogger
     """
-    if not sequence:
-        sequence = json.loads(sequence_path.read_text())
+    sequence = json.loads(sequence_path.read_text())
 
     # Automatically repair misspelled accessions where possible
     verified_accession = correct_accession(sequence["accession"])

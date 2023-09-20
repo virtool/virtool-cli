@@ -118,10 +118,15 @@ def check_schema(listing: dict):
     :param listing: Catalog listing data in dictionary form
     :returns: A boolean confirming the existence of a filled-out schema
     """
-    if type(listing["schema"]) != list:
+    if "schema" not in listing:
         return False
 
-    if not listing:
+    schema = listing["schema"]
+
+    if not schema:
+        return False
+
+    if type(schema) != list:
         return False
 
     return True

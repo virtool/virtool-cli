@@ -6,7 +6,6 @@ from virtool_cli.utils.reference import (
     search_otu_by_id,
     get_otu_paths,
     get_isolate_paths,
-    get_otu_accessions,
 )
 from virtool_cli.utils.hashing import generate_unique_ids
 from paths import TEST_FILES_PATH
@@ -51,14 +50,6 @@ def test_utils_get_otu_paths(src):
 @pytest.mark.parametrize("src", [SRC_PATH])
 def test_utils_get_isolate_paths(src):
     assert set(get_isolate_paths(src)) == set(get_subdir(src))
-
-
-@pytest.mark.parametrize("src", [SRC_PATH])
-def test_utils_get_accessions(src):
-    for otu_path in get_otu_paths(src):
-        accessions = get_otu_accessions(otu_path)
-        assert type(accessions) == list
-        assert len(accessions) > 0
 
 
 def test_utils_hashing():

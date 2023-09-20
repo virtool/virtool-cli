@@ -62,14 +62,14 @@ async def filter_refseq_otu(listing_path: Path, logger: BoundLogger = base_logge
             refseq_accessions.append(accession)
 
     if not refseq_accessions:
-        return False
+        return
 
     logger.debug("RefSeq accessions found", refseq=refseq_accessions)
     try:
         included_records = await fetch_upstream_records(refseq_accessions)
     except Exception as e:
         logger.exception(e)
-        return False
+        return
 
     excluded_set = set(listing["accessions"]["excluded"])
 
@@ -99,10 +99,8 @@ async def filter_refseq_otu(listing_path: Path, logger: BoundLogger = base_logge
 
         logger.debug("Wrote listing to file", filename=listing_path.name)
 
-    return True
 
-
-def in_refseq(comments: str, excluded: set):
+def in_refseq(comments: str, excluded: set) -> str:
     """
     Inspects text from the GenBank Comment field of a RefSeq record and retrieves
     an accession that this RefSeq record is "identical" or "derived from".
@@ -111,9 +109,7 @@ def in_refseq(comments: str, excluded: set):
     :param excluded: A set of excluded listings already present in the catalog listing
     :return: If found, returns the duplicate accession, otherwise returns an empty string
     """
-    comment_list = comments.split(".")
-
-    for part in comment_list:
+    for part in comments.split("."):
         if "identical" in part or "derived from" in part:
             # retrieves the last "word" from the sentence and removes the last character
             redundant_accession = part.strip().split()[-1:][0]

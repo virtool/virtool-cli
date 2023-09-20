@@ -9,11 +9,14 @@ from virtool_cli.utils.reference import (
     get_otu_paths,
     search_otu_by_id,
     read_otu,
+)
+from virtool_cli.accessions.listings import generate_listing, write_listing
+from virtool_cli.accessions.helpers import (
+    get_catalog_paths,
+    filter_catalog,
     get_otu_accessions,
     get_otu_accessions_metadata,
 )
-from virtool_cli.accessions.listings import generate_listing, write_listing
-from virtool_cli.accessions.helpers import get_catalog_paths, filter_catalog
 
 
 def run(src: Path, catalog: Path, debugging: bool = False):

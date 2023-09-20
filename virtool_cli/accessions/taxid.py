@@ -3,9 +3,10 @@ import json
 import asyncio
 import logging
 
-# from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.accessions.helpers import get_catalog_paths, find_taxid_from_accessions
+from virtool_cli.accessions.listings import update_listing
 
 
 def run(catalog: Path, debugging: bool = False):
@@ -79,7 +80,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     """
     Pulls packet dicts from the queue and updates the listing file accordingly
 
-    :param src_path: Path to a given reference directory
+    :param catalog_path: Path to a accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
     write_logger = base_logger
