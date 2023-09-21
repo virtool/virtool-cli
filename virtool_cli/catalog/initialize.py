@@ -7,8 +7,8 @@ from virtool_cli.utils.reference import (
     get_otu_paths,
     read_otu,
 )
-from virtool_cli.accessions.listings import generate_listing, write_listing
-from virtool_cli.accessions.helpers import get_otu_accessions_metadata
+from virtool_cli.catalog.listings import generate_listing, write_listing
+from virtool_cli.catalog.helpers import get_otu_accessions_metadata
 
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):

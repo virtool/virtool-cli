@@ -25,7 +25,7 @@ def catalog_path(tmp_path):
 def command(src_path, catalog_path):
     return [
         "virtool",
-        "acc",
+        "catalog",
         "init",
         "-src",
         str(src_path),
@@ -102,7 +102,7 @@ def test_update(src_path, catalog_path):
     subprocess.call(
         [
             "virtool",
-            "acc",
+            "catalog",
             "update",
             "-src",
             str(src_path),

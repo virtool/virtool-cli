@@ -17,7 +17,7 @@ from virtool_cli.utils.ncbi import (
 )
 from virtool_cli.update.evaluate import evaluate_sequence, get_qualifiers
 from virtool_cli.update.format import format_sequence
-from virtool_cli.accessions.helpers import search_by_otu_id
+from virtool_cli.catalog.helpers import search_by_otu_id
 
 DEFAULT_INTERVAL = 0.001
 

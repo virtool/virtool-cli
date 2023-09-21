@@ -3,8 +3,8 @@ import asyncio
 import logging
 
 from virtool_cli.utils.logging import base_logger
-from virtool_cli.accessions.initialize import initialize
-from virtool_cli.accessions.update import update
+from virtool_cli.catalog.initialize import initialize
+from virtool_cli.catalog.update import update
 
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):

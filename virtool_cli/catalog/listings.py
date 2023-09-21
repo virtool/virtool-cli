@@ -37,7 +37,7 @@ async def generate_listing(
             logger.exception(e)
 
         if taxid is None:
-            catalog_listing["taxid"] = "none"
+            catalog_listing["taxid"] = -1
             logger.debug(
                 f"Matching ID not found in NCBI Taxonomy. Setting taxid={taxid}"
             )

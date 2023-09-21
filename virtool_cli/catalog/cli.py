@@ -1,24 +1,24 @@
 from pathlib import Path
 import click
 
-from virtool_cli.accessions.checkup import run as run_checkup
-from virtool_cli.accessions.initialize import run as run_init
-from virtool_cli.accessions.update import run as run_update
-from virtool_cli.accessions.repair import run as run_repair
-from virtool_cli.accessions.exclude import run as run_exclude
+from virtool_cli.catalog.checkup import run as run_checkup
+from virtool_cli.catalog.initialize import run as run_init
+from virtool_cli.catalog.update import run as run_update
+from virtool_cli.catalog.repair import run as run_repair
+from virtool_cli.catalog.exclude import run as run_exclude
 
 ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
 
-@click.group("acc")
-def acc():
+@click.group("catalog")
+def catalog():
     """
     Commands related to accession catalogues.
     """
     pass
 
 
-@acc.command()
+@catalog.command()
 @click.option(
     "-src",
     "--src_path",
@@ -52,7 +52,7 @@ def init(src_path, catalog_path, debug):
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
 
 
-@acc.command()
+@catalog.command()
 @click.option(
     "-cat",
     "--catalog_path",
@@ -82,7 +82,7 @@ def update(src_path, catalog_path, debug):
         )
 
 
-@acc.command()
+@catalog.command()
 @click.option(
     "-cat",
     "--catalog_path",
@@ -100,7 +100,7 @@ def checkup(catalog_path, debug):
         click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
 
 
-@acc.command()
+@catalog.command()
 @click.option(
     "-cat",
     "--catalog_path",
@@ -118,7 +118,7 @@ def repair(catalog_path, debug):
         click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
 
 
-@acc.command()
+@catalog.command()
 @click.option(
     "-cat",
     "--catalog_path",

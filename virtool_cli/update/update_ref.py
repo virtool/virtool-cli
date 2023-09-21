@@ -6,7 +6,7 @@ import logging
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id, is_v1
 from virtool_cli.utils.hashing import get_unique_ids
-from virtool_cli.accessions.helpers import filter_catalog
+from virtool_cli.catalog.helpers import filter_catalog
 from virtool_cli.update.update import request_new_records, process_records, write_data
 
 DEFAULT_INTERVAL = 0.001

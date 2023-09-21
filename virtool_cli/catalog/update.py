@@ -10,8 +10,8 @@ from virtool_cli.utils.reference import (
     search_otu_by_id,
     read_otu,
 )
-from virtool_cli.accessions.listings import generate_listing, write_listing
-from virtool_cli.accessions.helpers import (
+from virtool_cli.catalog.listings import generate_listing, write_listing
+from virtool_cli.catalog.helpers import (
     get_catalog_paths,
     filter_catalog,
     get_otu_accessions,

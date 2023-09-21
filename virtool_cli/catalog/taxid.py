@@ -5,8 +5,8 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.accessions.helpers import get_catalog_paths, find_taxid_from_accessions
-from virtool_cli.accessions.listings import update_listing
+from virtool_cli.catalog.helpers import get_catalog_paths, find_taxid_from_accessions
+from virtool_cli.catalog.listings import update_listing
 
 
 def run(catalog_path: Path, debugging: bool = False):
