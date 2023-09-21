@@ -9,11 +9,11 @@ from virtool_cli.accessions.helpers import get_catalog_paths, find_taxid_from_ac
 from virtool_cli.accessions.listings import update_listing
 
 
-def run(catalog: Path, debugging: bool = False):
+def run(catalog_path: Path, debugging: bool = False):
     """
     CLI entry point for accession.taxid.run()
 
-    :param catalog: Path to an accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
@@ -25,28 +25,28 @@ def run(catalog: Path, debugging: bool = False):
     base_logger.info("Fetching taxon IDs...")
 
     # wipe_taxids(catalog)
-    asyncio.run(fetch_taxids(catalog))
+    asyncio.run(fetch_taxids(catalog_path))
 
 
-async def fetch_taxids(catalog: Path):
+async def fetch_taxids(catalog_path: Path):
     """
     Extracts taxon IDs from the included accessions.
     Runs the taxon ID request fetcher and the listing writer.
 
-    :param catalog: Path to an accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     """
     queue = asyncio.Queue()
 
-    fetcher = asyncio.create_task(fetcher_loop(catalog, queue))
+    fetcher = asyncio.create_task(fetcher_loop(catalog_path, queue))
 
-    asyncio.create_task(writer_loop(catalog, queue))
+    asyncio.create_task(writer_loop(catalog_path, queue))
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 
     await queue.join()
 
 
-async def fetcher_loop(catalog: Path, queue: asyncio.Queue):
+async def fetcher_loop(catalog_path: Path, queue: asyncio.Queue):
     """
     Iterates through all listings in a catalog directory, reads the included accessions
     and requests the taxon ID data from NCBI
@@ -54,10 +54,10 @@ async def fetcher_loop(catalog: Path, queue: asyncio.Queue):
     :param catalog_path: Path to a catalog directory
     :param queue: Queue containing the listing path and all taxon IDs extracted from the included accessions
     """
-    base_logger.debug("Starting fetcher...", n_catalog=len(get_catalog_paths(catalog)))
+    base_logger.debug("Starting fetcher...", n_catalog=len(get_catalog_paths(catalog_path)))
 
-    for listing_path in catalog.glob("*.json"):
-        logger = base_logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+    for listing_path in catalog_path.glob("*.json"):
+        logger = base_logger.bind(listing_path=str(listing_path.relative_to(catalog_path)))
 
         try:
             extracted_taxid = await find_taxid_from_accessions(listing_path, logger)
@@ -117,9 +117,9 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         queue.task_done()
 
 
-def wipe_taxids(catalog):
+def wipe_taxids(catalog_path):
     """ """
-    for listing_path in catalog.glob("*--*.json"):
+    for listing_path in catalog_path.glob("*--*.json"):
         with open(listing_path, "r") as f:
             listing = json.load(f)
 

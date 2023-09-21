@@ -19,11 +19,11 @@ from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 logger = structlog.get_logger()
 
 
-async def isolate(src: Path):
+async def isolate(src_path: Path):
     """
     Runs routines to find new isolates for OTU in a reference directory and writes newfound accessions to local cache
 
-    :param src: Path to a given reference directory
+    :param src_path: Path to a given reference directory
     """
     scheduler = await aiojobs.create_scheduler()
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
@@ -34,7 +34,7 @@ async def isolate(src: Path):
     existing_accessions = get_cache()
 
     # get paths for all OTU in the directory
-    paths = get_otu_paths(src)
+    paths = get_otu_paths(src_path)
 
     # get mapping of all OTU paths to its OTU JSON file
     otu_path_map = map_otus(paths)
@@ -428,10 +428,10 @@ def map_otus(paths: list) -> dict:
     return path_taxid_map
 
 
-def run(src: str):
+def run(src_path: str):
     """
     Runs the asynchronous routines to find new isolates for all OTU in a reference
 
-    :param src: Path to a reference directory
+    :param src_path: Path to a reference directory
     """
-    asyncio.run(isolate(src))
+    asyncio.run(isolate(src_path))

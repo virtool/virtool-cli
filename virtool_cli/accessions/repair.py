@@ -11,11 +11,11 @@ from virtool_cli.accessions.listings import update_listing
 from virtool_cli.accessions.helpers import find_taxid_from_accessions
 
 
-def run(catalog: Path, debugging: bool = False):
+def run(catalog_path: Path, debugging: bool = False):
     """
     CLI entry point for accession.repair.run()
 
-    :param catalog: Path to an accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
@@ -26,25 +26,25 @@ def run(catalog: Path, debugging: bool = False):
 
     base_logger.info("Repairing catalog...")
 
-    asyncio.run(repair_catalog(catalog))
+    asyncio.run(repair_catalog(catalog_path))
 
 
-async def repair_catalog(catalog: Path):
+async def repair_catalog(catalog_path: Path):
     """
     Runs repair functions on the accession catalog
 
-    :param catalog: Path to an accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     """
-    logger = base_logger.bind(catalog=str(catalog))
+    logger = base_logger.bind(catalog=str(catalog_path))
 
-    await fill_missing_taxids(catalog, logger)
+    await fill_missing_taxids(catalog_path, logger)
 
-    await rename_listings(catalog, logger)
+    await rename_listings(catalog_path, logger)
 
     return
 
 
-async def fill_missing_taxids(catalog: Path, logger: BoundLogger = base_logger):
+async def fill_missing_taxids(catalog_path: Path, logger: BoundLogger = base_logger):
     """
     Iterate through unmatched listings and run taxon ID extraction function.
     If a valid taxon ID is found, write to the listing.
@@ -52,8 +52,8 @@ async def fill_missing_taxids(catalog: Path, logger: BoundLogger = base_logger):
     :param listing: Catalog listing data in dictionary form
     :param logger: Optional entry point for a shared BoundLogger
     """
-    for listing_path in catalog.glob("none--*.json"):
-        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+    for listing_path in catalog_path.glob("none--*.json"):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog_path)))
 
         extracted_taxid = await find_taxid_from_accessions(listing_path, logger)
 
@@ -72,16 +72,16 @@ async def fill_missing_taxids(catalog: Path, logger: BoundLogger = base_logger):
                 continue
 
 
-async def rename_listings(catalog: Path, logger: BoundLogger = base_logger):
+async def rename_listings(catalog_path: Path, logger: BoundLogger = base_logger):
     """
     Renames listings where the taxon ID or OTU ID in the listing data
     no longer matches the listing's filename.
 
-    :param catalog: Catalog listing data in dictionary form
+    :param catalog_path: Catalog listing data in dictionary form
     :param logger: Optional entry point for a shared BoundLogger
     """
-    for listing_path in catalog.glob("*.json"):
-        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog)))
+    for listing_path in catalog_path.glob("*.json"):
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog_path)))
 
         [taxid, otu_id] = listing_path.stem.split("--")
 
@@ -100,14 +100,11 @@ async def rename_listings(catalog: Path, logger: BoundLogger = base_logger):
             logger.info(f"Renamed {old_name} to {new_path.name}", listing=new_path.name)
 
 
-async def fetch_upstream_record_taxids(
-    fetch_list: list,
-) -> list:
+async def fetch_upstream_record_taxids(fetch_list: list) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank
 
     :param fetch_list: List of accession numbers to fetch from GenBank
-    :param logger: Structured logger
     :return: A list of GenBank data converted from XML to dicts if possible,
         else an empty list
     """
@@ -120,9 +117,9 @@ async def fetch_upstream_record_taxids(
 
     await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
-    taxids = set()
+    taxids = []
 
     for r in record:
-        taxids.add(int(r.get("TaxId")))
+        taxids.append(int(r.get("TaxId")))
 
     return taxids

@@ -23,7 +23,7 @@ DEFAULT_INTERVAL = 0.001
 
 
 def run(
-    otu_path: Path, catalog: Path, auto_evaluate: bool = False, debugging: bool = False
+    otu_path: Path, catalog_path: Path, auto_evaluate: bool = False, debugging: bool = False
 ):
     """
     CLI entry point for update.update.run()
@@ -32,7 +32,7 @@ def run(
     Searches the catalog for a matching catalog listing and requests new updates if it finds one.
 
     :param otu_path: Path to a OTU directory
-    :param catalog: Path to a catalog directory
+    :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
@@ -48,7 +48,7 @@ def run(
         )
 
     [_, otu_id] = otu_path.name.split("--")
-    listing_path = search_by_otu_id(otu_id, catalog)
+    listing_path = search_by_otu_id(otu_id, catalog_path)
 
     if listing_path:
         asyncio.run(update_otu(otu_path, listing_path, auto_evaluate))

@@ -30,26 +30,26 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     get_catalog(src_path, catalog_path)
 
 
-def get_catalog(src: Path, catalog: Path):
+def get_catalog(src_path: Path, catalog_path: Path):
     """
     Runs accession.catalog.update if a catalog directory is found,
     else runs accession.catalog.update
 
-    :param src: Path to a reference directory
-    :param catalog: Path to an accession catalog directory
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to an accession catalog directory
     """
-    logger = base_logger.bind(catalog=str(catalog))
+    logger = base_logger.bind(catalog=str(catalog_path))
 
-    catalog_paths = list(catalog.glob("*--*.json"))
+    catalog_paths = list(catalog_path.glob("*--*.json"))
 
     if catalog_paths:
         logger.info("Catalog is already populated.", catalogued=True)
 
         logger.info("Updating listings...", task="update")
-        asyncio.run(update(src, catalog))
+        asyncio.run(update(src_path, catalog_path))
 
     else:
         logger.info("Catalog is empty.", catalogued=False)
 
         logger.info("Initializing listings...", task="initialize")
-        asyncio.run(initialize(src, catalog))
+        asyncio.run(initialize(src_path, catalog_path))

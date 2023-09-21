@@ -47,7 +47,7 @@ def init(src_path, catalog_path, debug):
         catalog_dir.mkdir(parents=True)
 
     try:
-        run_init(src=Path(src_path), catalog=Path(catalog_path), debugging=debug)
+        run_init(src_path=Path(src_path), catalog_path=Path(catalog_path), debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
 
@@ -73,7 +73,7 @@ def update(src_path, catalog_path, debug):
     """Generate a catalog of all included accessions in a src directory"""
 
     try:
-        run_update(src=src_path, catalog=catalog_path, debugging=debug)
+        run_update(src_path=src_path, catalog_path=catalog_path, debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(
             ERROR_MESSAGE

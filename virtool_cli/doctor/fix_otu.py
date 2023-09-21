@@ -50,7 +50,7 @@ def repair_otu(otu_path: Path, logger: BoundLogger = base_logger):
 
     for isolate_path in get_isolate_paths(otu_path):
         for sequence_path in get_sequence_paths(isolate_path):
-            logger = logger.bind(sequence_path=str(sequence_path.relative_to(otu_path)))
+            logger = logger.bind(sequence_path=sequence_path.relative_to(otu_path))
 
             logger.debug(f"Inspecting sequence '{sequence_path.stem}'...")
 

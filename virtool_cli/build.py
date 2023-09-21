@@ -20,13 +20,13 @@ SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def run(
-    src_path: Path, output: Path, indent: bool, version: str, debugging: bool = False
+    src_path: Path, output_path: Path, indent: bool, version: str, debugging: bool = False
 ):
     """
     Build a Virtool reference JSON file from a data directory.
 
     :param src_path: Path to database src directory
-    :param output: The output path for the reference.json file
+    :param output_path: The output path for the reference.json file
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     :param debugging: Enables verbose logs for debugging purposes
@@ -46,7 +46,7 @@ def run(
         return
 
     try:
-        build_from_src(src_path, output, indent, version)
+        build_from_src(src_path, output_path, indent, version)
     except FileNotFoundError as e:
         base_logger.exception(e)
     except Exception as e:

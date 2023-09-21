@@ -12,14 +12,14 @@ from virtool_cli.update.update import request_new_records, process_records, writ
 DEFAULT_INTERVAL = 0.001
 
 
-def run(src: Path, catalog: Path, auto_evaluate: bool = False, debugging: bool = False):
+def run(src_path: Path, catalog_path: Path, auto_evaluate: bool = False, debugging: bool = False):
     """
     CLI entry point for update.update_ref.run()
 
     Requests updates for all OTU directories under a source reference
 
-    :param src: Path to a reference directory
-    :param catalog: Path to a catalog directory
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
@@ -28,9 +28,9 @@ def run(src: Path, catalog: Path, auto_evaluate: bool = False, debugging: bool =
         format="%(message)s",
         level=filter_class,
     )
-    logger = base_logger.bind(src=str(src), catalog=str(catalog))
+    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
 
-    if is_v1(src):
+    if is_v1(src_path):
         logger.critical(
             'reference folder "src" is a deprecated v1 reference.'
             + 'Run "virtool ref migrate" before trying again.'
@@ -46,7 +46,7 @@ def run(src: Path, catalog: Path, auto_evaluate: bool = False, debugging: bool =
 
     asyncio.run(
         update_reference(
-            src_path=src, catalog_path=catalog, auto_evaluate=auto_evaluate
+            src_path=src_path, catalog_path=catalog_path, auto_evaluate=auto_evaluate
         )
     )
 

@@ -19,12 +19,12 @@ from virtool_cli.accessions.helpers import (
 )
 
 
-def run(src: Path, catalog: Path, debugging: bool = False):
+def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
     CLI entry point for accession.update.run()
 
-    :param src: Path to a reference directory
-    :param catalog: Path to a catalog directory
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
@@ -32,14 +32,14 @@ def run(src: Path, catalog: Path, debugging: bool = False):
         format="%(message)s",
         level=filter_class,
     )
-    logger = base_logger.bind(task="update", catalog=str(catalog))
+    logger = base_logger.bind(task="update", catalog=str(catalog_path))
 
     logger.info("Starting catalog updater...")
 
-    asyncio.run(update(src, catalog))
+    asyncio.run(update(src_path, catalog_path))
 
 
-async def update(src: Path, catalog: Path):
+async def update(src_path: Path, catalog_path: Path):
     """
     Checks reference directory src for data not accounted for by the accession catalog
     and updates the corresponding catalog listing accordingly.
@@ -47,15 +47,15 @@ async def update(src: Path, catalog: Path):
     :param src_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
     """
-    logger = base_logger.bind(task="update", catalog=str(catalog))
+    logger = base_logger.bind(task="update", catalog=str(catalog_path))
 
-    await complete_catalog(src, catalog, logger)
+    await complete_catalog(src_path, catalog_path, logger)
 
     queue = asyncio.Queue()
 
-    fetcher = asyncio.create_task(fetcher_loop(src, catalog, queue))
+    fetcher = asyncio.create_task(fetcher_loop(src_path, catalog_path, queue))
 
-    asyncio.create_task(writer_loop(catalog, queue))
+    asyncio.create_task(writer_loop(catalog_path, queue))
 
     await asyncio.gather(fetcher, return_exceptions=True)
 
@@ -64,7 +64,7 @@ async def update(src: Path, catalog: Path):
     logger.info("Catalog up to date")
 
 
-async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
+async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue):
     """
     Iterates through all listings with an associated OTU directory and:
         1) Inspects the OTU directory for changes.
@@ -80,12 +80,12 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
 
     update_count = 0
 
-    for listing_path in filter_catalog(src, catalog):
+    for listing_path in filter_catalog(src_path, catalog_path):
         [taxid, otu_id] = listing_path.stem.split("--")
 
         logger = fetch_logger.bind(listing=listing_path.name)
 
-        otu_path = search_otu_by_id(src, otu_id)
+        otu_path = search_otu_by_id(src_path, otu_id)
         existing_accessions = set(get_otu_accessions(otu_path))
         fetch_logger.debug(f"current accessions: {existing_accessions}")
 
@@ -131,18 +131,18 @@ async def fetcher_loop(src: Path, catalog: Path, queue: asyncio.Queue):
     base_logger.debug(
         f"Pushed {update_count} updates to writer",
         n_updated=update_count,
-        catalog_path=str(catalog),
+        catalog_path=str(catalog_path),
     )
 
 
-async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
+async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     """
     Pulls packet dicts from the queue and calls the update function
 
     :param src_path: Path to a given reference directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
-    write_logger = base_logger.bind(loop="writer", catalog=str(catalog))
+    write_logger = base_logger.bind(loop="writer", catalog=str(catalog_path))
     write_logger.debug("Starting writer...")
 
     while True:
@@ -150,7 +150,7 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
         listing_path = packet["path"]
         listing = packet["listing"]
         write_logger.bind(
-            listing_path=str(listing_path.relative_to(catalog)), logger=write_logger
+            listing_path=str(listing_path.relative_to(catalog_path)), logger=write_logger
         )
 
         write_logger.debug(f"New listing:\n{listing}")
@@ -201,13 +201,13 @@ async def complete_catalog(
 
 
 async def add_listing(
-    otu_path: Path, catalog: Path, logger: structlog.BoundLogger = base_logger
+    otu_path: Path, catalog_path: Path, logger: structlog.BoundLogger = base_logger
 ):
     """
     Generate and write a new listing to the catalog based on a given OTU
 
     :param otu_path: Path to an OTU directory in a reference directory
-    :param catalog: Path to a catalog directory
+    :param catalog_path: Path to a catalog directory
     :param logger: Optional entry point for an existing BoundLogger
     """
     otu_data = read_otu(otu_path)
@@ -229,7 +229,7 @@ async def add_listing(
         return
 
     await write_listing(
-        otu_data["taxid"], new_listing, catalog_path=catalog, logger=logger
+        otu_data["taxid"], new_listing, catalog_path=catalog_path, logger=logger
     )
 
     return

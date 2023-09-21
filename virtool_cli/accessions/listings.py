@@ -102,8 +102,8 @@ async def write_listing(
     Writes prepared listing data to a listing file under the catalog directory
 
     :param taxid: OTU taxon id
-    :param accessions: List of OTU's accessions
-    :param catalog: Path to an accession catalog
+    :param listing: Deserialized OTU catalog listing
+    :param catalog_path: Path to an accession catalog
     :param indent: Indent flag
     :param logger: Optional entry point for an existing BoundLogger
     """
@@ -155,15 +155,16 @@ def measure_monopartite(sequence_metadata: dict) -> int:
     return int(average_length)
 
 
-def measure_multipartite(sequence_metadata, part_list) -> dict:
+def measure_multipartite(sequence_metadata, segment_list) -> dict:
     """
     Takes a dict containing all sequence lengths and a list of segments,
     and returns the average length of each constituent segment.
 
     :param sequence_metadata: Dict containing segment data
+    :param segment_list: List of segment names
     :return: A dict keyed by segment name containing the average length of each segment
     """
-    part_total_dict = {element: [] for index, element in enumerate(part_list)}
+    part_total_dict = {element: [] for index, element in enumerate(segment_list)}
 
     for accession in sequence_metadata:
         metadata = sequence_metadata[accession]

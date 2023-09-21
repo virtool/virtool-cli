@@ -12,11 +12,11 @@ from virtool_cli.accessions.helpers import get_catalog_paths
 LISTING_KEYS = {"_id", "accessions", "name", "schema", "taxid"}
 
 
-def run(catalog: Path, debugging: bool = False):
+def run(catalog_path: Path, debugging: bool = False):
     """
     CLI entry point for accession.checkup.run()
 
-    :param catalog: Path to an accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
@@ -24,23 +24,23 @@ def run(catalog: Path, debugging: bool = False):
         format="%(message)s",
         level=filter_class,
     )
-    run_tests(catalog)
+    run_tests(catalog_path)
 
 
-def run_tests(catalog: Path):
+def run_tests(catalog_path: Path):
     """
     Check catalog for outstanding issues.
     Can also be used to diagnose issues with the corresponding reference.
 
-    :param catalog: Path to an accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     """
-    logger = base_logger.bind(catalog=str(catalog))
+    logger = base_logger.bind(catalog=str(catalog_path))
 
     logger.info("Checking for missing data within all listings...")
-    check_missing_data(catalog, logger)
+    check_missing_data(catalog_path, logger)
 
     logger.info("Checking for listings without taxon IDs...", test="no_taxid")
-    if unassigned := search_by_taxid("none", catalog):
+    if unassigned := search_by_taxid("none", catalog_path):
         logger.warning(
             "Found listings without assigned NCBI taxon IDs.",
             test="no_taxid",
@@ -48,7 +48,7 @@ def run_tests(catalog: Path):
         )
 
     logger.info("Checking for duplicate OTUs...", test="duplicate_taxid")
-    if duplicate_otus := find_shared_taxids(catalog, logger):
+    if duplicate_otus := find_shared_taxids(catalog_path, logger):
         logger.warning(
             "Found non-unique taxon IDs in catalog.",
             test="duplicate_taxid",
@@ -59,7 +59,7 @@ def run_tests(catalog: Path):
         "Checking for listings containing duplicate accessions...",
         test="duplicate_accessions",
     )
-    if duplicate_accessions := find_duplicate_accessions(catalog, logger):
+    if duplicate_accessions := find_duplicate_accessions(catalog_path, logger):
         logger.warning(
             "Found non-unique accessions in listings",
             test="duplicate_accessions",
@@ -70,17 +70,17 @@ def run_tests(catalog: Path):
         "Requesting spelling suggestions for unmatchable listings...",
         test="suggest_spellings",
     )
-    asyncio.run(suggest_spellings(catalog))
+    asyncio.run(suggest_spellings(catalog_path))
 
 
-def check_missing_data(catalog: Path, logger: BoundLogger = base_logger):
+def check_missing_data(catalog_path: Path, logger: BoundLogger = base_logger):
     """
     Checks all catalog listings for missing keys and schema data.
 
-    :param catalog: Path to a catalog directory
+    :param catalog_path: Path to a catalog directory
     :param logger: Optional entry point for a shared BoundLogger
     """
-    for listing_path in get_catalog_paths(catalog):
+    for listing_path in get_catalog_paths(catalog_path):
         logger = logger.bind(listing=listing_path.stem)
 
         listing = json.loads(listing_path.read_text())
@@ -89,7 +89,7 @@ def check_missing_data(catalog: Path, logger: BoundLogger = base_logger):
             logger.warning(
                 "Entry is missing keys",
                 missing_keys=missing_keys,
-                path=str(listing_path.relative_to(catalog, logger)),
+                path=str(listing_path.relative_to(catalog_path, logger)),
             )
 
         if not check_schema(listing):
@@ -137,14 +137,14 @@ def find_shared_taxids(catalog_path: Path, logger: BoundLogger = base_logger) ->
     Go through a catalog path and find listings that share a taxon ID
     and return those taxon IDs as a list
 
-    :param catalog: Path to a catalog directory
+    :param catalog_path: Path to a catalog directory
     :param logger: Optional entry point for a shared BoundLogger
     :return: A list of taxon IDs that have multiple OTUs under them
     """
     duplicated_taxids = set()
 
     for listing_path in catalog_path.glob("*--*.json"):
-        [taxid, otu_id] = (listing_path.stem).split("--")
+        [taxid, otu_id] = listing_path.stem.split("--")
 
         logger = logger.bind(
             path=str(listing_path.relative_to(catalog_path.parent)), otu_id=otu_id
@@ -160,17 +160,17 @@ def find_shared_taxids(catalog_path: Path, logger: BoundLogger = base_logger) ->
     return list(duplicated_taxids)
 
 
-def find_duplicate_accessions(catalog: Path, logger=base_logger):
+def find_duplicate_accessions(catalog_path: Path, logger=base_logger):
     """
     Checks catalog listings for accessions that have been listed twice.
     Can be used to identify redundant sequences in the reference directory.
 
-    :param catalog: Path to a catalog directory
+    :param catalog_path: Path to a catalog directory
     :param logger: Optional entry point for a shared BoundLogger
     """
     duplicate_accessions = []
 
-    for listing_path in catalog.glob("*--*.json"):
+    for listing_path in catalog_path.glob("*--*.json"):
         listing = json.loads(listing_path.read_text())
 
         logger = logger.bind(listing=listing_path.name, name=listing["name"])
@@ -198,20 +198,20 @@ def find_duplicate_accessions(catalog: Path, logger=base_logger):
     return duplicate_accessions
 
 
-async def suggest_spellings(catalog: Path, logger=base_logger):
+async def suggest_spellings(catalog_path: Path, logger=base_logger):
     """
     Evaluates the names of OTUs without retrievable taxon IDs
     and queries Entrez ESpell for alternatives.
 
-    :param catalog: Path to a catalog directory
+    :param catalog_path: Path to a catalog directory
     :param logger: Optional entry point for a shared BoundLogger
     """
-    for listing_path in catalog.glob("none--*.json"):
+    for listing_path in catalog_path.glob("none--*.json"):
         with open(listing_path, "r") as f:
             listing = json.load(f)
 
         logger = logger.bind(
-            path=str(listing_path.relative_to(catalog)),
+            path=str(listing_path.relative_to(catalog_path)),
             otu_id=listing["_id"],
             taxid=listing["taxid"],
             current_name=listing["name"],
@@ -233,7 +233,7 @@ def search_by_taxid(taxid: Union[int, str], catalog_path: Path) -> list:
     Searches records for a matching taxon id and returns all matching paths in the accession records as strings
     (for logging purposes)
 
-    :param otu_id: Unique taxon ID
+    :param taxid: Unique taxon ID
     :param catalog_path: Path to an accession catalog directory
     :return: List of listings matching this taxon ID
     """

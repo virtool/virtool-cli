@@ -11,7 +11,7 @@ from virtool_cli.accessions.listings import generate_listing, write_listing
 from virtool_cli.accessions.helpers import get_otu_accessions_metadata
 
 
-def run(src: Path, catalog: Path, debugging: bool = False):
+def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
     CLI entry point for accession.initialize.run()
 
@@ -25,7 +25,7 @@ def run(src: Path, catalog: Path, debugging: bool = False):
         level=filter_class,
     )
 
-    asyncio.run(initialize(src, catalog))
+    asyncio.run(initialize(src_path, catalog_path))
 
 
 async def initialize(src_path: Path, catalog_path: Path):
@@ -55,7 +55,7 @@ async def initialize(src_path: Path, catalog_path: Path):
     logger.info("Catalog generated")
 
 
-async def fetcher_loop(src: Path, queue: asyncio.Queue):
+async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
     """
     Iterates through all OTUs in the src directory and generates listings for each,
     then pushes the new listing to the write queue
@@ -63,10 +63,10 @@ async def fetcher_loop(src: Path, queue: asyncio.Queue):
     :param src_path: Path to a reference directory
     :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
-    logger = base_logger.bind(src=str(src))
+    logger = base_logger.bind(src=str(src_path))
     logger.debug("Starting fetcher...")
 
-    for otu_path in get_otu_paths(src):
+    for otu_path in get_otu_paths(src_path):
         logger = base_logger.bind(otu_path=str(otu_path.name))
 
         otu_data = read_otu(otu_path)
@@ -90,17 +90,17 @@ async def fetcher_loop(src: Path, queue: asyncio.Queue):
         await queue.put({"otu_id": otu_id, "listing": listing})
 
 
-async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
+async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     """
     Pulls packet dicts from the queue and calls the write function
 
-    :param src_path: Path to a given reference directory
+    :param catalog_path: Path to an accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
     while True:
         packet = await queue.get()
 
-        logger = base_logger.bind(catalog=str(catalog), otu_id=packet["otu_id"])
+        logger = base_logger.bind(catalog=str(catalog_path), otu_id=packet["otu_id"])
 
         logger.debug(f"Got listing data for {packet['otu_id']} from the queue")
 
@@ -108,7 +108,7 @@ async def writer_loop(catalog: Path, queue: asyncio.Queue) -> None:
         taxid = listing["taxid"]
 
         await write_listing(
-            taxid=taxid, listing=listing, catalog_path=catalog, logger=logger
+            taxid=taxid, listing=listing, catalog_path=catalog_path, logger=logger
         )
 
         await asyncio.sleep(0.1)

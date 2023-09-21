@@ -21,11 +21,11 @@ SEQUENCE_KEYS = [
 ]
 
 
-def run(ref_path: Path, output_path: Path, debugging: bool = False):
+def run(reference_path: Path, output_path: Path, debugging: bool = False):
     """
     Divide a reference.json file from Virtool into a src tree.
 
-    :param ref_path: Path to a reference.json file
+    :param reference_path: Path to a reference.json file
     :param output_path: Path to the where the src tree should be generated
     :param debugging: Enables verbose logs for debugging purposes
     """
@@ -35,14 +35,14 @@ def run(ref_path: Path, output_path: Path, debugging: bool = False):
         level=filter_class,
     )
 
-    logger = base_logger.bind(reference=str(ref_path), output_path=str(output_path))
+    logger = base_logger.bind(reference=str(reference_path), output_path=str(output_path))
 
-    logger.info(f"Dividing {output_path.name} into {str(ref_path.name)}...")
+    logger.info(f"Dividing {output_path.name} into {reference_path.name}...")
 
     shutil.rmtree(output_path, ignore_errors=True)
     output_path.mkdir()
 
-    with open(ref_path, "r") as export_handle:
+    with open(reference_path, "r") as export_handle:
         data = json.load(export_handle)
 
         for otu in data.get("otus"):
@@ -71,7 +71,7 @@ def run(ref_path: Path, output_path: Path, debugging: bool = False):
             )
 
 
-def build_otu(src_path: Path, otu: dict) -> str:
+def build_otu(src_path: Path, otu: dict) -> Path:
     """
     Creates a directory for all OTUs that begin with a particular
     letter if it doesn't already exist. Generates a directory for a
@@ -94,7 +94,7 @@ def build_otu(src_path: Path, otu: dict) -> str:
     return otu_path
 
 
-def build_isolate(otu_path: Path, isolate: dict) -> str:
+def build_isolate(otu_path: Path, isolate: dict) -> Path:
     """
     Creates a directory for a given isolate and generates
     a isolate.json with key information about it.

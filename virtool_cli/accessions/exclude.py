@@ -10,11 +10,11 @@ from urllib.error import HTTPError
 from virtool_cli.utils.logging import base_logger
 
 
-def run(catalog: Path, debugging: bool = False):
+def run(catalog_path: Path, debugging: bool = False):
     """
     CLI entry point for accession.exclude.run()
 
-    :param catalog: Path to an accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     filter_class = logging.DEBUG if debugging else logging.INFO
@@ -23,19 +23,19 @@ def run(catalog: Path, debugging: bool = False):
         level=filter_class,
     )
 
-    base_logger.info("Starting RefSeq filter...", catalog=str(catalog))
+    base_logger.info("Starting RefSeq filter...", catalog=str(catalog_path))
 
-    asyncio.run(filter_refseq_accessions(catalog))
+    asyncio.run(filter_refseq_accessions(catalog_path))
 
 
-async def filter_refseq_accessions(catalog: Path):
+async def filter_refseq_accessions(catalog_path: Path):
     """
     Automatically excludes the former accession numbers of RefSeq sequences
     Runs RefSeq filter and exclusion on all listings in an accession catalog
 
     :param catalog_path: Path to a catalog directory
     """
-    for listing_path in catalog.glob("*--*.json"):
+    for listing_path in catalog_path.glob("*--*.json"):
         logger = base_logger.bind(listing_path=listing_path.name)
 
         await filter_refseq_otu(listing_path, logger)
