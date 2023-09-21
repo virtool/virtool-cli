@@ -72,7 +72,7 @@ async def find_taxid_from_accessions(listing_path: Path, logger: BoundLogger) ->
     records = await fetch_upstream_record_taxids(fetch_list=accessions)
     if not records:
         logger.warning("No taxon IDs found", taxids=records)
-        return None
+        return ''
 
     otu_taxids = []
     for taxid in records:
@@ -82,11 +82,11 @@ async def find_taxid_from_accessions(listing_path: Path, logger: BoundLogger) ->
 
     if not otu_taxids:
         logger.warning("No taxon IDs found", taxids=records)
-        return None
+        return ''
 
     if len(otu_taxids) > 1:
         logger.warning("Found multiple taxon IDs in this OTU", taxids=otu_taxids)
-        return None
+        return ''
     else:
         taxid = otu_taxids.pop()
         return taxid

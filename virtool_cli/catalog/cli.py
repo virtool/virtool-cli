@@ -47,7 +47,9 @@ def init(src_path, catalog_path, debug):
         catalog_dir.mkdir(parents=True)
 
     try:
-        run_init(src_path=Path(src_path), catalog_path=Path(catalog_path), debugging=debug)
+        run_init(
+            src_path=Path(src_path), catalog_path=Path(catalog_path), debugging=debug
+        )
     except (FileNotFoundError, NotADirectoryError):
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
 

@@ -35,7 +35,9 @@ def run(reference_path: Path, output_path: Path, debugging: bool = False):
         level=filter_class,
     )
 
-    logger = base_logger.bind(reference=str(reference_path), output_path=str(output_path))
+    logger = base_logger.bind(
+        reference=str(reference_path), output_path=str(output_path)
+    )
 
     logger.info(f"Dividing {output_path.name} into {reference_path.name}...")
 
@@ -77,7 +79,7 @@ def build_otu(src_path: Path, otu: dict) -> Path:
     letter if it doesn't already exist. Generates a directory for a
     given OTU and copies key information about it to a otu.json file.
 
-    :param output: Path to the where the src tree should be generated
+    :param src_path: Path to the where the src tree should be generated
     :param otu: Dictionary of an OTU
     :return: Path to a newly generated OTU directory
     """

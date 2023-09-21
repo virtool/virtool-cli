@@ -12,7 +12,7 @@ from virtool_cli.utils.logging import base_logger
 
 def run(catalog_path: Path, debugging: bool = False):
     """
-    CLI entry point for accession.exclude.run()
+    CLI entry point for catalog.exclude.run()
 
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes

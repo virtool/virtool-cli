@@ -14,7 +14,7 @@ LISTING_KEYS = {"_id", "accessions", "name", "schema", "taxid"}
 
 def run(catalog_path: Path, debugging: bool = False):
     """
-    CLI entry point for accession.checkup.run()
+    CLI entry point for catalog.checkup.run()
 
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes

@@ -57,7 +57,7 @@ async def fill_missing_taxids(catalog_path: Path, logger: BoundLogger = base_log
 
         extracted_taxid = await find_taxid_from_accessions(listing_path, logger)
 
-        if extracted_taxid is not None:
+        if extracted_taxid:
             logger.debug(f"Found taxon ID {extracted_taxid}")
 
             with open(listing_path, "r") as f:

@@ -141,8 +141,6 @@ async def fetch_upstream_record_taxids(fetch_list: list) -> list:
     Take a list of accession numbers and request the records from NCBI GenBank
     
     :param fetch_list: List of accession numbers to fetch from GenBank
-    :param logger: Structured logger
-
     :return: A list of GenBank data converted from XML to dicts if possible, 
         else an empty list
     """

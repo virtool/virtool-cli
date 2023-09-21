@@ -3,7 +3,6 @@ import click
 
 from virtool_cli.update.update_ref import run as run_update_all
 from virtool_cli.update.update import run as run_update_single
-from virtool_cli.update.isolate import run as run_isolate
 
 
 @click.group("update")

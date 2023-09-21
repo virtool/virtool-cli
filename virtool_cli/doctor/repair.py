@@ -54,7 +54,7 @@ def repair_reference(src_path):
     write_otus(otus_to_update)
 
 
-def fix_folder_name(path: Path, otu: dict) -> Optional[str]:
+def fix_folder_name(path: Path, otu: dict) -> Optional[Path]:
     """
     Fixes each OTU folder name by ensuring that it's the same as the "name" field in its otu.json file
 

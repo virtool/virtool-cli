@@ -428,7 +428,7 @@ def map_otus(paths: list) -> dict:
     return path_taxid_map
 
 
-def run(src_path: str):
+def run(src_path: Path):
     """
     Runs the asynchronous routines to find new isolates for all OTU in a reference
 

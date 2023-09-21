@@ -16,14 +16,6 @@ def is_v1(src_path: Path) -> bool:
 
     return bool(alpha_bins)
 
-def get_subdir(path: Path) -> list:
-    """
-    Generates a list of all subdirectories under a path
-
-    :param path: Path to a src database directory
-    :return: List of paths to all OTU in a src directory
-    """
-    return [subdir for subdir in path.iterdir() if subdir.is_dir()]
 
 def get_otu_paths(src_path: Path) -> list:
     """
@@ -33,6 +25,7 @@ def get_otu_paths(src_path: Path) -> list:
     :return: List of paths to all OTU in a src directory
     """
     return [otu for otu in src_path.iterdir() if otu.is_dir()]
+
 
 def get_isolate_paths(otu_path: Path) -> list:
     """
@@ -57,6 +50,7 @@ def get_sequence_paths(isolate_path: Path) -> list:
 
     return sequence_ids
 
+
 def search_otu_by_id(src_path: Path, id: str) -> Optional[Path]:
     """
     Searches filenames in the database by unique id and
@@ -71,6 +65,7 @@ def search_otu_by_id(src_path: Path, id: str) -> Optional[Path]:
     
     return None
 
+
 def read_otu(path: Path) -> dict:
     """
     Returns a json file in dict form
@@ -82,6 +77,7 @@ def read_otu(path: Path) -> dict:
         otu = json.load(f)
 
     return otu
+
 
 def generate_otu_dirname(name: str, id: str = '') -> str:
     """

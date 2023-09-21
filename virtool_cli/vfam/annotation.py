@@ -154,9 +154,8 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
                     {
                         "accession": record.id,
                         "name": name,
-                        "organism": record.description.split("[")[1]
-                        .replace("]", "")
-                        .strip(),
+                        "organism":
+                            record.description.split("[")[1].replace("]", "").strip(),
                     }
                 )
             record_count += len(seq_ids)

@@ -13,7 +13,7 @@ from virtool_cli.catalog.helpers import get_otu_accessions_metadata
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
-    CLI entry point for accession.initialize.run()
+    CLI entry point for catalog.initialize.run()
 
     :param src_path: Path to a reference directory
     :param catalog_path: Path to an accession catalog directory

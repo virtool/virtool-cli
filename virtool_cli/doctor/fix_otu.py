@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 from pathlib import Path
 from structlog import BoundLogger
 import logging
@@ -62,7 +61,7 @@ def repair_otu_data(otu: dict):
     Deserializes an OTU's otu.json and updates the dictionary if issues are found
     and returns the dictionary
 
-    :param otu_path: Path to a OTU directory under a reference directory
+    :param otu: Deserialized OTU metadata
     """
     new_otu = otu.copy()
     if type(otu.get("taxid")) != int:

@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 import asyncio
-import aiofiles
 from typing import Optional
 import logging
 from structlog import BoundLogger
@@ -16,7 +15,8 @@ from virtool_cli.utils.ncbi import (
     NCBI_REQUEST_INTERVAL,
 )
 from virtool_cli.update.evaluate import evaluate_sequence, get_qualifiers
-from virtool_cli.update.format import format_sequence
+from virtool_cli.utils.storage import store_isolate, store_sequence
+from virtool_cli.utils.format import format_sequence
 from virtool_cli.catalog.helpers import search_by_otu_id
 
 DEFAULT_INTERVAL = 0.001
@@ -92,7 +92,7 @@ async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = F
 
 async def request_new_records(listing: dict, logger: BoundLogger = base_logger) -> list:
     """
-    :param listing_path: Path to a listing in an accession catalog directory
+    :param listing: Deserialized OTU catalog listing
     :param logger: Optional entry point for a shared BoundLogger
     """
     try:
@@ -223,9 +223,10 @@ async def write_data(
     logger: BoundLogger = base_logger,
 ):
     """
+    :param otu_path: A path to an OTU directory under a src reference directory
+    :param new_sequences: New sequences under the OTU, keyed by accession
     :param unique_iso: Set of all unique isolate IDs present in the reference
     :param unique_seq: Set of all unique sequence IDs present in the reference
-    :param otu_path: A path to an OTU directory under a src reference directory
     :param logger: Optional entry point for a shared BoundLogger
     """
     ref_isolates = await label_isolates(otu_path)
@@ -294,7 +295,7 @@ async def label_isolates(otu_path: Path) -> dict:
     :return: A dictionary of isolates indexed by source_name
     """
     if not otu_path.exists():
-        return FileNotFoundError
+        raise FileNotFoundError
 
     isolates = {}
 
@@ -345,53 +346,6 @@ async def fetch_upstream_accessions(listing: dict, logger: BoundLogger) -> list:
     upstream_set = set(upstream_accessions)
 
     return list(upstream_set.difference(included_set))
-
-
-async def store_isolate(
-    source_name: str, source_type: str, iso_hash: str, otu_path: Path
-) -> str:
-    """
-    Creates a new isolate directory and metadata file under an OTU directory,
-    then returns the metadata in dict form
-
-    :param source_name: Assigned source name for an accession
-    :param source_type: Assigned source type for an accession
-    :param iso_hash: Unique ID number for this new isolate
-    :param otu_path: Path to the parent OTU
-    :return: The unique isolate id
-    """
-    iso_path = otu_path / iso_hash
-    iso_path.mkdir()
-
-    new_isolate = {
-        "id": iso_hash,
-        "source_type": source_type,
-        "source_name": source_name,
-        "default": False,
-    }
-
-    async with aiofiles.open(iso_path / "isolate.json", "w") as f:
-        await f.write(json.dumps(new_isolate, indent=4))
-
-    return new_isolate
-
-
-async def store_sequence(sequence: dict, seq_hash: str, iso_path: Path) -> str:
-    """
-    Write sequence to isolate directory within the src directory
-
-    :param sequence: Dictionary containing formatted sequence data
-    :param seq_hash: Unique ID number for this new sequence
-    :param iso_path: Path to the parent isolate
-    :return: The unique sequence id (aka seq_hash)
-    """
-    sequence["_id"] = seq_hash
-    seq_path = iso_path / f"{seq_hash}.json"
-
-    async with aiofiles.open(seq_path, "w") as f:
-        await f.write(json.dumps(sequence, indent=4, sort_keys=True))
-
-    return seq_hash
 
 
 def get_lengthdict_multipartite(

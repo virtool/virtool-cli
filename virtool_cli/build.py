@@ -20,7 +20,8 @@ SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def run(
-    src_path: Path, output_path: Path, indent: bool, version: str, debugging: bool = False
+    src_path: Path, output_path: Path, indent: bool, version: str,
+    debugging: bool = False
 ):
     """
     Build a Virtool reference JSON file from a data directory.

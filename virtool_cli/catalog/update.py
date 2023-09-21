@@ -21,7 +21,7 @@ from virtool_cli.catalog.helpers import (
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
-    CLI entry point for accession.update.run()
+    CLI entry point for catalog.update.run()
 
     :param src_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
@@ -150,7 +150,8 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         listing_path = packet["path"]
         listing = packet["listing"]
         write_logger.bind(
-            listing_path=str(listing_path.relative_to(catalog_path)), logger=write_logger
+            listing_path=str(listing_path.relative_to(catalog_path)),
+            logger=write_logger,
         )
 
         write_logger.debug(f"New listing:\n{listing}")

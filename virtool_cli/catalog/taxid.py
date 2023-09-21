@@ -11,7 +11,7 @@ from virtool_cli.catalog.listings import update_listing
 
 def run(catalog_path: Path, debugging: bool = False):
     """
-    CLI entry point for accession.taxid.run()
+    CLI entry point for catalog.taxid.run()
 
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
@@ -54,10 +54,14 @@ async def fetcher_loop(catalog_path: Path, queue: asyncio.Queue):
     :param catalog_path: Path to a catalog directory
     :param queue: Queue containing the listing path and all taxon IDs extracted from the included accessions
     """
-    base_logger.debug("Starting fetcher...", n_catalog=len(get_catalog_paths(catalog_path)))
+    base_logger.debug(
+        "Starting fetcher...", n_catalog=len(get_catalog_paths(catalog_path))
+    )
 
     for listing_path in catalog_path.glob("*.json"):
-        logger = base_logger.bind(listing_path=str(listing_path.relative_to(catalog_path)))
+        logger = base_logger.bind(
+            listing_path=str(listing_path.relative_to(catalog_path))
+        )
 
         try:
             extracted_taxid = await find_taxid_from_accessions(listing_path, logger)
@@ -67,7 +71,7 @@ async def fetcher_loop(catalog_path: Path, queue: asyncio.Queue):
             await asyncio.sleep(NCBI_REQUEST_INTERVAL)
             continue
 
-        if extracted_taxid is not None:
+        if extracted_taxid:
             extracted_taxid = int(extracted_taxid)
             logger.debug(f"Found taxon ID: {extracted_taxid}")
 

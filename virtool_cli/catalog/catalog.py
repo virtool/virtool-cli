@@ -9,7 +9,7 @@ from virtool_cli.catalog.update import update
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
-    CLI entry point for accession.catalog.run()
+    CLI entry point for catalog.catalog.run()
 
     :param src_path: Path to a reference directory
     :param catalog_path: Path to an accession catalog directory
