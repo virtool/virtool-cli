@@ -93,7 +93,6 @@ def log_results(results: list, name: str):
 
     :param name: Name of OTU to log results for
     :param results: List of successful operations performed for a given OTU
-    :param console: Rich console object used to log results
     :return:
     """
     if not results:

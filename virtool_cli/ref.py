@@ -56,9 +56,7 @@ def build(src_path, output, indent, version, debug):
     try:
         run_build(src_path, output, indent, version, debug)
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + "Source directory has critical errors")
-    except Exception as e:
-        click.echo(ERROR_MESSAGE + "Unexpected exception")
+        click.echo(ERROR_MESSAGE + "Source directory contains critical errors")
 
 
 @ref.command()

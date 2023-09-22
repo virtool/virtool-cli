@@ -13,7 +13,7 @@ from Bio import Entrez, SeqIO
 import structlog
 
 from virtool_cli.utils.reference import get_otu_paths
-from virtool_cli.utils.hashing import get_unique_ids
+from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
 logger = structlog.get_logger()
@@ -25,7 +25,7 @@ async def isolate(src_path: Path):
 
     :param src_path: Path to a given reference directory
     """
-    scheduler = await aiojobs.create_scheduler()
+    scheduler = aiojobs.Scheduler()
     asyncio.get_event_loop().set_default_executor(ThreadPoolExecutor())
 
     coros = []
@@ -211,7 +211,10 @@ async def log_results(
     new_isolate_count = len(new_isolates)
 
     console.info(
-        f"Found {new_isolate_count} new isolates", n_isolates=new_isolate_count
+        f"Found {new_isolate_count} new isolates",
+        name=name,
+        taxon_id=taxid,
+        n_isolates=new_isolate_count,
     )
 
 

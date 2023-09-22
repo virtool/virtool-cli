@@ -51,15 +51,15 @@ def get_sequence_paths(isolate_path: Path) -> list:
     return sequence_ids
 
 
-def search_otu_by_id(src_path: Path, id: str) -> Optional[Path]:
+def search_otu_by_id(otu_id: str, src_path: Path) -> Optional[Path]:
     """
     Searches filenames in the database by unique id and
     returns the path if it finds a match
 
     :param src_path: Path to a reference database directory
-    :param otu_id: ID hash of OTU
+    :param otu_id: Virtool OTU unique ID
     """
-    for path in src_path.glob(f'*--{id}'):
+    for path in src_path.glob(f'*--{otu_id}'):
         if path.is_dir():
             return path
     
@@ -79,13 +79,13 @@ def read_otu(path: Path) -> dict:
     return otu
 
 
-def generate_otu_dirname(name: str, id: str = '') -> str:
+def generate_otu_dirname(name: str, otu_id: str = '') -> str:
     """
     Takes in a human-readable string, replaces whitespace and symbols
     and adds the Virtool hash id as a suffix
     
     :param name: Human-readable, searchable name of the OTU
-    :param id: ID hash of OTU 
+    :param otu_id: ID hash of OTU 
     :return: A directory name in the form of 'converted_otu_name--taxid'
     """
     no_plus = name.replace('+', 'plus ')
@@ -94,6 +94,6 @@ def generate_otu_dirname(name: str, id: str = '') -> str:
     no_whitespace = re.sub(r'[\s]+', "_", joined)
 
     dirname = no_whitespace.lower()
-    dirname += '--' + id
+    dirname += '--' + otu_id
 
     return dirname

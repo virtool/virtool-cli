@@ -5,14 +5,19 @@ import logging
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id, is_v1
-from virtool_cli.utils.hashing import get_unique_ids
+from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.catalog.helpers import filter_catalog
 from virtool_cli.update.update import request_new_records, process_records, write_data
 
 DEFAULT_INTERVAL = 0.001
 
 
-def run(src_path: Path, catalog_path: Path, auto_evaluate: bool = False, debugging: bool = False):
+def run(
+    src_path: Path,
+    catalog_path: Path,
+    auto_evaluate: bool = False,
+    debugging: bool = False,
+):
     """
     CLI entry point for update.update_ref.run()
 
@@ -128,7 +133,7 @@ async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
         acc_listing = json.loads(path.read_text())
 
         # extract taxon ID and _id hash from listing filename
-        [taxid, otu_id] = (path.stem).split("--")
+        [taxid, otu_id] = path.stem.split("--")
 
         logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
@@ -204,7 +209,7 @@ async def writer_loop(
     Awaits new sequence data for each OTU and writes new data into JSON files with unique Virtool IDs
 
     :param src_path: Path to a reference directory
-    :param downstream_queue: Queue holding formatted sequence and isolate data processed by this loop
+    :param queue: Queue holding formatted sequence and isolate data processed by this loop
     """
     base_logger.debug("Starting writer...")
 
@@ -219,7 +224,7 @@ async def writer_loop(
 
         logger = base_logger.bind(otu_id=otu_id, taxid=taxid, src=str(src_path))
 
-        otu_path = search_otu_by_id(src_path, otu_id)
+        otu_path = search_otu_by_id(otu_id, src_path)
 
         await write_data(otu_path, sequence_data, unique_iso, unique_seq, logger)
 

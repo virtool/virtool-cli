@@ -7,7 +7,7 @@ from virtool_cli.utils.reference import (
     get_otu_paths,
     get_isolate_paths,
 )
-from virtool_cli.utils.hashing import generate_unique_ids
+from virtool_cli.utils.id_generator import generate_unique_ids
 from paths import TEST_FILES_PATH
 
 SRC_PATH = TEST_FILES_PATH / "src_test"
@@ -34,12 +34,12 @@ def test_utils_is_v2():
 
 @pytest.mark.parametrize("otu_id", ["f8a56910", "3962f6ec"])
 def test_utils_search_by_id_success(otu_id):
-    assert search_otu_by_id(SRC_PATH, otu_id) is not None
+    assert search_otu_by_id(otu_id, SRC_PATH) is not None
 
 
 @pytest.mark.parametrize("otu_id", ["bbbbbbbb", "777777tt"])
 def test_utils_search_by_id_fail(otu_id):
-    assert search_otu_by_id(SRC_PATH, otu_id) is None
+    assert search_otu_by_id(otu_id, SRC_PATH) is None
 
 
 @pytest.mark.parametrize("src", [SRC_PATH])

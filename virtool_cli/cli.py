@@ -19,4 +19,5 @@ def entry():
 entry.add_command(ref)
 entry.add_command(hmm)
 entry.add_command(catalog)
+
 entry()

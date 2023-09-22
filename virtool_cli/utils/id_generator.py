@@ -8,7 +8,7 @@ from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 def generate_random_alphanumeric(
     length: int = 8,
     mixed_case: bool = False,
-    excluded: set = set
+    excluded: list | set = {}
 ) -> str:
     """
     Generates a random string composed of letters and numbers.
@@ -34,13 +34,13 @@ def generate_unique_ids(
     n: int = 1,
     length: int = 8,
     mixed_case: bool = False,
-    excluded: set = set()
+    excluded: list | set = {}
 ) -> set:
     """
-    :param excluded: List of alphanumeric strings that should be excluded from generation
     :param n: The number of strings to be generated
     :param mixed_case: included alpha characters will be mixed case instead of lowercase
     :param length: The length of each string
+    :param excluded: List of alphanumeric strings that should be excluded from generation
     """
     new_uniques = set()
     while len(new_uniques) < n:
@@ -70,3 +70,4 @@ async def get_unique_ids(otu_paths: list) -> Tuple[set, set]:
                 sequence_ids.add(seq_path.stem)
 
     return isolate_ids, sequence_ids
+

@@ -62,6 +62,7 @@ async def generate_listing(
                 length_dict = measure_multipartite(sequence_metadata, required_parts)
             except Exception as e:
                 logger.exception(e)
+                raise e
 
             for part in schema:
                 if part["name"] in length_dict:

@@ -10,7 +10,8 @@ def format_sequence(
     Creates a new sequence file for a given isolate
 
     :param record: Genbank record object for a given accession
-    :param qualifiers: Dictionary containing all qualifiers in the source field of the features section of a Genbank record
+    :param qualifiers: Dictionary containing all qualifiers in the source field
+        of the features section of a Genbank record
     :param logger: Entry point for a shared BoundLogger
     :return: A new sequence dictionary if possible, else an empty dict if not
     """

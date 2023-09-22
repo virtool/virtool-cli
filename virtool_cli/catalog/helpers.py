@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Optional
 from structlog import BoundLogger
+from urllib.error import HTTPError
 
 from virtool_cli.utils.reference import (
     get_otu_paths,
@@ -32,7 +33,7 @@ def filter_catalog(src_path: Path, catalog_path: Path) -> list:
     """
     included_listings = []
     for path in get_otu_paths(src_path):
-        [_, otu_id] = (path.name).split("--")
+        [_, otu_id] = path.name.split("--")
 
         listing_path = search_by_otu_id(otu_id, catalog_path)
         if listing_path is not None:
@@ -61,6 +62,7 @@ async def find_taxid_from_accessions(listing_path: Path, logger: BoundLogger) ->
     for each associated taxonomy ID.
 
     :param listing_path: Path to a listing in an accession catalog directory
+    :param logger: Entry point for an existing BoundLogger
     :return: Taxon ID as string
     """
     with open(listing_path, "r") as f:
@@ -69,10 +71,15 @@ async def find_taxid_from_accessions(listing_path: Path, logger: BoundLogger) ->
     accessions = listing["accessions"]["included"]
     logger.debug("Searching unique IDs:", uids=accessions)
 
-    records = await fetch_upstream_record_taxids(fetch_list=accessions)
+    try:
+        records = await fetch_upstream_record_taxids(fetch_list=accessions)
+    except HTTPError:
+        logger.error("Failed to link taxon ID with nucleotide records.")
+        return ""
+
     if not records:
         logger.warning("No taxon IDs found", taxids=records)
-        return ''
+        return ""
 
     otu_taxids = []
     for taxid in records:
@@ -82,11 +89,11 @@ async def find_taxid_from_accessions(listing_path: Path, logger: BoundLogger) ->
 
     if not otu_taxids:
         logger.warning("No taxon IDs found", taxids=records)
-        return ''
+        return ""
 
     if len(otu_taxids) > 1:
         logger.warning("Found multiple taxon IDs in this OTU", taxids=otu_taxids)
-        return ''
+        return ""
     else:
         taxid = otu_taxids.pop()
         return taxid

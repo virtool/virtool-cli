@@ -131,8 +131,8 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
     for cluster_path in cluster_paths:
         annotation = {
             "cluster": os.path.basename(cluster_path).split("_")[1],
-            "names": list(),
-            "entries": list(),
+            "names": [],
+            "entries": [],
         }
 
         log_data = parse_log(os.path.basename(cluster_path), output)
@@ -145,26 +145,26 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
 
         with cluster_path.open("r") as handle:
             seq_ids = []
-            for record in SeqIO.parse(handle, "fasta"):
-                seq_ids.append(record.id)
-                name = record.description.split("[")[0].split()
-                name = " ".join(name[1:])
+            records = SeqIO.parse(handle, "fasta")
 
-                annotation["entries"].append(
-                    {
-                        "accession": record.id,
-                        "name": name,
-                        "organism":
-                            record.description.split("[")[1].replace("]", "").strip(),
-                    }
-                )
-            record_count += len(seq_ids)
-            taxonomy = get_taxonomy(seq_ids, taxonomy_records)
-            if taxonomy:
-                annotation["families"] = json.loads(str(taxonomy[0]).replace("'", '"'))
-                family_count += len(taxonomy[0])
-                annotation["genera"] = json.loads(str(taxonomy[1]).replace("'", '"'))
-                genus_count += len(taxonomy[1])
+        for record in records:
+            seq_ids.append(record.id)
+
+            name = record.description.split("[")[0].split()
+            name = " ".join(name[1:])
+            organism = record.description.split("[")[1].replace("]", "").strip()
+
+            new_entry = {"accession": record.id, "name": name, "organism": organism}
+            annotation["entries"].append(new_entry)
+
+        record_count += len(seq_ids)
+
+        taxonomy = get_taxonomy(seq_ids, taxonomy_records)
+        if taxonomy:
+            annotation["families"] = json.loads(str(taxonomy[0]).replace("'", '"'))
+            family_count += len(taxonomy[0])
+            annotation["genera"] = json.loads(str(taxonomy[1]).replace("'", '"'))
+            genus_count += len(taxonomy[1])
 
         annotation["names"] = get_names(annotation)
         annotation["entries"] = sorted(

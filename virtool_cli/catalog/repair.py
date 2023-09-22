@@ -49,7 +49,7 @@ async def fill_missing_taxids(catalog_path: Path, logger: BoundLogger = base_log
     Iterate through unmatched listings and run taxon ID extraction function.
     If a valid taxon ID is found, write to the listing.
 
-    :param listing: Catalog listing data in dictionary form
+    :param catalog_path: Path to an accession catalog directory
     :param logger: Optional entry point for a shared BoundLogger
     """
     for listing_path in catalog_path.glob("none--*.json"):

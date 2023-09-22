@@ -1,20 +1,25 @@
 import json
 from pathlib import Path
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 import logging
 from structlog import BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
 from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths
-from virtool_cli.utils.hashing import generate_unique_ids, get_unique_ids
+from virtool_cli.utils.id_generator import generate_unique_ids, get_unique_ids
 from virtool_cli.utils.ncbi import (
     request_linked_accessions,
     request_from_nucleotide,
     NCBI_REQUEST_INTERVAL,
 )
-from virtool_cli.update.evaluate import evaluate_sequence, get_qualifiers
+from virtool_cli.update.evaluate import (
+    evaluate_sequence,
+    get_qualifiers,
+    get_lengthdict_monopartite,
+    get_lengthdict_multipartite,
+)
 from virtool_cli.utils.storage import store_isolate, store_sequence
 from virtool_cli.utils.format import format_sequence
 from virtool_cli.catalog.helpers import search_by_otu_id
@@ -23,7 +28,10 @@ DEFAULT_INTERVAL = 0.001
 
 
 def run(
-    otu_path: Path, catalog_path: Path, auto_evaluate: bool = False, debugging: bool = False
+    otu_path: Path,
+    catalog_path: Path,
+    auto_evaluate: bool = False,
+    debugging: bool = False,
 ):
     """
     CLI entry point for update.update.run()
@@ -70,7 +78,7 @@ async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = F
     listing = json.loads(listing_path.read_text())
 
     # extract taxon ID and _id hash from listing filename
-    [taxid, otu_id] = (listing_path.stem).split("--")
+    [taxid, otu_id] = listing_path.stem.split("--")
 
     logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
@@ -123,11 +131,11 @@ async def request_new_records(listing: dict, logger: BoundLogger = base_logger) 
 
 
 async def process_records(
-    records,
+    records: list,
     listing: dict,
     auto_evaluate: bool = True,
     logger: BoundLogger = base_logger,
-):
+) -> list:
     """
     Takes sequence records and:
         1) Evaluates whether those records should be added to the database,
@@ -136,75 +144,28 @@ async def process_records(
 
     WARNING: Auto-evaluation is still under active development, especially multipartite filtering
 
-    :param listing_path: Path to a listing in an accession catalog directory
+    :param records: SeqRecords retrieved from the NCBI Nucleotide database
+    :param listing: Deserialized OTU catalog listing
     :param auto_evaluate: Boolean flag for whether automatic evaluation functions
         should be run
     :param logger: Optional entry point for a shared BoundLogger
+    :return: A list of valid sequences formatted for the Virtool reference database
     """
     filter_set = set(listing["accessions"]["included"])
     filter_set.update(listing["accessions"]["excluded"])
 
-    if auto_evaluate:
-        if not listing.get("schema", []):
-            logger.warning("Missing schema. moving on...")
-            return False
-
-        if len(listing["schema"]) < 1:
-            required_parts = get_lengthdict_multipartite(listing["schema"], logger)
-
-        else:
-            required_parts = get_lengthdict_monopartite(listing["schema"], logger)
-
-        logger = logger.bind(required_parts=required_parts)
-
-    auto_excluded = []
-    otu_updates = []
-
-    for seq_data in records:
-        [accession, _] = (seq_data.id).split(".")
-        seq_qualifier_data = get_qualifiers(seq_data.features)
-
-        if accession in filter_set:
-            logger.debug("Accession already exists", accession=seq_data.id)
-            return False
-
+    try:
         if auto_evaluate:
-            if "_" in seq_data.id:
-                logger.warning(
-                    "This is a RefSeq accession. This data may already exist under a different accession.",
-                    accession=seq_data.id,
-                )
-
-            inclusion_passed = evaluate_sequence(
-                seq_data=seq_data,
-                seq_qualifier_data=seq_qualifier_data,
-                required_parts=required_parts,
-                logger=logger,
+            otu_updates, auto_excluded = await process_auto_evaluate(
+                records, listing, filter_set, logger
             )
-            if not inclusion_passed:
-                logger.debug(
-                    f"GenBank #{accession} did not pass the curation test...",
-                    accession=accession,
-                    including=False,
-                )
-                auto_excluded.append(accession)
-                continue
-
-        isolate_type = find_isolate(seq_qualifier_data)
-        if isolate_type is None:
-            continue
-        isolate_name = seq_qualifier_data.get(isolate_type)[0]
-
-        seq_dict = format_sequence(
-            record=seq_data, qualifiers=seq_qualifier_data, logger=logger
-        )
-
-        if "segment" not in seq_dict:
-            seq_dict["segment"] = listing.get("schema")[0]["name"]
-
-        isolate = {"source_name": isolate_name, "source_type": isolate_type}
-        seq_dict["isolate"] = isolate
-        otu_updates.append(seq_dict)
+        else:
+            otu_updates, auto_excluded = await process_default(
+                records, listing, filter_set, logger
+            )
+    except Exception as e:
+        logger.exception(e)
+        raise e
 
     if auto_excluded:
         logger.info(
@@ -212,19 +173,22 @@ async def process_records(
             auto_excluded=auto_excluded,
         )
 
-    return otu_updates
+    if otu_updates:
+        return otu_updates
+
+    return []
 
 
 async def write_data(
     otu_path: Path,
-    new_sequences: dict,
+    new_sequences: list,
     unique_iso: set,
     unique_seq: set,
     logger: BoundLogger = base_logger,
 ):
     """
     :param otu_path: A path to an OTU directory under a src reference directory
-    :param new_sequences: New sequences under the OTU, keyed by accession
+    :param new_sequences: List of new sequences under the OTU
     :param unique_iso: Set of all unique isolate IDs present in the reference
     :param unique_seq: Set of all unique sequence IDs present in the reference
     :param logger: Optional entry point for a shared BoundLogger
@@ -232,7 +196,9 @@ async def write_data(
     ref_isolates = await label_isolates(otu_path)
 
     try:
-        seq_hashes = generate_unique_ids(n=len(new_sequences), excluded=unique_seq)
+        seq_hashes = generate_unique_ids(
+            n=len(new_sequences), excluded=list(unique_seq)
+        )
     except Exception as e:
         logger.exception(e)
         return e
@@ -245,33 +211,32 @@ async def write_data(
         isolate_type = isolate_data["source_type"]
 
         if isolate_name in ref_isolates:
-            iso_hash = ref_isolates[isolate_name]["id"]
+            iso_id = ref_isolates[isolate_name]["id"]
             logger.debug(
-                "Existing isolate name found", iso_name=isolate_name, iso_hash=iso_hash
+                "Existing isolate name found", iso_name=isolate_name, iso_hash=iso_id
             )
 
         else:
             try:
-                iso_hash = generate_unique_ids(n=1, excluded=unique_iso).pop()
+                iso_id = generate_unique_ids(n=1, excluded=list(unique_iso)).pop()
             except Exception as e:
                 logger.exception(e)
+                continue
 
             logger.debug(
-                "Assigning new isolate hash", iso_name=isolate_name, iso_hash=iso_hash
+                "Assigning new isolate hash", iso_name=isolate_name, iso_hash=iso_id
             )
 
             new_isolate = await store_isolate(
-                isolate_name, isolate_type, iso_hash, otu_path
+                isolate_name, isolate_type, iso_id, otu_path
             )
 
-            unique_iso.add(iso_hash)
+            unique_iso.add(iso_id)
             ref_isolates[isolate_name] = new_isolate
 
-            logger.info(
-                "Created a new isolate directory", path=str(otu_path / iso_hash)
-            )
+            logger.info("Created a new isolate directory", path=str(otu_path / iso_id))
 
-        iso_path = otu_path / iso_hash
+        iso_path = otu_path / iso_id
 
         seq_hash = seq_hashes.pop()
         logger.debug(
@@ -340,7 +305,8 @@ async def fetch_upstream_accessions(listing: dict, logger: BoundLogger) -> list:
 
     try:
         upstream_accessions = await request_linked_accessions(taxon_id=taxid)
-    except Exception:
+    except HTTPError:
+        logger.error("Could not retrieve new accessions from NCBI.")
         return []
 
     upstream_set = set(upstream_accessions)
@@ -348,45 +314,103 @@ async def fetch_upstream_accessions(listing: dict, logger: BoundLogger) -> list:
     return list(upstream_set.difference(included_set))
 
 
-def get_lengthdict_multipartite(
-    schema: list, logger: BoundLogger = base_logger
-) -> dict:
+async def process_default(
+    records: list, listing: dict, filter_set: set, logger: BoundLogger = base_logger
+) -> Tuple[list, list]:
+    auto_excluded = []
+    otu_updates = []
+
+    for seq_data in records:
+        [accession, _] = seq_data.id.split(".")
+        seq_qualifier_data = get_qualifiers(seq_data.features)
+
+        if accession in filter_set:
+            logger.debug("Accession already exists", accession=seq_data.id)
+            continue
+
+        isolate_type = find_isolate(seq_qualifier_data)
+        if isolate_type is None:
+            continue
+        isolate_name = seq_qualifier_data.get(isolate_type)[0]
+
+        seq_dict = format_sequence(
+            record=seq_data, qualifiers=seq_qualifier_data, logger=logger
+        )
+
+        if "segment" not in seq_dict:
+            seq_dict["segment"] = listing.get("schema")[0]["name"]
+
+        isolate = {"source_name": isolate_name, "source_type": isolate_type}
+        seq_dict["isolate"] = isolate
+        otu_updates.append(seq_dict)
+
+    return otu_updates, auto_excluded
+
+
+async def process_auto_evaluate(
+    records: list, listing: dict, filter_set: set, logger: BoundLogger = base_logger
+) -> Tuple[list, list]:
     """
-    Returns a dict of each required segment and its average length.
-
-    :param schema: Augmented schema from the catalog listing, contains average length data
-    :param logger: Optional entry point for an existing BoundLogger
-    :return: A dict of required segments and their average lengths
+    Processes autoevaluated
     """
-    required_part_lengths = {}
+    auto_excluded = []
+    otu_updates = []
 
-    for part in schema:
-        if part["required"]:
-            part_length = part.get("length", -1)
-            if part_length < 0:
-                logger.warning(f"{part['name']} lacks a length listing.")
+    if not listing.get("schema", []):
+        logger.warning("Missing schema. Moving on...")
+        return [], []
 
-            required_part_lengths[part["name"]] = part_length
+    if len(listing["schema"]) < 1:
+        required_parts = get_lengthdict_multipartite(listing["schema"], logger)
 
-    return required_part_lengths
+    else:
+        required_parts = get_lengthdict_monopartite(listing["schema"], logger)
 
+    logger = logger.bind(required_parts=required_parts)
 
-def get_lengthdict_monopartite(schema: list, logger: BoundLogger = base_logger) -> dict:
-    """
-    Returns a dict of the segment name and its average length.
-    Given that the OTU is monopartite, a filler segment name can be used if none is found.
+    for seq_data in records:
+        [accession, _] = seq_data.id.split(".")
+        seq_qualifier_data = get_qualifiers(seq_data.features)
 
-    :param schema: Augmented schema from the catalog listing, contains average length data
-    :param logger: Optional entry point for an existing BoundLogger
-    :return: A dict of the single segment and its average length
-    """
-    part = schema[0]
+        if accession in filter_set:
+            logger.debug("Accession already exists", accession=seq_data.id)
+            return [], []
 
-    if (part_name := part.get("name", None)) is None:
-        part_name = "unlabelled"
+        if "_" in seq_data.id:
+            logger.warning(
+                "This is a RefSeq accession. This data may already exist under a different accession.",
+                accession=seq_data.id,
+            )
 
-    part_length = part.get("length", -1)
-    if part_length < 0:
-        logger.warning(f"{part['name']} lacks a length listing.")
+        inclusion_passed = evaluate_sequence(
+            seq_data=seq_data,
+            seq_qualifier_data=seq_qualifier_data,
+            required_parts=required_parts,
+            logger=logger,
+        )
+        if not inclusion_passed:
+            logger.debug(
+                f"GenBank #{accession} did not pass the curation test...",
+                accession=accession,
+                including=False,
+            )
+            auto_excluded.append(accession)
+            continue
 
-    return {part_name: part_length}
+        isolate_type = find_isolate(seq_qualifier_data)
+        if isolate_type is None:
+            continue
+        isolate_name = seq_qualifier_data.get(isolate_type)[0]
+
+        seq_dict = format_sequence(
+            record=seq_data, qualifiers=seq_qualifier_data, logger=logger
+        )
+
+        if "segment" not in seq_dict:
+            seq_dict["segment"] = listing.get("schema")[0]["name"]
+
+        isolate = {"source_name": isolate_name, "source_type": isolate_type}
+        seq_dict["isolate"] = isolate
+        otu_updates.append(seq_dict)
+
+    return otu_updates, auto_excluded

@@ -45,7 +45,7 @@ def reference(src_path, catalog_path, evaluate, debug):
     "-otu",
     "--otu_path",
     required=True,
-    type=str,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a single OTU directory",
 )
 @click.option(

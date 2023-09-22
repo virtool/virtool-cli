@@ -85,7 +85,7 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
 
         logger = fetch_logger.bind(listing=listing_path.name)
 
-        otu_path = search_otu_by_id(src_path, otu_id)
+        otu_path = search_otu_by_id(otu_id, src_path)
         existing_accessions = set(get_otu_accessions(otu_path))
         fetch_logger.debug(f"current accessions: {existing_accessions}")
 
@@ -97,15 +97,16 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
 
         not_in_reference = listed_accessions.difference(existing_accessions)
         not_in_listing = existing_accessions.difference(listed_accessions)
+
         indexed_accessions = listing["accessions"]["included"]
 
         if not_in_reference:
-            logger.debug(f"reference is missing accessions: {not_in_reference}")
+            logger.debug(f"Reference is missing accessions: {not_in_reference}")
             for accession in not_in_reference:
                 indexed_accessions.pop(accession)
 
         if not_in_listing:
-            logger.debug(f"listing is missing accessions: {not_in_listing}")
+            logger.debug(f"Listing is missing accessions: {not_in_listing}")
 
             for accession in not_in_listing:
                 if accession in indexed_accessions:
@@ -113,10 +114,6 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
                     indexed_accessions.pop(accession)
                 else:
                     indexed_accessions.append(accession)
-
-                if not_in_listing:
-                    for accession in not_in_listing:
-                        indexed_accessions.append(accession)
 
                 listing["accessions"]["included"] = indexed_accessions
 
@@ -139,7 +136,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     """
     Pulls packet dicts from the queue and calls the update function
 
-    :param src_path: Path to a given reference directory
+    :param catalog_path: Path to a catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
     write_logger = base_logger.bind(loop="writer", catalog=str(catalog_path))
@@ -177,17 +174,16 @@ async def complete_catalog(
     :param logger: Optional entry point for an existing BoundLogger
     """
     try:
-        otu_ids = {
-            (otu_path.name).split("--")[1] for otu_path in get_otu_paths(src_path)
-        }
+        otu_ids = {otu_path.name.split("--")[1] for otu_path in get_otu_paths(src_path)}
 
         catalog_ids = {
-            (listing_path.stem).split("--")[1]
+            listing_path.stem.split("--")[1]
             for listing_path in get_catalog_paths(catalog_path)
         }
 
     except Exception as e:
         logger.exception(e)
+        return
 
     if otu_ids.issubset(catalog_ids):
         logger.info("All OTUs present in catalog")

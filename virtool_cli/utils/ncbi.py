@@ -30,6 +30,7 @@ async def request_linked_accessions(taxon_id: int) -> list:
 
     return upstream_accessions
 
+
 async def request_from_nucleotide(fetch_list: list) -> list:
     """
     Take a list of accession numbers and request the corresponding records from NCBI Nucleotide
@@ -59,6 +60,7 @@ async def request_from_nucleotide(fetch_list: list) -> list:
     except Exception as e:
         raise e
 
+
 async def fetch_taxid(name: str) -> int:
     """
     Searches the NCBI taxonomy database for a given OTU name, 
@@ -81,6 +83,7 @@ async def fetch_taxid(name: str) -> int:
         taxid = None
 
     return taxid
+
 
 async def fetch_taxonomy_species(taxon_id: str) -> int:
     """
@@ -115,6 +118,7 @@ async def fetch_taxonomy_species(taxon_id: str) -> int:
     if taxid:
         return int(taxid)
 
+
 async def fetch_taxonomy_rank(taxon_id) -> str:
     """
     Fetches a record from NCBI Taxonomy and extracts its taxonomic rank
@@ -128,13 +132,12 @@ async def fetch_taxonomy_rank(taxon_id) -> str:
         handle.close()
     except HTTPError:
         return 'http_error'
-    except Exception:
-        return 'unknown_error'
     
     rank = 'unassigned'
     for r in record:
         rank = r['Rank']
     return rank
+
 
 async def fetch_upstream_record_taxids(fetch_list: list) -> list:
     """
@@ -148,8 +151,8 @@ async def fetch_upstream_record_taxids(fetch_list: list) -> list:
         handle = Entrez.efetch(db="nucleotide", id=fetch_list, rettype="docsum")
         record = Entrez.read(handle)
         handle.close()
-    except Exception:
-        return []
+    except HTTPError as e:
+        raise e
     
     taxids = set()
 
@@ -159,6 +162,7 @@ async def fetch_upstream_record_taxids(fetch_list: list) -> list:
     await asyncio.sleep(NCBI_REQUEST_INTERVAL)
     
     return list(taxids)
+
 
 async def get_spelling(name: str, db: str = 'taxonomy') -> str:
     """
