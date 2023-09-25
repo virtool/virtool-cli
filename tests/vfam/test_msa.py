@@ -36,7 +36,7 @@ def test_batch_muscle_call(filtered_msa, input_dir, msa):
 )
 def test_batch_hmm_call(filtered_hmm, input_dir, hmm):
     """
-    Test profile HMMs by comparing lines 17 onward (part that contains hmm data) 
+    Test profile HMMs by comparing lines 17 onward (part that contains hmm data)
     of output data and og vfam data.
     """
     hmm_names = os.listdir(hmm)

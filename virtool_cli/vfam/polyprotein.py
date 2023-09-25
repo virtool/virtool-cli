@@ -127,7 +127,6 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
 
     for seq_id in seq_lengths:
         if seq_lengths[seq_id] > 400 and seq_id in alignment_records:
-
             checked_by_length = check_alignments_by_length(
                 seq_id, alignment_records, seq_lengths
             )

@@ -1,0 +1,60 @@
+{
+  "_id": "c93ec9a9",
+  "accessions": {
+    "excluded": [],
+    "included": [
+      "NC_010314.1",
+      "NC_010318.1",
+      "NC_010316.1",
+      "NC_010319.1",
+      "NC_010315.1",
+      "NC_010317.1",
+      "EF546804.1",
+      "EF546802.1",
+      "EF546803.1",
+      "EF546806.1",
+      "EF546807.1",
+      "EF546805.1"
+    ]
+  },
+  "name": "Abaca bunchy top virus",
+  "schema": [
+    {
+      "length": 1098,
+      "molecule": "ssDNA",
+      "name": "DNA-R",
+      "required": true
+    },
+    {
+      "length": 1058,
+      "molecule": "ssDNA",
+      "name": "DNA-U3",
+      "required": true
+    },
+    {
+      "length": 1081,
+      "molecule": "ssDNA",
+      "name": "DNA-N",
+      "required": true
+    },
+    {
+      "length": 1082,
+      "molecule": "ssDNA",
+      "name": "DNA-S",
+      "required": true
+    },
+    {
+      "length": 1081,
+      "molecule": "ssDNA",
+      "name": "DNA-M",
+      "required": true
+    },
+    {
+      "length": 1014,
+      "molecule": "ssDNA",
+      "name": "DNA-C",
+      "required": true
+    }
+  ],
+  "taxid": 438782
+}

@@ -1,0 +1,19 @@
+{
+  "_id": "407d8a21",
+  "accessions": {
+    "excluded": [],
+    "included": [
+      "NC_013006.1"
+    ]
+  },
+  "name": "Kalanchoe latent virus",
+  "schema": [
+    {
+      "length": 8517,
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
+  ],
+  "taxid": 132477
+}

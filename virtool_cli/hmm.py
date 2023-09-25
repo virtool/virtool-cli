@@ -5,14 +5,15 @@ from pathlib import Path
 
 from virtool_cli.vfam.vfam import run
 
-ERROR_MESSAGE = click.style("ERROR: ", fg='red')
+ERROR_MESSAGE = click.style("ERROR: ", fg="red")
+
 
 @click.group("hmm")
 def hmm():
     """
     Commands related to Hidden Markov Models.
 
-    Requires bioconda packages: cd-hit, hmmer, blast, mcl, muscle 
+    Requires bioconda packages: cd-hit, hmmer, blast, mcl, muscle
     """
     pass
 
@@ -90,9 +91,7 @@ def vfam(
     try:
         check_vfam_dependencies()
     except (FileNotFoundError, PermissionError) as e:
-        click.echo(
-            ERROR_MESSAGE +
-            "Missing external program dependency")
+        click.echo(ERROR_MESSAGE + "Missing external program dependency")
         click.echo(e)
         sys.exit(1)
 
@@ -112,10 +111,7 @@ def vfam(
             min_sequences,
         )
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(
-            ERROR_MESSAGE, 
-            "Not a valid reference directory.")
-        click.echo(e)
+        click.echo(ERROR_MESSAGE + "Not a valid reference directory.")
 
 
 def check_vfam_dependencies():

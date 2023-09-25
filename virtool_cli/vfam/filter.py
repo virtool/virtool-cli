@@ -137,7 +137,6 @@ def filter_on_number(fasta_paths: List[Path], min_sequences: int) -> List[Path]:
     num_unfiltered = len(fasta_paths)
     filtered_fasta_paths = []
     for fasta_path in fasta_paths:
-
         for index, _ in enumerate(SeqIO.parse(fasta_path, "fasta")):
             if index + 1 >= min_sequences:
                 filtered_fasta_paths.append(fasta_path)

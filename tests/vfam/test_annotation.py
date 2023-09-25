@@ -11,7 +11,6 @@ LARGE_JSON = VFAM_INTERMEDIATES_PATH / "Large" / "master.json"
 
 @pytest.mark.parametrize("input_path", [DUPES_JSON, GENERIC_JSON, LARGE_JSON])
 def test_get_taxonomy(input_path):
-
     with input_path.open("r") as handle:
         json_decode = json.load(handle)
         for annotation in json_decode:

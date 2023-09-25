@@ -1,0 +1,23 @@
+{
+  "_id": "0bfdb8bc",
+  "accessions": {
+    "excluded": [],
+    "included": [
+      "MH200607.1",
+      "NC_003355.1",
+      "KJ207375.1",
+      "MK431779.1",
+      "B017504.1"
+    ]
+  },
+  "name": "Wasabi mottle virus",
+  "schema": [
+    {
+      "length": 6297,
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
+  ],
+  "taxid": 1169032
+}

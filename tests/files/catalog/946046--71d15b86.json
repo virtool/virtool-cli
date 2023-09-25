@@ -1,0 +1,19 @@
+{
+  "_id": "71d15b86",
+  "accessions": {
+    "excluded": [],
+    "included": [
+      "NC_014791.1"
+    ]
+  },
+  "name": "Ugandan cassava brown streak virus",
+  "schema": [
+    {
+      "length": 9070,
+      "molecule": "ssRNA+",
+      "name": "Genome",
+      "required": true
+    }
+  ],
+  "taxid": 946046
+}

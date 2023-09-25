@@ -23,7 +23,6 @@ jobs:
           
       - name: Install package
         run: |
-          poetry lock
           poetry install
       
       - name: Run tests
