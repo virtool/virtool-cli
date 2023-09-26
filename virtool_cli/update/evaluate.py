@@ -1,8 +1,11 @@
-from structlog import BoundLogger
+from structlog import BoundLogger, get_logger
 
 
 def evaluate_sequence(
-    seq_data, seq_qualifier_data, required_parts: dict, logger: BoundLogger
+    seq_data,
+    seq_qualifier_data,
+    required_parts: dict,
+    logger: BoundLogger = get_logger(),
 ):
     """
     Evaluates the validity of the record using catalogued metadata
@@ -93,7 +96,9 @@ def get_qualifiers(seq: list) -> dict:
     return qualifiers
 
 
-def get_lengthdict_multipartite(schema: list, logger: BoundLogger) -> dict:
+def get_lengthdict_multipartite(
+    schema: list, logger: BoundLogger = get_logger()
+) -> dict:
     """
     Returns a dict of each required segment and its average length.
 
@@ -114,7 +119,9 @@ def get_lengthdict_multipartite(schema: list, logger: BoundLogger) -> dict:
     return required_part_lengths
 
 
-def get_lengthdict_monopartite(schema: list, logger: BoundLogger) -> dict:
+def get_lengthdict_monopartite(
+    schema: list, logger: BoundLogger = get_logger()
+) -> dict:
     """
     Returns a dict of the segment name and its average length.
     Given that the OTU is monopartite, a filler segment name can be used if none is found.

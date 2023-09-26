@@ -3,6 +3,7 @@ import click
 
 from virtool_cli.doctor.cli import doctor
 from virtool_cli.update.cli import update
+from virtool_cli.add.cli import add
 from virtool_cli.build import run as run_build
 from virtool_cli.divide import run as run_divide
 from virtool_cli.migrate import run as run_migrate
@@ -20,6 +21,7 @@ def ref():
 
 ref.add_command(update)
 ref.add_command(doctor)
+ref.add_command(add)
 
 
 @ref.command()
