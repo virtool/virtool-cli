@@ -1,11 +1,11 @@
 from pathlib import Path
 import json
 import asyncio
-from typing import Union
-from structlog import BoundLogger
-import logging
+import structlog
+from structlog import get_logger
+from structlog.stdlib import BoundLogger
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import get_spelling
 from virtool_cli.catalog.helpers import get_catalog_paths
 
@@ -19,11 +19,8 @@ def run(catalog_path: Path, debugging: bool = False):
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+
     run_tests(catalog_path)
 
 
@@ -34,7 +31,7 @@ def run_tests(catalog_path: Path):
 
     :param catalog_path: Path to an accession catalog directory
     """
-    logger = base_logger.bind(catalog=str(catalog_path))
+    logger = get_logger().bind(catalog=str(catalog_path))
 
     logger.info("Checking for missing data within all listings...")
     check_missing_data(catalog_path, logger)
@@ -73,7 +70,7 @@ def run_tests(catalog_path: Path):
     asyncio.run(suggest_spellings(catalog_path))
 
 
-def check_missing_data(catalog_path: Path, logger: BoundLogger = base_logger):
+def check_missing_data(catalog_path: Path, logger: BoundLogger = get_logger()):
     """
     Checks all catalog listings for missing keys and schema data.
 
@@ -132,7 +129,7 @@ def check_schema(listing: dict):
     return True
 
 
-def find_shared_taxids(catalog_path: Path, logger: BoundLogger = base_logger) -> list:
+def find_shared_taxids(catalog_path: Path, logger: BoundLogger = get_logger()) -> list:
     """
     Go through a catalog path and find listings that share a taxon ID
     and return those taxon IDs as a list
@@ -160,7 +157,7 @@ def find_shared_taxids(catalog_path: Path, logger: BoundLogger = base_logger) ->
     return list(duplicated_taxids)
 
 
-def find_duplicate_accessions(catalog_path: Path, logger=base_logger):
+def find_duplicate_accessions(catalog_path: Path, logger=get_logger()):
     """
     Checks catalog listings for accessions that have been listed twice.
     Can be used to identify redundant sequences in the reference directory.
@@ -198,7 +195,7 @@ def find_duplicate_accessions(catalog_path: Path, logger=base_logger):
     return duplicate_accessions
 
 
-async def suggest_spellings(catalog_path: Path, logger=base_logger):
+async def suggest_spellings(catalog_path: Path, logger=get_logger()):
     """
     Evaluates the names of OTUs without retrievable taxon IDs
     and queries Entrez ESpell for alternatives.
@@ -228,7 +225,7 @@ async def suggest_spellings(catalog_path: Path, logger=base_logger):
             logger.info(f"Try: {new_spelling}", potential_name=new_spelling)
 
 
-def search_by_taxid(taxid: Union[int, str], catalog_path: Path) -> list:
+def search_by_taxid(taxid: int | str, catalog_path: Path) -> list:
     """
     Searches records for a matching taxon id and returns all matching paths in the accession records as strings
     (for logging purposes)

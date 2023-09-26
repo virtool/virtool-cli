@@ -1,9 +1,10 @@
 from pathlib import Path
 import json
 import asyncio
-import logging
+import structlog
+from structlog.stdlib import get_logger
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.catalog.helpers import get_catalog_paths, find_taxid_from_accessions
 from virtool_cli.catalog.listings import update_listing
@@ -16,13 +17,10 @@ def run(catalog_path: Path, debugging: bool = False):
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = get_logger().bind(catalog=str(catalog_path))
 
-    base_logger.info("Fetching taxon IDs...")
+    logger.info("Fetching taxon IDs...")
 
     # wipe_taxids(catalog)
     asyncio.run(fetch_taxids(catalog_path))
@@ -51,17 +49,14 @@ async def fetcher_loop(catalog_path: Path, queue: asyncio.Queue):
     Iterates through all listings in a catalog directory, reads the included accessions
     and requests the taxon ID data from NCBI
 
-    :param catalog_path: Path to a catalog directory
+    :param catalog_path: Path to an accession catalog directory
     :param queue: Queue containing the listing path and all taxon IDs extracted from the included accessions
     """
-    base_logger.debug(
-        "Starting fetcher...", n_catalog=len(get_catalog_paths(catalog_path))
-    )
+    logger = get_logger()
+    logger.debug("Starting fetcher...", n_catalog=len(get_catalog_paths(catalog_path)))
 
     for listing_path in catalog_path.glob("*.json"):
-        logger = base_logger.bind(
-            listing_path=str(listing_path.relative_to(catalog_path))
-        )
+        logger = logger.bind(listing_path=str(listing_path.relative_to(catalog_path)))
 
         try:
             extracted_taxid = await find_taxid_from_accessions(listing_path, logger)
@@ -84,18 +79,19 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     """
     Pulls packet dicts from the queue and updates the listing file accordingly
 
-    :param catalog_path: Path to a accession catalog directory
+    :param catalog_path: Path to an accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
-    write_logger = base_logger
-    write_logger.debug("Starting writer...")
+    logger = get_logger()
+    logger.debug("Starting writer...")
+
     while True:
         packet = await queue.get()
         path = packet["path"]
         fetched_taxid = packet["taxid"]
         [old_taxid, otu_id] = path.name.split("--")
         old_taxid = int(old_taxid)
-        logger = base_logger.bind(
+        logger = logger.bind(
             otu_id=otu_id, listing_path=str(path.relative_to(catalog_path))
         )
         logger.debug(f"{packet}")
@@ -115,14 +111,18 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
             await update_listing(listing, path)
             logger.info("Wrote updated listing to file")
         except Exception as e:
-            base_logger.exception(e)
+            logger.exception(e)
 
         await asyncio.sleep(0.1)
         queue.task_done()
 
 
-def wipe_taxids(catalog_path):
-    """ """
+def wipe_taxids(catalog_path: Path):
+    """
+    Utility function that removes all taxon IDs from all catalog entries
+
+    :param catalog_path: Path to an accession catalog directory
+    """
     for listing_path in catalog_path.glob("*--*.json"):
         with open(listing_path, "r") as f:
             listing = json.load(f)

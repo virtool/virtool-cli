@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 import re
-from structlog import BoundLogger
-import logging
+import structlog
+from structlog import get_logger, BoundLogger
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import (
     get_otu_paths,
     get_isolate_paths,
@@ -19,11 +19,10 @@ def run(src_path: Path, debugging: bool = False):
     :param src_path: Path to a given reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = get_logger().bind(src=str(src_path), verbose=debugging)
+
+    logger.info("Running checks on reference directory...")
 
     check_reference(src_path)
 
@@ -44,7 +43,7 @@ def check_reference(src_path: Path):
                 check_sequence(sequence_path, logger)
 
 
-def check_otu(otu_path: Path, logger: BoundLogger = base_logger):
+def check_otu(otu_path: Path, logger: BoundLogger = get_logger()):
     """
     Checks an OTU file for bad content and logs a warning if problems are found
 
@@ -58,7 +57,7 @@ def check_otu(otu_path: Path, logger: BoundLogger = base_logger):
         logger.warning(f"{otu['_id']}: missing schema")
 
 
-def check_sequence(sequence_path: Path, logger: BoundLogger = base_logger):
+def check_sequence(sequence_path: Path, logger: BoundLogger = get_logger()):
     """
     Checks a sequence file for bad content and logs a warning if problems are found
 

@@ -1,9 +1,10 @@
 import json
 from pathlib import Path
 import asyncio
-import logging
+import structlog
+from structlog import get_logger
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER, base_logger
 from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id, is_v1
 from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.catalog.helpers import filter_catalog
@@ -28,12 +29,8 @@ def run(
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
-    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = get_logger().bind(src=str(src_path), catalog=str(catalog_path))
 
     if is_v1(src_path):
         logger.critical(

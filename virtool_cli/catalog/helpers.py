@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Optional
-from structlog import BoundLogger
+from structlog.stdlib import get_logger, BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.reference import (
@@ -56,7 +56,9 @@ def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
         return None
 
 
-async def find_taxid_from_accessions(listing_path: Path, logger: BoundLogger) -> str:
+async def find_taxid_from_accessions(
+    listing_path: Path, logger: BoundLogger = get_logger()
+) -> str:
     """
     Checks each accession on the accession listing and requests metadata
     for each associated taxonomy ID.

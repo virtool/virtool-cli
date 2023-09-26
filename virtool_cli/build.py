@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 import arrow
-import logging
-from structlog import BoundLogger
+import structlog
+from structlog.stdlib import BoundLogger, get_logger
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import (
     get_otu_paths,
     get_isolate_paths,
@@ -20,8 +20,11 @@ SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def run(
-    src_path: Path, output_path: Path, indent: bool, version: str,
-    debugging: bool = False
+    src_path: Path,
+    output_path: Path,
+    indent: bool,
+    version: str,
+    debugging: bool = False,
 ):
     """
     Build a Virtool reference JSON file from a data directory.
@@ -32,11 +35,8 @@ def run(
     :param version: The version string to include in the reference.json file
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    base_logger = get_logger()
 
     if is_v1(src_path):
         base_logger.critical(
@@ -54,16 +54,16 @@ def run(
         base_logger.exception(e)
 
 
-def build_from_src(src_path, output, indent, version):
+def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str):
     """
     Build a Virtool reference JSON file from a data directory.
 
     :param src_path: Path to database src directory
-    :param output: The output path for the reference.json file
+    :param output_path: The output path for the reference.json file
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
-    logger = base_logger.bind(src=str(src_path), output=str(output))
+    logger = get_logger().bind(src=str(src_path), output=str(output_path))
 
     data = {"data_type": "genome", "organism": ""}
 
@@ -105,7 +105,7 @@ def build_from_src(src_path, output, indent, version):
         {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
     )
 
-    with open(output, "w") as f:
+    with open(output_path, "w") as f:
         json.dump(data, f, indent=4 if indent else None, sort_keys=True)
 
     logger.info("Reference file built at output")
@@ -136,7 +136,7 @@ def parse_alpha(alpha: Path) -> list:
     return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
 
-def parse_otu_contents(otu_path: Path, logger: BoundLogger = base_logger) -> dict:
+def parse_otu_contents(otu_path: Path, logger: BoundLogger = get_logger()) -> dict:
     """
     Traverses, deserializes and returns all data under an OTU directory.
 

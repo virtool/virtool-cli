@@ -1,8 +1,9 @@
 from pathlib import Path
 import asyncio
-import logging
+import structlog
+from structlog.stdlib import get_logger
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import (
     get_otu_paths,
     read_otu,
@@ -19,11 +20,9 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = get_logger().bind(src=str(src_path), catalog=str(catalog_path))
+    logger.info("Creating new catalog in catalog path")
 
     asyncio.run(initialize(src_path, catalog_path))
 
@@ -38,7 +37,7 @@ async def initialize(src_path: Path, catalog_path: Path):
     if not catalog_path.exists():
         catalog_path.mkdir()
 
-    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
+    logger = get_logger().bind(src=str(src_path), catalog=str(catalog_path))
 
     logger.debug("Starting catalog generation...")
 
@@ -63,11 +62,11 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
     :param src_path: Path to a reference directory
     :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
-    logger = base_logger.bind(src=str(src_path))
+    logger = get_logger().bind(src=str(src_path))
     logger.debug("Starting fetcher...")
 
     for otu_path in get_otu_paths(src_path):
-        logger = base_logger.bind(otu_path=str(otu_path.name))
+        logger = logger.bind(otu_path=str(otu_path.name))
 
         otu_data = read_otu(otu_path)
         otu_id = otu_data["_id"]
@@ -97,10 +96,12 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     :param catalog_path: Path to an accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
+    logger = get_logger().bind(catalog=str(catalog_path))
+
     while True:
         packet = await queue.get()
 
-        logger = base_logger.bind(catalog=str(catalog_path), otu_id=packet["otu_id"])
+        logger = logger.bind(otu_id=packet["otu_id"])
 
         logger.debug(f"Got listing data for {packet['otu_id']} from the queue")
 

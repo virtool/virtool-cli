@@ -2,11 +2,11 @@ import json
 from pathlib import Path
 import asyncio
 from typing import Optional, Tuple
-import logging
-from structlog import BoundLogger
+import structlog
+from structlog import get_logger, BoundLogger
 from urllib.error import HTTPError
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths
 from virtool_cli.utils.id_generator import generate_unique_ids, get_unique_ids
 from virtool_cli.utils.ncbi import (
@@ -44,14 +44,11 @@ def run(
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = get_logger().bind(otu_path=str(otu_path))
 
     if auto_evaluate:
-        base_logger.warning(
+        logger.warning(
             "Auto-evaluation is in active development and may produce false negatives."
         )
 
@@ -62,8 +59,8 @@ def run(
         asyncio.run(update_otu(otu_path, listing_path, auto_evaluate))
 
     else:
-        base_logger.critical("Listing not found for this OTU.")
-        base_logger.info("Use virtool acc init to create a new accession catalog.")
+        logger.critical("Listing not found for this OTU.")
+        logger.info("Use virtool acc init to create a new accession catalog.")
 
 
 async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = False):
@@ -73,6 +70,7 @@ async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = F
 
     :param otu_path: Path to a OTU directory
     :param listing_path: Path to a listing in an accession catalog directory
+    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
     src_path = otu_path.parent
     listing = json.loads(listing_path.read_text())
@@ -98,7 +96,9 @@ async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = F
     await write_data(otu_path, otu_updates, unique_iso, unique_seq, logger=logger)
 
 
-async def request_new_records(listing: dict, logger: BoundLogger = base_logger) -> list:
+async def request_new_records(
+    listing: dict, logger: BoundLogger = get_logger()
+) -> list:
     """
     :param listing: Deserialized OTU catalog listing
     :param logger: Optional entry point for a shared BoundLogger
@@ -134,7 +134,7 @@ async def process_records(
     records: list,
     listing: dict,
     auto_evaluate: bool = True,
-    logger: BoundLogger = base_logger,
+    logger: BoundLogger = get_logger(),
 ) -> list:
     """
     Takes sequence records and:
@@ -184,7 +184,7 @@ async def write_data(
     new_sequences: list,
     unique_iso: set,
     unique_seq: set,
-    logger: BoundLogger = base_logger,
+    logger: BoundLogger = get_logger(),
 ):
     """
     :param otu_path: A path to an OTU directory under a src reference directory
@@ -286,7 +286,9 @@ def find_isolate(record_features: dict) -> Optional[str]:
     return None
 
 
-async def fetch_upstream_accessions(listing: dict, logger: BoundLogger) -> list:
+async def fetch_upstream_accessions(
+    listing: dict, logger: BoundLogger = get_logger()
+) -> list:
     """
     Requests a list of all uninspected accessions associated with an OTU's taxon ID
 
@@ -315,7 +317,7 @@ async def fetch_upstream_accessions(listing: dict, logger: BoundLogger) -> list:
 
 
 async def process_default(
-    records: list, listing: dict, filter_set: set, logger: BoundLogger = base_logger
+    records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
 ) -> Tuple[list, list]:
     auto_excluded = []
     otu_updates = []
@@ -348,7 +350,7 @@ async def process_default(
 
 
 async def process_auto_evaluate(
-    records: list, listing: dict, filter_set: set, logger: BoundLogger = base_logger
+    records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
 ) -> Tuple[list, list]:
     """
     Processes autoevaluated
