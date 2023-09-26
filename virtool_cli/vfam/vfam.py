@@ -1,4 +1,7 @@
 from pathlib import Path
+import structlog
+
+from virtool_cli.utils.logging import DEFAULT_LOGGER
 from virtool_cli.vfam.curate import (
     get_input_paths,
     group_input_paths,
@@ -33,6 +36,7 @@ def run(
     filter_clusters,
     min_sequences,
 ):
+    structlog.configure(wrapper_class=DEFAULT_LOGGER)
     """Dictates workflow for vfam pipeline."""
     if src_path:
         input_paths = get_input_paths(Path(src_path))

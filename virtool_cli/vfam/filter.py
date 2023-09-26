@@ -1,8 +1,7 @@
 from Bio import SeqIO
 from pathlib import Path
-
 from typing import Optional, List
-from virtool_cli.vfam.console import console
+from structlog.stdlib import get_logger
 
 COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
 
@@ -109,6 +108,8 @@ def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
     :param fasta_paths: list of paths to FASTA files from mcl_to_fasta step to be filtered
     :return: filtered_by_coverage, a list of paths to filtered FASTA files
     """
+    logger = get_logger()
+
     num_unfiltered = len(fasta_paths)
     filtered_by_coverage = []
     for fasta_path in fasta_paths:
@@ -118,9 +119,8 @@ def filter_on_coverage(fasta_paths: List[Path]) -> List[Path]:
 
     num_filtered = len(filtered_by_coverage)
 
-    console.print(
-        f"✔ Filtered out {num_unfiltered - num_filtered} FASTA cluster files based on coverage.",
-        style="green",
+    logger.info(
+        f"Filtered out {num_unfiltered - num_filtered} FASTA cluster files based on coverage."
     )
 
     return filtered_by_coverage
@@ -134,6 +134,8 @@ def filter_on_number(fasta_paths: List[Path], min_sequences: int) -> List[Path]:
     :param min_sequences: Filter out clusters with fewer records than min_sequences_check
     :return: filtered_fasta_paths, a list of filtered FASTA files
     """
+    logger = get_logger()
+
     num_unfiltered = len(fasta_paths)
     filtered_fasta_paths = []
     for fasta_path in fasta_paths:
@@ -144,10 +146,9 @@ def filter_on_number(fasta_paths: List[Path], min_sequences: int) -> List[Path]:
 
     num_filtered = len(filtered_fasta_paths)
 
-    console.print(
-        f"✔ Filtered out {num_unfiltered - num_filtered} "
-        f"FASTA cluster files based on number of sequences.",
-        style="green",
+    logger.info(
+        f"Filtered out {num_unfiltered - num_filtered} "
+        + "FASTA cluster files based on number of sequences."
     )
 
     return filtered_fasta_paths

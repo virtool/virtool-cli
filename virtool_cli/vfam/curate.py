@@ -1,13 +1,14 @@
-import gzip
 import sys
-import urllib.request
-
-from abc import ABC
-from html.parser import HTMLParser
-from urllib.error import HTTPError, URLError
-from Bio import SeqIO
 from pathlib import Path
 from typing import List
+import urllib.request
+from urllib.error import HTTPError, URLError
+from html.parser import HTMLParser
+import gzip
+from abc import ABC
+from Bio import SeqIO
+from structlog.stdlib import get_logger
+
 from virtool_cli.vfam.console import console
 
 
@@ -22,6 +23,7 @@ def get_genbank_files(output: Path) -> List[Path]:
     :param output: path to output directory
     :return: genbank_file_paths, a list of paths to the .gpff files in project directory gathered from NCBI
     """
+    logger = get_logger()
     viral_release_url = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
 
     parser = ViralProteinParser()
@@ -51,19 +53,14 @@ def get_genbank_files(output: Path) -> List[Path]:
                 genbank_file_paths.append(output_path)
 
         except (HTTPError, URLError):
-            console.print(
-                f"Error retrieving {file_name} from {viral_release_url}", style="red"
-            )
-            console.print(
-                f"Record data from {file_name} will not be included in output",
-                style="red",
-            )
+            logger.error(f"Error retrieving {file_name} from {viral_release_url}")
+            logger.error(f"Record data from {file_name} will not be included in output")
+
             continue
 
     if genbank_file_paths:
-        console.print(
-            f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.",
-            style="green",
+        logger.info(
+            f"Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}."
         )
         return genbank_file_paths
 
@@ -78,6 +75,8 @@ def get_input_paths(src_path: Path) -> List[Path]:
     :param src_path: Path to input source directory containing unfiltered FASTA files
     :return: input_paths, list of paths to input files if any files are found
     """
+    logger = get_logger()
+
     input_paths = list(src_path.iterdir())
 
     if input_paths:
@@ -86,7 +85,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
         )
         return input_paths
 
-    console.print("No files found in input directory.", style="red")
+    logger.critical("No files found in input directory.")
     sys.exit(1)
 
 
@@ -105,6 +104,8 @@ def group_input_paths(
     :param sequence_min_length: minimum length of sequence to be included in output
     :return: records found in input paths
     """
+    logger = get_logger()
+
     record_seqs = list()
     record_count = 0
     dupes_count = 0
@@ -134,14 +135,13 @@ def group_input_paths(
 
         handle.close()
 
-    console.print(
-        f"✔ Retrieved {record_count} records from {len(input_paths)} input files.",
-        style="green",
+    logger.info(
+        f"Retrieved {record_count} records from {len(input_paths)} input files."
     )
 
     if no_named_phages:
-        console.print(
-            f"✔ Filtered out {phage_count} phage records by name.", style="green"
+        logger.info(
+            f"Filtered out {phage_count} phage records by name.",
         )
 
     console.print(f"✔ Filtered out {dupes_count} duplicate records.", style="green")

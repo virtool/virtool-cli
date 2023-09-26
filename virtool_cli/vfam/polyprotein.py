@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 from Bio import SearchIO
-from virtool_cli.vfam.console import console
+from structlog.stdlib import get_logger
 
 
 def get_sequence_lengths(blast_results_path: Path) -> dict:
@@ -121,6 +121,8 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
     :param blast_results_path: path to BLAST file produced in blast_all_by_all() step
     :return: polyprotein_ids, a list of sequence IDs to not include in output
     """
+    logger = get_logger()
+
     seq_lengths = get_sequence_lengths(blast_results_path)
     alignment_records = get_alignment_records(blast_results_path)
     polyprotein_ids = []
@@ -140,8 +142,7 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
                     polyprotein_ids.append(checked_by_position)
 
     if len(polyprotein_ids) > 0:
-        console.print(
-            f"✔ Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage.",
-            style="green",
+        logger.info(
+            f"Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage.",
         )
     return polyprotein_ids
