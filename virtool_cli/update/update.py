@@ -78,7 +78,7 @@ async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = F
     # extract taxon ID and _id hash from listing filename
     [taxid, otu_id] = listing_path.stem.split("--")
 
-    logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
+    logger = get_logger().bind(taxid=taxid, otu_id=otu_id)
 
     record_data = await request_new_records(listing)
     if not record_data:

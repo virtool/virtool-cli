@@ -33,8 +33,10 @@ def check_reference(src_path: Path):
 
     :param src_path: Path to a given reference directory
     """
+    logger = get_logger()
+
     for otu_path in get_otu_paths(src_path):
-        logger = base_logger.bind(otu_path=str(otu_path.relative_to(src_path)))
+        logger = logger.bind(otu_path=str(otu_path.relative_to(src_path)))
 
         check_otu(otu_path, logger)
 

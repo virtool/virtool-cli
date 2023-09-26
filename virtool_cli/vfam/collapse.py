@@ -19,6 +19,8 @@ def generate_clusters(
     :param fraction_cov: Fraction coverage for CD-HIT step
     :return: output_path, path to a file containing cluster information created at CD-HIT step
     """
+    logger = get_logger()
+
     output_name = "clustered_fasta.faa"
     if prefix:
         output_name = f"{prefix}_{output_name}"
@@ -41,7 +43,7 @@ def generate_clusters(
     try:
         subprocess.run(cd_hit_cmd, check=True, shell=False)
     except FileNotFoundError:
-        console.print("Dependency cd-hit not found in path.", style="red")
+        logger.critical("Dependency cd-hit not found in path.")
         sys.exit(1)
     return output_path
 

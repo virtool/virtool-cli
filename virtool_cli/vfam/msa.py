@@ -4,7 +4,6 @@ import sys
 
 from pathlib import Path
 from typing import List, Optional
-from virtool_cli.vfam.console import console
 from structlog import get_logger
 
 NUM_CORES = 16

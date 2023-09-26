@@ -1,6 +1,6 @@
 from pathlib import Path
 import structlog
-from structlog.stdlib import BoundLogger, get_logger
+from structlog.stdlib import get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths
@@ -17,7 +17,7 @@ def run(src_path: Path, debugging: bool = False):
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
     logger = get_logger().bind(src=str(src_path))
 
-    base_logger.info("Repairing data...")
+    logger.info("Repairing data...")
 
     repair_data(src_path)
 
