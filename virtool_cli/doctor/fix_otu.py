@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import re
 import structlog
-from structlog.stdlib import BoundLogger, get_logger
+from structlog import BoundLogger, get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
@@ -71,6 +71,7 @@ def repair_otu_data(otu: dict):
 
 def repair_sequence(sequence_path: Path, logger: BoundLogger = get_logger()):
     """
+    :param sequence_path: Path to reference file containing sequence and metadata
     :param logger: Optional entry point for an existing BoundLogger
     """
     sequence = json.loads(sequence_path.read_text())

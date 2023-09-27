@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import shutil
 import structlog
-from structlog.stdlib import get_logger
+from structlog import get_logger
 
 from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
 from virtool_cli.utils.reference import generate_otu_dirname

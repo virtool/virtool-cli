@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 from Bio import SearchIO
-from structlog.stdlib import get_logger
+from structlog import get_logger
 
 
 def get_sequence_lengths(blast_results_path: Path) -> dict:

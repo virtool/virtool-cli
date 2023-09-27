@@ -7,7 +7,7 @@ import collections
 from collections import defaultdict
 from typing import Tuple, List
 from Bio import SeqIO
-from structlog.stdlib import get_logger
+from structlog import get_logger
 
 
 def get_taxonomy(seq_ids: List[str], taxonomy_records: dict) -> Tuple[dict, dict]:
@@ -130,6 +130,7 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
     family_count = 0
     genus_count = 0
     record_count = 0
+
     for cluster_path in cluster_paths:
         annotation = {
             "cluster": cluster_path.name.split("_")[1],

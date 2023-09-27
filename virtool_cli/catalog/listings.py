@@ -1,7 +1,7 @@
 import json
 import aiofiles
 from pathlib import Path
-from structlog.stdlib import BoundLogger, get_logger
+from structlog import BoundLogger, get_logger
 from virtool_cli.utils.ncbi import fetch_taxid
 from virtool_cli.utils.logging import base_logger
 

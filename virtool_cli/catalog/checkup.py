@@ -3,7 +3,7 @@ import json
 import asyncio
 import structlog
 from structlog import get_logger
-from structlog.stdlib import BoundLogger
+from structlog import BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import get_spelling

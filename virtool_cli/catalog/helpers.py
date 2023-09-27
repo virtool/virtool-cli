@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Optional
-from structlog.stdlib import get_logger, BoundLogger
+from structlog import get_logger, BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.reference import (

@@ -1,7 +1,7 @@
 from Bio import SeqIO
 from pathlib import Path
 from typing import Optional, List
-from structlog.stdlib import get_logger
+from structlog import get_logger
 
 COVERAGE_HEUR_DICT = {0: 0.6, 1: 0.65, 2: 0.7, 3: 0.75, 4: 0.8, 5: 0.85}
 

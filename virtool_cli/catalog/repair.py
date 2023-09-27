@@ -3,7 +3,7 @@ import json
 from Bio import Entrez
 import asyncio
 import structlog
-from structlog.stdlib import BoundLogger, get_logger
+from structlog import BoundLogger, get_logger
 
 from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL

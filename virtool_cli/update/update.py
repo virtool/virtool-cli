@@ -20,8 +20,8 @@ from virtool_cli.update.evaluate import (
     get_lengthdict_monopartite,
     get_lengthdict_multipartite,
 )
+from virtool_cli.utils.format import format_isolate, format_sequence
 from virtool_cli.utils.storage import store_isolate, store_sequence
-from virtool_cli.utils.format import format_sequence
 from virtool_cli.catalog.helpers import search_by_otu_id
 
 DEFAULT_INTERVAL = 0.001
@@ -227,9 +227,9 @@ async def write_data(
                 "Assigning new isolate hash", iso_name=isolate_name, iso_hash=iso_id
             )
 
-            new_isolate = await store_isolate(
-                isolate_name, isolate_type, iso_id, otu_path
-            )
+            new_isolate = format_isolate(isolate_name, isolate_type, iso_id)
+
+            await store_isolate(new_isolate, iso_id, otu_path)
 
             unique_iso.add(iso_id)
             ref_isolates[isolate_name] = new_isolate
@@ -293,6 +293,7 @@ async def fetch_upstream_accessions(
     Requests a list of all uninspected accessions associated with an OTU's taxon ID
 
     :param listing: Corresponding catalog listing for this OTU
+    :param logger: Optional entry point for an existing BoundLogger
     :return: A list of accessions from NCBI Genbank for the taxon ID,
         sans included and excluded accessions
     """
@@ -319,6 +320,16 @@ async def fetch_upstream_accessions(
 async def process_default(
     records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
 ) -> Tuple[list, list]:
+    """
+    Format new sequences from NCBI Taxonomy if they do not already exist in the reference.
+
+    :param records: A list of SeqRecords from NCBI Taxonomy
+    :param listing: A deserialized catalog listing for the OTU
+    :param filter_set: A set of accessions that should be omitted
+    :param logger: Optional entry point for an existing BoundLogger
+    :return: A list of processed new sequences/isolates and
+        a set of automatically excluded accessions
+    """
     auto_excluded = []
     otu_updates = []
 
@@ -353,7 +364,15 @@ async def process_auto_evaluate(
     records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
 ) -> Tuple[list, list]:
     """
-    Processes autoevaluated
+    Format new sequences from NCBI Taxonomy if they do not already exist in the reference.
+    Automatically evaluate new sequences during formatting.
+
+    :param records: A list of SeqRecords from NCBI Taxonomy
+    :param listing: A deserialized catalog listing for the OTU
+    :param filter_set: A set of accessions that should be omitted
+    :param logger: Optional entry point for an existing BoundLogger
+    :return: A list of processed new sequences/isolates and
+        a set of automatically excluded accessions
     """
     auto_excluded = []
     otu_updates = []
@@ -404,9 +423,7 @@ async def process_auto_evaluate(
             continue
         isolate_name = seq_qualifier_data.get(isolate_type)[0]
 
-        seq_dict = format_sequence(
-            record=seq_data, qualifiers=seq_qualifier_data, logger=logger
-        )
+        seq_dict = format_sequence(record=seq_data, qualifiers=seq_qualifier_data)
 
         if "segment" not in seq_dict:
             seq_dict["segment"] = listing.get("schema")[0]["name"]

@@ -2,7 +2,7 @@ from pathlib import Path
 import subprocess
 import sys
 from Bio import SeqIO
-from structlog.stdlib import get_logger
+from structlog import get_logger
 
 
 def generate_clusters(

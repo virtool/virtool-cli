@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 import asyncio
 import structlog
-from structlog.stdlib import get_logger, BoundLogger
+from structlog import get_logger, BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import (

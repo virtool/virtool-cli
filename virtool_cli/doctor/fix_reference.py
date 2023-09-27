@@ -1,6 +1,6 @@
 from pathlib import Path
 import structlog
-from structlog.stdlib import get_logger
+from structlog import get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths
@@ -29,4 +29,4 @@ def repair_data(src_path: Path):
     :param src_path: Path to a given reference directory
     """
     for otu_path in get_otu_paths(src_path):
-        repair_otu(otu_path, base_logger.bind(otu=otu_path.relative_to(src_path)))
+        repair_otu(otu_path, get_logger().bind(otu=otu_path.relative_to(src_path)))

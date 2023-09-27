@@ -7,7 +7,7 @@ from html.parser import HTMLParser
 import gzip
 from abc import ABC
 from Bio import SeqIO
-from structlog.stdlib import get_logger
+from structlog import get_logger
 
 from virtool_cli.vfam.console import console
 
@@ -217,10 +217,11 @@ def genbank_to_fasta(curated_records_path, prefix=None) -> Path:
 
 
 class ViralProteinParser(HTMLParser, ABC):
-
     """Parser used to gather .gpff file names from NCBI viral release .html file"""
 
-    file_names = list()
+    def __init__(self):
+        super().__init__()
+        self.file_names = []
 
     def handle_data(self, data):
         if data.startswith("viral") and ".gpff" in data:
