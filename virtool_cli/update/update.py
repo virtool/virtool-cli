@@ -227,7 +227,11 @@ async def write_data(
                 "Assigning new isolate hash", iso_name=isolate_name, iso_hash=iso_id
             )
 
-            new_isolate = format_isolate(isolate_name, isolate_type, iso_id)
+            try:
+                new_isolate = format_isolate(isolate_name, isolate_type, iso_id)
+            except Exception as e:
+                logger.exception(e)
+                continue
 
             await store_isolate(new_isolate, iso_id, otu_path)
 
@@ -243,8 +247,10 @@ async def write_data(
             "Assigning new sequence",
             seq_hash=seq_hash,
         )
-
-        await store_sequence(seq_data, seq_hash, iso_path)
+        try:
+            await store_sequence(seq_data, seq_hash, iso_path)
+        except Exception as e:
+            logger.exception(e)
         unique_seq.add(seq_hash)
 
         logger.info(
@@ -346,9 +352,7 @@ async def process_default(
             continue
         isolate_name = seq_qualifier_data.get(isolate_type)[0]
 
-        seq_dict = format_sequence(
-            record=seq_data, qualifiers=seq_qualifier_data, logger=logger
-        )
+        seq_dict = format_sequence(record=seq_data, qualifiers=seq_qualifier_data)
 
         if "segment" not in seq_dict:
             seq_dict["segment"] = listing.get("schema")[0]["name"]
