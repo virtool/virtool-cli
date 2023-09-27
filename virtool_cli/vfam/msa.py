@@ -37,11 +37,14 @@ def batch_muscle_call(fasta_paths: List[Path]) -> List[Path]:
         try:
             subprocess.run(muscle_cmd, check=True, shell=False)
         except FileNotFoundError:
-            logger.critical("Dependency 'muscle' not found in path")
+            logger.error("Dependency 'muscle' not found in path")
             sys.exit(1)
 
+    num_msa = len(msa_paths)
+
     logger.info(
-        f"Produced {len(msa_paths)} MSAs from {len(fasta_paths)} FASTA cluster files."
+        f"Produced {num_msa} MSAs from {len(fasta_paths)} FASTA cluster files.",
+        count=num_msa,
     )
 
     return msa_paths
@@ -76,10 +79,14 @@ def batch_hmm_call(msa_paths: List[Path]) -> List[Path]:
         try:
             subprocess.run(hmmer_cmd, check=True, shell=False)
         except FileNotFoundError:
-            logger.critical("Dependency hmmbuild not found in path.")
+            logger.error("Dependency hmmbuild not found in path.")
             sys.exit(1)
 
-    logger.info(f"✔ Collected {len(hmm_paths)} HMM profiles produced by hmmbuild.")
+    num_profiles = len(hmm_paths)
+    logger.info(
+        f"✔ Collected {num_profiles} HMM profiles produced by hmmbuild.",
+        count=num_profiles,
+    )
 
     return hmm_paths
 
@@ -108,6 +115,6 @@ def concatenate_hmms(
                 for line in h_handle:
                     o_handle.write(line)
 
-    logger.info(f"Master HMM profile built in {output_path}")
+    logger.info(f"Master HMM profile built in output_path", output_path=output_path)
 
     return output_path

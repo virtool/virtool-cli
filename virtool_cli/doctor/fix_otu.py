@@ -2,10 +2,12 @@ import json
 from pathlib import Path
 import re
 import structlog
-from structlog import BoundLogger, get_logger
+from structlog import BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
+
+base_logger = structlog.get_logger()
 
 
 def run(otu_path: Path, src_path: Path, debugging: bool = False):
@@ -17,14 +19,14 @@ def run(otu_path: Path, src_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(otu_path=otu_path.name)
+    logger = base_logger.bind(otu_path=otu_path.name)
 
     logger.info("Inspecting OTU for repairs...", src=str(src_path))
 
     repair_otu(otu_path, logger)
 
 
-def repair_otu(otu_path: Path, logger: BoundLogger = get_logger()):
+def repair_otu(otu_path: Path, logger: BoundLogger = base_logger):
     """
     Inspects an OTU and its contents for repairable issues and corrects them if found
 
@@ -69,7 +71,7 @@ def repair_otu_data(otu: dict):
     return otu
 
 
-def repair_sequence(sequence_path: Path, logger: BoundLogger = get_logger()):
+def repair_sequence(sequence_path: Path, logger: BoundLogger = base_logger):
     """
     :param sequence_path: Path to reference file containing sequence and metadata
     :param logger: Optional entry point for an existing BoundLogger

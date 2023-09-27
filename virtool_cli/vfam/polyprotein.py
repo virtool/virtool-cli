@@ -70,7 +70,7 @@ def check_alignments_by_length(
     :param seq_lengths: dictionary containing {sequence ID: sequence} length pairs
     :return: checked alignments, a list of alignment records to investigate further in check_alignments_by_position()
     """
-    checked_alignments = list()
+    checked_alignments = []
 
     for alignment in alignment_records[seq_id]:
         if seq_lengths[alignment["s_id"]] < 0.7 * seq_lengths[alignment["q_id"]]:
@@ -141,8 +141,10 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
                 if checked_by_position:
                     polyprotein_ids.append(checked_by_position)
 
+    num_polyprotein = len(polyprotein_ids)
     if len(polyprotein_ids) > 0:
         logger.info(
-            f"Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage.",
+            f"Filtered out {num_polyprotein} polyprotein-like records based on coverage.",
+            count=num_polyprotein,
         )
     return polyprotein_ids

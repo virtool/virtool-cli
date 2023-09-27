@@ -85,7 +85,7 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     try:
         stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
     except FileNotFoundError:
-        logger.critical("Dependency hmmstat not found in path.", path=str(output))
+        logger.error("Dependency hmmstat not found in path.", path=str(output))
         sys.exit(1)
 
     for line in stat_data:

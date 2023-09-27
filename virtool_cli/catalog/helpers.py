@@ -140,7 +140,7 @@ def get_sequence_metadata(sequence_path: Path) -> dict:
     return sequence_metadata
 
 
-def get_otu_accessions_metadata(otu_path) -> dict:
+def get_otu_accessions_metadata(otu_path: Path) -> dict:
     """
     Returns sequence metadata for all sequences present under an OTU
 

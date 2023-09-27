@@ -92,7 +92,7 @@ def blast_to_mcl(
     try:
         subprocess.run(mcxload_cmd, check=True, shell=False)
     except FileNotFoundError:
-        logger.critical("Dependency mcxload not found in path")
+        logger.error("Dependency mcxload not found in path")
         sys.exit(1)
 
     mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
@@ -103,7 +103,7 @@ def blast_to_mcl(
     try:
         subprocess.run(mcl_cmd, check=True, shell=False)
     except FileNotFoundError:
-        logger.critical("Dependency mcl not found in path.")
+        logger.error("Dependency mcl not found in path.")
         sys.exit(1)
 
     return mcl_path
@@ -138,7 +138,9 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
 
+    num_clustered = len(list(set(mcl_path_dict.values())))
     logger.info(
-        f"Produced {len(list(set(mcl_path_dict.values())))} FASTA cluster files from MCL clusters."
+        f"Produced {num_clustered} FASTA cluster files from MCL clusters.",
+        count=num_clustered,
     )
     return list(set(mcl_path_dict.values()))

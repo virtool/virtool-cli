@@ -1,10 +1,12 @@
 import json
 from typing import Optional
 from pathlib import Path
-import logging
+import structlog
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths, generate_otu_dirname
+
+base_logger = structlog.get_logger()
 
 
 def run(src_path: Path, debugging: bool = False):
@@ -14,11 +16,7 @@ def run(src_path: Path, debugging: bool = False):
     :param src_path: Path to a given reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
 
     repair_reference(src_path)
 

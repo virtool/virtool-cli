@@ -1,9 +1,10 @@
 from pathlib import Path
 import structlog
-from structlog import get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import read_otu, generate_otu_dirname, is_v1
+
+base_logger = structlog.get_logger()
 
 
 def run(src_path: Path, debugging: bool = False):
@@ -12,7 +13,7 @@ def run(src_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(src_path=str(src_path))
+    logger = base_logger.bind(src_path=str(src_path))
 
     if not is_v1(src_path):
         logger.info("Reference in src_path is already v2")
@@ -37,7 +38,7 @@ def flatten_src(src_path: Path):
     :param src_path: Path to a src database directory
     """
     for alpha in [alpha for alpha in src_path.glob("[a-z]") if alpha.is_dir()]:
-        alpha_logger = get_logger().bind(bin=alpha.name)
+        alpha_logger = base_logger.bind(bin=alpha.name)
 
         otu_paths = [otu for otu in alpha.iterdir() if otu.is_dir()]
 

@@ -11,6 +11,8 @@ from virtool_cli.utils.reference import (
     get_sequence_paths,
 )
 
+base_logger = get_logger()
+
 
 def run(src_path: Path, debugging: bool = False):
     """
@@ -20,7 +22,7 @@ def run(src_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(src=str(src_path), verbose=debugging)
+    logger = base_logger.bind(src=str(src_path), verbose=debugging)
 
     logger.info("Running checks on reference directory...")
 
@@ -45,7 +47,7 @@ def check_reference(src_path: Path):
                 check_sequence(sequence_path, logger)
 
 
-def check_otu(otu_path: Path, logger: BoundLogger = get_logger()):
+def check_otu(otu_path: Path, logger: BoundLogger = base_logger):
     """
     Checks an OTU file for bad content and logs a warning if problems are found
 
@@ -59,7 +61,7 @@ def check_otu(otu_path: Path, logger: BoundLogger = get_logger()):
         logger.warning(f"{otu['_id']}: missing schema")
 
 
-def check_sequence(sequence_path: Path, logger: BoundLogger = get_logger()):
+def check_sequence(sequence_path: Path, logger: BoundLogger = base_logger):
     """
     Checks a sequence file for bad content and logs a warning if problems are found
 

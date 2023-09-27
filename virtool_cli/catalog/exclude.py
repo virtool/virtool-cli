@@ -4,10 +4,12 @@ import asyncio
 import aiofiles
 from Bio import Entrez, SeqIO
 import structlog
-from structlog import get_logger, BoundLogger
+from structlog import BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+
+base_logger = structlog.get_logger()
 
 
 def run(catalog_path: Path, debugging: bool = False):
@@ -18,7 +20,7 @@ def run(catalog_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(catalog=str(catalog_path), verbose=debugging)
+    logger = base_logger.bind(catalog=str(catalog_path), verbose=debugging)
 
     logger.info("Starting RefSeq filter...", catalog=str(catalog_path))
 
@@ -32,14 +34,14 @@ async def filter_refseq_accessions(catalog_path: Path):
 
     :param catalog_path: Path to a catalog directory
     """
-    logger = get_logger()
+    logger = base_logger
     for listing_path in catalog_path.glob("*--*.json"):
         logger = logger.bind(listing_path=listing_path.name)
 
         await filter_refseq_otu(listing_path, logger)
 
 
-async def filter_refseq_otu(listing_path: Path, logger: BoundLogger = get_logger()):
+async def filter_refseq_otu(listing_path: Path, logger: BoundLogger = base_logger):
     """
     Parses a catalog listing, checks the included accession list
     for RefSeq-formatted accessions and requests GenBank for data.
@@ -119,7 +121,7 @@ def in_refseq(comments: str, excluded: set) -> str:
 
 
 async def fetch_upstream_records(
-    fetch_list: list, logger: BoundLogger = get_logger()
+    fetch_list: list, logger: BoundLogger = base_logger
 ) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank

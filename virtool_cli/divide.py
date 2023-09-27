@@ -2,10 +2,11 @@ import json
 from pathlib import Path
 import shutil
 import structlog
-from structlog import get_logger
 
 from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
 from virtool_cli.utils.reference import generate_otu_dirname
+
+base_logger = structlog.get_logger()
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -31,7 +32,7 @@ def run(reference_path: Path, output_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(reference=str(reference_path), output=str(output_path))
+    logger = base_logger.bind(reference=str(reference_path), output=str(output_path))
 
     logger.info(f"Dividing {output_path.name} into {reference_path.name}...")
 

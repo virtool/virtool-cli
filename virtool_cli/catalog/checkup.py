@@ -34,7 +34,7 @@ def run_tests(catalog_path: Path):
     logger = get_logger().bind(catalog=str(catalog_path))
 
     logger.info("Checking for missing data within all listings...")
-    check_missing_data(catalog_path, logger)
+    check_missing_data(catalog_path)
 
     logger.info("Checking for listings without taxon IDs...", test="no_taxid")
     if unassigned := search_by_taxid("none", catalog_path):
@@ -56,7 +56,7 @@ def run_tests(catalog_path: Path):
         "Checking for listings containing duplicate accessions...",
         test="duplicate_accessions",
     )
-    if duplicate_accessions := find_duplicate_accessions(catalog_path, logger):
+    if duplicate_accessions := find_duplicate_accessions(catalog_path):
         logger.warning(
             "Found non-unique accessions in listings",
             test="duplicate_accessions",
@@ -70,13 +70,13 @@ def run_tests(catalog_path: Path):
     asyncio.run(suggest_spellings(catalog_path))
 
 
-def check_missing_data(catalog_path: Path, logger: BoundLogger = get_logger()):
+def check_missing_data(catalog_path: Path):
     """
     Checks all catalog listings for missing keys and schema data.
 
     :param catalog_path: Path to a catalog directory
-    :param logger: Optional entry point for a shared BoundLogger
     """
+    logger = get_logger(__name__ + ".missing_data")
     for listing_path in get_catalog_paths(catalog_path):
         logger = logger.bind(listing=listing_path.stem)
 
@@ -157,14 +157,15 @@ def find_shared_taxids(catalog_path: Path, logger: BoundLogger = get_logger()) -
     return list(duplicated_taxids)
 
 
-def find_duplicate_accessions(catalog_path: Path, logger=get_logger()):
+def find_duplicate_accessions(catalog_path: Path):
     """
     Checks catalog listings for accessions that have been listed twice.
     Can be used to identify redundant sequences in the reference directory.
 
     :param catalog_path: Path to a catalog directory
-    :param logger: Optional entry point for a shared BoundLogger
     """
+    logger = get_logger()
+
     duplicate_accessions = []
 
     for listing_path in catalog_path.glob("*--*.json"):
@@ -185,7 +186,8 @@ def find_duplicate_accessions(catalog_path: Path, logger=get_logger()):
 
         logger.debug("Checking included list against excluded list for eliminations...")
         for versioned_accession in listing["accessions"]["included"]:
-            [accession, _] = versioned_accession.split(".")
+            accession = versioned_accession.split(".")[0]
+
             if accession in accession_set:
                 logger.warning(
                     f"Included accession '{versioned_accession}' is on the exclusion list."
@@ -195,14 +197,15 @@ def find_duplicate_accessions(catalog_path: Path, logger=get_logger()):
     return duplicate_accessions
 
 
-async def suggest_spellings(catalog_path: Path, logger=get_logger()):
+async def suggest_spellings(catalog_path: Path):
     """
     Evaluates the names of OTUs without retrievable taxon IDs
     and queries Entrez ESpell for alternatives.
 
     :param catalog_path: Path to a catalog directory
-    :param logger: Optional entry point for a shared BoundLogger
     """
+    logger = get_logger()
+
     for listing_path in catalog_path.glob("none--*.json"):
         with open(listing_path, "r") as f:
             listing = json.load(f)

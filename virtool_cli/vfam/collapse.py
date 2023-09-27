@@ -43,7 +43,7 @@ def generate_clusters(
     try:
         subprocess.run(cd_hit_cmd, check=True, shell=False)
     except FileNotFoundError:
-        logger.critical("Dependency cd-hit not found in path.")
+        logger.error("Dependency cd-hit not found in path.")
         sys.exit(1)
     return output_path
 
@@ -102,7 +102,7 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     try:
         subprocess.run(format_db_cmd, check=True, shell=False)
     except FileNotFoundError:
-        logger.critical("Dependency makeblastdb not found in path.")
+        logger.error("Dependency makeblastdb not found in path.")
         sys.exit(1)
 
     blast_name = "blast.br"
@@ -128,7 +128,7 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     try:
         subprocess.run(blast_cmd, check=True, shell=False)
     except FileNotFoundError:
-        logger.critical("Dependency blastp not found in path.")
+        logger.error("Dependency blastp not found in path.")
         sys.exit(1)
 
     return blast_results_path

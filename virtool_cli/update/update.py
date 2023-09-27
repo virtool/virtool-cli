@@ -6,9 +6,8 @@ import structlog
 from structlog import get_logger, BoundLogger
 from urllib.error import HTTPError
 
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths
-from virtool_cli.utils.id_generator import generate_unique_ids, get_unique_ids
+from virtool_cli.utils.reference import get_isolate_paths
+from virtool_cli.utils.id_generator import generate_unique_ids
 from virtool_cli.utils.ncbi import (
     request_linked_accessions,
     request_from_nucleotide,
@@ -22,78 +21,10 @@ from virtool_cli.update.evaluate import (
 )
 from virtool_cli.utils.format import format_isolate, format_sequence
 from virtool_cli.utils.storage import store_isolate, store_sequence
-from virtool_cli.catalog.helpers import search_by_otu_id
 
 DEFAULT_INTERVAL = 0.001
 
-
-def run(
-    otu_path: Path,
-    catalog_path: Path,
-    auto_evaluate: bool = False,
-    debugging: bool = False,
-):
-    """
-    CLI entry point for update.update.run()
-
-    Requests updates for a single OTU directory
-    Searches the catalog for a matching catalog listing and requests new updates if it finds one.
-
-    :param otu_path: Path to a OTU directory
-    :param catalog_path: Path to a catalog directory
-    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
-    :param debugging: Enables verbose logs for debugging purposes
-    """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(otu_path=str(otu_path))
-
-    if auto_evaluate:
-        logger.warning(
-            "Auto-evaluation is in active development and may produce false negatives."
-        )
-
-    [_, otu_id] = otu_path.name.split("--")
-    listing_path = search_by_otu_id(otu_id, catalog_path)
-
-    if listing_path:
-        asyncio.run(update_otu(otu_path, listing_path, auto_evaluate))
-
-    else:
-        logger.critical("Listing not found for this OTU.")
-        logger.info("Use virtool acc init to create a new accession catalog.")
-
-
-async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = False):
-    """
-    Requests new records for a single taxon ID
-    and writes new data under the corresponding path.
-
-    :param otu_path: Path to a OTU directory
-    :param listing_path: Path to a listing in an accession catalog directory
-    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
-    """
-    src_path = otu_path.parent
-    listing = json.loads(listing_path.read_text())
-
-    # extract taxon ID and _id hash from listing filename
-    [taxid, otu_id] = listing_path.stem.split("--")
-
-    logger = get_logger().bind(taxid=taxid, otu_id=otu_id)
-
-    record_data = await request_new_records(listing)
-    if not record_data:
-        return
-
-    otu_updates = await process_records(
-        records=record_data, listing=listing, auto_evaluate=auto_evaluate, logger=logger
-    )
-    if not otu_updates:
-        return
-
-    # List all isolate and sequence IDs presently in src
-    unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
-
-    await write_data(otu_path, otu_updates, unique_iso, unique_seq, logger=logger)
+base_logger = structlog.get_logger()
 
 
 async def request_new_records(
@@ -134,7 +65,7 @@ async def process_records(
     records: list,
     listing: dict,
     auto_evaluate: bool = True,
-    logger: BoundLogger = get_logger(),
+    logger: BoundLogger = base_logger,
 ) -> list:
     """
     Takes sequence records and:
@@ -184,7 +115,7 @@ async def write_data(
     new_sequences: list,
     unique_iso: set,
     unique_seq: set,
-    logger: BoundLogger = get_logger(),
+    logger: BoundLogger = base_logger,
 ):
     """
     :param otu_path: A path to an OTU directory under a src reference directory
@@ -293,7 +224,7 @@ def find_isolate(record_features: dict) -> Optional[str]:
 
 
 async def fetch_upstream_accessions(
-    listing: dict, logger: BoundLogger = get_logger()
+    listing: dict, logger: BoundLogger = base_logger
 ) -> list:
     """
     Requests a list of all uninspected accessions associated with an OTU's taxon ID
@@ -365,7 +296,7 @@ async def process_default(
 
 
 async def process_auto_evaluate(
-    records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
+    records: list, listing: dict, filter_set: set, logger: BoundLogger = base_logger
 ) -> Tuple[list, list]:
     """
     Format new sequences from NCBI Taxonomy if they do not already exist in the reference.

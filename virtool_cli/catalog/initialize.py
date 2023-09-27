@@ -62,7 +62,7 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
     :param src_path: Path to a reference directory
     :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
-    logger = get_logger().bind(src=str(src_path))
+    logger = get_logger(__name__ + ".fetcher").bind(src=str(src_path))
     logger.debug("Starting fetcher...")
 
     for otu_path in get_otu_paths(src_path):
@@ -96,7 +96,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     :param catalog_path: Path to an accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
-    logger = get_logger().bind(catalog=str(catalog_path))
+    logger = get_logger(__name__ + ".writer").bind(catalog=str(catalog_path))
 
     while True:
         packet = await queue.get()

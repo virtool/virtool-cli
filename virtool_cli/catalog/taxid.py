@@ -2,12 +2,15 @@ from pathlib import Path
 import json
 import asyncio
 import structlog
-from structlog import get_logger
+
+# from structlog import get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.catalog.helpers import get_catalog_paths, find_taxid_from_accessions
 from virtool_cli.catalog.listings import update_listing
+
+base_logger = structlog.get_logger()
 
 
 def run(catalog_path: Path, debugging: bool = False):
@@ -18,7 +21,7 @@ def run(catalog_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(catalog=str(catalog_path))
+    logger = base_logger.bind(catalog=str(catalog_path))
 
     logger.info("Fetching taxon IDs...")
 
@@ -52,7 +55,7 @@ async def fetcher_loop(catalog_path: Path, queue: asyncio.Queue):
     :param catalog_path: Path to an accession catalog directory
     :param queue: Queue containing the listing path and all taxon IDs extracted from the included accessions
     """
-    logger = get_logger()
+    logger = structlog.get_logger(__name__ + ".fetcher")
     logger.debug("Starting fetcher...", n_catalog=len(get_catalog_paths(catalog_path)))
 
     for listing_path in catalog_path.glob("*.json"):
@@ -82,7 +85,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     :param catalog_path: Path to an accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
-    logger = get_logger()
+    logger = structlog.get_logger(__name__ + ".writer")
     logger.debug("Starting writer...")
 
     while True:

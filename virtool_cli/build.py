@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 import arrow
 import structlog
-from structlog import BoundLogger, get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import (
@@ -11,6 +10,8 @@ from virtool_cli.utils.reference import (
     get_sequence_paths,
     is_v1,
 )
+
+base_logger = structlog.get_logger()
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -36,22 +37,21 @@ def run(
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    base_logger = get_logger()
+    logger = base_logger.bind(src=str(src_path))
 
     if is_v1(src_path):
-        base_logger.critical(
+        logger.error(
             "This reference database is a deprecated v1 reference."
-            + 'Run "virtool ref migrate" before trying again.',
-            src=str(src_path),
+            + 'Run "virtool ref migrate" before trying again.'
         )
         return
 
     try:
         build_from_src(src_path, output_path, indent, version)
     except FileNotFoundError as e:
-        base_logger.exception(e)
+        logger.exception(e)
     except Exception as e:
-        base_logger.exception(e)
+        logger.exception(e)
 
 
 def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str):
@@ -63,7 +63,7 @@ def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
-    logger = get_logger().bind(src=str(src_path), output=str(output_path))
+    logger = base_logger.bind(src=str(src_path), output=str(output_path))
 
     data = {"data_type": "genome", "organism": ""}
 
@@ -136,19 +136,18 @@ def parse_alpha(alpha: Path) -> list:
     return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
 
-def parse_otu_contents(otu_path: Path, logger: BoundLogger = get_logger()) -> dict:
+def parse_otu_contents(otu_path: Path) -> dict:
     """
     Traverses, deserializes and returns all data under an OTU directory.
 
     :param otu_path: Path to a OTU directory
-    :param logger: Optional entry point for a shared BoundLogger
     :return: All isolate and sequence data under an OTU,
         deserialized and compiled in a dict
     """
     with open(otu_path / "otu.json", "r") as f:
         otu = json.load(f)
 
-    logger = logger.bind(path=otu_path, otu_id=otu["_id"])
+    logger = base_logger.bind(path=otu_path, otu_id=otu["_id"])
 
     isolates = []
     for isolate_path in get_isolate_paths(otu_path):
@@ -163,7 +162,8 @@ def parse_otu_contents(otu_path: Path, logger: BoundLogger = get_logger()) -> di
 
             sequences.append(sequence)
             logger.debug(
-                f"Added sequence {sequence.get('accession')} under id={sequence.get('_id')}"
+                f"Added sequence {sequence.get('accession')} under id={sequence.get('_id')}",
+                sequence_id=sequence,
             )
 
         isolate["sequences"] = sequences
