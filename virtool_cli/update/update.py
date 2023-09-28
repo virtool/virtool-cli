@@ -3,7 +3,7 @@ from pathlib import Path
 import asyncio
 from typing import Optional, Tuple
 import structlog
-from structlog import get_logger, BoundLogger
+from structlog import BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.reference import get_isolate_paths
@@ -27,9 +27,7 @@ DEFAULT_INTERVAL = 0.001
 base_logger = structlog.get_logger()
 
 
-async def request_new_records(
-    listing: dict, logger: BoundLogger = get_logger()
-) -> list:
+async def request_new_records(listing: dict, logger: BoundLogger = base_logger) -> list:
     """
     :param listing: Deserialized OTU catalog listing
     :param logger: Optional entry point for a shared BoundLogger
@@ -255,7 +253,7 @@ async def fetch_upstream_accessions(
 
 
 async def process_default(
-    records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
+    records: list, listing: dict, filter_set: set, logger: BoundLogger = base_logger
 ) -> Tuple[list, list]:
     """
     Format new sequences from NCBI Taxonomy if they do not already exist in the reference.
