@@ -3,8 +3,6 @@ import json
 import asyncio
 import structlog
 
-# from structlog import get_logger
-
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.catalog.helpers import get_catalog_paths, find_taxid_from_accessions
@@ -25,7 +23,6 @@ def run(catalog_path: Path, debugging: bool = False):
 
     logger.info("Fetching taxon IDs...")
 
-    # wipe_taxids(catalog)
     asyncio.run(fetch_taxids(catalog_path))
 
 

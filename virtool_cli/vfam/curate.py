@@ -11,7 +11,6 @@ from structlog import get_logger
 
 base_logger = get_logger()
 
-# from virtool_cli.vfam.console import console
 
 VIRAL_RELEASE_URL = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
 
@@ -27,7 +26,7 @@ def get_genbank_files(output: Path) -> List[Path]:
     :param output: path to output directory
     :return: genbank_file_paths, a list of paths to the .gpff files in project directory gathered from NCBI
     """
-    logger = get_logger()
+    logger = base_logger
     viral_release_url = VIRAL_RELEASE_URL
 
     if not viral_release_url.startswith("http"):
