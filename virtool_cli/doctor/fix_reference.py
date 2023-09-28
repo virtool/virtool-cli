@@ -28,6 +28,7 @@ def repair_data(src_path: Path, logger: structlog.BoundLogger = base_logger):
     Fixes incorrect data in all OTUs under a reference
 
     :param src_path: Path to a given reference directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
     for otu_path in get_otu_paths(src_path):
-        repair_otu(otu_path, base_logger)
+        repair_otu(otu_path, logger)
