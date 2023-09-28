@@ -1,5 +1,4 @@
 import pytest
-from pathlib import Path
 import json
 import shutil
 import subprocess

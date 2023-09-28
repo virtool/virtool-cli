@@ -89,7 +89,7 @@ def get_input_paths(src_path: Path) -> List[Path]:
         logger.info(f"Retrieved {len(input_paths)} files from input directory.")
         return input_paths
 
-    logger.critical("No files found in input directory.")
+    logger.error("No files found in input directory.")
     sys.exit(1)
 
 

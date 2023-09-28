@@ -87,7 +87,7 @@ def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str
         try:
             otu = parse_otu_contents(otu_path)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            logger.critical("Reference data at src_path is invalid.")
+            logger.error("Reference data at src_path is invalid.")
             logger.exception(e)
             return
         except Exception as e:
