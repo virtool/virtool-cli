@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
 import shutil
-import logging
+import structlog
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
 from virtool_cli.utils.reference import generate_otu_dirname
+
+base_logger = structlog.get_logger()
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -23,21 +25,14 @@ SEQUENCE_KEYS = [
 
 def run(reference_path: Path, output_path: Path, debugging: bool = False):
     """
-    Divide a reference.json file from Virtool into a src tree.
+    Divide a reference.json file from Virtool into a src tree structure.
 
     :param reference_path: Path to a reference.json file
     :param output_path: Path to the where the src tree should be generated
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
-
-    logger = base_logger.bind(
-        reference=str(reference_path), output_path=str(output_path)
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = base_logger.bind(reference=str(reference_path), output=str(output_path))
 
     logger.info(f"Dividing {output_path.name} into {reference_path.name}...")
 

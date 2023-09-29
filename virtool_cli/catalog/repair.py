@@ -2,13 +2,14 @@ from pathlib import Path
 import json
 from Bio import Entrez
 import asyncio
-from structlog import BoundLogger
-import logging
+import structlog
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 from virtool_cli.catalog.listings import update_listing
 from virtool_cli.catalog.helpers import find_taxid_from_accessions
+
+base_logger = structlog.get_logger()
 
 
 def run(catalog_path: Path, debugging: bool = False):
@@ -18,13 +19,10 @@ def run(catalog_path: Path, debugging: bool = False):
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = base_logger.bind(catalog=str(catalog_path))
 
-    base_logger.info("Repairing catalog...")
+    logger.info("Repairing catalog...")
 
     asyncio.run(repair_catalog(catalog_path))
 
@@ -35,23 +33,22 @@ async def repair_catalog(catalog_path: Path):
 
     :param catalog_path: Path to an accession catalog directory
     """
-    logger = base_logger.bind(catalog=str(catalog_path))
+    await fill_missing_taxids(catalog_path)
 
-    await fill_missing_taxids(catalog_path, logger)
-
-    await rename_listings(catalog_path, logger)
+    await rename_listings(catalog_path)
 
     return
 
 
-async def fill_missing_taxids(catalog_path: Path, logger: BoundLogger = base_logger):
+async def fill_missing_taxids(catalog_path: Path):
     """
     Iterate through unmatched listings and run taxon ID extraction function.
     If a valid taxon ID is found, write to the listing.
 
     :param catalog_path: Path to an accession catalog directory
-    :param logger: Optional entry point for a shared BoundLogger
     """
+    logger = base_logger
+
     for listing_path in catalog_path.glob("none--*.json"):
         logger = logger.bind(listing_path=str(listing_path.relative_to(catalog_path)))
 
@@ -72,14 +69,15 @@ async def fill_missing_taxids(catalog_path: Path, logger: BoundLogger = base_log
                 continue
 
 
-async def rename_listings(catalog_path: Path, logger: BoundLogger = base_logger):
+async def rename_listings(catalog_path: Path):
     """
     Renames listings where the taxon ID or OTU ID in the listing data
     no longer matches the listing's filename.
 
     :param catalog_path: Catalog listing data in dictionary form
-    :param logger: Optional entry point for a shared BoundLogger
     """
+    logger = base_logger
+
     for listing_path in catalog_path.glob("*.json"):
         logger = logger.bind(listing_path=str(listing_path.relative_to(catalog_path)))
 

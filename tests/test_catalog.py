@@ -3,8 +3,9 @@ from pathlib import Path
 import shutil
 import json
 import subprocess
-import logging
+import structlog
 
+from virtool_cli.utils.logging import DEBUG_LOGGER
 from paths import TEST_FILES_PATH
 
 TEST_FULLSRC_PATH = TEST_FILES_PATH / "src_test"
@@ -13,7 +14,8 @@ TEST_CONTROL_LOG_PATH = TEST_FILES_PATH / "catalog"
 
 CONTROL_SET = {child.name for child in Path(TEST_CONTROL_LOG_PATH).iterdir()}
 
-LOGGER = logging.getLogger(__name__)
+structlog.configure(wrapper_class=DEBUG_LOGGER)
+logger = structlog.get_logger()
 
 
 @pytest.fixture()
@@ -47,9 +49,9 @@ def test_init_full(command, src_path, catalog_path):
 
     temp_set = {child.name for child in temp_catalog.iterdir()}
 
-    LOGGER.info(f"generated: /n{temp_set}")
+    logger.info(f"generated: /n{temp_set}")
 
-    LOGGER.info(f"control: /n {CONTROL_SET}")
+    logger.info(f"control: /n {CONTROL_SET}")
 
     assert temp_set == CONTROL_SET
 
@@ -73,9 +75,9 @@ def test_init_partial(command, src_path, catalog_path):
 
     temp_set = {child.name for child in temp_catalog.iterdir()}
 
-    LOGGER.info(f"generated: /n{temp_set}")
+    logger.info(f"generated: /n{temp_set}")
 
-    LOGGER.info(f"control: /n {CONTROL_SET}")
+    logger.info(f"control: /n {CONTROL_SET}")
 
     assert temp_set.issubset(CONTROL_SET)
 

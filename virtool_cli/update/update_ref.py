@@ -1,15 +1,17 @@
 import json
 from pathlib import Path
 import asyncio
-import logging
+import structlog
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id, is_v1
 from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.catalog.helpers import filter_catalog
 from virtool_cli.update.update import request_new_records, process_records, write_data
 
 DEFAULT_INTERVAL = 0.001
+
+base_logger = structlog.get_logger()
 
 
 def run(
@@ -28,15 +30,11 @@ def run(
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
     logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
 
     if is_v1(src_path):
-        logger.critical(
+        logger.error(
             'reference folder "src" is a deprecated v1 reference.'
             + 'Run "virtool ref migrate" before trying again.'
         )
@@ -127,7 +125,8 @@ async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
     :param listing_paths: A list of paths to listings from the accession catalog
     :param queue: Queue holding fetched NCBI GenBank data
     """
-    base_logger.debug("Starting fetcher...")
+    logger = structlog.get_logger(__name__ + ".fetcher")
+    logger.debug("Starting fetcher...")
 
     for path in listing_paths:
         acc_listing = json.loads(path.read_text())
@@ -135,7 +134,7 @@ async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
         # extract taxon ID and _id hash from listing filename
         [taxid, otu_id] = path.stem.split("--")
 
-        logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
+        logger = logger.bind(taxid=taxid, otu_id=otu_id)
 
         record_data = await request_new_records(acc_listing, logger)
         if not record_data:
@@ -172,14 +171,15 @@ async def processor_loop(
     :param downstream_queue: Queue holding formatted sequence and isolate data processed by this loop
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
-    base_logger.debug("Starting processor...")
+    logger = structlog.get_logger(__name__ + ".processor")
+    logger.debug("Starting processor...")
 
     while True:
         fetch_packet = await upstream_queue.get()
 
         taxid = fetch_packet["taxid"]
         otu_id = fetch_packet["otu_id"]
-        logger = base_logger.bind(taxid=taxid)
+        logger = logger.bind(taxid=taxid)
 
         otu_updates = await process_records(
             records=fetch_packet["data"],
@@ -211,7 +211,8 @@ async def writer_loop(
     :param src_path: Path to a reference directory
     :param queue: Queue holding formatted sequence and isolate data processed by this loop
     """
-    base_logger.debug("Starting writer...")
+    logger = structlog.get_logger(__name__ + ".writer")
+    logger.debug("Starting writer...")
 
     unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
 
@@ -222,7 +223,7 @@ async def writer_loop(
         otu_id = packet["otu_id"]
         sequence_data = packet["data"]
 
-        logger = base_logger.bind(otu_id=otu_id, taxid=taxid, src=str(src_path))
+        logger = logger.bind(otu_id=otu_id, taxid=taxid, src=str(src_path))
 
         otu_path = search_otu_by_id(otu_id, src_path)
 

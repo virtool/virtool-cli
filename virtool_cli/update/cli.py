@@ -2,7 +2,7 @@ from pathlib import Path
 import click
 
 from virtool_cli.update.update_ref import run as run_update_all
-from virtool_cli.update.update import run as run_update_single
+from virtool_cli.update.update_otu import run as run_update_single
 
 
 @click.group("update")

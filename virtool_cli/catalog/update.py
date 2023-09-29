@@ -2,9 +2,10 @@ from pathlib import Path
 import json
 import asyncio
 import structlog
-import logging
 
-from virtool_cli.utils.logging import base_logger
+from structlog import get_logger, BoundLogger
+
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import (
     get_otu_paths,
     search_otu_by_id,
@@ -18,6 +19,8 @@ from virtool_cli.catalog.helpers import (
     get_otu_accessions_metadata,
 )
 
+base_logger = get_logger()
+
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     """
@@ -27,12 +30,8 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     :param catalog_path: Path to a catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
-    logger = base_logger.bind(task="update", catalog=str(catalog_path))
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = base_logger.bind(catalog=str(catalog_path))
 
     logger.info("Starting catalog updater...")
 
@@ -75,19 +74,19 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
     :param catalog_path: Path to a catalog directory
     :param queue: Queue containing changed listings
     """
-    fetch_logger = base_logger.bind(loop="fetcher")
-    fetch_logger.debug("Starting fetcher...")
+    logger = get_logger(__name__ + ".fetcher").bind(loop="fetcher")
+    logger.debug("Starting fetcher...")
 
     update_count = 0
 
     for listing_path in filter_catalog(src_path, catalog_path):
         [taxid, otu_id] = listing_path.stem.split("--")
 
-        logger = fetch_logger.bind(listing=listing_path.name)
+        logger = logger.bind(listing=listing_path.name)
 
         otu_path = search_otu_by_id(otu_id, src_path)
         existing_accessions = set(get_otu_accessions(otu_path))
-        fetch_logger.debug(f"current accessions: {existing_accessions}")
+        logger.debug(f"current accessions: {existing_accessions}")
 
         listing = json.loads(listing_path.read_text())
 
@@ -125,7 +124,7 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
 
             update_count += 1
 
-    base_logger.debug(
+    logger.debug(
         f"Pushed {update_count} updates to writer",
         n_updated=update_count,
         catalog_path=str(catalog_path),
@@ -139,7 +138,9 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     :param catalog_path: Path to a catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
-    write_logger = base_logger.bind(loop="writer", catalog=str(catalog_path))
+    write_logger = get_logger(__name__ + ".writer").bind(
+        loop="writer", catalog=str(catalog_path)
+    )
     write_logger.debug("Starting writer...")
 
     while True:
@@ -161,7 +162,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
 
 
 async def complete_catalog(
-    src_path: Path, catalog_path: Path, logger: structlog.BoundLogger = base_logger
+    src_path: Path, catalog_path: Path, logger: BoundLogger = base_logger
 ):
     """
     Check reference directory src contents against
@@ -198,7 +199,7 @@ async def complete_catalog(
 
 
 async def add_listing(
-    otu_path: Path, catalog_path: Path, logger: structlog.BoundLogger = base_logger
+    otu_path: Path, catalog_path: Path, logger: BoundLogger = base_logger
 ):
     """
     Generate and write a new listing to the catalog based on a given OTU

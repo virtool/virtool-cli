@@ -1,9 +1,8 @@
+from pathlib import Path
 import subprocess
 import sys
-
-from pathlib import Path
 from Bio import SeqIO
-from virtool_cli.vfam.console import console
+from structlog import get_logger
 
 
 def generate_clusters(
@@ -20,6 +19,8 @@ def generate_clusters(
     :param fraction_cov: Fraction coverage for CD-HIT step
     :return: output_path, path to a file containing cluster information created at CD-HIT step
     """
+    logger = get_logger()
+
     output_name = "clustered_fasta.faa"
     if prefix:
         output_name = f"{prefix}_{output_name}"
@@ -42,7 +43,7 @@ def generate_clusters(
     try:
         subprocess.run(cd_hit_cmd, check=True, shell=False)
     except FileNotFoundError:
-        console.print("Dependency cd-hit not found in path.", style="red")
+        logger.error("Dependency cd-hit not found in path.")
         sys.exit(1)
     return output_path
 
@@ -59,13 +60,12 @@ def rmv_polyproteins(clustered_fasta_path: Path) -> list:
             yield record
         else:
             polyprotein_count += 1
-    console.print(
-        f"✔ Filtered out {polyprotein_count} polyprotein records by name.",
-        style="green",
-    )
+
+    logger = get_logger()
+    logger.info(f"Filtered out {polyprotein_count} polyprotein records by name.")
 
 
-def write_rmv_polyproteins(clustered_fasta_path: Path, prefix=None) -> Path:
+def write_rmv_polyproteins(clustered_fasta_path: Path, prefix: str = "") -> Path:
     """
     Writes all records from rmw_polyproteins() step to output_path.
 
@@ -96,11 +96,13 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     :param prefix: Prefix for intermediate and result files
     :return: path to tab-delimited format 6 BLAST results file
     """
+    logger = get_logger()
+
     format_db_cmd = ["makeblastdb", "-in", clustered_fasta_path, "-dbtype", "prot"]
     try:
         subprocess.run(format_db_cmd, check=True, shell=False)
     except FileNotFoundError:
-        console.print("Dependency makeblastdb not found in path.", style="red")
+        logger.error("Dependency makeblastdb not found in path.")
         sys.exit(1)
 
     blast_name = "blast.br"
@@ -126,7 +128,7 @@ def blast_all_by_all(clustered_fasta_path: Path, num_cores: int, prefix=None) ->
     try:
         subprocess.run(blast_cmd, check=True, shell=False)
     except FileNotFoundError:
-        console.print("Dependency blastp not found in path.", style="red")
+        logger.error("Dependency blastp not found in path.")
         sys.exit(1)
 
     return blast_results_path

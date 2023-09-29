@@ -1,5 +1,11 @@
 import sys
 import structlog
+import logging
+
+logging.basicConfig(
+    format="%(message)s",
+    level=logging.DEBUG,
+)
 
 shared_processors = [
     structlog.stdlib.filter_by_level,
@@ -30,9 +36,11 @@ else:
 
 structlog.configure(
     processors=processors,
-    wrapper_class=structlog.stdlib.BoundLogger,
     logger_factory=structlog.stdlib.LoggerFactory(),
     cache_logger_on_first_use=True,
 )
 
 base_logger = structlog.get_logger()
+
+DEFAULT_LOGGER = structlog.make_filtering_bound_logger(logging.INFO)
+DEBUG_LOGGER = structlog.make_filtering_bound_logger(logging.DEBUG)

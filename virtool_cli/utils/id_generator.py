@@ -8,7 +8,7 @@ from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 def generate_random_alphanumeric(
     length: int = 8,
     mixed_case: bool = False,
-    excluded: list | set = {}
+    excluded: list | set | None = None
 ) -> str:
     """
     Generates a random string composed of letters and numbers.
@@ -18,7 +18,10 @@ def generate_random_alphanumeric(
     :param excluded: strings that may not be returned.
     :return: a random alphanumeric string.
     """
-    excluded_set = set(excluded)
+    if excluded is None:
+        excluded_set = set()
+    else:
+        excluded_set = set(excluded)
 
     characters = digits + (ascii_letters if mixed_case else ascii_lowercase)
 
@@ -34,7 +37,7 @@ def generate_unique_ids(
     n: int = 1,
     length: int = 8,
     mixed_case: bool = False,
-    excluded: list | set = {}
+    excluded: list | set | None = None
 ) -> set:
     """
     :param n: The number of strings to be generated
@@ -42,10 +45,15 @@ def generate_unique_ids(
     :param length: The length of each string
     :param excluded: List of alphanumeric strings that should be excluded from generation
     """
+    if excluded is None:
+        excluded_set = set()
+    else:
+        excluded_set = set(excluded)
+
     new_uniques = set()
     while len(new_uniques) < n:
         new_uniques.add(
-            generate_random_alphanumeric(length, mixed_case, excluded)
+            generate_random_alphanumeric(length, mixed_case, excluded_set)
         )
     
     return new_uniques

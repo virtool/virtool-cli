@@ -1,14 +1,18 @@
-import gzip
 import sys
-import urllib.request
-
-from abc import ABC
-from html.parser import HTMLParser
-from urllib.error import HTTPError, URLError
-from Bio import SeqIO
 from pathlib import Path
 from typing import List
-from virtool_cli.vfam.console import console
+import urllib.request
+from urllib.error import HTTPError, URLError
+from html.parser import HTMLParser
+import gzip
+from abc import ABC
+from Bio import SeqIO
+from structlog import get_logger
+
+base_logger = get_logger()
+
+
+VIRAL_RELEASE_URL = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
 
 
 def get_genbank_files(output: Path) -> List[Path]:
@@ -22,16 +26,19 @@ def get_genbank_files(output: Path) -> List[Path]:
     :param output: path to output directory
     :return: genbank_file_paths, a list of paths to the .gpff files in project directory gathered from NCBI
     """
-    viral_release_url = "https://ftp.ncbi.nlm.nih.gov/refseq/release/viral/"
+    logger = base_logger
+    viral_release_url = VIRAL_RELEASE_URL
+
+    if not viral_release_url.startswith("http"):
+        logger.error(f"{viral_release_url} is not a valid HTTP URL.")
+        sys.exit(1)
 
     parser = ViralProteinParser()
     try:
         with urllib.request.urlopen(viral_release_url) as html_file:
             parser.feed(html_file.read().decode("utf-8"))
     except (HTTPError, URLError):
-        console.print(
-            f"Error fetching .html file from {viral_release_url}", style="red"
-        )
+        logger.error(f"Error fetching .html file from {viral_release_url}")
         sys.exit(1)
 
     file_names = parser.close()
@@ -51,23 +58,18 @@ def get_genbank_files(output: Path) -> List[Path]:
                 genbank_file_paths.append(output_path)
 
         except (HTTPError, URLError):
-            console.print(
-                f"Error retrieving {file_name} from {viral_release_url}", style="red"
-            )
-            console.print(
-                f"Record data from {file_name} will not be included in output",
-                style="red",
-            )
+            logger.error(f"Error retrieving {file_name} from {viral_release_url}")
+            logger.error(f"Record data from {file_name} will not be included in output")
+
             continue
 
     if genbank_file_paths:
-        console.print(
-            f"✔ Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}.",
-            style="green",
+        logger.info(
+            f"Retrieved {len(genbank_file_paths)} .gpff files from {viral_release_url}."
         )
         return genbank_file_paths
 
-    console.print(f"Retrieved 0 .gpff files from {viral_release_url}", style="red")
+    logger.error(f"Retrieved 0 .gpff files from {viral_release_url}")
     sys.exit(1)
 
 
@@ -78,15 +80,15 @@ def get_input_paths(src_path: Path) -> List[Path]:
     :param src_path: Path to input source directory containing unfiltered FASTA files
     :return: input_paths, list of paths to input files if any files are found
     """
+    logger = base_logger
+
     input_paths = list(src_path.iterdir())
 
     if input_paths:
-        console.print(
-            f"✔ Retrieved {len(input_paths)} files from input directory.", style="green"
-        )
+        logger.info(f"Retrieved {len(input_paths)} files from input directory.")
         return input_paths
 
-    console.print("No files found in input directory.", style="red")
+    logger.error("No files found in input directory.")
     sys.exit(1)
 
 
@@ -105,6 +107,8 @@ def group_input_paths(
     :param sequence_min_length: minimum length of sequence to be included in output
     :return: records found in input paths
     """
+    logger = base_logger
+
     record_seqs = list()
     record_count = 0
     dupes_count = 0
@@ -134,17 +138,17 @@ def group_input_paths(
 
         handle.close()
 
-    console.print(
-        f"✔ Retrieved {record_count} records from {len(input_paths)} input files.",
-        style="green",
+    logger.info(
+        f"Retrieved {record_count} records from {len(input_paths)} input files.",
+        count=record_count,
     )
 
     if no_named_phages:
-        console.print(
-            f"✔ Filtered out {phage_count} phage records by name.", style="green"
+        logger.info(
+            f"Filtered out {phage_count} phage records by name.", count=phage_count
         )
 
-    console.print(f"✔ Filtered out {dupes_count} duplicate records.", style="green")
+    logger.info(f"Filtered out {dupes_count} duplicate records.", count=dupes_count)
 
 
 def write_curated_records(curated_records: iter, output: Path, prefix: str) -> Path:
@@ -217,10 +221,11 @@ def genbank_to_fasta(curated_records_path, prefix=None) -> Path:
 
 
 class ViralProteinParser(HTMLParser, ABC):
-
     """Parser used to gather .gpff file names from NCBI viral release .html file"""
 
-    file_names = list()
+    def __init__(self):
+        super().__init__()
+        self.file_names = []
 
     def handle_data(self, data):
         if data.startswith("viral") and ".gpff" in data:

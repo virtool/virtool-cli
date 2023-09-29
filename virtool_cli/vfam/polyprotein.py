@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 from Bio import SearchIO
-from virtool_cli.vfam.console import console
+from structlog import get_logger
 
 
 def get_sequence_lengths(blast_results_path: Path) -> dict:
@@ -70,7 +70,7 @@ def check_alignments_by_length(
     :param seq_lengths: dictionary containing {sequence ID: sequence} length pairs
     :return: checked alignments, a list of alignment records to investigate further in check_alignments_by_position()
     """
-    checked_alignments = list()
+    checked_alignments = []
 
     for alignment in alignment_records[seq_id]:
         if seq_lengths[alignment["s_id"]] < 0.7 * seq_lengths[alignment["q_id"]]:
@@ -121,6 +121,8 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
     :param blast_results_path: path to BLAST file produced in blast_all_by_all() step
     :return: polyprotein_ids, a list of sequence IDs to not include in output
     """
+    logger = get_logger()
+
     seq_lengths = get_sequence_lengths(blast_results_path)
     alignment_records = get_alignment_records(blast_results_path)
     polyprotein_ids = []
@@ -139,9 +141,10 @@ def find_polyproteins(blast_results_path: Path) -> List[str]:
                 if checked_by_position:
                     polyprotein_ids.append(checked_by_position)
 
+    num_polyprotein = len(polyprotein_ids)
     if len(polyprotein_ids) > 0:
-        console.print(
-            f"✔ Filtered out {len(polyprotein_ids)} polyprotein-like records based on coverage.",
-            style="green",
+        logger.info(
+            f"Filtered out {num_polyprotein} polyprotein-like records based on coverage.",
+            count=num_polyprotein,
         )
     return polyprotein_ids

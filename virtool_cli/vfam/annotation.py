@@ -1,15 +1,13 @@
-import collections
 import json
-import operator
-import os.path
-import subprocess
-import sys
-
-from collections import defaultdict
 from pathlib import Path
+import sys
+import operator
+import subprocess
+import collections
+from collections import defaultdict
 from typing import Tuple, List
 from Bio import SeqIO
-from virtool_cli.vfam.console import console
+from structlog import get_logger
 
 
 def get_taxonomy(seq_ids: List[str], taxonomy_records: dict) -> Tuple[dict, dict]:
@@ -78,6 +76,8 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     :param output: path to output directory
     :return: mean_positional_relative_entropy and kullback_leibler_divergence
     """
+    logger = get_logger()
+
     hmm_path = output / "intermediate_files" / f"{cluster_name}.hmm"
 
     hmmstat_cmd = ["hmmstat", hmm_path]
@@ -85,7 +85,7 @@ def parse_stat(cluster_name: str, output: Path) -> Tuple[float, float]:
     try:
         stat_data = str(subprocess.run(hmmstat_cmd, capture_output=True)).split("\\n")
     except FileNotFoundError:
-        console.print("✘ Dependency hmmstat not found in path.", style="red")
+        logger.error("Dependency hmmstat not found in path.", path=str(output))
         sys.exit(1)
 
     for line in stat_data:
@@ -122,24 +122,27 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
     :param taxonomy_records: dictionary containing taxonomic information for each record
     :param output: Path to output directory containing intermediate files from vfam pipeline
     """
+    logger = get_logger()
+
     output_path = output / "vfam.json"
     annotations = list()
 
     family_count = 0
     genus_count = 0
     record_count = 0
+
     for cluster_path in cluster_paths:
         annotation = {
-            "cluster": os.path.basename(cluster_path).split("_")[1],
+            "cluster": cluster_path.name.split("_")[1],
             "names": [],
             "entries": [],
         }
 
-        log_data = parse_log(os.path.basename(cluster_path), output)
+        log_data = parse_log(cluster_path.name, output)
         for key in log_data:
             annotation[key] = log_data[key]
 
-        stat_data = parse_stat(os.path.basename(cluster_path), output)
+        stat_data = parse_stat(cluster_path.name, output)
         annotation["mean_positional_relative_entropy"] = stat_data[0]
         annotation["kullback_leibler_divergence"] = stat_data[1]
 
@@ -175,12 +178,11 @@ def get_json_from_clusters(cluster_paths: List[Path], taxonomy_records, output: 
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
 
-    console.print(
-        f"✔ Retreived {family_count} families and {genus_count} genus for {record_count} sequences",
-        style="green",
+    logger.info(
+        f"Retrieved {family_count} families and {genus_count} genus for {record_count} sequences",
     )
 
     with open(output_path, "w") as f:
         json.dump(annotations, f, indent=4)
 
-    console.print(f"Master JSON file built in {output_path}", style="green")
+    logger.info(f"Master JSON file built in {output_path}")

@@ -3,11 +3,13 @@ import json
 import asyncio
 import aiofiles
 from Bio import Entrez, SeqIO
-import logging
+import structlog
 from structlog import BoundLogger
 from urllib.error import HTTPError
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+
+base_logger = structlog.get_logger()
 
 
 def run(catalog_path: Path, debugging: bool = False):
@@ -17,13 +19,10 @@ def run(catalog_path: Path, debugging: bool = False):
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = base_logger.bind(catalog=str(catalog_path), verbose=debugging)
 
-    base_logger.info("Starting RefSeq filter...", catalog=str(catalog_path))
+    logger.info("Starting RefSeq filter...", catalog=str(catalog_path))
 
     asyncio.run(filter_refseq_accessions(catalog_path))
 
@@ -35,8 +34,9 @@ async def filter_refseq_accessions(catalog_path: Path):
 
     :param catalog_path: Path to a catalog directory
     """
+    logger = base_logger
     for listing_path in catalog_path.glob("*--*.json"):
-        logger = base_logger.bind(listing_path=listing_path.name)
+        logger = logger.bind(listing_path=listing_path.name)
 
         await filter_refseq_otu(listing_path, logger)
 
@@ -120,7 +120,9 @@ def in_refseq(comments: str, excluded: set) -> str:
     return ""
 
 
-async def fetch_upstream_records(fetch_list: list, logger=base_logger) -> list:
+async def fetch_upstream_records(
+    fetch_list: list, logger: BoundLogger = base_logger
+) -> list:
     """
     Take a list of accession numbers and request the records from NCBI GenBank
 
@@ -153,5 +155,5 @@ async def fetch_upstream_records(fetch_list: list, logger=base_logger) -> list:
         accession_list = [record for record in record_dict.values() if record.seq]
         return accession_list
     except Exception as e:
-        base_logger.exception(e)
+        logger.exception(e)
         return []

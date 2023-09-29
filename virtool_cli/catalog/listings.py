@@ -1,7 +1,7 @@
 import json
 import aiofiles
 from pathlib import Path
-from structlog import BoundLogger
+from structlog import BoundLogger, get_logger
 from virtool_cli.utils.ncbi import fetch_taxid
 from virtool_cli.utils.logging import base_logger
 
@@ -10,7 +10,7 @@ async def generate_listing(
     otu_data: dict,
     accession_list: list,
     sequence_metadata: dict,
-    logger: BoundLogger = base_logger,
+    logger: BoundLogger = get_logger(),
 ) -> dict:
     """
     Generates a new listing for a given OTU and returns it as a dict

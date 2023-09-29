@@ -1,9 +1,11 @@
 from pathlib import Path
-import logging
+import structlog
 
-from virtool_cli.utils.logging import base_logger
+from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.doctor.fix_otu import repair_otu
+
+base_logger = structlog.get_logger()
 
 
 def run(src_path: Path, debugging: bool = False):
@@ -13,22 +15,20 @@ def run(src_path: Path, debugging: bool = False):
     :param src_path: Path to a given reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    filter_class = logging.DEBUG if debugging else logging.INFO
-    logging.basicConfig(
-        format="%(message)s",
-        level=filter_class,
-    )
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = base_logger.bind(src=str(src_path))
 
-    base_logger.info("Repairing data...")
+    logger.info("Repairing data...")
 
     repair_data(src_path)
 
 
-def repair_data(src_path: Path):
+def repair_data(src_path: Path, logger: structlog.BoundLogger = base_logger):
     """
     Fixes incorrect data in all OTUs under a reference
 
     :param src_path: Path to a given reference directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
     for otu_path in get_otu_paths(src_path):
-        repair_otu(otu_path, base_logger.bind(otu=otu_path.relative_to(src_path)))
+        repair_otu(otu_path, logger)

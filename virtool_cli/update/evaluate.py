@@ -39,7 +39,6 @@ def evaluate_sequence(
 
     else:
         segment_name, listed_length = required_parts.copy().popitem()
-        logger.debug(f"{segment_name}: {listed_length}")
 
     logger = logger.bind(segment=segment_name)
 

@@ -1,7 +1,5 @@
 import pytest
-from pathlib import Path
 
-from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.utils.ncbi import request_linked_accessions, fetch_taxonomy_rank
 from paths import TEST_FILES_PATH
 

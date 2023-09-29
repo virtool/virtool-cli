@@ -16,7 +16,7 @@ def output(tmpdir):
 
 @pytest.fixture()
 def command(output):
-    return ["virtool", "ref", "divide", "-o", str(output), "-src"]
+    return ["virtool", "ref", "divide", "-o", str(output), "-f"]
 
 
 @pytest.mark.parametrize("src", [TEST_PATH, TEST_WITH_INDENT_PATH])

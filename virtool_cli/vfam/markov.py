@@ -1,10 +1,9 @@
+from pathlib import Path
 import subprocess
 import sys
-
 from Bio import SeqIO, SearchIO
-from pathlib import Path
 from typing import List
-from virtool_cli.vfam.console import console
+from structlog import get_logger
 
 
 def write_abc(
@@ -60,6 +59,8 @@ def blast_to_mcl(
     :param prefix: Prefix for intermediate and result files
     :return: mcl_path to file containing newline-separated clusters
     """
+    logger = get_logger()
+
     abc_path = write_abc(blast_results_path, polyprotein_ids, prefix)
 
     mci_name = "blast.mci"
@@ -91,7 +92,7 @@ def blast_to_mcl(
     try:
         subprocess.run(mcxload_cmd, check=True, shell=False)
     except FileNotFoundError:
-        console.print("Dependency mcxload not found in path", style="red")
+        logger.error("Dependency mcxload not found in path")
         sys.exit(1)
 
     mcl_cmd = ["mcl", mci_path, "-use-tab", tab_path, "-o", mcl_path]
@@ -102,7 +103,7 @@ def blast_to_mcl(
     try:
         subprocess.run(mcl_cmd, check=True, shell=False)
     except FileNotFoundError:
-        console.print("Dependency mcl not found in path.", style="red")
+        logger.error("Dependency mcl not found in path.")
         sys.exit(1)
 
     return mcl_path
@@ -117,6 +118,8 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
     :param prefix: Prefix for intermediate and result files
     :return: list of paths to seperated  files
     """
+    logger = get_logger()
+
     fasta_path = clustered_fasta_path.parent
     mcl_path_dict = {}
 
@@ -135,8 +138,9 @@ def mcl_to_fasta(mcl_path: Path, clustered_fasta_path: Path, prefix=None) -> Lis
             with mcl_path_dict[record.id].open("a") as fasta_path:
                 SeqIO.write(record, fasta_path, "fasta")
 
-    console.print(
-        f"✔ Produced {len(list(set(mcl_path_dict.values())))} FASTA cluster files from MCL clusters.",
-        style="green",
+    num_clustered = len(list(set(mcl_path_dict.values())))
+    logger.info(
+        f"Produced {num_clustered} FASTA cluster files from MCL clusters.",
+        count=num_clustered,
     )
     return list(set(mcl_path_dict.values()))

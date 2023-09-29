@@ -61,29 +61,29 @@ def build(src_path, output, indent, version, debug):
 
 @ref.command()
 @click.option(
-    "-src",
-    "--src_path",
+    "-f",
+    "--file_path",
     required=True,
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="the path to a input reference.json file",
 )
 @click.option(
     "-o",
-    "--output",
+    "--output_path",
     default="src",
     type=click.Path(file_okay=False, path_type=Path),
     help="the output path for a divided reference directory tree",
 )
 @click.option("--debug/--no-debug", default=False)
-def divide(src_path, output, debug):
+def divide(file_path, output_path, debug):
     """Divide a reference.json file from Virtool into a reference directory tree."""
-    if src_path.suffix is not ".json":
-        click.echo(ERROR_MESSAGE + f"{src_path} is not a JSON file")
+    if file_path.suffix is not ".json":
+        click.echo(ERROR_MESSAGE + f"{file_path} is not a JSON file")
 
     try:
-        run_divide(src_path, output, debug)
+        run_divide(file_path, output_path, debug)
     except (TypeError, FileNotFoundError) as e:
-        click.echo(ERROR_MESSAGE + f"{src_path} is not a proper JSON file")
+        click.echo(ERROR_MESSAGE + f"{file_path} is not a proper JSON file")
         click.echo(e)
 
 
