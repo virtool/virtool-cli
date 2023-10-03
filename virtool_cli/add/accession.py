@@ -1,22 +1,17 @@
-import json
 from pathlib import Path
 import asyncio
 
 import structlog
-from structlog import get_logger, BoundLogger
-
-# from typing import Optional, Tuple
-# from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import is_v1, get_otu_paths, get_isolate_paths
-from virtool_cli.utils.ncbi import request_from_nucleotide, NCBI_REQUEST_INTERVAL
+from virtool_cli.utils.reference import get_otu_paths, is_v1, search_otu_by_id
+from virtool_cli.utils.ncbi import request_from_nucleotide
+from virtool_cli.utils.id_generator import get_unique_ids
+from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
+from virtool_cli.utils.storage import write_records
 
-# from virtool_cli.utils.id_generator import generate_unique_ids, get_unique_ids
-# from virtool_cli.utils.storage import store_isolate, store_sequence
-from virtool_cli.utils.format import format_sequence, get_qualifiers, find_isolate
 
-DEFAULT_INTERVAL = 0.001
+base_logger = structlog.get_logger()
 
 
 def run(
@@ -36,7 +31,7 @@ def run(
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger()
+    logger = base_logger.bind(src=str(src_path))
 
     if is_v1(src_path):
         logger.critical(
@@ -47,15 +42,18 @@ def run(
 
     logger.debug("Debug flag is enabled")
 
-    asyncio.run(add_accession(accession=accession, src_path=src_path))
+    asyncio.run(
+        add_accession(accession=accession, src_path=src_path, catalog_path=catalog_path)
+    )
 
 
-async def add_accession(accession: str, src_path: Path) -> dict:
-    logger = get_logger().bind(accession=accession)
+async def add_accession(accession: str, src_path: Path, catalog_path: Path):
+    logger = structlog.get_logger().bind(accession=accession)
 
     record_list = await request_from_nucleotide([accession])
     seq_data = record_list.pop()
 
+    # Get taxon ID and OTU
     seq_qualifiers = get_qualifiers(seq_data.features)
     logger.debug(seq_qualifiers)
 
@@ -63,22 +61,45 @@ async def add_accession(accession: str, src_path: Path) -> dict:
     if taxid < 0:
         logger.error("No taxon ID found!")
 
-    logger.debug(f"taxon_id: {taxid}")
+    taxid_matches = list(catalog_path.glob(f"{taxid}--*.json"))
+    if not taxid_matches:
+        return
 
-    if not (isolate_type := find_isolate(seq_qualifiers)):
-        return {}
-
-    isolate_name = seq_qualifiers.get(isolate_type)[0]
-
-    logger.debug(f"isolate={isolate_name}")
-
-    new_sequence = format_sequence(
-        record=seq_data, qualifiers=seq_qualifiers, logger=logger
+    listing_path = taxid_matches.pop()
+    logger.info(
+        "Found matching listing in catalog.",
+        listing=listing_path.name,
     )
+    otu_id = listing_path.stem.split("--")[1]
+
+    if not (otu_path := search_otu_by_id(otu_id, src_path)):
+        logger.error("No matching OTU found in src directory.")
+
+        return
+
+    logger.debug(
+        "Matching OTU directory found", listing=listing_path.name, otu=otu_path.name
+    )
+
+    isolate_type = check_source_type(seq_qualifiers)
+    if not isolate_type:
+        return
+    isolate_name = seq_qualifiers.get(isolate_type)[0]
+    isolate = {"source_name": isolate_name, "source_type": isolate_type}
+
+    new_sequence = format_sequence(record=seq_data, qualifiers=seq_qualifiers)
+    new_sequence["isolate"] = isolate
 
     logger.debug(new_sequence)
 
-    pass
+    isolate_uids, sequence_uids = await get_unique_ids(get_otu_paths(src_path))
+
+    try:
+        await write_records(
+            otu_path, [new_sequence], isolate_uids, sequence_uids, logger=logger
+        )
+    except Exception as e:
+        logger.exception(e)
 
 
 def find_taxon_id(db_xref: list[str]) -> int:
@@ -102,10 +123,12 @@ if __name__ == "__main__":
 
     REPO_DIR = "/Users/sygao/Development/UVic/Virtool/Repositories"
 
-    project_path = Path(REPO_DIR) / "ref-plant-viruses"
+    project_path = Path(REPO_DIR) / "ref-mini"
     src_path = project_path / "src"
     catalog_path = Path(REPO_DIR) / "ref-accession-catalog/catalog"
 
-    ACCESSION = "NC_017829"
+    ACCESSION = "NC_010319"
 
-    asyncio.run(add_accession(accession=ACCESSION, src_path=src_path))
+    asyncio.run(
+        add_accession(accession=ACCESSION, src_path=src_path, catalog_path=catalog_path)
+    )

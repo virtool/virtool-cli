@@ -1,6 +1,5 @@
 from pathlib import Path
 import click
-import logging
 
 from virtool_cli.add.accession import run as run_add_accession
 
@@ -82,4 +81,4 @@ def accession(accession, src_path, catalog_path, debug):
 
 
 if __name__ == "__main__":
-    update()
+    add()
