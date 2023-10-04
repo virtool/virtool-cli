@@ -1,7 +1,7 @@
 import os
 import asyncio
-from urllib.error import HTTPError
 from Bio import Entrez, SeqIO
+from urllib.error import HTTPError
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -84,6 +84,23 @@ async def fetch_taxid(name: str) -> int:
 
     return taxid
 
+
+async def fetch_taxonomy_record(taxon_id) -> dict | None:
+    """
+    Fetches a record from NCBI Taxonomy and returns the contents as a dictionary if found
+
+    :param taxon_id: NCBI Taxonomy UID
+    :return: The taxonomic rank of this Taxonomy record as a string
+    """
+    try:
+        handle = Entrez.efetch(db="taxonomy", id=taxon_id, rettype="docsum", retmode="xml")
+        record = Entrez.read(handle)
+        handle.close()
+    except HTTPError:
+        raise 'http_error'
+
+    if record:
+        return record.pop()
 
 async def fetch_taxonomy_species(taxon_id: str) -> int:
     """

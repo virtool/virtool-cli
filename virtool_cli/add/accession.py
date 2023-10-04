@@ -35,7 +35,7 @@ def run(
 
     if is_v1(src_path):
         logger.critical(
-            'reference folder "src" is a deprecated v1 reference.'
+            'Reference folder "src" is a deprecated v1 reference.'
             + 'Run "virtool ref migrate" before trying again.'
         )
         return

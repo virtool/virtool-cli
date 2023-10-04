@@ -1,3 +1,4 @@
+from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Tuple
@@ -79,3 +80,17 @@ async def get_unique_ids(otu_paths: list) -> Tuple[set, set]:
 
     return isolate_ids, sequence_ids
 
+
+async def get_unique_otu_ids(src_path: Path) -> list:
+    """
+    Returns a list of all unique OTU ids included in the reference database
+
+    :param src_path: Path to a Virtool reference database directory
+    :return: List
+    """
+    unique_otus = [
+        otu_path.stem.split("--")[1]
+        for otu_path in src_path.iterdir()
+        if otu_path.is_dir()
+    ]
+    return unique_otus
