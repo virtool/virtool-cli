@@ -6,7 +6,7 @@ from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import is_v1, generate_otu_dirname
-from virtool_cli.utils.id_generator import generate_unique_ids
+from virtool_cli.utils.id_generator import generate_unique_ids, get_unique_otu_ids
 from virtool_cli.utils.ncbi import fetch_taxonomy_record
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
@@ -21,7 +21,7 @@ def run(
     debugging: bool = False,
 ):
     """
-    CLI entry point for update.update.run()
+    CLI entry point for virtool_cli.add.otu module
 
     Requests updates for a single OTU directory
     Searches the catalog for a matching catalog listing and requests new updates if it finds one.
