@@ -20,6 +20,13 @@ def work_path(tmp_path):
     return test_src_path
 
 
+@pytest.fixture()
+def work_catalog_path(tmp_path):
+    test_catalog_path = tmp_path / "catalog"
+    shutil.copytree(TEST_ACCLOG_PATH, test_catalog_path)
+    return test_catalog_path
+
+
 class TestAddAccession:
     @staticmethod
     def run_command(accession: str, src_path: Path, catalog_path: Path):
@@ -74,7 +81,9 @@ class TestAddAccession:
         "accession, isolate_subpath",
         [("DQ178612", "cabbage_leaf_curl_jamaica_virus--d226290f/d293d531")],
     )
-    def test_add_accession_success(self, accession, isolate_subpath, work_path):
+    def test_add_accession_success(
+        self, accession, isolate_subpath, work_path, work_catalog_path
+    ):
         """
         Check that virtool ref add accession does the job when the isolate exists
         """
@@ -82,7 +91,7 @@ class TestAddAccession:
             accession,
             isolate_subpath,
             src_path=work_path,
-            catalog_path=TEST_ACCLOG_PATH,
+            catalog_path=work_catalog_path,
         )
 
         new_sequences = post_sequence_paths.difference(pre_sequence_paths)
@@ -93,7 +102,9 @@ class TestAddAccession:
         "accession, isolate_subpath",
         [("NC_010319", "abaca_bunchy_top_virus--c93ec9a9/4e8amg20")],
     )
-    def test_add_accession_fail(self, accession, isolate_subpath, work_path):
+    def test_add_accession_fail(
+        self, accession, isolate_subpath, work_path, work_catalog_path
+    ):
         """
         Check that virtool ref add accession does not add sequences that already exist
         """
@@ -101,7 +112,7 @@ class TestAddAccession:
             accession,
             isolate_subpath,
             src_path=work_path,
-            catalog_path=TEST_ACCLOG_PATH,
+            catalog_path=work_catalog_path,
         )
 
         new_sequences = post_sequence_paths.difference(pre_sequence_paths)
@@ -112,12 +123,14 @@ class TestAddAccession:
         "accession, otu_dirname",
         [("KT390494", "nanovirus-like_particle--ae0f2a35")],
     )
-    def test_add_isolate_success(self, accession, otu_dirname, work_path):
+    def test_add_isolate_success(
+        self, accession, otu_dirname, work_path, work_catalog_path
+    ):
         """
         Check that virtool ref add accession does the job when the isolate does not exist
         """
         pre_isolate_paths, post_isolate_paths = self.run_add_isolate(
-            accession, otu_dirname, src_path=work_path, catalog_path=TEST_ACCLOG_PATH
+            accession, otu_dirname, src_path=work_path, catalog_path=work_catalog_path
         )
 
         new_isolates = post_isolate_paths.difference(pre_isolate_paths)
@@ -163,12 +176,12 @@ class TestAddOTU:
         return pre_otu_paths, post_otu_paths
 
     @pytest.mark.parametrize("taxon_id", [908125])
-    def test_add_otu_success(self, taxon_id, work_path):
+    def test_add_otu_success(self, taxon_id, work_path, work_catalog_path):
         """ """
         pre_otu_paths = set(work_path.glob("*--*"))
 
         self.run_add_otu(
-            taxon_id=taxon_id, src_path=work_path, catalog_path=TEST_ACCLOG_PATH
+            taxon_id=taxon_id, src_path=work_path, catalog_path=work_catalog_path
         )
 
         post_otu_paths = set(work_path.glob("*--*"))
@@ -182,12 +195,12 @@ class TestAddOTU:
         assert (otu_path / "otu.json").exists()
 
     @pytest.mark.parametrize("taxon_id", [345184])
-    def test_add_otu_conflict(self, taxon_id, work_path):
+    def test_add_otu_conflict(self, taxon_id, work_path, work_catalog_path):
         """Don't add taxon IDs that already exist"""
         pre_otu_paths = set(work_path.glob("*--*"))
 
         self.run_add_otu(
-            taxon_id=taxon_id, src_path=work_path, catalog_path=TEST_ACCLOG_PATH
+            taxon_id=taxon_id, src_path=work_path, catalog_path=work_catalog_path
         )
 
         post_otu_paths = set(work_path.glob("*--*"))

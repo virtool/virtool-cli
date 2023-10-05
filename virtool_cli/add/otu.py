@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import asyncio
+import aiofiles
 import structlog
 from urllib.error import HTTPError
 
@@ -8,6 +9,7 @@ from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import is_v1, generate_otu_dirname
 from virtool_cli.utils.id_generator import generate_unique_ids, get_unique_otu_ids
 from virtool_cli.utils.ncbi import fetch_taxonomy_record
+from virtool_cli.catalog.listings import add_new_listing
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -47,6 +49,14 @@ def run(
 
 
 async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
+    """
+    Fetch NCBI Taxonomy data for a given UID and write the OTU to
+    reference directory src and a listing to the catalog
+
+    :param taxid:
+    :param src_path:
+    :param catalog_path:
+    """
     logger = structlog.get_logger().bind(taxon_id=taxid)
 
     try:
@@ -79,9 +89,21 @@ async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
 
     logger.debug(new_otu)
 
-    await write_otu(new_otu, src_path)
+    otu_path = await write_otu(new_otu, src_path)
+    if otu_path is None:
+        logger.error("Failed to write OTU data to directory")
+        return
 
-    logger.info("Wrote OTU data")
+    logger.info("Wrote OTU data", otu=str(otu_path))
+
+    listing_path = await add_new_listing(
+        otu_path, catalog_path=catalog_path, logger=logger
+    )
+    if listing_path is None:
+        logger.error("Failed to write listing data to catalog")
+        return
+
+    logger.info("Wrote catalog listing", listing=str(listing_path))
 
 
 def generate_otu(taxonomy_data: dict, new_id: str) -> dict:
@@ -107,7 +129,7 @@ def generate_otu(taxonomy_data: dict, new_id: str) -> dict:
     return otu
 
 
-async def write_otu(otu: dict, src_path: Path):
+async def write_otu(otu: dict, src_path: Path) -> Path | None:
     """
     Generate a new directory for given OTU metadata and
     store the metadata under in otu.json
@@ -120,5 +142,10 @@ async def write_otu(otu: dict, src_path: Path):
     otu_path = src_path / dirname
     otu_path.mkdir()
 
-    with open(otu_path / "otu.json", "w") as f:
-        json.dump(otu, f, indent=4, sort_keys=True)
+    try:
+        async with aiofiles.open(otu_path / "otu.json", "w") as f:
+            await f.write(json.dumps(otu, indent=4, sort_keys=True))
+    except:
+        return None
+
+    return otu_path
