@@ -2,8 +2,69 @@ import json
 import aiofiles
 from pathlib import Path
 from structlog import BoundLogger, get_logger
-from virtool_cli.utils.ncbi import fetch_taxid
-from virtool_cli.utils.logging import base_logger
+
+
+def generate_new_listing(otu_id="", name="", taxid=-1) -> dict:
+    """
+    Generates a new listing from new OTU data regardless of input
+
+    :return: An empty listing dictionary if no input is given OR
+        a barebones skeleton for filling out if input is given
+    """
+    catalog_listing = {
+        "_id": otu_id,
+        "accessions": {"excluded": [], "included": []},
+        "name": name,
+        "schema": [],
+        "taxid": taxid,
+    }
+    return catalog_listing
+
+
+async def update_listing(data: dict, path: Path):
+    """
+    Updates the listing file at path with new data
+
+    :param data: Updated listing data
+    :param path: Path to the listing file
+    """
+    async with aiofiles.open(path, "w") as f:
+        await f.write(json.dumps(data, indent=2, sort_keys=True))
+
+
+async def write_new_listing(listing: dict, catalog_path: Path) -> Path | None:
+    """
+    Writes prepared listing data to a listing file under the catalog directory
+
+    :param listing: Deserialized OTU catalog listing
+    :param catalog_path: Path to an accession catalog
+    """
+    listing_path = catalog_path / f"{listing['taxid']}--{listing['_id']}.json"
+
+    try:
+        await update_listing(data=listing, path=listing_path)
+    except:
+        return None
+
+    return listing_path
+
+
+async def add_new_listing(otu_path: Path, catalog_path: Path, logger=get_logger()):
+    """
+    Creates a new listing for a newly created OTU with no isolate or accession data
+    """
+    otu = json.loads((otu_path / "otu.json").read_text())
+
+    listing = generate_new_listing(
+        otu_id=otu["_id"], name=otu["name"], taxid=otu["taxid"]
+    )
+
+    listing_path = await write_new_listing(listing, catalog_path)
+    if listing_path is None:
+        logger.error("Listing could not be created under catalog")
+        return
+
+    logger.info("Listing written to listing_path", listing_path=listing_path)
 
 
 async def generate_listing(
@@ -13,44 +74,23 @@ async def generate_listing(
     logger: BoundLogger = get_logger(),
 ) -> dict:
     """
-    Generates a new listing for a given OTU and returns it as a dict
+    Takes a fully populated OTU directory and generates a listing based on the contained data
 
     :param otu_data: OTU data in dict form
     :param accession_list: list of included accesssions
     :param sequence_metadata: dict of sequence metadata, including average length
     :param logger: Optional entry point for an existing BoundLogger
     """
-    catalog_listing = {}
+    if (taxid := otu_data.get("taxid", None)) is None:
+        taxid = -1
 
-    otu_id = otu_data.get("_id")
-    taxid = otu_data.get("taxid", None)
-
-    catalog_listing["_id"] = otu_id
-
-    # Attempts to fetch the taxon id if none is found in the OTU metadata
-    if taxid is None:
-        logger.info("Taxon ID not found. Attempting to fetch from NCBI Taxonomy...")
-
-        try:
-            taxid = await fetch_taxid(otu_data.get("name", None))
-        except Exception as e:
-            logger.exception(e)
-
-        if taxid is None:
-            catalog_listing["taxid"] = -1
-            logger.debug(
-                f"Matching ID not found in NCBI Taxonomy. Setting taxid={taxid}"
-            )
-        else:
-            catalog_listing["taxid"] = int(taxid)
-            logger.debug(f"Matching ID found in NCBI Taxonomy. Setting taxid={taxid}")
-
-    else:
-        catalog_listing["taxid"] = int(taxid)
+    catalog_listing = generate_new_listing(
+        otu_id=otu_data["_id"], name=otu_data["name"], taxid=taxid
+    )
 
     catalog_listing["name"] = otu_data["name"]
 
-    catalog_listing["accessions"] = {"included": accession_list}
+    catalog_listing["accessions"]["included"] = accession_list
 
     schema = otu_data.get("schema", [])
     logger.debug(f"{schema}")
@@ -79,47 +119,6 @@ async def generate_listing(
     catalog_listing["schema"] = schema
 
     return catalog_listing
-
-
-async def update_listing(data: dict, path: Path):
-    """
-    Updates the listing file at path with new data
-
-    :param data: Updated listing data
-    :param path: Path to the listing file
-    """
-    async with aiofiles.open(path, "w") as f:
-        await f.write(json.dumps(data, indent=2, sort_keys=True))
-
-
-async def write_listing(
-    taxid: int,
-    listing: dict,
-    catalog_path: Path,
-    indent: bool = True,
-    logger: BoundLogger = base_logger,
-):
-    """
-    Writes prepared listing data to a listing file under the catalog directory
-
-    :param taxid: OTU taxon id
-    :param listing: Deserialized OTU catalog listing
-    :param catalog_path: Path to an accession catalog
-    :param indent: Indent flag
-    :param logger: Optional entry point for an existing BoundLogger
-    """
-
-    output_path = catalog_path / f"{taxid}--{listing['_id']}.json"
-    logger = logger.bind(
-        taxid=taxid, listing_path=str(output_path.relative_to(output_path.parent))
-    )
-
-    logger.debug("Writing accession listing...")
-
-    listing["accessions"]["excluded"] = {}
-
-    with open(output_path, "w") as f:
-        json.dump(listing, f, indent=2 if indent else None, sort_keys=True)
 
 
 def get_required_parts(schema: list) -> list:

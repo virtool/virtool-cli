@@ -8,7 +8,7 @@ from virtool_cli.utils.reference import (
     get_otu_paths,
     read_otu,
 )
-from virtool_cli.catalog.listings import generate_listing, write_listing
+from virtool_cli.catalog.listings import generate_listing, write_new_listing
 from virtool_cli.catalog.helpers import get_otu_accessions_metadata
 
 
@@ -106,11 +106,12 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         logger.debug(f"Got listing data for {packet['otu_id']} from the queue")
 
         listing = packet["listing"]
-        taxid = listing["taxid"]
+        listing["accessions"]["excluded"] = {}
 
-        await write_listing(
-            taxid=taxid, listing=listing, catalog_path=catalog_path, logger=logger
-        )
+        listing_path = await write_new_listing(listing, catalog_path)
+
+        if listing_path is None:
+            logger.error("Listing could not be created under catalog")
 
         await asyncio.sleep(0.1)
         queue.task_done()

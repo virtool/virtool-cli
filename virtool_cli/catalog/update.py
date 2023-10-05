@@ -11,7 +11,7 @@ from virtool_cli.utils.reference import (
     search_otu_by_id,
     read_otu,
 )
-from virtool_cli.catalog.listings import generate_listing, write_listing
+from virtool_cli.catalog.listings import generate_listing, write_new_listing
 from virtool_cli.catalog.helpers import (
     get_catalog_paths,
     filter_catalog,
@@ -226,8 +226,8 @@ async def add_listing(
         logger.error("Could not generate a listing for this OTU.")
         return
 
-    await write_listing(
-        otu_data["taxid"], new_listing, catalog_path=catalog_path, logger=logger
-    )
+    listing_path = await write_new_listing(new_listing, catalog_path=catalog_path)
+    if listing_path is None:
+        logger.error("Listing could not be created under catalog")
 
     return

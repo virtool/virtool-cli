@@ -51,13 +51,13 @@ async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
 
     try:
         taxonomy_data = await fetch_taxonomy_record(taxon_id=taxid)
-        if taxonomy_data is None:
+        if not taxonomy_data:
             logger.error("Could not find a record under this taxon ID on NCBI Taxonomy")
             return
 
     except HTTPError:
         logger.error(
-            "Could not download this data, please wait a few seconds before trying again"
+            "Could not download this data. Please wait a few seconds before trying again"
         )
         return
 
