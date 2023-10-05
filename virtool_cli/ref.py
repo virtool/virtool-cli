@@ -4,6 +4,7 @@ import click
 from virtool_cli.doctor.cli import doctor
 from virtool_cli.update.cli import update
 from virtool_cli.add.cli import add
+from virtool_cli.init import run as run_init
 from virtool_cli.build import run as run_build
 from virtool_cli.divide import run as run_divide
 from virtool_cli.migrate import run as run_migrate
@@ -22,6 +23,25 @@ def ref():
 ref.add_command(update)
 ref.add_command(doctor)
 ref.add_command(add)
+
+
+@ref.command()
+@click.option(
+    "-repo",
+    "--repo_path",
+    required=True,
+    type=click.Path(file_okay=False, path_type=Path),
+    help="the path to a database reference directory",
+)
+@click.option("--debug/--no-debug", default=False)
+def init(repo_path, debug):
+    try:
+        run_init(repo_path, debug)
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo(
+            ERROR_MESSAGE
+            + "Ran into problems with the given reference repository directory"
+        )
 
 
 @ref.command()
