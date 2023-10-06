@@ -15,6 +15,7 @@ from virtool_cli.utils.ncbi import request_from_nucleotide
 from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
 from virtool_cli.utils.storage import write_records
+from virtool_cli.catalog.helpers import get_otu_accessions
 
 
 base_logger = structlog.get_logger()
@@ -83,12 +84,24 @@ async def add_accessions(accessions: list, otu_path: Path):
     """
     logger = base_logger.bind(accessions=accessions)
 
+    otu_accession_list = get_otu_accessions(otu_path)
+
     record_list = await request_from_nucleotide(accessions)
 
     new_sequences = []
 
     for record in record_list:
-        logger.debug(record)
+        accession = record.id
+        logger = logger.bind(accession=accession)
+
+        accession_collision = await check_accession_collision(
+            accession, otu_accession_list, logger
+        )
+        if accession_collision:
+            logger.warning(
+                f"{accession} already in OTU, moving on...", accession=accession
+            )
+            continue
 
         seq_qualifiers = get_qualifiers(record.features)
 
@@ -127,7 +140,15 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
     record_list = await request_from_nucleotide([accession])
     seq_data = record_list.pop()
 
-    otu_path = await get_otu_path(seq_data, catalog_path, logger)
+    otu_path = await get_otu_path(seq_data, src_path, catalog_path, logger)
+
+    otu_accession_list = get_otu_accessions(otu_path)
+    accession_collision = await check_accession_collision(
+        accession, otu_accession_list, logger
+    )
+    if accession_collision:
+        logger.warning(f"{accession} already in OTU, moving on...", accession=accession)
+        return
 
     seq_qualifiers = get_qualifiers(seq_data.features)
 
@@ -152,7 +173,7 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
         logger.exception(e)
 
 
-async def get_otu_path(seq_data, catalog_path: Path, logger):
+async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
     """
     :param seq_data:
     :param logger:
@@ -218,7 +239,7 @@ async def check_accession_collision(
     :param logger:
     """
     for existing_accession in accession_list:
-        if new_accession == existing_accession.split(".")[0]:
+        if new_accession.split(".")[0] == existing_accession.split(".")[0]:
             logger.error(
                 "This accession already exists in the reference. Consider editing the existing sequence."
             )
