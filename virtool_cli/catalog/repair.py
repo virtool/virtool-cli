@@ -6,7 +6,7 @@ import structlog
 
 from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.catalog.listings import update_listing
+from virtool_cli.catalog.listings import parse_listing, update_listing
 from virtool_cli.catalog.helpers import find_taxid_from_accessions
 
 base_logger = structlog.get_logger()
@@ -57,8 +57,7 @@ async def fill_missing_taxids(catalog_path: Path):
         if extracted_taxid:
             logger.debug(f"Found taxon ID {extracted_taxid}")
 
-            with open(listing_path, "r") as f:
-                listing = json.load(f)
+            listing = await parse_listing(listing_path)
             listing["taxid"] = extracted_taxid
 
             try:
@@ -83,7 +82,7 @@ async def rename_listings(catalog_path: Path):
 
         [taxid, otu_id] = listing_path.stem.split("--")
 
-        listing = json.loads(listing_path.read_text())
+        listing = await parse_listing(listing_path)
 
         if taxid != str(listing["taxid"]) or otu_id != listing["_id"]:
             old_name = listing_path.name
