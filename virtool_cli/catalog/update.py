@@ -7,7 +7,11 @@ from structlog import get_logger, BoundLogger
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id
 from virtool_cli.utils.storage import read_otu
-from virtool_cli.catalog.listings import generate_listing, write_new_listing
+from virtool_cli.catalog.listings import (
+    parse_listing,
+    generate_listing,
+    write_new_listing,
+)
 from virtool_cli.catalog.helpers import (
     get_catalog_paths,
     filter_catalog,
@@ -84,7 +88,7 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
         existing_accessions = set(get_otu_accessions(otu_path))
         logger.debug(f"current accessions: {existing_accessions}")
 
-        listing = json.loads(listing_path.read_text())
+        listing = await parse_listing(listing_path)
 
         logger = logger.bind(otu_name=listing["name"], otu_id=otu_id, taxid=taxid)
 

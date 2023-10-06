@@ -4,6 +4,14 @@ from pathlib import Path
 from structlog import BoundLogger, get_logger
 
 
+async def parse_listing(path):
+    async with aiofiles.open(path, "r") as f:
+        contents = await f.read()
+        listing = json.loads(contents)
+
+    return listing
+
+
 def generate_new_listing(otu_id="", name="", taxid=-1) -> dict:
     """
     Generates a new listing from new OTU data regardless of input

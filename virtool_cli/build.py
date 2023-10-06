@@ -1,6 +1,8 @@
+import asyncio
 import json
 from pathlib import Path
 import arrow
+import aiofiles
 import structlog
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
@@ -47,14 +49,14 @@ def run(
         return
 
     try:
-        build_from_src(src_path, output_path, indent, version)
+        asyncio.run(build_from_src(src_path, output_path, indent, version))
     except FileNotFoundError as e:
         logger.exception(e)
     except Exception as e:
         logger.exception(e)
 
 
-def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str):
+async def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str):
     """
     Build a Virtool reference JSON file from a data directory.
 
@@ -67,7 +69,8 @@ def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str
 
     data = {"data_type": "genome", "organism": ""}
 
-    if meta := parse_meta(src_path):
+    meta = await parse_meta(src_path)
+    if meta:
         logger.debug(
             "Metadata parsed", meta=meta, metadata_path=str(src_path / "meta.json")
         )
@@ -85,7 +88,7 @@ def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str
 
     for otu_path in get_otu_paths(src_path):
         try:
-            otu = parse_otu_contents(otu_path)
+            otu = await parse_otu_contents(otu_path)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error("Reference data at src_path is invalid.")
             logger.exception(e)
@@ -105,13 +108,13 @@ def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str
         {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
     )
 
-    with open(output_path, "w") as f:
-        json.dump(data, f, indent=4 if indent else None, sort_keys=True)
+    async with aiofiles.open(output_path, "w") as f:
+        await f.write(json.dumps(data, indent=4 if indent else None, sort_keys=True))
 
     logger.info("Reference file built at output")
 
 
-def parse_meta(src_path: Path) -> dict:
+async def parse_meta(src_path: Path) -> dict:
     """
     Deserializes and returns meta.json if found, else returns an empty dictionary.
 
@@ -119,8 +122,10 @@ def parse_meta(src_path: Path) -> dict:
     :return: The deserialized meta.json object or an empty dictionary
     """
     try:
-        with open(src_path / "meta.json", "r") as f:
-            return json.load(f)
+        async with aiofiles.open(src_path / "meta.json", "r") as f:
+            contents = await f.read()
+            return json.loads(contents)
+
     except FileNotFoundError:
         return {}
 
@@ -136,7 +141,7 @@ def parse_alpha(alpha: Path) -> list:
     return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
 
-def parse_otu_contents(otu_path: Path) -> dict:
+async def parse_otu_contents(otu_path: Path) -> dict:
     """
     Traverses, deserializes and returns all data under an OTU directory.
 
@@ -150,15 +155,17 @@ def parse_otu_contents(otu_path: Path) -> dict:
     logger = base_logger.bind(path=otu_path, otu_id=otu["_id"])
 
     isolates = []
+
     for isolate_path in get_isolate_paths(otu_path):
-        with open(isolate_path / "isolate.json", "r") as f:
-            isolate = json.load(f)
+        async with aiofiles.open(isolate_path / "isolate.json", "r") as f:
+            contents = await f.read()
+            isolate = json.loads(contents)
 
         logger = logger.bind(isolate_id=isolate["id"])
 
         sequences = []
         for sequence_path in get_sequence_paths(isolate_path):
-            sequence = json.loads(sequence_path.read_text())
+            sequence = await parse_sequence(sequence_path)
 
             sequences.append(sequence)
             logger.debug(
@@ -173,3 +180,11 @@ def parse_otu_contents(otu_path: Path) -> dict:
     otu["isolates"] = isolates
 
     return otu
+
+
+async def parse_sequence(path):
+    async with aiofiles.open(path, "r") as f:
+        contents = await f.read()
+        sequence = json.loads(contents)
+
+    return sequence

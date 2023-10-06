@@ -1,13 +1,14 @@
 from pathlib import Path
 import asyncio
 import structlog
-from structlog import get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.utils.storage import read_otu
 from virtool_cli.catalog.listings import generate_listing, write_new_listing
 from virtool_cli.catalog.helpers import get_otu_accessions_metadata
+
+base_logger = structlog.get_logger()
 
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
@@ -19,7 +20,7 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(src=str(src_path), catalog=str(catalog_path))
+    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
     logger.info("Creating new catalog in catalog path")
 
     asyncio.run(initialize(src_path, catalog_path))
@@ -35,7 +36,7 @@ async def initialize(src_path: Path, catalog_path: Path):
     if not catalog_path.exists():
         catalog_path.mkdir()
 
-    logger = get_logger().bind(src=str(src_path), catalog=str(catalog_path))
+    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
 
     logger.debug("Starting catalog generation...")
 
@@ -60,7 +61,7 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
     :param src_path: Path to a reference directory
     :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
-    logger = get_logger(__name__ + ".fetcher").bind(src=str(src_path))
+    logger = structlog.get_logger(__name__ + ".fetcher").bind(src=str(src_path))
     logger.debug("Starting fetcher...")
 
     for otu_path in get_otu_paths(src_path):
@@ -94,7 +95,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     :param catalog_path: Path to an accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
-    logger = get_logger(__name__ + ".writer").bind(catalog=str(catalog_path))
+    logger = structlog.get_logger(__name__ + ".writer").bind(catalog=str(catalog_path))
 
     while True:
         packet = await queue.get()
