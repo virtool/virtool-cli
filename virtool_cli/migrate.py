@@ -1,8 +1,10 @@
 from pathlib import Path
+import asyncio
 import structlog
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import read_otu, generate_otu_dirname, is_v1
+from virtool_cli.utils.reference import generate_otu_dirname, is_v1
+from virtool_cli.utils.storage import read_otu
 
 base_logger = structlog.get_logger()
 
@@ -22,14 +24,14 @@ def run(src_path: Path, debugging: bool = False):
 
     # Runs flatten once confirmed as a v1 reference
     try:
-        flatten_src(src_path)
+        asyncio.run(flatten_src(src_path))
         logger.info("Converted reference in src_path to v2")
     except Exception as e:
         logger.error("Error occured during conversion")
         logger.exception(f"Error: {e}")
 
 
-def flatten_src(src_path: Path):
+async def flatten_src(src_path: Path):
     """
     Traverses through binning directories a to z and:
         1) Reassigns all OTU directories directly under src_path,
@@ -47,7 +49,7 @@ def flatten_src(src_path: Path):
         )
 
         for otu_path in otu_paths:
-            otu = read_otu(otu_path)
+            otu = await read_otu(otu_path)
             new_name = generate_otu_dirname(otu.get("name"), otu.get("_id"))
             new_path = src_path / new_name
 

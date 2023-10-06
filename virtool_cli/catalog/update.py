@@ -2,15 +2,11 @@ from pathlib import Path
 import json
 import asyncio
 import structlog
-
 from structlog import get_logger, BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    search_otu_by_id,
-    read_otu,
-)
+from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id
+from virtool_cli.utils.storage import read_otu
 from virtool_cli.catalog.listings import generate_listing, write_new_listing
 from virtool_cli.catalog.helpers import (
     get_catalog_paths,
@@ -208,7 +204,7 @@ async def add_listing(
     :param catalog_path: Path to a catalog directory
     :param logger: Optional entry point for an existing BoundLogger
     """
-    otu_data = read_otu(otu_path)
+    otu_data = await read_otu(otu_path)
 
     logger.info(f"No accession record for {otu_data['taxid']}.")
 

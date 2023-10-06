@@ -141,3 +141,17 @@ async def label_isolates(otu_path: Path) -> dict:
         isolates[isolate.get("source_name")] = isolate
 
     return isolates
+
+
+async def read_otu(path: Path) -> dict:
+    """
+    Returns a json file in dict form
+
+    :param path: Path to an OTU directory under a reference source
+    :return: Deserialized OTU data in dict form
+    """
+    async with aiofiles.open(path / "otu.json", "r") as f:
+        contents = await f.read()
+        otu = json.loads(contents)
+
+    return otu

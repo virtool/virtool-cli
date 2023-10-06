@@ -4,10 +4,8 @@ import structlog
 from structlog import get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    read_otu,
-)
+from virtool_cli.utils.reference import get_otu_paths
+from virtool_cli.utils.storage import read_otu
 from virtool_cli.catalog.listings import generate_listing, write_new_listing
 from virtool_cli.catalog.helpers import get_otu_accessions_metadata
 
@@ -68,7 +66,7 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
     for otu_path in get_otu_paths(src_path):
         logger = logger.bind(otu_path=str(otu_path.name))
 
-        otu_data = read_otu(otu_path)
+        otu_data = await read_otu(otu_path)
         otu_id = otu_data["_id"]
 
         logger = logger.bind(
