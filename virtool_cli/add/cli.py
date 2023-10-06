@@ -1,7 +1,7 @@
 from pathlib import Path
 import click
 
-from virtool_cli.add.accession import run as run_add_accession
+from virtool_cli.add.accession import run_single as run_add_accession
 from virtool_cli.add.otu import run as run_add_otu
 
 
