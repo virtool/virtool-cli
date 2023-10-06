@@ -1,29 +1,8 @@
-import json
 from pathlib import Path
 import asyncio
-
-# from typing import Optional, Tuple
 import logging
-from structlog import BoundLogger
-from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import base_logger
-
-# from virtool_cli.utils.reference import get_otu_paths, get_isolate_paths
-# from virtool_cli.utils.id_generator import generate_unique_ids, get_unique_ids
-# from virtool_cli.utils.ncbi import (
-#     request_linked_accessions,
-#     request_from_nucleotide,
-#     NCBI_REQUEST_INTERVAL,
-# )
-# from virtool_cli.update.evaluate import (
-#     evaluate_sequence,
-#     get_qualifiers,
-#     get_lengthdict_monopartite,
-#     get_lengthdict_multipartite,
-# )
-# from virtool_cli.utils.storage import store_isolate, store_sequence
-# from virtool_cli.utils.format import format_sequence
 from virtool_cli.catalog.helpers import search_by_otu_id
 
 DEFAULT_INTERVAL = 0.001

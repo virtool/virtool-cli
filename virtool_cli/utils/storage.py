@@ -135,8 +135,9 @@ async def label_isolates(otu_path: Path) -> dict:
     isolates = {}
 
     for iso_path in get_isolate_paths(otu_path):
-        with open(iso_path / "isolate.json", "r") as f:
-            isolate = json.load(f)
+        async with aiofiles.open(iso_path / "isolate.json", "r") as f:
+            contents = await f.read()
+            isolate = json.loads(contents)
         isolates[isolate.get("source_name")] = isolate
 
     return isolates
