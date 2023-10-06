@@ -27,6 +27,15 @@ def work_catalog_path(tmp_path):
     return test_catalog_path
 
 
+@pytest.fixture()
+def empty_repo(tmp_path):
+    new_repo_path = tmp_path / "new_repo"
+
+    subprocess.call(["virtool", "ref", "init", "-repo", str(new_repo_path)])
+
+    return new_repo_path
+
+
 class TestAddAccession:
     @staticmethod
     def run_command(accession: str, src_path: Path, catalog_path: Path):
@@ -208,3 +217,28 @@ class TestAddOTU:
         new_otus = post_otu_paths.difference(pre_otu_paths)
 
         assert not new_otus
+
+
+class TestInitAdd:
+    @pytest.mark.parametrize("taxon_id, accession", [(908125, "NC_031754")])
+    def test_init_and_add(self, empty_repo, taxon_id, accession):
+        src_path = empty_repo / "src"
+        catalog_path = empty_repo / ".cache/catalog"
+        build_path = empty_repo / "reference.json"
+        TestAddOTU.run_command(taxon_id, src_path, catalog_path)
+
+        TestAddAccession.run_command(accession, src_path, catalog_path)
+
+        subprocess.call(
+            [
+                "virtool",
+                "ref",
+                "build",
+                "-o",
+                str(build_path),
+                "-src",
+                str(src_path),
+            ]
+        )
+
+        assert build_path.exists()
