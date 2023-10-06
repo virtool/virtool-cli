@@ -131,7 +131,7 @@ async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
     logger.debug("Starting fetcher...")
 
     for path in listing_paths:
-        acc_listing = parse_listing(path)
+        acc_listing = await parse_listing(path)
 
         # extract taxon ID and _id hash from listing filename
         [taxid, otu_id] = path.stem.split("--")

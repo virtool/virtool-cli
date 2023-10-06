@@ -75,7 +75,7 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
             otu_id=otu_id,
         )
 
-        sequences = get_otu_accessions_metadata(otu_path)
+        sequences = await get_otu_accessions_metadata(otu_path)
         accessions = list(sequences.keys())
 
         listing = await generate_listing(

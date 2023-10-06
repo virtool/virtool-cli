@@ -76,10 +76,13 @@ async def write_records(
             "Assigning new sequence",
             seq_hash=seq_hash,
         )
+
         try:
             await store_sequence(seq_data, seq_hash, iso_path)
+
         except Exception as e:
             logger.exception(e)
+
         unique_seq.add(seq_hash)
 
         logger.info(
@@ -155,3 +158,11 @@ async def read_otu(path: Path) -> dict:
         otu = json.loads(contents)
 
     return otu
+
+async def parse_sequence(path):
+    async with aiofiles.open(path, "r") as f:
+        contents = await f.read()
+        sequence = json.loads(contents)
+
+    return sequence
+

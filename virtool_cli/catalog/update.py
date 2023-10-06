@@ -10,6 +10,7 @@ from virtool_cli.utils.storage import read_otu
 from virtool_cli.catalog.listings import (
     parse_listing,
     generate_listing,
+    update_listing,
     write_new_listing,
 )
 from virtool_cli.catalog.helpers import (
@@ -154,8 +155,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
 
         write_logger.debug(f"New listing:\n{listing}")
 
-        with open(packet["path"], "w") as f:
-            json.dump(packet["listing"], f, indent=2, sort_keys=True)
+        await update_listing(listing, listing_path)
 
         await asyncio.sleep(0.1)
         queue.task_done()
@@ -212,7 +212,7 @@ async def add_listing(
 
     logger.info(f"No accession record for {otu_data['taxid']}.")
 
-    sequences = get_otu_accessions_metadata(otu_path)
+    sequences = await get_otu_accessions_metadata(otu_path)
     accessions = list(sequences.keys())
 
     new_listing = await generate_listing(
