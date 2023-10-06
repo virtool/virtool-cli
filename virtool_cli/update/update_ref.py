@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 import asyncio
 import structlog
@@ -9,6 +8,7 @@ from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.utils.format import process_records
 from virtool_cli.utils.storage import write_records
 from virtool_cli.update.update import request_new_records
+from virtool_cli.catalog.listings import parse_listing
 from virtool_cli.catalog.helpers import filter_catalog
 
 DEFAULT_INTERVAL = 0.001
@@ -131,7 +131,7 @@ async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
     logger.debug("Starting fetcher...")
 
     for path in listing_paths:
-        acc_listing = json.loads(path.read_text())
+        acc_listing = parse_listing(path)
 
         # extract taxon ID and _id hash from listing filename
         [taxid, otu_id] = path.stem.split("--")

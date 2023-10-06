@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 import asyncio
 import structlog
@@ -8,6 +7,7 @@ from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.utils.format import process_records
 from virtool_cli.utils.storage import write_records
+from virtool_cli.catalog.listings import parse_listing
 from virtool_cli.catalog.helpers import search_by_otu_id
 from virtool_cli.update.update import request_new_records
 
@@ -60,7 +60,7 @@ async def update_otu(otu_path: Path, listing_path: Path, auto_evaluate: bool = F
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
     src_path = otu_path.parent
-    listing = json.loads(listing_path.read_text())
+    listing = await parse_listing(listing_path)
 
     # extract taxon ID and _id hash from listing filename
     [taxid, otu_id] = listing_path.stem.split("--")
