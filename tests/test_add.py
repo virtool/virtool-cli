@@ -10,7 +10,6 @@ from paths import TEST_FILES_PATH
 
 BASE_PATH = TEST_FILES_PATH / "src_test"
 TEST_ACCLOG_PATH = TEST_FILES_PATH / "catalog"
-TEST_ACCESSION = "NC_010319"
 
 
 @pytest.fixture()
@@ -34,6 +33,20 @@ def empty_repo(tmp_path):
     subprocess.call(["virtool", "ref", "init", "-repo", str(new_repo_path)])
 
     return new_repo_path
+
+
+def run_build(src_path, build_path):
+    subprocess.call(
+        [
+            "virtool",
+            "ref",
+            "build",
+            "-o",
+            str(build_path),
+            "-src",
+            str(src_path),
+        ]
+    )
 
 
 class TestAddAccession:
@@ -229,16 +242,6 @@ class TestInitAdd:
 
         TestAddAccession.run_command(accession, src_path, catalog_path)
 
-        subprocess.call(
-            [
-                "virtool",
-                "ref",
-                "build",
-                "-o",
-                str(build_path),
-                "-src",
-                str(src_path),
-            ]
-        )
+        run_build(src_path, build_path)
 
         assert build_path.exists()
