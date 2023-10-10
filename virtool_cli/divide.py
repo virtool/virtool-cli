@@ -92,8 +92,8 @@ async def build_otu(src_path: Path, otu: dict) -> Path:
     otu_path.mkdir()
 
     otu = {key: otu.get(key) for key in OTU_KEYS}
-    async with aiofiles.open(otu_path / "otu.json", "w") as f:
-        await f.write(json.dumps(otu, indent=4, sort_keys=True))
+    with open(otu_path / "otu.json", "w") as f:
+        json.dump(otu, f, indent=4, sort_keys=True)
 
     return otu_path
 
@@ -111,8 +111,8 @@ async def build_isolate(otu_path: Path, isolate: dict) -> Path:
     isolate_path.mkdir()
 
     isolate = {key: isolate[key] for key in ISOLATE_KEYS}
-    async with aiofiles.open(isolate_path / "isolate.json", "w") as f:
-        await f.write(json.dumps(isolate, indent=4, sort_keys=True))
+    with open(isolate_path / "isolate.json", "w") as f:
+        json.dump(isolate, f, indent=4, sort_keys=True)
 
     return isolate_path
 
@@ -127,5 +127,5 @@ async def build_sequence(isolate_path: Path, sequence: dict):
     sequence = {key: sequence[key] for key in SEQUENCE_KEYS if key in sequence}
     sequence_id = sequence.get("_id")
 
-    async with aiofiles.open(isolate_path / f"{sequence_id}.json", "w") as f:
-        await f.write(json.dumps(sequence, indent=4, sort_keys=True))
+    with open(isolate_path / f"{sequence_id}.json", "w") as f:
+        json.dump(sequence, f, indent=4, sort_keys=True)

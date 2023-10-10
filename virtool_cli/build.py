@@ -67,22 +67,23 @@ async def build_from_src(src_path: Path, output_path: Path, indent: bool, versio
     """
     logger = base_logger.bind(src=str(src_path), output=str(output_path))
 
-    data = {"data_type": "genome", "organism": ""}
-
     meta = await parse_meta(src_path)
     if meta:
         logger.debug(
             "Metadata parsed", meta=meta, metadata_path=str(src_path / "meta.json")
         )
-
-        data["data_type"] = meta.get("data_type", "genome")
-        data["organism"] = (meta.get("organism", ""),)
+        data = {
+            "data_type": meta.get("data_type", "genome"),
+            "organism": meta.get("organism", ""),
+        }
 
     else:
         logger.warning(
             f'Metadata file not found at {src_path / "meta.json"}',
             metadata_path=str(src_path / "meta.json"),
         )
+
+        data = {"data_type": "genome", "organism": ""}
 
     otus = []
 
@@ -145,12 +146,13 @@ async def parse_otu_contents(otu_path: Path) -> dict:
     """
     Traverses, deserializes and returns all data under an OTU directory.
 
-    :param otu_path: Path to a OTU directory
+    :param otu_path: Path to an OTU directory
     :return: All isolate and sequence data under an OTU,
         deserialized and compiled in a dict
     """
-    with open(otu_path / "otu.json", "r") as f:
-        otu = json.load(f)
+    async with aiofiles.open(otu_path / "otu.json", "r") as f:
+        contents = await f.read()
+        otu = json.loads(contents)
 
     logger = base_logger.bind(path=otu_path, otu_id=otu["_id"])
 

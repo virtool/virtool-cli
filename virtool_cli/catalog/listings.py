@@ -5,6 +5,12 @@ from structlog import BoundLogger, get_logger
 
 
 async def parse_listing(path):
+    """
+    Asynchronously reads listing data from path and returns in dict form
+
+    :param path: Path to the listing file
+    :return: Deserialized listing data
+    """
     async with aiofiles.open(path, "r") as f:
         contents = await f.read()
         listing = json.loads(contents)
@@ -31,13 +37,13 @@ def generate_new_listing(otu_id="", name="", taxid=-1) -> dict:
 
 async def update_listing(data: dict, path: Path):
     """
-    Updates the listing file at path with new data
+    Overwrites the listing file at path with new data
 
     :param data: Updated listing data
     :param path: Path to the listing file
     """
-    async with aiofiles.open(path, "w") as f:
-        await f.write(json.dumps(data, indent=2, sort_keys=True))
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2, sort_keys=True)
 
 
 async def write_new_listing(listing: dict, catalog_path: Path) -> Path | None:
@@ -49,10 +55,7 @@ async def write_new_listing(listing: dict, catalog_path: Path) -> Path | None:
     """
     listing_path = catalog_path / f"{listing['taxid']}--{listing['_id']}.json"
 
-    try:
-        await update_listing(data=listing, path=listing_path)
-    except:
-        return None
+    await update_listing(data=listing, path=listing_path)
 
     return listing_path
 
@@ -61,7 +64,7 @@ async def add_new_listing(otu_path: Path, catalog_path: Path, logger=get_logger(
     """
     Creates a new listing for a newly created OTU with no isolate or accession data
     """
-    async with aiofiles.open(otu_path, "r") as f:
+    async with aiofiles.open(otu_path / "otu.json", "r") as f:
         contents = await f.read()
         otu = json.loads(contents)
 

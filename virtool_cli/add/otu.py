@@ -57,7 +57,7 @@ async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
     :param src_path:
     :param catalog_path:
     """
-    logger = structlog.get_logger().bind(taxon_id=taxid)
+    logger = base_logger.bind(taxon_id=taxid)
 
     try:
         taxonomy_data = await fetch_taxonomy_record(taxon_id=taxid)
@@ -108,11 +108,12 @@ async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
 
 def generate_otu(taxonomy_data: dict, new_id: str) -> dict:
     """
-    Create a new OTU from a given Id from NCBI Taxonomy
+    Create a new OTU from a given NCBI Taxonomy unique Id (taxid) and
+    a pre-generated Virtool OTU Id
 
-    :param taxonomy_data:
-    :param new_id:
-    :return:
+    :param taxonomy_data: Dictionary containing fetched NCBI Taxonomy metadata
+    :param new_id: Pre-generated Virtool OTU Id
+    :return: The contents of a OTU metadata file
     """
     for key in ["ScientificName", "Id"]:
         if key not in taxonomy_data:
@@ -129,10 +130,9 @@ def generate_otu(taxonomy_data: dict, new_id: str) -> dict:
     return otu
 
 
-async def write_otu(otu: dict, src_path: Path) -> Path | None:
+async def write_otu(otu: dict, src_path: Path) -> Path:
     """
-    Generate a new directory for given OTU metadata and
-    store the metadata under in otu.json
+    Generate a new directory for given OTU metadata and store the metadata under in otu.json
 
     :param otu: Dict of OTU metadata
     :param src_path: Path to a reference directory
@@ -142,10 +142,7 @@ async def write_otu(otu: dict, src_path: Path) -> Path | None:
     otu_path = src_path / dirname
     otu_path.mkdir()
 
-    try:
-        async with aiofiles.open(otu_path / "otu.json", "w") as f:
-            await f.write(json.dumps(otu, indent=4, sort_keys=True))
-    except:
-        return None
+    with open(otu_path / "otu.json", "w") as f:
+        json.dump(otu, f, indent=4, sort_keys=True)
 
     return otu_path

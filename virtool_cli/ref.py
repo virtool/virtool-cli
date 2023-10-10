@@ -1,13 +1,13 @@
 from pathlib import Path
 import click
 
-from virtool_cli.doctor.cli import doctor
 from virtool_cli.update.cli import update
 from virtool_cli.add.cli import add
 from virtool_cli.init import run as run_init
 from virtool_cli.build import run as run_build
 from virtool_cli.divide import run as run_divide
 from virtool_cli.migrate import run as run_migrate
+from virtool_cli.checkup import run as run_checkup
 
 ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
@@ -21,7 +21,6 @@ def ref():
 
 
 ref.add_command(update)
-ref.add_command(doctor)
 ref.add_command(add)
 
 
@@ -122,6 +121,25 @@ def migrate(src_path, debug):
     """Convert a reference directory from v1.x to v2.x"""
     try:
         run_migrate(Path(src_path), debug)
+
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
+        click.echo(e)
+
+
+@ref.command()
+@click.option(
+    "-src",
+    "--src_path",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="the path to a reference directory",
+)
+@click.option("--debug/--no-debug", default=False)
+def checkup(src_path, debug):
+    """Convert a reference directory from v1.x to v2.x"""
+    try:
+        run_checkup(Path(src_path), debug)
 
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")

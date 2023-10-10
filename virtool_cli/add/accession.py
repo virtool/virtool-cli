@@ -28,7 +28,7 @@ def run_single(
     debugging: bool = False,
 ):
     """
-    CLI entry point for virtool_cli.add.accession module
+    CLI entry point for virtool_cli.add.accession.add_accession()
 
     :param accession: NCBI Taxonomy accession to be added to the reference
     :param src_path: Path to a reference directory
@@ -52,13 +52,9 @@ def run_single(
     )
 
 
-def run_multiple(
-    accessions: str,
-    otu_path: Path,
-    debugging: bool = False,
-):
+def run_multiple(accessions: str, otu_path: Path, debugging: bool = False):
     """
-    CLI entry point for virtool_cli.add.accession module
+    CLI entry point for virtool_cli.add.accession.add_accessions()
 
     :param accessions: NCBI Taxonomy accessions to be added to the reference
     :param otu_path: Path to a reference directory
@@ -81,6 +77,9 @@ def run_multiple(
 async def add_accessions(accessions: list, otu_path: Path):
     """
     Add a list of accessions to an OTU. Appropriate if you know the OTU path already.
+
+    :param accessions: A list of accession numbers to query from NCBI
+    :param otu_path: Path to an OTU directory
     """
     logger = base_logger.bind(accessions=accessions)
 
@@ -121,6 +120,9 @@ async def add_accessions(accessions: list, otu_path: Path):
     try:
         await write_records(
             otu_path, new_sequences, isolate_uids, sequence_uids, logger=logger
+        )
+        logger.info(
+            f'OTU written to {otu_path.name}. Use "virtool ref add accessions" to add accessions.'
         )
     except Exception as e:
         logger.exception(e)
@@ -263,33 +265,3 @@ def find_taxon_id(db_xref: list[str]) -> int:
             return int(value)
 
     return -1
-
-
-if __name__ == "__main__":
-    debug = True
-
-    REPO_DIR = "/Users/sygao/Development/UVic/Virtool/Repositories"
-
-    project_path = Path(REPO_DIR) / "ref-mini"
-    src_path = project_path / "src"
-    catalog_path = Path(REPO_DIR) / "ref-accession-catalog/catalog"
-
-    ACCESSIONS = [
-        "KT390405.1",
-        "KT390497.1",
-    ]
-
-    # asyncio.run(
-    #     add_accession(
-    #         accession=ACCESSIONS[0],
-    #         src_path=src_path,
-    #         catalog_path=catalog_path,
-    #         otu_path=src_path / "nanovirus-like_particle--ae0f2a35",
-    #     )
-    # )
-
-    run_multiple(
-        accessions="KT390405.1,KT390497.1",
-        otu_path=src_path / "nanovirus-like_particle--ae0f2a35",
-        debugging=True,
-    )

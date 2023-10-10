@@ -105,8 +105,8 @@ async def store_isolate(
     iso_path = otu_path / isolate_id
     iso_path.mkdir()
 
-    async with aiofiles.open(iso_path / "isolate.json", "w") as f:
-        await f.write(json.dumps(isolate, indent=4))
+    with open(iso_path / "isolate.json", "w") as f:
+        json.dump(isolate, f, indent=4)
 
 
 async def store_sequence(sequence: dict, sequence_id: str, iso_path: Path):
@@ -121,8 +121,8 @@ async def store_sequence(sequence: dict, sequence_id: str, iso_path: Path):
     sequence["_id"] = sequence_id
     seq_path = iso_path / f"{sequence_id}.json"
 
-    async with aiofiles.open(seq_path, "w") as f:
-        await f.write(json.dumps(sequence, indent=4, sort_keys=True))
+    with open(seq_path, "w") as f:
+        json.dump(sequence, f, indent=4, sort_keys=True)
 
 
 async def label_isolates(otu_path: Path) -> dict:
@@ -158,6 +158,7 @@ async def read_otu(path: Path) -> dict:
         otu = json.loads(contents)
 
     return otu
+
 
 async def parse_sequence(path):
     async with aiofiles.open(path, "r") as f:
