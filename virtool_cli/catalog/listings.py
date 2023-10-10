@@ -61,7 +61,9 @@ async def add_new_listing(otu_path: Path, catalog_path: Path, logger=get_logger(
     """
     Creates a new listing for a newly created OTU with no isolate or accession data
     """
-    otu = json.loads((otu_path / "otu.json").read_text())
+    async with aiofiles.open(otu_path, "r") as f:
+        contents = await f.read()
+        otu = json.loads(contents)
 
     listing = generate_new_listing(
         otu_id=otu["_id"], name=otu["name"], taxid=otu["taxid"]
@@ -73,6 +75,8 @@ async def add_new_listing(otu_path: Path, catalog_path: Path, logger=get_logger(
         return
 
     logger.info("Listing written to listing_path", listing_path=listing_path)
+
+    return catalog_path
 
 
 async def generate_listing(
