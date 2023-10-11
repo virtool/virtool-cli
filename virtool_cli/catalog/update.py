@@ -1,5 +1,4 @@
 from pathlib import Path
-import json
 import asyncio
 import structlog
 from structlog import get_logger, BoundLogger

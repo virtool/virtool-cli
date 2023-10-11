@@ -185,6 +185,12 @@ async def parse_otu_contents(otu_path: Path) -> dict:
 
 
 async def parse_sequence(path):
+    """
+    Asynchronously reads a sequence file and returns the contents as a dictionary.
+
+    :param path:
+    :return: A deserialized sequence
+    """
     async with aiofiles.open(path, "r") as f:
         contents = await f.read()
         sequence = json.loads(contents)

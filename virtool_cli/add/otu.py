@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 import asyncio
-import aiofiles
 import structlog
 from urllib.error import HTTPError
 
@@ -132,10 +131,12 @@ def generate_otu(taxonomy_data: dict, new_id: str) -> dict:
 
 async def write_otu(otu: dict, src_path: Path) -> Path:
     """
-    Generate a new directory for given OTU metadata and store the metadata under in otu.json
+    Generate a new directory for given OTU metadata, store the metadata under in otu.json
+    and return the path to the new directory.
 
     :param otu: Dict of OTU metadata
     :param src_path: Path to a reference directory
+    :return: The new OTU directory path
     """
     dirname = generate_otu_dirname(name=otu["name"], otu_id=otu["_id"])
 

@@ -36,7 +36,7 @@ def run(src_path: Path, debugging: bool = False):
 
 def check_reference(src_path: Path) -> bool:
     """
-    Inspects all files in the reference and logs a warning if a problem is found
+    Inspects all files in the reference directory and logs a warning if a problem is found.
 
     :param src_path: Path to a given reference directory
     """
@@ -60,7 +60,14 @@ def check_reference(src_path: Path) -> bool:
                 if not check_isolate(isolate_path, otu_logger):
                     is_valid = False
 
-                for sequence_path in get_sequence_paths(isolate_path):
+                sequence_paths = get_sequence_paths(isolate_path)
+                if not sequence_paths:
+                    otu_logger.error(
+                        "No sequences in isolate", isolate=isolate_path.name
+                    )
+                    is_valid = False
+
+                for sequence_path in sequence_paths:
                     if not check_sequence(sequence_path, otu_logger):
                         is_valid = False
 
@@ -76,10 +83,12 @@ def check_reference(src_path: Path) -> bool:
 
 def check_otu(otu_path: Path, logger: BoundLogger = base_logger) -> bool:
     """
-    Checks OTU metadata for bad content and logs a warning if problems are found
+    Checks OTU metadata for bad content and logs a warning if problems are found.
 
     :param otu_path: A path to an OTU directory under a src reference directory
     :param logger: Optional entry point for a shared BoundLogger
+    :return: True if an OTU's metadata is valid and there are sequences assigned under it,
+        False if a problem is found
     """
     otu_metadata_path = otu_path / "otu.json"
 
@@ -106,6 +115,13 @@ def check_otu(otu_path: Path, logger: BoundLogger = base_logger) -> bool:
 
 
 def check_isolate(isolate_path: Path, logger: BoundLogger = base_logger) -> bool:
+    """
+    Checks isolate metadata for bad content and logs a warning if problems are found.
+
+    :param isolate_path: A path to an isolate directory under an OTU directory
+    :param logger: Optional entry point for a shared BoundLogger
+    :return: True if an isolate's metadata is valid, False if a problem is found
+    """
     logger = logger.bind(isolate_id=isolate_path.stem)
 
     isolate_metadata_path = isolate_path / "isolate.json"
@@ -142,10 +158,11 @@ def check_isolate(isolate_path: Path, logger: BoundLogger = base_logger) -> bool
 
 def check_sequence(sequence_path: Path, logger: BoundLogger = base_logger) -> bool:
     """
-    Checks a sequence file for bad content and logs a warning if problems are found
+    Checks a sequence file for bad content and logs a warning if problems are found.
 
     :param sequence_path: A path to a sequence file under an isolate directory
     :param logger: Optional entry point for a shared BoundLogger
+    :return: True if a sequence's metadata is valid, False if a problem is found
     """
     logger = logger.bind(sequence_id=sequence_path.stem)
 

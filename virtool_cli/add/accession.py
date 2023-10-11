@@ -61,7 +61,7 @@ def run_multiple(accessions: str, otu_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = base_logger.bind(src=str(src_path))
+    logger = base_logger.bind(src=str(otu_path))
 
     accession_list = accessions.split(",")
 
@@ -115,7 +115,7 @@ async def add_accessions(accessions: list, otu_path: Path):
 
         new_sequences.append(new_sequence)
 
-    isolate_uids, sequence_uids = await get_unique_ids(get_otu_paths(src_path))
+    isolate_uids, sequence_uids = await get_unique_ids(get_otu_paths(otu_path.parent))
 
     try:
         await write_records(
@@ -135,7 +135,7 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
 
     :param accession: NCBI Taxonomy accession to be added to the reference
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
+    :param catalog_path: Path to an accession catalog directory
     """
     logger = base_logger.bind(accession=accession)
 
@@ -177,8 +177,13 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
 
 async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
     """
-    :param seq_data:
-    :param logger:
+    Find a OTU directory in the reference using metadata
+    from NCBI Nucleotide sequence records (such as Taxonomy UID and name).
+
+    :param seq_data: Sequence data retrieved from NCBI Nucleotide and parsed as SeqRecord
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to an accession catalog directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
     # Get taxon id and OTU id
     seq_qualifiers = get_qualifiers(seq_data.features)
@@ -236,9 +241,12 @@ async def check_accession_collision(
     new_accession: str, accession_list: list, logger
 ) -> bool:
     """
-    :param new_accession:
-    :param accession_list:
-    :param logger:
+    Check if a new accession already exists in a list of already-assessed accessions.
+
+    :param new_accession: A new accession
+    :param accession_list: A list of accessions that should not be added anew
+    :param logger: Optional entry point for an existing BoundLogger
+    :return: True if the accession collides with the accession list, False if not
     """
     for existing_accession in accession_list:
         if new_accession.split(".")[0] == existing_accession.split(".")[0]:
@@ -254,7 +262,7 @@ def find_taxon_id(db_xref: list[str]) -> int:
     """
     Searches the database cross-reference data for the associated taxon ID.
 
-    :param db_xref:
+    :param db_xref: List of NCBI cross-reference information taken from NCBI taxonomy record
     :return: NCBI taxon ID as an integer if found, -1 if not found.
     """
     print(f"xrefs: {db_xref}")

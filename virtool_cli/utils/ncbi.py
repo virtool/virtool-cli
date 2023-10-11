@@ -85,7 +85,7 @@ async def fetch_taxid(name: str) -> int:
     return taxid
 
 
-async def fetch_taxonomy_record(taxon_id) -> dict | HTTPError:
+async def fetch_taxonomy_record(taxon_id) -> dict:
     """
     Fetches a record from NCBI Taxonomy and returns the contents as a dictionary if found
 
@@ -97,12 +97,13 @@ async def fetch_taxonomy_record(taxon_id) -> dict | HTTPError:
         record = Entrez.read(handle)
         handle.close()
     except HTTPError:
-        return HTTPError
+        raise HTTPError
 
     if record:
         return record.pop()
 
     return {}
+
 
 async def fetch_taxonomy_species(taxon_id: str) -> int:
     """
