@@ -4,6 +4,7 @@ import logging
 
 logging.basicConfig(
     format="%(message)s",
+    stream=sys.stdout,
     level=logging.DEBUG,
 )
 
