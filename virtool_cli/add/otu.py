@@ -89,11 +89,12 @@ async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
     logger.debug(new_otu)
 
     otu_path = await write_otu(new_otu, src_path)
+
     if otu_path is None:
         logger.error("Failed to write OTU data to directory")
         return
 
-    logger.info("Wrote OTU data", otu=str(otu_path))
+    logger.info("OTU data written", otu_path=str(otu_path))
 
     listing_path = await add_new_listing(
         otu_path, catalog_path=catalog_path, logger=logger

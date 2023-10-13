@@ -63,6 +63,10 @@ async def write_new_listing(listing: dict, catalog_path: Path) -> Path | None:
 async def add_new_listing(otu_path: Path, catalog_path: Path, logger=get_logger()):
     """
     Creates a new listing for a newly created OTU with no isolate or accession data
+
+    :param otu_path: Path to an OTU directory
+    :param catalog_path: Path to an accession catalog
+    :param logger: Optional entry point for an existing BoundLogger
     """
     async with aiofiles.open(otu_path / "otu.json", "r") as f:
         contents = await f.read()
@@ -77,7 +81,7 @@ async def add_new_listing(otu_path: Path, catalog_path: Path, logger=get_logger(
         logger.error("Listing could not be created under catalog")
         return
 
-    logger.info("Listing written to listing_path", listing_path=listing_path)
+    logger.info("Listing written to listing_path", listing_path=str(listing_path))
 
     return catalog_path
 
@@ -156,7 +160,7 @@ def measure_monopartite(sequence_metadata: dict) -> int:
     Takes a dict containing all sequence lengths and returns the average length
 
     :param sequence_metadata: Dict containing segment data
-    :return: Average length of all sequences
+    :return: Average length of all sequences as an integer
     """
     sequence_lengths = []
 
@@ -170,7 +174,7 @@ def measure_monopartite(sequence_metadata: dict) -> int:
     return int(average_length)
 
 
-def measure_multipartite(sequence_metadata, segment_list) -> dict:
+def measure_multipartite(sequence_metadata: dict, segment_list: list) -> dict:
     """
     Takes a dict containing all sequence lengths and a list of segments,
     and returns the average length of each constituent segment.

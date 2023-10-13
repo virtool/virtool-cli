@@ -86,7 +86,7 @@ async def get_unique_otu_ids(src_path: Path) -> list:
     Returns a list of all unique OTU ids included in the reference database
 
     :param src_path: Path to a Virtool reference database directory
-    :return: List
+    :return: List of all unique OTU ids
     """
     unique_otus = [
         otu_path.stem.split("--")[1]
