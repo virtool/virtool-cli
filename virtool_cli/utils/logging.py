@@ -1,3 +1,4 @@
+import os
 import sys
 import structlog
 import logging
@@ -23,7 +24,7 @@ shared_processors = [
             }
         ),
 ]
-if sys.stderr.isatty():
+if sys.stderr.isatty() and not os.environ.get("NO_COLOR"):
     processors = shared_processors + [
         structlog.dev.ConsoleRenderer()
     ]
