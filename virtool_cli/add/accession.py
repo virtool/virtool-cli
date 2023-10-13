@@ -4,11 +4,17 @@ import asyncio
 import structlog
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import get_otu_paths, is_v1, generate_otu_dirname
+from virtool_cli.utils.reference import (
+    get_otu_paths,
+    is_v1,
+    generate_otu_dirname,
+    search_otu_by_id,
+)
 from virtool_cli.utils.ncbi import request_from_nucleotide
 from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
 from virtool_cli.utils.storage import write_records
+from virtool_cli.catalog.listings import parse_listing
 from virtool_cli.catalog.helpers import get_otu_accessions
 
 
@@ -138,6 +144,9 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
     seq_data = record_list.pop()
 
     otu_path = await get_otu_path(seq_data, src_path, catalog_path, logger)
+    if not otu_path:
+        logger.error("No matching OTU found.")
+        return
 
     otu_accession_list = get_otu_accessions(otu_path)
     accession_collision = await check_accession_collision(accession, otu_accession_list)
@@ -198,9 +207,11 @@ async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
 
     # Generate a potential name for the directory and match it against OTU
     if "organism" not in seq_qualifiers:
+        logger.error("Could not find taxon identifier")
         raise ValueError
     otu_name = seq_qualifiers["organism"][0]
     dummy_name = generate_otu_dirname(name=otu_name, otu_id="")
+    logger.info(dummy_name)
 
     otu_matches = list(src_path.glob(f"{dummy_name}*"))
     if otu_matches:
@@ -210,9 +221,36 @@ async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
 
         return otu_path
 
-    else:
+    # Attempt a direct catalog match
+    taxid_matches = list(catalog_path.glob(f"{taxid}--*.json"))
+    if taxid_matches:
+        # Get the OTU id directly from the listing
+        listing_path = taxid_matches.pop()
+
+        logger.info(
+            "Found matching listing in catalog.",
+            listing=listing_path.name,
+        )
+
+        matching_listing = await parse_listing(listing_path)
+
+        otu_id = matching_listing["_id"]
+
+        if otu_path := search_otu_by_id(otu_id, src_path):
+            logger.debug(
+                "Matching OTU directory found",
+                listing=listing_path.name,
+                otu=otu_path.name,
+            )
+
+            return otu_path
+
         logger.error("No matching OTU found in src directory.")
+
         return None
+
+    logger.error("No matching OTU found in src directory.")
+    return None
 
 
 async def check_accession_collision(new_accession: str, accession_list: list) -> bool:
