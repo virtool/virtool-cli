@@ -187,7 +187,9 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
         print(str(path))
 
 
-async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
+async def get_otu_path(
+    seq_data, src_path: Path, catalog_path: Path, logger
+) -> Path | None:
     """
     Find a OTU directory in the reference using metadata
     from NCBI Nucleotide sequence records (such as Taxonomy UID and name).
@@ -201,55 +203,70 @@ async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
     seq_qualifiers = get_qualifiers(seq_data.features)
     logger.debug(seq_qualifiers)
 
-    taxid = find_taxon_id(seq_qualifiers["db_xref"])
-    if taxid < 0:
-        logger.error("No taxon id found!")
-
     # Generate a potential name for the directory and match it against OTU
     if "organism" not in seq_qualifiers:
         logger.error("Could not find taxon identifier")
         raise ValueError
     otu_name = seq_qualifiers["organism"][0]
     dummy_name = generate_otu_dirname(name=otu_name, otu_id="")
-    logger.info(dummy_name)
 
     otu_matches = list(src_path.glob(f"{dummy_name}*"))
     if otu_matches:
         otu_path = otu_matches.pop()
 
-        logger.debug("Unlisted matching OTU found", otu=otu_path.name)
+        logger.debug("Matching OTU found", otu_path=str(otu_path))
 
         return otu_path
 
-    # Attempt a direct catalog match
-    taxid_matches = list(catalog_path.glob(f"{taxid}--*.json"))
-    if taxid_matches:
-        # Get the OTU id directly from the listing
-        listing_path = taxid_matches.pop()
+    logger.warning(
+        "OTU could not be found by name. Your OTU naming scheme may not be up to date."
+    )
 
-        logger.info(
-            "Found matching listing in catalog.",
-            listing=listing_path.name,
-        )
+    logger.info(
+        "Attempting catalog match...",
+        catalog_path=str(catalog_path),
+    )
+    if taxid := find_taxon_id(seq_qualifiers["db_xref"]):
+        logger.info("Taxon ID found", taxid=taxid)
 
-        matching_listing = await parse_listing(listing_path)
-
-        otu_id = matching_listing["_id"]
-
-        if otu_path := search_otu_by_id(otu_id, src_path):
-            logger.debug(
-                "Matching OTU directory found",
-                listing=listing_path.name,
-                otu=otu_path.name,
-            )
-
+        # Search for a matching OTU path using the taxid
+        if otu_path := await get_otu_path_from_taxid(taxid, src_path, catalog_path):
+            logger.info("OTU path found", otu_path=otu_path.name)
             return otu_path
 
-        logger.error("No matching OTU found in src directory.")
-
-        return None
+    else:
+        logger.error("No taxon id found in metadata.")
 
     logger.error("No matching OTU found in src directory.")
+    return None
+
+
+async def get_otu_path_from_taxid(
+    taxid: int, src_path: Path, catalog_path: Path
+) -> Path | None:
+    """
+    Use NCBI Taxonomy UID to retrieve a matching OTU ID from catalog if possible.
+
+    :param taxid: NCBI Taxonomy UID
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to an accession catalog directory
+    :return: Matching OTU directory path if found, None if not found
+    """
+    # Attempt a direct catalog match
+    taxid_matches = list(catalog_path.glob(f"{taxid}--*.json"))
+    if not taxid_matches:
+        return None
+
+    # Get the OTU id directly from the listing
+    listing_path = taxid_matches.pop()
+
+    matching_listing = await parse_listing(listing_path)
+
+    otu_id = matching_listing["_id"]
+
+    if otu_path := search_otu_by_id(otu_id, src_path):
+        return otu_path
+
     return None
 
 
@@ -268,16 +285,16 @@ async def check_accession_collision(new_accession: str, accession_list: list) ->
     return False
 
 
-def find_taxon_id(db_xref: list[str]) -> int:
+def find_taxon_id(db_xref: list[str]) -> int | None:
     """
-    Searches the database cross-reference data for the associated taxon ID.
+    Searches the database cross-reference data for the associated NCBI taxonomy UID.
 
     :param db_xref: List of NCBI cross-reference information taken from NCBI taxonomy record
-    :return: NCBI taxon ID as an integer if found, -1 if not found.
+    :return: NCBI Taxonomy UID as an integer if found, None if not found
     """
     for xref in db_xref:
         [key, value] = xref.split(":")
         if key == "taxon":
             return int(value)
 
-    return -1
+    return None
