@@ -109,10 +109,18 @@ async def build_from_src(src_path: Path, output_path: Path, indent: bool, versio
         {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
     )
 
-    async with aiofiles.open(output_path, "w") as f:
-        await f.write(json.dumps(data, indent=4 if indent else None, sort_keys=True))
+    try:
+        async with aiofiles.open(output_path, "w") as f:
+            await f.write(
+                json.dumps(data, indent=4 if indent else None, sort_keys=True)
+            )
 
-    logger.info("Reference file built at output")
+        logger.info("Reference file built at output")
+
+        print(str(output_path.resolve()))
+
+    except Exception as e:
+        logger.exception(e)
 
 
 async def parse_meta(src_path: Path) -> dict:
@@ -163,8 +171,6 @@ async def parse_otu_contents(otu_path: Path) -> dict:
             contents = await f.read()
             isolate = json.loads(contents)
 
-        logger = logger.bind(isolate_id=isolate["id"])
-
         sequences = []
         for sequence_path in get_sequence_paths(isolate_path):
             sequence = await parse_sequence(sequence_path)
@@ -173,6 +179,7 @@ async def parse_otu_contents(otu_path: Path) -> dict:
             logger.debug(
                 f"Added sequence {sequence.get('accession')} under id={sequence.get('_id')}",
                 sequence_id=sequence,
+                isolate_id=isolate["id"],
             )
 
         isolate["sequences"] = sequences

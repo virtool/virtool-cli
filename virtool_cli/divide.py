@@ -73,6 +73,8 @@ async def divide_reference_file(reference_path: Path, output_path: Path):
     async with aiofiles.open(output_path / "meta.json", "w") as f:
         await f.write(json.dumps(meta, sort_keys=True))
 
+    logger.info("Wrote input reference to output_path")
+
 
 async def build_otu(src_path: Path, otu: dict) -> Path:
     """

@@ -14,7 +14,7 @@ async def write_records(
     unique_iso: set,
     unique_seq: set,
     logger: structlog.BoundLogger = structlog.get_logger(),
-):
+) -> list:
     """
     :param otu_path: A path to an OTU directory under a src reference directory
     :param new_sequences: List of new sequences under the OTU
@@ -34,6 +34,7 @@ async def write_records(
 
     logger.debug(f"Writing {len(new_sequences)} sequences...")
 
+    new_sequence_paths = []
     for seq_data in new_sequences:
         isolate_data = seq_data.pop("isolate")
         isolate_name = isolate_data["source_name"]
@@ -84,10 +85,15 @@ async def write_records(
             logger.exception(e)
 
         unique_seq.add(seq_hash)
+        sequence_path = iso_path / f"{seq_hash}.json"
 
         logger.info(
-            f"Wrote new sequence '{seq_hash}'", path=str(iso_path / f"{seq_hash}.json")
+            f"Wrote new sequence '{seq_hash}'", path=str(sequence_path)
         )
+
+        new_sequence_paths.append(sequence_path)
+
+    return new_sequence_paths
 
 
 async def store_isolate(

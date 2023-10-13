@@ -1,16 +1,10 @@
-import json
 from pathlib import Path
 import asyncio
 
 import structlog
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    is_v1,
-    search_otu_by_id,
-    generate_otu_dirname,
-)
+from virtool_cli.utils.reference import get_otu_paths, is_v1, generate_otu_dirname
 from virtool_cli.utils.ncbi import request_from_nucleotide
 from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
@@ -94,7 +88,7 @@ async def add_accessions(accessions: list, otu_path: Path):
         logger = logger.bind(accession=accession)
 
         accession_collision = await check_accession_collision(
-            accession, otu_accession_list, logger
+            accession, otu_accession_list
         )
         if accession_collision:
             logger.warning(
@@ -118,12 +112,13 @@ async def add_accessions(accessions: list, otu_path: Path):
     isolate_uids, sequence_uids = await get_unique_ids(get_otu_paths(otu_path.parent))
 
     try:
-        await write_records(
+        new_sequence_paths = await write_records(
             otu_path, new_sequences, isolate_uids, sequence_uids, logger=logger
         )
-        logger.info(
-            f'OTU written to {otu_path.name}. Use "virtool ref add accessions" to add accessions.'
-        )
+        logger.info(f"Accessions written to {otu_path.name}.")
+
+        for path in new_sequence_paths:
+            print(str(path))
     except Exception as e:
         logger.exception(e)
 
@@ -145,17 +140,17 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
     otu_path = await get_otu_path(seq_data, src_path, catalog_path, logger)
 
     otu_accession_list = get_otu_accessions(otu_path)
-    accession_collision = await check_accession_collision(
-        accession, otu_accession_list, logger
-    )
+    accession_collision = await check_accession_collision(accession, otu_accession_list)
     if accession_collision:
-        logger.warning(f"{accession} already in OTU, moving on...", accession=accession)
+        logger.warning(
+            "This accession already exists in the reference. Consider editing the existing sequence.",
+            accession=accession,
+        )
         return
 
     seq_qualifiers = get_qualifiers(seq_data.features)
 
-    isolate_type = check_source_type(seq_qualifiers)
-    if not isolate_type:
+    if not (isolate_type := check_source_type(seq_qualifiers)):
         return
     isolate_name = seq_qualifiers.get(isolate_type)[0]
     isolate = {"source_name": isolate_name, "source_type": isolate_type}
@@ -168,11 +163,19 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
     isolate_uids, sequence_uids = await get_unique_ids(get_otu_paths(src_path))
 
     try:
-        await write_records(
-            otu_path, [new_sequence], isolate_uids, sequence_uids, logger=logger
+        new_sequence_paths = await write_records(
+            otu_path,
+            new_sequences=[new_sequence],
+            unique_iso=isolate_uids,
+            unique_seq=sequence_uids,
+            logger=logger,
         )
     except Exception as e:
         logger.exception(e)
+        new_sequence_paths = []
+
+    for path in new_sequence_paths:
+        print(str(path))
 
 
 async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
@@ -193,66 +196,35 @@ async def get_otu_path(seq_data, src_path: Path, catalog_path: Path, logger):
     if taxid < 0:
         logger.error("No taxon id found!")
 
-    taxid_matches = list(catalog_path.glob(f"{taxid}--*.json"))
-    if taxid_matches:
-        # Get the OTU id directly from the listing
-        listing_path = taxid_matches.pop()
+    # Generate a potential name for the directory and match it against OTU
+    if "organism" not in seq_qualifiers:
+        raise ValueError
+    otu_name = seq_qualifiers["organism"][0]
+    dummy_name = generate_otu_dirname(name=otu_name, otu_id="")
 
-        logger.info(
-            "Found matching listing in catalog.",
-            listing=listing_path.name,
-        )
+    otu_matches = list(src_path.glob(f"{dummy_name}*"))
+    if otu_matches:
+        otu_path = otu_matches.pop()
 
-        matching_listing = json.loads(listing_path.read_text())
+        logger.debug("Unlisted matching OTU found", otu=otu_path.name)
 
-        otu_id = matching_listing["_id"]
-
-        if otu_path := search_otu_by_id(otu_id, src_path):
-            logger.debug(
-                "Matching OTU directory found",
-                listing=listing_path.name,
-                otu=otu_path.name,
-            )
-
-            return otu_path
-
-        logger.error("No matching OTU found in src directory.")
-
-        return None
+        return otu_path
 
     else:
-        # Generate a potential name for the directory and match it against OTU
-        dummy_name = generate_otu_dirname(name=seq_data["ScientificName"], otu_id="")
-
-        otu_matches = list(src_path.glob(f"{dummy_name}*"))
-        if otu_matches:
-            otu_path = otu_matches.pop()
-
-            logger.debug("Unlisted matching OTU found", otu=otu_path.name)
-
-            return otu_path
-
-        else:
-            logger.error("No matching OTU found in src directory.")
-            return None
+        logger.error("No matching OTU found in src directory.")
+        return None
 
 
-async def check_accession_collision(
-    new_accession: str, accession_list: list, logger
-) -> bool:
+async def check_accession_collision(new_accession: str, accession_list: list) -> bool:
     """
     Check if a new accession already exists in a list of already-assessed accessions.
 
     :param new_accession: A new accession
     :param accession_list: A list of accessions that should not be added anew
-    :param logger: Optional entry point for an existing BoundLogger
     :return: True if the accession collides with the accession list, False if not
     """
     for existing_accession in accession_list:
         if new_accession.split(".")[0] == existing_accession.split(".")[0]:
-            logger.error(
-                "This accession already exists in the reference. Consider editing the existing sequence."
-            )
             return True
 
     return False
@@ -265,8 +237,6 @@ def find_taxon_id(db_xref: list[str]) -> int:
     :param db_xref: List of NCBI cross-reference information taken from NCBI taxonomy record
     :return: NCBI taxon ID as an integer if found, -1 if not found.
     """
-    print(f"xrefs: {db_xref}")
-
     for xref in db_xref:
         [key, value] = xref.split(":")
         if key == "taxon":

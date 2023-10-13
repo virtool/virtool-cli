@@ -94,7 +94,10 @@ async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
         logger.error("Failed to write OTU data to directory")
         return
 
-    logger.info("OTU data written", otu_path=str(otu_path))
+    logger.info("OTU data written to otu_path.", otu_path=str(otu_path))
+    logger.warning(
+        'otu_path is empty. Use "virtool ref add accessions" before building, updating or submitting.'
+    )
 
     listing_path = await add_new_listing(
         otu_path, catalog_path=catalog_path, logger=logger
@@ -104,6 +107,9 @@ async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
         return
 
     logger.info("Wrote catalog listing", listing=str(listing_path))
+
+    # Sent new OTU path to stdout
+    print(str(otu_path))
 
 
 def generate_otu(taxonomy_data: dict, new_id: str) -> dict:
