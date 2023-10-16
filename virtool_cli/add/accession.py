@@ -10,7 +10,7 @@ from virtool_cli.utils.reference import (
     generate_otu_dirname,
     search_otu_by_id,
 )
-from virtool_cli.utils.ncbi import request_from_nucleotide
+from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_taxonomy_record
 from virtool_cli.utils.id_generator import get_unique_ids
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
 from virtool_cli.utils.storage import write_records
@@ -104,10 +104,19 @@ async def add_accessions(accessions: list, otu_path: Path):
 
         seq_qualifiers = get_qualifiers(record.features)
 
-        isolate_type = check_source_type(seq_qualifiers)
-        if not isolate_type:
-            return
-        isolate_name = seq_qualifiers.get(isolate_type)[0]
+        if isolate_type := check_source_type(seq_qualifiers):
+            # Isolate metadata contained in qualifiers
+            isolate_name = seq_qualifiers.get(isolate_type)[0]
+
+        else:
+            # Extract isolate metadata from NCBI Taxonomy docsum
+            taxid = find_taxon_id(seq_qualifiers["db_xref"])
+            taxid_docsum = await fetch_taxonomy_record(taxid)
+            logger.debug(taxid_docsum)
+
+            isolate_type = taxid_docsum.get("Rank", "unknown")
+            isolate_name = taxid_docsum.get("ScientificName")
+
         isolate = {"source_name": isolate_name, "source_type": isolate_type}
 
         new_sequence = format_sequence(record=record, qualifiers=seq_qualifiers)
@@ -159,9 +168,19 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
 
     seq_qualifiers = get_qualifiers(seq_data.features)
 
-    if not (isolate_type := check_source_type(seq_qualifiers)):
-        return
-    isolate_name = seq_qualifiers.get(isolate_type)[0]
+    if isolate_type := check_source_type(seq_qualifiers):
+        # Isolate metadata contained in qualifiers
+        isolate_name = seq_qualifiers.get(isolate_type)[0]
+
+    else:
+        # Extract isolate metadata from NCBI Taxonomy docsum
+        taxid = find_taxon_id(seq_qualifiers["db_xref"])
+        taxid_docsum = await fetch_taxonomy_record(taxid)
+        logger.debug(taxid_docsum)
+
+        isolate_type = taxid_docsum.get("Rank", "unknown")
+        isolate_name = taxid_docsum.get("ScientificName")
+
     isolate = {"source_name": isolate_name, "source_type": isolate_type}
 
     new_sequence = format_sequence(record=seq_data, qualifiers=seq_qualifiers)
