@@ -6,7 +6,7 @@ from paths import TEST_FILES_PATH
 
 TEST_PATH = TEST_FILES_PATH / "reference.json"
 TEST_WITH_INDENT_PATH = TEST_FILES_PATH / "reference_with_indent.json"
-TEST_DIRECTORY_PATH = TEST_FILES_PATH / "src_test"
+TEST_DIRECTORY_PATH = TEST_FILES_PATH / "src"
 
 
 @pytest.fixture()
@@ -16,7 +16,7 @@ def output(tmpdir):
 
 @pytest.fixture()
 def command(output):
-    return ["virtool", "ref", "divide", "-o", str(output), "-f"]
+    return ["virtool", "ref", "divide", "-o", str(output), "-src"]
 
 
 @pytest.mark.parametrize("src", [TEST_PATH, TEST_WITH_INDENT_PATH])

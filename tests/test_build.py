@@ -6,8 +6,7 @@ import subprocess
 
 from paths import TEST_FILES_PATH
 
-TEST_SRC_PATH = TEST_FILES_PATH / "src_test"
-TEST_BUILD_PATH = TEST_FILES_PATH / "reference.json"
+TEST_PATH = TEST_FILES_PATH / "reference.json"
 TEST_WITH_INDENT_PATH = TEST_FILES_PATH / "reference_with_indent.json"
 
 
@@ -25,7 +24,7 @@ def command(output):
         "-o",
         str(output),
         "-src",
-        TEST_SRC_PATH,
+        TEST_FILES_PATH / "src",
     ]
 
 
@@ -48,6 +47,7 @@ def test_version(version, command, output):
 def test_created_at(command, output):
     """
     Test that the time of the creation in the reference.json file is correct
+
     """
 
     subprocess.call(command)
@@ -63,13 +63,14 @@ def test_created_at(command, output):
 def test_indent(command, output, indent):
     """
     Test that the indent in the reference.json file is properly set
+
     """
 
     if indent:
         command.append("-i")
         expected_path = TEST_WITH_INDENT_PATH
     else:
-        expected_path = TEST_BUILD_PATH
+        expected_path = TEST_PATH
 
     subprocess.call(command)
 

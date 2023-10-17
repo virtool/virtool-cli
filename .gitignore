@@ -5,6 +5,3 @@ __pycache__
 .pytest_cache
 /.cli
 .DS_Store
-Thumbs.db
-.vscode
-doc

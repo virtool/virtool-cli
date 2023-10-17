@@ -1,19 +1,10 @@
-import asyncio
 import json
-from pathlib import Path
+import pathlib
+from typing import Tuple
+
+from rich.console import Console
+
 import arrow
-import aiofiles
-import structlog
-
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    get_isolate_paths,
-    get_sequence_paths,
-    is_v1,
-)
-
-base_logger = structlog.get_logger()
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -22,108 +13,64 @@ ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
 SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
-def run(
-    src_path: Path,
-    output_path: Path,
-    indent: bool,
-    version: str,
-    debugging: bool = False,
-):
+def run(src_path: pathlib.Path, output: pathlib.Path, indent: bool, version: str):
     """
     Build a Virtool reference JSON file from a data directory.
 
     :param src_path: Path to database src directory
-    :param output_path: The output path for the reference.json file
-    :param indent: A flag to indicate whether the output file should be indented
-    :param version: The version string to include in the reference.json file
-    :param debugging: Enables verbose logs for debugging purposes
-    """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = base_logger.bind(src=str(src_path))
-
-    if is_v1(src_path):
-        logger.error(
-            "This reference database is a deprecated v1 reference."
-            + 'Run "virtool ref migrate" before trying again.'
-        )
-        return
-
-    try:
-        asyncio.run(build_from_src(src_path, output_path, indent, version))
-    except FileNotFoundError as e:
-        logger.exception(e)
-    except Exception as e:
-        logger.exception(e)
-
-
-async def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str):
-    """
-    Build a Virtool reference JSON file from a data directory.
-
-    :param src_path: Path to database src directory
-    :param output_path: The output path for the reference.json file
+    :param output: The output path for the reference.json file
     :param indent: A flag to indicate whether the output file should be indented
     :param version: The version string to include in the reference.json file
     """
-    logger = base_logger.bind(src=str(src_path), output=str(output_path))
+    console = Console()
+    meta = parse_meta(src_path)
 
-    meta = await parse_meta(src_path)
-    if meta:
-        logger.debug(
-            "Metadata parsed", meta=meta, metadata_path=str(src_path / "meta.json")
-        )
-        data = {
-            "data_type": meta.get("data_type", "genome"),
-            "organism": meta.get("organism", ""),
-        }
+    data = {
+        "data_type": meta.get("data_type", "genome"),
+        "organism": meta.get("organism", ""),
+    }
 
-    else:
-        logger.warning(
-            f'Metadata file not found at {src_path / "meta.json"}',
-            metadata_path=str(src_path / "meta.json"),
-        )
+    otus = list()
 
-        data = {"data_type": "genome", "organism": ""}
+    alpha_paths = [path for path in src_path.iterdir() if path.is_dir()]
 
-    otus = []
+    for alpha in alpha_paths:
 
-    for otu_path in get_otu_paths(src_path):
-        try:
-            otu = await parse_otu_contents(otu_path)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logger.error("Reference data at src_path is invalid.")
-            logger.exception(e)
-            return
-        except Exception as e:
-            logger.exception(e)
-            return
+        otu_paths = parse_alpha(alpha)
 
-        otus.append(otu)
+        for otu_path in otu_paths:
 
-        logger.debug(
-            f"Added {otu['_id']} to reference data",
-            path=str(otu_path.relative_to(src_path)),
-        )
+            otu, isolate_ids = parse_otu(otu_path)
 
-    data.update(
-        {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
-    )
+            for isolate_path in isolate_ids:
+
+                isolate, sequence_ids = parse_isolate(isolate_path)
+
+                for sequence_path in sequence_ids:
+                    with open(sequence_path, "r") as f:
+                        sequence = json.load(f)
+
+                    isolate["sequences"].append(sequence)
+
+                otu["isolates"].append(isolate)
+
+            otus.append(otu)
 
     try:
-        async with aiofiles.open(output_path, "w") as f:
-            await f.write(
-                json.dumps(data, indent=4 if indent else None, sort_keys=True)
+        with open(output, "w") as f:
+            data.update(
+                {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
             )
 
-        logger.info("Reference file built at output")
+            json.dump(data, f, indent=4 if indent else None, sort_keys=True)
+            console.print(f"[green]  ✔ [/green]" + 
+                f"Reference folder '{src_path}' has been written to '{output}'")
+    except:
+        console.print(f"[red]  ✘ [/red]" + 
+                f"Reference folder '{src_path}' could not be written to '{output}'")
 
-        print(str(output_path.resolve()))
 
-    except Exception as e:
-        logger.exception(e)
-
-
-async def parse_meta(src_path: Path) -> dict:
+def parse_meta(src_path: pathlib.Path) -> dict:
     """
     Deserializes and returns meta.json if found, else returns an empty dictionary.
 
@@ -131,18 +78,15 @@ async def parse_meta(src_path: Path) -> dict:
     :return: The deserialized meta.json object or an empty dictionary
     """
     try:
-        async with aiofiles.open(src_path / "meta.json", "r") as f:
-            contents = await f.read()
-            return json.loads(contents)
-
+        with open(src_path / "meta.json", "r") as f:
+            return json.load(f)
     except FileNotFoundError:
-        return {}
+        return dict()
 
 
-def parse_alpha(alpha: Path) -> list:
+def parse_alpha(alpha: pathlib.Path) -> list:
     """
-    Generates and returns a list with every OTU in the directory of the given alpha.
-    Deprecated as of v2.
+    Generates and returns a list with every OTU in the directory of the given alpha
 
     :param alpha: Path to a given alpha directory in a reference
     :return: A list containing all the OTU in the given directory
@@ -150,56 +94,41 @@ def parse_alpha(alpha: Path) -> list:
     return [otu for otu in alpha.iterdir() if otu.is_dir()]
 
 
-async def parse_otu_contents(otu_path: Path) -> dict:
+def parse_otu(otu_path: pathlib.Path) -> Tuple[dict, list]:
     """
-    Traverses, deserializes and returns all data under an OTU directory.
+    Creates an list of isolate IDs for a given OTU
 
-    :param otu_path: Path to an OTU directory
-    :return: All isolate and sequence data under an OTU,
-        deserialized and compiled in a dict
+    :param otu_path: Path to a OTU directory
+    :return: The dictionary and list of isolate ids for a given OTU
     """
-    async with aiofiles.open(otu_path / "otu.json", "r") as f:
-        contents = await f.read()
-        otu = json.loads(contents)
+    with open(otu_path / "otu.json", "r") as f:
+        otu = json.load(f)
 
-    logger = base_logger.bind(path=otu_path, otu_id=otu["_id"])
+    otu["isolates"] = list()
 
-    isolates = []
+    isolate_ids = [
+        i for i in otu_path.iterdir() if i.name != "otu.json" and i.name[0] != "."
+    ]
 
-    for isolate_path in get_isolate_paths(otu_path):
-        async with aiofiles.open(isolate_path / "isolate.json", "r") as f:
-            contents = await f.read()
-            isolate = json.loads(contents)
-
-        sequences = []
-        for sequence_path in get_sequence_paths(isolate_path):
-            sequence = await parse_sequence(sequence_path)
-
-            sequences.append(sequence)
-            logger.debug(
-                f"Added sequence {sequence.get('accession')} under id={sequence.get('_id')}",
-                sequence_id=sequence,
-                isolate_id=isolate["id"],
-            )
-
-        isolate["sequences"] = sequences
-
-        isolates.append(isolate)
-
-    otu["isolates"] = isolates
-
-    return otu
+    return otu, isolate_ids
 
 
-async def parse_sequence(path):
+def parse_isolate(isolate_path: pathlib.Path) -> Tuple[dict, list]:
     """
-    Asynchronously reads a sequence file and returns the contents as a dictionary.
+    Creates a list of sequence IDs for a given sequence
 
-    :param path:
-    :return: A deserialized sequence
+    :param isolate_path: Path to a isolate directory
+    :return: The dictionary and list of sequenece ids for a given isolate
     """
-    async with aiofiles.open(path, "r") as f:
-        contents = await f.read()
-        sequence = json.loads(contents)
+    with open(isolate_path / "isolate.json", "r") as f:
+        isolate = json.load(f)
 
-    return sequence
+    isolate["sequences"] = list()
+
+    sequence_ids = [
+        i
+        for i in isolate_path.glob('*.json')
+        if i.name != "isolate.json" and i.name[0] != "."
+    ]
+
+    return isolate, sequence_ids
