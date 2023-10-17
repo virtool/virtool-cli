@@ -1,4 +1,3 @@
-import json
 import re
 from pathlib import Path
 from typing import Optional
@@ -64,19 +63,6 @@ def search_otu_by_id(otu_id: str, src_path: Path) -> Optional[Path]:
             return path
     
     return None
-
-
-def read_otu(path: Path) -> dict:
-    """
-    Returns a json file in dict form
-
-    :param path: Path to an OTU directory under a reference source
-    :return: Deserialized OTU data in dict form
-    """
-    with open(path / "otu.json", "r") as f:
-        otu = json.load(f)
-
-    return otu
 
 
 def generate_otu_dirname(name: str, otu_id: str = '') -> str:

@@ -1,15 +1,14 @@
 from pathlib import Path
 import asyncio
 import structlog
-from structlog import get_logger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    read_otu,
-)
-from virtool_cli.catalog.listings import generate_listing, write_listing
+from virtool_cli.utils.reference import get_otu_paths
+from virtool_cli.utils.storage import read_otu
+from virtool_cli.catalog.listings import generate_listing, write_new_listing
 from virtool_cli.catalog.helpers import get_otu_accessions_metadata
+
+base_logger = structlog.get_logger()
 
 
 def run(src_path: Path, catalog_path: Path, debugging: bool = False):
@@ -21,7 +20,7 @@ def run(src_path: Path, catalog_path: Path, debugging: bool = False):
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = get_logger().bind(src=str(src_path), catalog=str(catalog_path))
+    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
     logger.info("Creating new catalog in catalog path")
 
     asyncio.run(initialize(src_path, catalog_path))
@@ -37,7 +36,7 @@ async def initialize(src_path: Path, catalog_path: Path):
     if not catalog_path.exists():
         catalog_path.mkdir()
 
-    logger = get_logger().bind(src=str(src_path), catalog=str(catalog_path))
+    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
 
     logger.debug("Starting catalog generation...")
 
@@ -62,13 +61,13 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
     :param src_path: Path to a reference directory
     :param queue: Queue holding relevant OTU information from src and fetched NCBI taxonomy id
     """
-    logger = get_logger(__name__ + ".fetcher").bind(src=str(src_path))
+    logger = structlog.get_logger(__name__ + ".fetcher").bind(src=str(src_path))
     logger.debug("Starting fetcher...")
 
     for otu_path in get_otu_paths(src_path):
         logger = logger.bind(otu_path=str(otu_path.name))
 
-        otu_data = read_otu(otu_path)
+        otu_data = await read_otu(otu_path)
         otu_id = otu_data["_id"]
 
         logger = logger.bind(
@@ -76,7 +75,7 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
             otu_id=otu_id,
         )
 
-        sequences = get_otu_accessions_metadata(otu_path)
+        sequences = await get_otu_accessions_metadata(otu_path)
         accessions = list(sequences.keys())
 
         listing = await generate_listing(
@@ -96,7 +95,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
     :param catalog_path: Path to an accession catalog directory
     :param queue: Queue of parsed OTU data awaiting processing
     """
-    logger = get_logger(__name__ + ".writer").bind(catalog=str(catalog_path))
+    logger = structlog.get_logger(__name__ + ".writer").bind(catalog=str(catalog_path))
 
     while True:
         packet = await queue.get()
@@ -106,11 +105,12 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         logger.debug(f"Got listing data for {packet['otu_id']} from the queue")
 
         listing = packet["listing"]
-        taxid = listing["taxid"]
+        listing["accessions"]["excluded"] = {}
 
-        await write_listing(
-            taxid=taxid, listing=listing, catalog_path=catalog_path, logger=logger
-        )
+        listing_path = await write_new_listing(listing, catalog_path)
+
+        if listing_path is None:
+            logger.error("Listing could not be created under catalog")
 
         await asyncio.sleep(0.1)
         queue.task_done()

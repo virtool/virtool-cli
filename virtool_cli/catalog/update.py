@@ -1,17 +1,17 @@
 from pathlib import Path
-import json
 import asyncio
 import structlog
-
 from structlog import get_logger, BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    search_otu_by_id,
-    read_otu,
+from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id
+from virtool_cli.utils.storage import read_otu
+from virtool_cli.catalog.listings import (
+    parse_listing,
+    generate_listing,
+    update_listing,
+    write_new_listing,
 )
-from virtool_cli.catalog.listings import generate_listing, write_listing
 from virtool_cli.catalog.helpers import (
     get_catalog_paths,
     filter_catalog,
@@ -88,7 +88,7 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
         existing_accessions = set(get_otu_accessions(otu_path))
         logger.debug(f"current accessions: {existing_accessions}")
 
-        listing = json.loads(listing_path.read_text())
+        listing = await parse_listing(listing_path)
 
         logger = logger.bind(otu_name=listing["name"], otu_id=otu_id, taxid=taxid)
 
@@ -154,8 +154,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
 
         write_logger.debug(f"New listing:\n{listing}")
 
-        with open(packet["path"], "w") as f:
-            json.dump(packet["listing"], f, indent=2, sort_keys=True)
+        await update_listing(listing, listing_path)
 
         await asyncio.sleep(0.1)
         queue.task_done()
@@ -208,11 +207,11 @@ async def add_listing(
     :param catalog_path: Path to a catalog directory
     :param logger: Optional entry point for an existing BoundLogger
     """
-    otu_data = read_otu(otu_path)
+    otu_data = await read_otu(otu_path)
 
     logger.info(f"No accession record for {otu_data['taxid']}.")
 
-    sequences = get_otu_accessions_metadata(otu_path)
+    sequences = await get_otu_accessions_metadata(otu_path)
     accessions = list(sequences.keys())
 
     new_listing = await generate_listing(
@@ -226,8 +225,8 @@ async def add_listing(
         logger.error("Could not generate a listing for this OTU.")
         return
 
-    await write_listing(
-        otu_data["taxid"], new_listing, catalog_path=catalog_path, logger=logger
-    )
+    listing_path = await write_new_listing(new_listing, catalog_path=catalog_path)
+    if listing_path is None:
+        logger.error("Listing could not be created under catalog")
 
     return

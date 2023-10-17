@@ -10,6 +10,8 @@ from virtool_cli.utils.reference import (
     get_sequence_paths,
 )
 from virtool_cli.utils.ncbi import fetch_taxonomy_rank, fetch_upstream_record_taxids
+from virtool_cli.utils.storage import parse_sequence
+from virtool_cli.catalog.listings import parse_listing
 
 
 def get_catalog_paths(catalog: Path) -> list:
@@ -67,8 +69,7 @@ async def find_taxid_from_accessions(
     :param logger: Entry point for an existing BoundLogger
     :return: Taxon ID as string
     """
-    with open(listing_path, "r") as f:
-        listing = json.load(f)
+    listing = await parse_listing(listing_path)
 
     accessions = listing["accessions"]["included"]
     logger.debug("Searching unique IDs:", uids=accessions)
@@ -118,7 +119,7 @@ def get_otu_accessions(otu_path: Path) -> list:
     return accessions
 
 
-def get_sequence_metadata(sequence_path: Path) -> dict:
+async def get_sequence_metadata(sequence_path: Path) -> dict:
     """
     Gets the accession length and segment name from a sequence file
     and returns it in a dict
@@ -126,7 +127,7 @@ def get_sequence_metadata(sequence_path: Path) -> dict:
     :param sequence_path: Path to a sequence file
     :return: A dict containing the sequence accession, sequence length and segment name if present
     """
-    sequence = json.loads(sequence_path.read_text())
+    sequence = await parse_sequence(sequence_path)
 
     sequence_metadata = {
         "accession": sequence["accession"],
@@ -140,7 +141,7 @@ def get_sequence_metadata(sequence_path: Path) -> dict:
     return sequence_metadata
 
 
-def get_otu_accessions_metadata(otu_path: Path) -> dict:
+async def get_otu_accessions_metadata(otu_path: Path) -> dict:
     """
     Returns sequence metadata for all sequences present under an OTU
 
@@ -152,8 +153,10 @@ def get_otu_accessions_metadata(otu_path: Path) -> dict:
 
     for isolate_path in get_isolate_paths(otu_path):
         for sequence_path in get_sequence_paths(isolate_path):
-            sequence_metadata = get_sequence_metadata(sequence_path)
+            sequence_metadata = await get_sequence_metadata(sequence_path)
+
             accession = sequence_metadata["accession"]
+
             all_metadata[accession] = sequence_metadata
 
     return all_metadata

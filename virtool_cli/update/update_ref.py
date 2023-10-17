@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 import asyncio
 import structlog
@@ -6,8 +5,11 @@ import structlog
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id, is_v1
 from virtool_cli.utils.id_generator import get_unique_ids
+from virtool_cli.utils.format import process_records
+from virtool_cli.utils.storage import write_records
+from virtool_cli.update.update import request_new_records
+from virtool_cli.catalog.listings import parse_listing
 from virtool_cli.catalog.helpers import filter_catalog
-from virtool_cli.update.update import request_new_records, process_records, write_data
 
 DEFAULT_INTERVAL = 0.001
 
@@ -129,7 +131,7 @@ async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
     logger.debug("Starting fetcher...")
 
     for path in listing_paths:
-        acc_listing = json.loads(path.read_text())
+        acc_listing = await parse_listing(path)
 
         # extract taxon ID and _id hash from listing filename
         [taxid, otu_id] = path.stem.split("--")
@@ -227,7 +229,7 @@ async def writer_loop(
 
         otu_path = search_otu_by_id(otu_id, src_path)
 
-        await write_data(otu_path, sequence_data, unique_iso, unique_seq, logger)
+        await write_records(otu_path, sequence_data, unique_iso, unique_seq, logger)
 
         await asyncio.sleep(DEFAULT_INTERVAL)
         queue.task_done()

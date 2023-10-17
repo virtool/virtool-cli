@@ -8,6 +8,7 @@ from structlog import BoundLogger
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+from virtool_cli.catalog.listings import parse_listing
 
 base_logger = structlog.get_logger()
 
@@ -51,7 +52,7 @@ async def filter_refseq_otu(listing_path: Path, logger: BoundLogger = base_logge
     :param listing_path: Path to an individual listing in an accession catalog directory
     :param logger: Optional entry point for an existing BoundLogger
     """
-    listing = json.loads(listing_path.read_text())
+    listing = await parse_listing(listing_path)
 
     logger = logger.bind(name=listing["name"])
 

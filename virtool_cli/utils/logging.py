@@ -1,9 +1,11 @@
+import os
 import sys
 import structlog
 import logging
 
 logging.basicConfig(
     format="%(message)s",
+    stream=sys.stderr,
     level=logging.DEBUG,
 )
 
@@ -22,7 +24,7 @@ shared_processors = [
             }
         ),
 ]
-if sys.stderr.isatty():
+if sys.stderr.isatty() and not os.environ.get("NO_COLOR"):
     processors = shared_processors + [
         structlog.dev.ConsoleRenderer()
     ]
