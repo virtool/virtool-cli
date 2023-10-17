@@ -1,0 +1,19 @@
+{
+  "_id": "9da7c10d",
+  "accessions": {
+    "excluded": [],
+    "included": [
+      "NC_010239.1"
+    ]
+  },
+  "name": "Radish leaf curl betasatellite",
+  "schema": [
+    {
+      "length": 1358,
+      "molecule": "ssDNA",
+      "name": "Betasatellite",
+      "required": true
+    }
+  ],
+  "taxid": 662596
+}
