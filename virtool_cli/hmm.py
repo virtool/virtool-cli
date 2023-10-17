@@ -1,20 +1,15 @@
 import subprocess
 import sys
 import click
+import virtool_cli.vfam
+
 from pathlib import Path
-
-from virtool_cli.vfam.vfam import run
-
-ERROR_MESSAGE = click.style("ERROR: ", fg="red")
+from virtool_cli.vfam_console import console
 
 
 @click.group("hmm")
 def hmm():
-    """
-    Commands related to Hidden Markov Models.
-
-    Requires bioconda packages: cd-hit, hmmer, blast, mcl, muscle
-    """
+    """Commands related to HMMs"""
     pass
 
 
@@ -85,18 +80,15 @@ def vfam(
     filter_clusters: bool,
     min_sequences: int,
 ):
-    """
-    Build profile HMMs from FASTAs
-    """
+    """Build profile HMMS from fasta."""
     try:
         check_vfam_dependencies()
-    except (FileNotFoundError, PermissionError) as e:
-        click.echo(ERROR_MESSAGE + "Missing external program dependency")
-        click.echo(e)
+    except (FileNotFoundError, PermissionError):
+        console.print("Missing external program dependency.", style="red")
         sys.exit(1)
 
     try:
-        run(
+        virtool_cli.vfam.run(
             src_path,
             Path(output),
             prefix,
@@ -111,7 +103,7 @@ def vfam(
             min_sequences,
         )
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + "Not a valid reference directory.")
+        console.print("Not a valid reference directory.", style="red")
 
 
 def check_vfam_dependencies():

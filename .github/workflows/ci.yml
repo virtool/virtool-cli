@@ -1,34 +1,19 @@
 name: ci
+
 on:
   pull_request:
-    branches: [ main, alpha ]
+    branches: [ main ]
   push:
-    branches: [ main, alpha ]
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: continuumio/miniconda3:latest
-      env:
-        NODE_ENV: development
-
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Install conda and poetry
-        run: |
-          conda install -c bioconda cd-hit hmmer blast mcl muscle -q -y
-          pip install poetry
-          
-      - name: Install package
-        run: |
-          poetry install
-      
-      - name: Run tests
-        run: |
-          poetry run pytest
-      
+      - uses: actions/checkout@v2
+      - name: Run CI
+        run:
+          docker build -t virtool/cli:test --target=test .
   release:
     if: github.event_name == 'push'
     needs:
@@ -36,11 +21,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
       - name: Setup NodeJS
         uses: actions/setup-node@v1
         with:
-          node-version: 18
+          node-version: 16
       - name: Install semantic-release
         run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
       - name: Release
