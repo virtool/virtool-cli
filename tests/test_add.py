@@ -233,7 +233,9 @@ class TestAddOTU:
 
 
 class TestInitAdd:
-    @pytest.mark.parametrize("taxon_id, accession", [(908125, "NC_031754")])
+    @pytest.mark.parametrize(
+        "taxon_id, accession", [(908125, "NC_031754"), (1016856, "NC_015504")]
+    )
     def test_init_and_add(self, empty_repo, taxon_id, accession):
         src_path = empty_repo / "src"
         catalog_path = empty_repo / ".cache/catalog"
