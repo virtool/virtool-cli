@@ -7,7 +7,7 @@ from structlog import BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import get_spelling
-from virtool_cli.catalog.helpers import get_catalog_paths
+from virtool_cli.catalog.catalog import get_catalog_paths
 
 LISTING_KEYS = {"_id", "accessions", "name", "schema", "taxid"}
 

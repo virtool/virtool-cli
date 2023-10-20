@@ -12,8 +12,7 @@ import aiojobs
 from Bio import Entrez, SeqIO
 import structlog
 
-from virtool_cli.utils.reference import get_otu_paths
-from virtool_cli.utils.id_generator import get_unique_ids
+from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
 
 logger = structlog.get_logger()

@@ -202,3 +202,16 @@ async def get_spelling(name: str, db: str = 'taxonomy') -> str:
         raise e
     
     return record['CorrectedQuery']
+
+
+async def fetch_isolate_metadata(taxid: int) -> dict:
+    """
+    :param qualifiers: Dict of qualifiers from SeqRecord
+    :return: Dict of isolate name and type
+    """
+    taxid_docsum = await fetch_taxonomy_record(str(taxid))
+
+    isolate_type = taxid_docsum.get("Rank", "unknown")
+    isolate_name = taxid_docsum.get("ScientificName")
+
+    return {"source_name": isolate_name, "source_type": isolate_type}

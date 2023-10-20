@@ -14,16 +14,6 @@ from virtool_cli.utils.storage import parse_sequence
 from virtool_cli.catalog.listings import parse_listing
 
 
-def get_catalog_paths(catalog: Path) -> list:
-    """
-    Return a list of paths to accession listings contained in an accession catalog.
-
-    :param catalog: Path to an accession catalog directory
-    :return: A list of paths representing the contents of the accession catalog.
-    """
-    return list(catalog.glob("*--*.json"))
-
-
 def filter_catalog(src_path: Path, catalog_path: Path) -> list:
     """
     Return all paths to accession listings relevant to the source reference.

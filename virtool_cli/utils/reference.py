@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 
 def is_v1(src_path: Path) -> bool:
@@ -83,3 +83,39 @@ def generate_otu_dirname(name: str, otu_id: str = '') -> str:
     dirname += '--' + otu_id
 
     return dirname
+
+
+async def get_unique_ids(otu_paths: list) -> Tuple[set, set]:
+    """
+    Returns sets containing unique random alphanumeric ids for both the isolates and the sequences
+
+    :param otu_paths: List of paths to all OTU in a reference
+    :return: Sets containing unique ids for both isolates and sequences
+    """
+    isolate_ids = set()
+    sequence_ids = set()
+
+    for otu_path in otu_paths:
+
+        for isolate_path in get_isolate_paths(otu_path):
+            isolate_ids.add(isolate_path.name)
+
+            for seq_path in get_sequence_paths(isolate_path):
+                sequence_ids.add(seq_path.stem)
+
+    return isolate_ids, sequence_ids
+
+
+async def get_unique_otu_ids(src_path: Path) -> list:
+    """
+    Returns a list of all unique OTU ids included in the reference database
+
+    :param src_path: Path to a Virtool reference database directory
+    :return: List of all unique OTU ids
+    """
+    unique_otus = [
+        otu_path.stem.split("--")[1]
+        for otu_path in src_path.iterdir()
+        if otu_path.is_dir()
+    ]
+    return unique_otus

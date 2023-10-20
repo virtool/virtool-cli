@@ -65,27 +65,9 @@ async def fetcher_loop(src_path: Path, queue: asyncio.Queue):
     logger.debug("Starting fetcher...")
 
     for otu_path in get_otu_paths(src_path):
-        logger = logger.bind(otu_path=str(otu_path.name))
+        listing = await initialize_listing(otu_path, logger)
 
-        otu_data = await read_otu(otu_path)
-        otu_id = otu_data["_id"]
-
-        logger = logger.bind(
-            otu_name=otu_data.get("name", ""),
-            otu_id=otu_id,
-        )
-
-        sequences = await get_otu_accessions_metadata(otu_path)
-        accessions = list(sequences.keys())
-
-        listing = await generate_listing(
-            otu_data=otu_data,
-            accession_list=accessions,
-            sequence_metadata=sequences,
-            logger=logger,
-        )
-
-        await queue.put({"otu_id": otu_id, "listing": listing})
+        await queue.put({"otu_id": listing["_id"], "listing": listing})
 
 
 async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
@@ -114,3 +96,66 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
 
         await asyncio.sleep(0.1)
         queue.task_done()
+
+
+def run_otu(otu_path, debugging: bool = False):
+    """
+    CLI entry point for catalog.initialize.initialize_OTU()
+
+    :param src_path: Path to a reference directory
+    :param catalog_path: Path to an accession catalog directory
+    :param debugging: Enables verbose logs for debugging purposes
+    """
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    logger = base_logger.bind(src=str(otu_path), catalog=str(catalog_path))
+    logger.info("Creating new catalog in catalog path")
+
+    asyncio.run(initialize_OTU(otu_path, catalog_path))
+
+
+async def initialize_OTU(otu_path: Path, catalog_path: Path, logger=base_logger):
+    """
+    Take an OTU path and initialize a new catalog listing for the contents.
+
+    :param otu_path:
+    :param catalog_path:
+    """
+    logger = logger.bind(otu_path=str(otu_path.name))
+
+    otu_data = await read_otu(otu_path)
+    otu_id = otu_data["_id"]
+
+    logger = logger.bind(
+        otu_name=otu_data.get("name", ""),
+        otu_id=otu_id,
+    )
+
+    listing = await initialize_listing(otu_path, logger)
+
+    listing_path = await write_new_listing(listing, catalog_path)
+
+    print(listing_path)
+
+
+async def initialize_listing(otu_path: Path, logger=base_logger) -> dict:
+    logger = logger.bind(otu_path=str(otu_path.name))
+
+    otu_data = await read_otu(otu_path)
+    otu_id = otu_data["_id"]
+
+    logger = logger.bind(
+        otu_name=otu_data.get("name", ""),
+        otu_id=otu_id,
+    )
+
+    sequences = await get_otu_accessions_metadata(otu_path)
+    accessions = list(sequences.keys())
+
+    listing = await generate_listing(
+        otu_data=otu_data,
+        accession_list=accessions,
+        sequence_metadata=sequences,
+        logger=logger,
+    )
+
+    return listing
