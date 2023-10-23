@@ -1,10 +1,9 @@
 import pytest
 from pathlib import Path
-import json
 import shutil
 import subprocess
 
-from virtool_cli.utils.reference import get_isolate_paths
+from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 
 from paths import TEST_FILES_PATH
 
@@ -33,6 +32,21 @@ def empty_repo(tmp_path):
     subprocess.call(["virtool", "ref", "init", "-repo", str(new_repo_path)])
 
     return new_repo_path
+
+
+def get_all_sequence_paths(otu_path: Path) -> set[Path]:
+    sequence_paths = set()
+
+    for isolate_path in otu_path.iterdir():
+        if not isolate_path.is_dir():
+            continue
+
+        for sequence_path in get_sequence_paths(isolate_path):
+            sequence_paths.add(sequence_path)
+
+    print(sequence_paths)
+
+    return sequence_paths
 
 
 def run_build(src_path, build_path):
@@ -73,13 +87,13 @@ class TestAddAccession:
         """
         Add into an existing isolate directory
         """
-        isolate_path = src_path / otu_dirname
+        otu_path = src_path / otu_dirname
 
-        pre_sequence_paths = set(isolate_path.glob("*.json"))
+        pre_sequence_paths = get_all_sequence_paths(otu_path)
 
         self.run_command(accession, src_path, catalog_path)
 
-        post_sequence_paths = set(isolate_path.glob("*.json"))
+        post_sequence_paths = get_all_sequence_paths(otu_path)
 
         return pre_sequence_paths, post_sequence_paths
 
@@ -100,18 +114,21 @@ class TestAddAccession:
         return pre_isolate_paths, post_isolate_paths
 
     @pytest.mark.parametrize(
-        "accession, isolate_subpath",
-        [("DQ178612", "cabbage_leaf_curl_jamaica_virus--d226290f/d293d531")],
+        "accession, otu_subpath",
+        [
+            ("DQ178612", "cabbage_leaf_curl_jamaica_virus--d226290f"),
+            ("NC_038793", "cabbage_leaf_curl_jamaica_virus--d226290f"),
+        ],
     )
     def test_add_accession_success(
-        self, accession, isolate_subpath, work_path, work_catalog_path
+        self, accession, otu_subpath, work_path, work_catalog_path
     ):
         """
         Check that virtool ref add accession does the job when the isolate exists
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accession(
             accession,
-            isolate_subpath,
+            otu_dirname=otu_subpath,
             src_path=work_path,
             catalog_path=work_catalog_path,
         )
@@ -122,7 +139,10 @@ class TestAddAccession:
 
     @pytest.mark.parametrize(
         "accession, isolate_subpath",
-        [("NC_010319", "abaca_bunchy_top_virus--c93ec9a9/4e8amg20")],
+        [
+            ("NC_010319", "abaca_bunchy_top_virus--c93ec9a9/4e8amg20"),
+            ("NC_024301", "pagoda_yellow_mosaic_associated_virus--dd21fd8f"),
+        ],
     )
     def test_add_accession_fail(
         self, accession, isolate_subpath, work_path, work_catalog_path
@@ -164,6 +184,65 @@ class TestAddAccession:
         assert new_isolates
 
         assert (new_isolates.pop() / "isolate.json").exists()
+
+
+class TestAddAccessions:
+    @staticmethod
+    def run_command(accessions: str, otu_path: Path, catalog_path: Path):
+        subprocess.call(
+            [
+                "virtool",
+                "ref",
+                "add",
+                "accessions",
+                "-acc",
+                accessions,
+                "-otu",
+                str(otu_path),
+                "-cat",
+                str(catalog_path),
+            ]
+        )
+
+    def run_add_accessions(
+        self, accessions: str, otu_dirname: str, src_path: Path, catalog_path: Path
+    ):
+        """
+        Add into an existing isolate directory
+        """
+        otu_path = src_path / otu_dirname
+
+        pre_sequence_paths = get_all_sequence_paths(otu_path)
+
+        self.run_command(accessions, otu_path, catalog_path)
+
+        post_sequence_paths = get_all_sequence_paths(otu_path)
+
+        return pre_sequence_paths, post_sequence_paths
+
+    @pytest.mark.parametrize(
+        "accessions, otu_subpath",
+        [
+            ("DQ178612, NC_038793", "cabbage_leaf_curl_jamaica_virus--d226290f"),
+            ("KT390494, KT390496, KT390501", "nanovirus-like_particle--ae0f2a35"),
+        ],
+    )
+    def test_add_accessions_success(
+        self, accessions, otu_subpath, work_path, work_catalog_path
+    ):
+        """
+        Check that virtool ref add accessions does the job
+        """
+        pre_sequence_paths, post_sequence_paths = self.run_add_accessions(
+            accessions,
+            otu_dirname=otu_subpath,
+            src_path=work_path,
+            catalog_path=work_catalog_path,
+        )
+
+        new_sequences = post_sequence_paths.difference(pre_sequence_paths)
+
+        assert new_sequences
 
 
 class TestAddOTU:

@@ -53,12 +53,12 @@ def run_single(
 
 
 def run_multiple(
-    accessions: str, otu_path: Path, catalog_path: Path, debugging: bool = False
+    accessions_string: str, otu_path: Path, catalog_path: Path, debugging: bool = False
 ):
     """
     CLI entry point for virtool_cli.add.accession.add_accessions()
 
-    :param accessions: NCBI Taxonomy accessions to be added to the reference
+    :param accessions_string: NCBI Taxonomy accessions to be added to the reference
     :param otu_path: Path to a reference directory
     :param catalog_path: Path to a catalog directory
     :param debugging: Enables verbose logs for debugging purposes
@@ -66,7 +66,7 @@ def run_multiple(
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
     logger = base_logger.bind(src=str(otu_path))
 
-    accession_list = accessions.split(",")
+    accession_list = split_clean_csv_string(accessions_string, delimiter=",")
 
     logger.debug("Debug flag is enabled")
 
@@ -87,6 +87,10 @@ async def add_accessions(accessions: list, otu_path: Path, catalog_path: Path):
     logger = base_logger.bind(accessions=accessions)
 
     otu_accession_list = get_otu_accessions(otu_path)
+
+    logger.debug(otu_accession_list)
+
+    logger.debug(accessions)
 
     record_list = await request_from_nucleotide(accessions)
 
@@ -316,3 +320,19 @@ def find_taxon_id(db_xref: list[str]) -> int | None:
             return int(value)
 
     return None
+
+
+def split_clean_csv_string(input_string: str, delimiter: str = ",") -> list[str]:
+    """
+    Splits comma-separated values into a list of strings.
+
+    :param input_string: A raw comma-delineated string
+    :param delimiter: A delimiter string for use with split(). Defaults to a comma (",")
+    :return: A list of accession strings
+    """
+    raw_list = input_string.split(delimiter)
+    stripped_list = []
+    for item in raw_list:
+        stripped_list.append(item.strip())
+
+    return stripped_list
