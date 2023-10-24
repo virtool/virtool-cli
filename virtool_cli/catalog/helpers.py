@@ -44,8 +44,8 @@ def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
     matches = list(catalog_path.glob(f"*--{otu_id}.json"))
     if matches:
         return matches[0]
-    else:
-        return None
+
+    return None
 
 
 async def find_taxid_from_accessions(
@@ -87,9 +87,9 @@ async def find_taxid_from_accessions(
     if len(otu_taxids) > 1:
         logger.warning("Found multiple taxon IDs in this OTU", taxids=otu_taxids)
         return ""
-    else:
-        taxid = otu_taxids.pop()
-        return taxid
+
+    taxid = otu_taxids.pop()
+    return taxid
 
 
 def get_otu_accessions(otu_path: Path) -> list:

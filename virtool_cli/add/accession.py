@@ -71,13 +71,17 @@ def run_multiple(
     logger.debug("Debug flag is enabled")
 
     if otu_path.exists():
-        asyncio.run(add_accessions(accession_list, otu_path, catalog_path))
+        asyncio.run(add_accessions(accession_list, otu_path))
 
     else:
         logger.error("Given OTU path does not exist", otu=otu_path)
 
+    logger.debug(
+        "Future placeholder for listing update run", catalog_path=str(catalog_path)
+    )
 
-async def add_accessions(accessions: list, otu_path: Path, catalog_path: Path):
+
+async def add_accessions(accessions: list, otu_path: Path):
     """
     Add a list of accessions to an OTU. Appropriate if you know the OTU path already.
 
@@ -300,11 +304,10 @@ async def check_accession_collision(new_accession: str, accession_list: list) ->
     :param accession_list: A list of accessions that should not be added anew
     :return: True if the accession collides with the accession list, False if not
     """
-    for existing_accession in accession_list:
-        if new_accession.split(".")[0] == existing_accession.split(".")[0]:
-            return True
-
-    return False
+    return any(
+        new_accession.split(".")[0] == existing_accession.split(".")[0]
+        for existing_accession in accession_list
+    )
 
 
 def find_taxon_id(db_xref: list[str]) -> int | None:

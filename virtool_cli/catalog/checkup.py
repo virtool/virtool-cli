@@ -104,8 +104,8 @@ def check_keys(listing: dict):
     if not LISTING_KEYS.issubset(listing.keys()):
         missing_keys = LISTING_KEYS.difference(listing.keys())
         return list(missing_keys)
-    else:
-        return []
+
+    return []
 
 
 def check_schema(listing: dict):
@@ -244,5 +244,5 @@ def search_by_taxid(taxid: int | str, catalog_path: Path) -> list:
 
     if matches:
         return matches
-    else:
-        return []
+
+    return []
