@@ -30,7 +30,7 @@ async def write_records(
         )
     except Exception as e:
         logger.exception(e)
-        return e
+        raise e
 
     logger.debug(f"Writing {len(new_sequences)} sequences...")
 
