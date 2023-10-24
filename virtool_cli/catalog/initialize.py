@@ -98,11 +98,11 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         queue.task_done()
 
 
-def run_otu(otu_path, debugging: bool = False):
+def run_otu(otu_path: Path, catalog_path: Path, debugging: bool = False):
     """
     CLI entry point for catalog.initialize.initialize_OTU()
 
-    :param src_path: Path to a reference directory
+    :param otu_path: Path to an OTU directory
     :param catalog_path: Path to an accession catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
@@ -110,15 +110,17 @@ def run_otu(otu_path, debugging: bool = False):
     logger = base_logger.bind(src=str(otu_path), catalog=str(catalog_path))
     logger.info("Creating new catalog in catalog path")
 
-    asyncio.run(initialize_OTU(otu_path, catalog_path))
+    asyncio.run(initialize_otu(otu_path, catalog_path))
 
 
-async def initialize_OTU(otu_path: Path, catalog_path: Path, logger=base_logger):
+async def initialize_otu(otu_path: Path, catalog_path: Path, logger=base_logger):
     """
-    Take an OTU path and initialize a new catalog listing for the contents.
+    Take an OTU path, extract the metadata, get a new catalog listing for the contents
+    and write the new listing to the catalog directory.
 
-    :param otu_path:
-    :param catalog_path:
+    :param otu_path: Path to an OTU directory
+    :param catalog_path: Path to an accession catalog directory
+    :param logger: Optional entry point for an existing BoundLogger
     """
     logger = logger.bind(otu_path=str(otu_path.name))
 
@@ -138,6 +140,12 @@ async def initialize_OTU(otu_path: Path, catalog_path: Path, logger=base_logger)
 
 
 async def initialize_listing(otu_path: Path, logger=base_logger) -> dict:
+    """
+    Take an OTU path and return a new catalog listing for the contents.
+
+    :param otu_path: Path to an OTU directory
+    :param logger: Optional entry point for an existing BoundLogger
+    """
     logger = logger.bind(otu_path=str(otu_path.name))
 
     otu_data = await read_otu(otu_path)

@@ -206,7 +206,7 @@ async def get_spelling(name: str, db: str = 'taxonomy') -> str:
 
 async def fetch_isolate_metadata(taxid: int) -> dict:
     """
-    :param qualifiers: Dict of qualifiers from SeqRecord
+    :param taxid: NCBI taxon ID in integer form
     :return: Dict of isolate name and type
     """
     taxid_docsum = await fetch_taxonomy_record(str(taxid))
