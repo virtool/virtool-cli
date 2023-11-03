@@ -3,8 +3,12 @@ import asyncio
 import structlog
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id, is_v1
-from virtool_cli.utils.id_generator import get_unique_ids
+from virtool_cli.utils.reference import (
+    get_otu_paths,
+    search_otu_by_id,
+    is_v1,
+    get_unique_ids,
+)
 from virtool_cli.utils.format import process_records
 from virtool_cli.utils.storage import write_records
 from virtool_cli.update.update import request_new_records

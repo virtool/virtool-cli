@@ -9,9 +9,9 @@ from virtool_cli.utils.reference import (
     is_v1,
     generate_otu_dirname,
     search_otu_by_id,
+    get_unique_ids,
 )
-from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_taxonomy_record
-from virtool_cli.utils.id_generator import get_unique_ids
+from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_isolate_metadata
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
 from virtool_cli.utils.storage import write_records
 from virtool_cli.catalog.listings import parse_listing
@@ -52,18 +52,21 @@ def run_single(
     )
 
 
-def run_multiple(accessions: str, otu_path: Path, debugging: bool = False):
+def run_multiple(
+    accessions_string: str, otu_path: Path, catalog_path: Path, debugging: bool = False
+):
     """
     CLI entry point for virtool_cli.add.accession.add_accessions()
 
-    :param accessions: NCBI Taxonomy accessions to be added to the reference
+    :param accessions_string: NCBI Taxonomy accessions to be added to the reference
     :param otu_path: Path to a reference directory
+    :param catalog_path: Path to a catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
     logger = base_logger.bind(src=str(otu_path))
 
-    accession_list = accessions.split(",")
+    accession_list = split_clean_csv_string(accessions_string, delimiter=",")
 
     logger.debug("Debug flag is enabled")
 
@@ -72,6 +75,10 @@ def run_multiple(accessions: str, otu_path: Path, debugging: bool = False):
 
     else:
         logger.error("Given OTU path does not exist", otu=otu_path)
+
+    logger.debug(
+        "Future placeholder for listing update run", catalog_path=str(catalog_path)
+    )
 
 
 async def add_accessions(accessions: list, otu_path: Path):
@@ -84,6 +91,10 @@ async def add_accessions(accessions: list, otu_path: Path):
     logger = base_logger.bind(accessions=accessions)
 
     otu_accession_list = get_otu_accessions(otu_path)
+
+    logger.debug(otu_accession_list)
+
+    logger.debug(accessions)
 
     record_list = await request_from_nucleotide(accessions)
 
@@ -106,18 +117,16 @@ async def add_accessions(accessions: list, otu_path: Path):
 
         if isolate_type := check_source_type(seq_qualifiers):
             # Isolate metadata contained in qualifiers
-            isolate_name = seq_qualifiers.get(isolate_type)[0]
+            isolate = {
+                "source_name": seq_qualifiers.get(isolate_type)[0],
+                "source_type": isolate_type,
+            }
 
         else:
             # Extract isolate metadata from NCBI Taxonomy docsum
-            taxid = find_taxon_id(seq_qualifiers["db_xref"])
-            taxid_docsum = await fetch_taxonomy_record(taxid)
-            logger.debug(taxid_docsum)
-
-            isolate_type = taxid_docsum.get("Rank", "unknown")
-            isolate_name = taxid_docsum.get("ScientificName")
-
-        isolate = {"source_name": isolate_name, "source_type": isolate_type}
+            isolate = await fetch_isolate_metadata(
+                find_taxon_id(seq_qualifiers["db_xref"])
+            )
 
         new_sequence = format_sequence(record=record, qualifiers=seq_qualifiers)
         new_sequence["isolate"] = isolate
@@ -134,14 +143,16 @@ async def add_accessions(accessions: list, otu_path: Path):
 
         for path in new_sequence_paths:
             print(str(path))
+
     except Exception as e:
         logger.exception(e)
 
 
 async def add_accession(accession: str, src_path: Path, catalog_path: Path):
     """
-    Takes a specified accession, fetches the corresponding record from NCBI Taxonomy
-    and writes it to the reference directory.
+    Takes a specified accession, fetches the corresponding record from NCBI Nucleotide.
+    Finds a matching OTU directory in the reference and writes the new accession data
+    under the existing OTU directory.
 
     :param accession: NCBI Taxonomy accession to be added to the reference
     :param src_path: Path to a reference directory
@@ -170,18 +181,14 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
 
     if isolate_type := check_source_type(seq_qualifiers):
         # Isolate metadata contained in qualifiers
-        isolate_name = seq_qualifiers.get(isolate_type)[0]
+        isolate = {
+            "source_name": seq_qualifiers.get(isolate_type)[0],
+            "source_type": isolate_type,
+        }
 
     else:
         # Extract isolate metadata from NCBI Taxonomy docsum
-        taxid = find_taxon_id(seq_qualifiers["db_xref"])
-        taxid_docsum = await fetch_taxonomy_record(taxid)
-        logger.debug(taxid_docsum)
-
-        isolate_type = taxid_docsum.get("Rank", "unknown")
-        isolate_name = taxid_docsum.get("ScientificName")
-
-    isolate = {"source_name": isolate_name, "source_type": isolate_type}
+        isolate = await fetch_isolate_metadata(find_taxon_id(seq_qualifiers["db_xref"]))
 
     new_sequence = format_sequence(record=seq_data, qualifiers=seq_qualifiers)
     new_sequence["isolate"] = isolate
@@ -297,11 +304,10 @@ async def check_accession_collision(new_accession: str, accession_list: list) ->
     :param accession_list: A list of accessions that should not be added anew
     :return: True if the accession collides with the accession list, False if not
     """
-    for existing_accession in accession_list:
-        if new_accession.split(".")[0] == existing_accession.split(".")[0]:
-            return True
-
-    return False
+    return any(
+        new_accession.split(".")[0] == existing_accession.split(".")[0]
+        for existing_accession in accession_list
+    )
 
 
 def find_taxon_id(db_xref: list[str]) -> int | None:
@@ -317,3 +323,19 @@ def find_taxon_id(db_xref: list[str]) -> int | None:
             return int(value)
 
     return None
+
+
+def split_clean_csv_string(input_string: str, delimiter: str = ",") -> list[str]:
+    """
+    Splits comma-separated values into a list of strings.
+
+    :param input_string: A raw comma-delineated string
+    :param delimiter: A delimiter string for use with split(). Defaults to a comma (",")
+    :return: A list of accession strings
+    """
+    raw_list = input_string.split(delimiter)
+    stripped_list = []
+    for item in raw_list:
+        stripped_list.append(item.strip())
+
+    return stripped_list

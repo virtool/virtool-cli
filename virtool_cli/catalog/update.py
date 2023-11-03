@@ -13,11 +13,11 @@ from virtool_cli.catalog.listings import (
     write_new_listing,
 )
 from virtool_cli.catalog.helpers import (
-    get_catalog_paths,
     filter_catalog,
     get_otu_accessions,
     get_otu_accessions_metadata,
 )
+from virtool_cli.catalog.catalog import get_catalog_paths
 
 base_logger = get_logger()
 

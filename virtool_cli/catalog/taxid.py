@@ -5,7 +5,8 @@ import structlog
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import NCBI_REQUEST_INTERVAL
-from virtool_cli.catalog.helpers import get_catalog_paths, find_taxid_from_accessions
+from virtool_cli.catalog.helpers import find_taxid_from_accessions
+from virtool_cli.catalog.catalog import get_catalog_paths
 from virtool_cli.catalog.listings import update_listing
 
 base_logger = structlog.get_logger()

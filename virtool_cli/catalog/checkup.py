@@ -7,7 +7,7 @@ from structlog import BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.ncbi import get_spelling
-from virtool_cli.catalog.helpers import get_catalog_paths
+from virtool_cli.catalog.catalog import get_catalog_paths
 
 LISTING_KEYS = {"_id", "accessions", "name", "schema", "taxid"}
 
@@ -104,8 +104,8 @@ def check_keys(listing: dict):
     if not LISTING_KEYS.issubset(listing.keys()):
         missing_keys = LISTING_KEYS.difference(listing.keys())
         return list(missing_keys)
-    else:
-        return []
+
+    return []
 
 
 def check_schema(listing: dict):
@@ -244,5 +244,5 @@ def search_by_taxid(taxid: int | str, catalog_path: Path) -> list:
 
     if matches:
         return matches
-    else:
-        return []
+
+    return []

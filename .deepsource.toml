@@ -1,5 +1,12 @@
 version = 1
 
+test_patterns = [
+  "tests/test_**.py",
+  "tests/vfam/test_**.py"
+]
+
 [[analyzers]]
 name = "python"
 enabled = true
+
+max_line_length = 88

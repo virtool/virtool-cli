@@ -14,16 +14,6 @@ from virtool_cli.utils.storage import parse_sequence
 from virtool_cli.catalog.listings import parse_listing
 
 
-def get_catalog_paths(catalog: Path) -> list:
-    """
-    Return a list of paths to accession listings contained in an accession catalog.
-
-    :param catalog: Path to an accession catalog directory
-    :return: A list of paths representing the contents of the accession catalog.
-    """
-    return list(catalog.glob("*--*.json"))
-
-
 def filter_catalog(src_path: Path, catalog_path: Path) -> list:
     """
     Return all paths to accession listings relevant to the source reference.
@@ -54,8 +44,8 @@ def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
     matches = list(catalog_path.glob(f"*--{otu_id}.json"))
     if matches:
         return matches[0]
-    else:
-        return None
+
+    return None
 
 
 async def find_taxid_from_accessions(
@@ -97,9 +87,9 @@ async def find_taxid_from_accessions(
     if len(otu_taxids) > 1:
         logger.warning("Found multiple taxon IDs in this OTU", taxids=otu_taxids)
         return ""
-    else:
-        taxid = otu_taxids.pop()
-        return taxid
+
+    taxid = otu_taxids.pop()
+    return taxid
 
 
 def get_otu_accessions(otu_path: Path) -> list:
