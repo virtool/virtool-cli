@@ -30,10 +30,11 @@ ref.add_command(add)
     "--repo_path",
     required=True,
     type=click.Path(file_okay=False, path_type=Path),
-    help="the path to a database reference directory",
+    help="the path to a containing directory for the repository",
 )
 @click.option("--debug/--no-debug", default=False)
 def init(repo_path, debug):
+    """Instantiate directory structure for an empty reference source"""
     try:
         run_init(repo_path, debug)
     except (FileNotFoundError, NotADirectoryError):
