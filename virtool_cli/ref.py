@@ -140,10 +140,12 @@ def migrate(src_path, debug):
 def checkup(src_path, debug):
     """Checks the validity of a reference source"""
     try:
-        run_checkup(Path(src_path), debug)
+        run_checkup(src_path, debug)
 
     except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
+        click.echo(
+            ERROR_MESSAGE + f"{str(src_path)} is not a valid reference directory"
+        )
         click.echo(e)
 
 
