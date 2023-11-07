@@ -137,7 +137,7 @@ def migrate(src_path, debug):
 )
 @click.option("--debug/--no-debug", default=False)
 def checkup(src_path, debug):
-    """Convert a reference directory from v1.x to v2.x"""
+    """Checks the validity of a reference source"""
     try:
         run_checkup(Path(src_path), debug)
 
