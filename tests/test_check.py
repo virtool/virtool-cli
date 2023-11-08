@@ -18,7 +18,7 @@ def test_otu_check_success(otu_dir):
         ["virtool", "ref", "check", "otu", "--otu_path", str(otu_path)]
     ).decode("utf-8")
 
-    assert output == ""
+    assert output.strip() == "True"
 
 
 @pytest.mark.parametrize("otu_dir", ["abaca_bunchy_top_virus--c93ec9a9"])
@@ -28,4 +28,4 @@ def test_otu_check_fail(otu_dir):
         ["virtool", "ref", "check", "otu", "--otu_path", str(otu_path)]
     ).decode("utf-8")
 
-    assert output != ""
+    assert output.strip() == "False"

@@ -20,5 +20,7 @@ def run(otu_path: Path, debugging: bool = False):
 
     if check_otu(otu_path):
         logger.info("Reference folder is valid.", valid_result=True)
+        print(True)
     else:
         logger.error("Reference folder is invalid.", valid_result=False)
+        print(False)
