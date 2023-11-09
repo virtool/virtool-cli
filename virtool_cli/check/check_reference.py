@@ -3,17 +3,9 @@ from pathlib import Path
 import structlog
 from structlog import BoundLogger
 
-from virtool_cli.check.checkup import (
-    validate_otu,
-    validate_isolate,
-    validate_sequence,
-)
+from virtool_cli.check.checkup import check_otu
 from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    get_isolate_paths,
-    get_sequence_paths,
-)
+from virtool_cli.utils.reference import get_otu_paths
 
 base_logger = structlog.get_logger()
 
@@ -50,42 +42,7 @@ def check_reference(src_path: Path, logger: BoundLogger = base_logger) -> bool:
     watch_list = []
 
     for otu_path in get_otu_paths(src_path):
-        otu_valid = True
-
-        try:
-            [_, otu_id] = otu_path.name.split("--")
-        except ValueError as e:
-            logger.exception(e)
-            ref_valid = False
-            continue
-
-        otu_logger = logger.bind(otu_id=otu_id)
-
-        otu_logger.debug(f"Running checks on OTU {otu_id}...")
-
-        if not validate_otu(otu_path, otu_logger):
-            otu_valid = False
-
-        isolate_paths = get_isolate_paths(otu_path)
-        if not isolate_paths:
-            otu_logger.error("No accession data in OTU", otu=otu_path.name)
-            otu_valid = False
-
-        else:
-            for isolate_path in isolate_paths:
-                if not validate_isolate(isolate_path, logger):
-                    otu_valid = False
-
-                sequence_paths = get_sequence_paths(isolate_path)
-                if not sequence_paths:
-                    otu_logger.error(
-                        "No sequences in isolate", isolate=isolate_path.name
-                    )
-                    otu_valid = False
-
-                for sequence_path in sequence_paths:
-                    if not validate_sequence(sequence_path, logger):
-                        otu_valid = False
+        otu_valid = check_otu(otu_path)
 
         if not otu_valid:
             ref_valid = False
