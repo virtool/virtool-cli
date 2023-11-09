@@ -65,16 +65,21 @@ def validate_otu(otu_path: Path, logger: BoundLogger = get_logger()) -> bool:
     """
     otu_metadata_path = otu_path / "otu.json"
 
-    if not otu_metadata_path.exists():
-        logger.error(f"{otu_path.name}: missing metadata")
+    try:
+        with open(otu_metadata_path, "r") as f:
+            otu = json.load(f)
+    except FileNotFoundError:
+        logger.error(f"Missing OTU metadata file")
+        return False
+    except json.JSONDecodeError:
+        logger.error(f"OTU metadata is not JSON-parseable")
         return False
 
-    with open(otu_metadata_path, "r") as f:
-        otu = json.load(f)
+    is_valid = True
 
     if not otu.get("_id", ""):
         logger.error(f"OTU metadata lacks a unique Virtool ID")
-        return False
+        is_valid = False
 
     if not otu.get("schema", []):
         logger.warning(f"OTU metadata lacks a schema")
@@ -82,7 +87,7 @@ def validate_otu(otu_path: Path, logger: BoundLogger = get_logger()) -> bool:
     if otu.get("taxid", None) is None:
         logger.warning(f"OTU metadata lacks a NCBI Taxonomy UID")
 
-    return True
+    return is_valid
 
 
 def validate_isolate(isolate_path: Path, logger: BoundLogger = get_logger()) -> bool:
@@ -101,17 +106,23 @@ def validate_isolate(isolate_path: Path, logger: BoundLogger = get_logger()) -> 
 
     logger = logger.bind(path=str(isolate_metadata_path))
 
-    if not isolate_metadata_path.exists():
-        logger.error(f"{isolate_path.name}: missing metadata")
+    # Run file checks
+    try:
+        with open(isolate_metadata_path, "r") as f:
+            isolate = json.load(f)
+    except FileNotFoundError:
+        logger.error(f"Missing isolate data")
+        return False
+    except json.JSONDecodeError:
+        logger.error(f"Isolate metadata is not JSON-parseable")
         return False
 
-    with open(isolate_metadata_path, "r") as f:
-        isolate = json.load(f)
+    is_valid = True
 
     # Run isolate metadata checks
     if not isolate.get("id", ""):
         logger.error(f"Isolate metadata lacks a unique Virtool ID in the JSON")
-        return False
+        is_valid = False
 
     if not isolate.get("source_type", ""):
         logger.warning(f"Isolate metadata lacks a source type")
@@ -122,12 +133,12 @@ def validate_isolate(isolate_path: Path, logger: BoundLogger = get_logger()) -> 
     if "default" in isolate:
         if type(isolate["default"]) != bool:
             logger.error(f"Isolate metadata lacks a valid default flag")
-            return False
+            is_valid = False
     else:
         logger.error(f"Isolate metadata lacks a valid default flag")
-        return False
+        is_valid = False
 
-    return True
+    return is_valid
 
 
 def validate_sequence(sequence_path: Path, logger: BoundLogger = get_logger()) -> bool:
@@ -138,6 +149,7 @@ def validate_sequence(sequence_path: Path, logger: BoundLogger = get_logger()) -
     :param logger: Optional entry point for a shared BoundLogger
     :return: True if a sequence's metadata is valid, False if a problem is found
     """
+    is_valid = True
     sequence_location = str(sequence_path.relative_to(sequence_path.parents[3]))
 
     sequence_id = sequence_path.stem
@@ -147,22 +159,36 @@ def validate_sequence(sequence_path: Path, logger: BoundLogger = get_logger()) -
     )
     logger.debug(f"Running checks on sequence {sequence_id}...")
 
-    sequence = json.loads(sequence_path.read_text())
+    # Run file checks
+    try:
+        sequence_data = json.loads(sequence_path.read_text())
+    except FileNotFoundError:
+        logger.error(f"Missing sequence data")
+        return False
+    except json.JSONDecodeError:
+        logger.error(f"Sequence metadata is not JSON-parseable")
+        return False
 
-    accession = sequence["accession"]
+    accession = sequence_data["accession"]
+
+    # Run metadata checks
+    if not sequence_data.get("_id", ""):
+        logger.error(f"Sequence metadata lacks a unique Virtool ID in the JSON")
+        is_valid = False
 
     if not verify_accession(accession):
         logger.error(
             f"Accession '{accession}' contains invalid characters or capitalization"
         )
-        return False
+        is_valid = False
 
     # if "." not in accession:
     #     logger.warning(f"Version not included in accession={accession}")
     #     return False
+
     logger.debug(f"Sequence {sequence_id} is valid")
 
-    return True
+    return is_valid
 
 
 def verify_accession(accession: str):

@@ -1,7 +1,5 @@
 from pathlib import Path
-
 import structlog
-from structlog import BoundLogger
 
 from virtool_cli.check.checkup import check_otu
 from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
@@ -28,7 +26,9 @@ def run(src_path: Path, debugging: bool = False):
         logger.error("Reference folder is invalid.", valid_result=False)
 
 
-def check_reference(src_path: Path, logger: BoundLogger = base_logger) -> bool:
+def check_reference(
+    src_path: Path, logger: structlog.BoundLogger = base_logger
+) -> bool:
     """
     Inspects all files in the reference directory and logs a warning if a problem is found.
 
