@@ -1,44 +1,38 @@
 name: ci
 on:
   pull_request:
-    branches: [ main, alpha ]
+    branches: [main, alpha]
   push:
-    branches: [ main, alpha ]
+    branches: [main, alpha]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container:
       image: continuumio/miniconda3:latest
       env:
         NODE_ENV: development
-
     steps:
-      - uses: actions/checkout@v3
-
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Install conda and poetry
         run: |
           conda install -c bioconda cd-hit hmmer blast mcl muscle -q -y
           pip install poetry
-          
       - name: Install package
-        run: |
-          poetry install
-      
+        run: poetry install
       - name: Run tests
-        run: |
-          poetry run pytest
-      
+        run: poetry run pytest
   release:
     if: github.event_name == 'push'
     needs:
       - test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup NodeJS
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: 18
       - name: Install semantic-release
