@@ -10,7 +10,7 @@ from Bio import SeqIO
 from structlog import get_logger
 
 
-def get_taxonomy(seq_ids: List[str], taxonomy_records: dict) -> Tuple[dict, dict]:
+def get_taxonomy(seq_ids: list[str], taxonomy_records: dict) -> tuple[dict, dict]:
     """
     Takes in list of sequence IDs and gathers family, genus information from taxonomy_records for each sequence.
 

@@ -3,7 +3,7 @@ import sys
 import click
 from pathlib import Path
 
-from virtool_cli.vfam.vfam import run
+from virtool_cli.vfam.cmd import run
 
 ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
@@ -20,10 +20,10 @@ def hmm():
 
 @hmm.command()
 @click.option(
-    "-src",
     "--src-path",
     default=None,
     help="Path to input reference directory if not gathering from NCBI",
+    type=click.Path(exists=True)
 )
 @click.option(
     "-o",

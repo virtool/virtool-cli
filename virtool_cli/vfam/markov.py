@@ -20,6 +20,7 @@ def write_abc(
     :return: path to .abc file
     """
     abc_name = "blast.abc"
+
     if prefix:
         abc_name = f"{prefix}_{abc_name}"
 

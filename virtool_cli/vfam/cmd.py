@@ -23,7 +23,7 @@ from virtool_cli.vfam.annotation import get_json_from_clusters
 
 
 def run(
-    src_path,
+    src_path:Path,
     output,
     prefix,
     sequence_min_length,
