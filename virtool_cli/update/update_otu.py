@@ -25,7 +25,7 @@ def run(
     Requests updates for a single OTU directory
     Searches the catalog for a matching catalog listing and requests new updates if it finds one.
 
-    :param otu_path: Path to a OTU directory
+    :param otu_path: Path to an OTU directory
     :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes

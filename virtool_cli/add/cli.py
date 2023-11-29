@@ -111,7 +111,7 @@ def otu(taxon_id, src_path, catalog_path, debug):
         run_add_otu(taxon_id, src_path, catalog_path, debugging=debug)
 
     except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo("Not a valid reference directory")
+        click.echo("Not a valid OTU directory")
         click.echo(e)
 
 

@@ -3,11 +3,12 @@ import click
 
 from virtool_cli.update.cli import update
 from virtool_cli.add.cli import add
+from virtool_cli.check.cli import check
 from virtool_cli.init import run as run_init
 from virtool_cli.build import run as run_build
 from virtool_cli.divide import run as run_divide
 from virtool_cli.migrate import run as run_migrate
-from virtool_cli.checkup import run as run_checkup
+from virtool_cli.check.check_reference import run as run_checkup
 
 ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
@@ -22,6 +23,7 @@ def ref():
 
 ref.add_command(update)
 ref.add_command(add)
+ref.add_command(check)
 
 
 @ref.command()
@@ -30,10 +32,11 @@ ref.add_command(add)
     "--repo_path",
     required=True,
     type=click.Path(file_okay=False, path_type=Path),
-    help="the path to a database reference directory",
+    help="the path to a containing directory for the repository",
 )
 @click.option("--debug/--no-debug", default=False)
 def init(repo_path, debug):
+    """Instantiate directory structure for an empty reference source"""
     try:
         run_init(repo_path, debug)
     except (FileNotFoundError, NotADirectoryError):
@@ -127,23 +130,25 @@ def migrate(src_path, debug):
         click.echo(e)
 
 
-@ref.command()
-@click.option(
-    "-src",
-    "--src_path",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    help="the path to a reference directory",
-)
-@click.option("--debug/--no-debug", default=False)
-def checkup(src_path, debug):
-    """Convert a reference directory from v1.x to v2.x"""
-    try:
-        run_checkup(Path(src_path), debug)
-
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
-        click.echo(e)
+# @ref.command()
+# @click.option(
+#     "-src",
+#     "--src_path",
+#     required=True,
+#     type=click.Path(exists=True, file_okay=False, path_type=Path),
+#     help="the path to a reference directory",
+# )
+# @click.option("--debug/--no-debug", default=False)
+# def checkup(src_path, debug):
+#     """Checks the validity of a reference source"""
+#     try:
+#         run_checkup(src_path, debug)
+#
+#     except (FileNotFoundError, NotADirectoryError) as e:
+#         click.echo(
+#             ERROR_MESSAGE + f"{str(src_path)} is not a valid reference directory"
+#         )
+#         click.echo(e)
 
 
 if __name__ == "__main__":
