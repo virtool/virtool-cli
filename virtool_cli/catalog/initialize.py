@@ -87,7 +87,7 @@ async def writer_loop(catalog_path: Path, queue: asyncio.Queue) -> None:
         logger.debug(f"Got listing data for {packet['otu_id']} from the queue")
 
         listing = packet["listing"]
-        listing["accessions"]["excluded"] = {}
+        listing["accessions"]["excluded"] = []
 
         listing_path = await write_new_listing(listing, catalog_path)
 
