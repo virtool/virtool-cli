@@ -9,11 +9,11 @@ from virtool_cli.utils.reference import (
     is_v1,
     generate_otu_dirname,
     search_otu_by_id,
-    get_unique_ids, get_otu_accessions,
+    get_unique_ids,
 )
 from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_isolate_metadata
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
-from virtool_cli.utils.storage import write_records
+from virtool_cli.utils.storage import write_records, get_otu_accessions
 from virtool_cli.catalog.listings import parse_listing
 
 base_logger = structlog.get_logger()
