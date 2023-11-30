@@ -1,16 +1,10 @@
-import json
 from pathlib import Path
 from typing import Optional
 from structlog import get_logger, BoundLogger
 from urllib.error import HTTPError
 
-from virtool_cli.utils.reference import (
-    get_otu_paths,
-    get_isolate_paths,
-    get_sequence_paths,
-)
+from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.utils.ncbi import fetch_taxonomy_rank, fetch_upstream_record_taxids
-from virtool_cli.utils.storage import parse_sequence
 from virtool_cli.catalog.listings import parse_listing
 
 
@@ -90,63 +84,3 @@ async def find_taxid_from_accessions(
 
     taxid = otu_taxids.pop()
     return taxid
-
-
-def get_otu_accessions(otu_path: Path) -> list:
-    """
-    Gets all accessions from an OTU directory and returns a list
-
-    :param otu_path: Path to an OTU directory under a reference directory
-    :return: A list of all accessions under an OTU
-    """
-    accessions = []
-
-    for isolate_path in get_isolate_paths(otu_path):
-        for sequence_path in get_sequence_paths(isolate_path):
-            sequence = json.loads(sequence_path.read_text())
-            accessions.append(sequence["accession"])
-
-    return accessions
-
-
-async def get_sequence_metadata(sequence_path: Path) -> dict:
-    """
-    Gets the accession length and segment name from a sequence file
-    and returns it in a dict
-
-    :param sequence_path: Path to a sequence file
-    :return: A dict containing the sequence accession, sequence length and segment name if present
-    """
-    sequence = await parse_sequence(sequence_path)
-
-    sequence_metadata = {
-        "accession": sequence["accession"],
-        "length": len(sequence["sequence"]),
-    }
-
-    segment = sequence.get("segment", None)
-    if segment is not None:
-        sequence_metadata["segment"] = segment
-
-    return sequence_metadata
-
-
-async def get_otu_accessions_metadata(otu_path: Path) -> dict:
-    """
-    Returns sequence metadata for all sequences present under an OTU
-
-    :param otu_path: Path to an OTU directory under a reference directory
-    :return: An accession-keyed dict containing all constituent sequence metadata
-    """
-    # get length and segment metadata from sequences
-    all_metadata = {}
-
-    for isolate_path in get_isolate_paths(otu_path):
-        for sequence_path in get_sequence_paths(isolate_path):
-            sequence_metadata = await get_sequence_metadata(sequence_path)
-
-            accession = sequence_metadata["accession"]
-
-            all_metadata[accession] = sequence_metadata
-
-    return all_metadata

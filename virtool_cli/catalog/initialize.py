@@ -3,10 +3,9 @@ import asyncio
 import structlog
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import get_otu_paths
+from virtool_cli.utils.reference import get_otu_paths, get_otu_accessions_metadata
 from virtool_cli.utils.storage import read_otu
 from virtool_cli.catalog.listings import generate_listing, write_new_listing
-from virtool_cli.catalog.helpers import get_otu_accessions_metadata
 
 base_logger = structlog.get_logger()
 
