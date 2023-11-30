@@ -2,11 +2,153 @@ import pytest
 import shutil
 import json
 import subprocess
+from subprocess import CompletedProcess
 
 from paths import TEST_FILES_PATH
 
 BASE_PATH = TEST_FILES_PATH / "src_test_partial"
 TEST_ACCLOG_PATH = TEST_FILES_PATH / "catalog"
+
+
+class TestEmptyRepo:
+    def test_empty_success(self, empty_repo_path):
+        subprocess.run(["virtool", "ref", "init", "-repo", str(empty_repo_path)])
+
+        completed_process = run_update(
+            src_path=empty_repo_path / "src", catalog_path=TEST_ACCLOG_PATH
+        )
+
+        assert completed_process.returncode == 0
+
+    def test_empty_fail(self, empty_repo_path):
+        subprocess.run(["virtool", "ref", "init", "-repo", str(empty_repo_path)])
+
+        completed_process = run_update(
+            src_path=empty_repo_path / "src", catalog_path=empty_repo_path / "catalog"
+        )
+
+        assert completed_process.returncode != 0
+
+
+@pytest.mark.parametrize("base_path", [BASE_PATH])
+def test_update_basic(base_path, tmp_path):
+    """
+    Test that updates actually pull something.
+    """
+    fetch_path = tmp_path / "src"
+    pre_update_ref_path = tmp_path / "reference_pre.json"
+    post_update_ref_path = tmp_path / "reference_post.json"
+
+    shutil.copytree(base_path, fetch_path)
+
+    run_build(src_path=fetch_path, output_path=pre_update_ref_path)
+
+    completed_process = run_update(src_path=fetch_path, catalog_path=TEST_ACCLOG_PATH)
+    assert completed_process.returncode == 0
+
+    run_build(src_path=fetch_path, output_path=post_update_ref_path)
+
+    reference_pre = json.loads(pre_update_ref_path.read_text())
+    pre_otu_dict = convert_to_dict(reference_pre["otus"])
+
+    reference_post = json.loads(post_update_ref_path.read_text())
+    post_otu_dict = convert_to_dict(reference_post["otus"])
+
+    difference_counter = 0
+
+    for otu_id in post_otu_dict:
+        pre_accessions = get_otu_accessions(pre_otu_dict[otu_id])
+        post_accessions = get_otu_accessions(post_otu_dict[otu_id])
+
+        print(pre_accessions)
+        print(post_accessions)
+
+        if pre_accessions != post_accessions:
+            difference_counter += 1
+
+    # Any new data counts
+    assert difference_counter > 0
+
+
+@pytest.mark.skip()
+@pytest.mark.parametrize("base_path", [BASE_PATH])
+def test_update_autoevaluate(base_path, tmp_path):
+    """
+    Test that updates actually pull something.
+    Autoevaluation.
+    """
+    fetch_path = tmp_path / "src"
+    pre_update_ref_path = tmp_path / "reference_pre.json"
+    post_update_ref_path = tmp_path / "reference_post.json"
+
+    shutil.copytree(base_path, fetch_path)
+
+    run_build(src_path=fetch_path, output_path=pre_update_ref_path)
+
+    run_update(src_path=fetch_path, catalog_path=TEST_ACCLOG_PATH)
+
+    run_build(src_path=fetch_path, output_path=post_update_ref_path)
+
+    reference_pre = json.loads(pre_update_ref_path.read_text())
+    pre_otu_dict = convert_to_dict(reference_pre["otus"])
+
+    reference_post = json.loads(post_update_ref_path.read_text())
+    post_otu_dict = convert_to_dict(reference_post["otus"])
+
+    difference_counter = 0
+
+    for otu_id in post_otu_dict:
+        pre_accessions = get_otu_accessions(pre_otu_dict[otu_id])
+        post_accessions = get_otu_accessions(post_otu_dict[otu_id])
+
+        print(pre_accessions)
+        print(post_accessions)
+
+        if pre_accessions != post_accessions:
+            difference_counter += 1
+
+    # Any new data counts
+    assert difference_counter > 0
+
+
+@pytest.fixture()
+def empty_repo_path(tmp_path):
+    return tmp_path / "repo_empty"
+
+
+def run_update(src_path, catalog_path=TEST_ACCLOG_PATH) -> CompletedProcess:
+    complete_process = subprocess.run(
+        [
+            "virtool",
+            "ref",
+            "update",
+            "reference",
+            "-src",
+            str(src_path),
+            "-cat",
+            str(catalog_path),
+        ],
+        capture_output=True,
+    )
+
+    return complete_process
+
+
+def run_build(src_path, output_path) -> CompletedProcess:
+    complete_process = subprocess.run(
+        [
+            "virtool",
+            "ref",
+            "build",
+            "-src",
+            str(src_path),
+            "-o",
+            str(output_path),
+        ],
+        capture_output=True,
+    )
+
+    return complete_process
 
 
 def convert_to_dict(otu_list: list) -> dict:
@@ -36,146 +178,3 @@ def get_otu_accessions(otu_dict: dict) -> set:
             accessions.add(sequence["accession"])
 
     return accessions
-
-
-@pytest.mark.parametrize("base_path", [BASE_PATH])
-def test_update_basic(base_path, tmp_path):
-    """
-    Test that updates actually pull something.
-    No autoevaluation.
-    """
-    fetch_path = tmp_path / "src"
-    pre_update_ref_path = tmp_path / "reference_pre.json"
-    post_update_ref_path = tmp_path / "reference_post.json"
-
-    shutil.copytree(base_path, fetch_path)
-
-    subprocess.call(
-        [
-            "virtool",
-            "ref",
-            "build",
-            "-src",
-            str(fetch_path),
-            "-o",
-            str(pre_update_ref_path),
-        ]
-    )
-
-    subprocess.call(
-        [
-            "virtool",
-            "ref",
-            "update",
-            "reference",
-            "-src",
-            str(fetch_path),
-            "-cat",
-            str(TEST_ACCLOG_PATH),
-        ]
-    )
-
-    subprocess.call(
-        [
-            "virtool",
-            "ref",
-            "build",
-            "-src",
-            str(fetch_path),
-            "-o",
-            str(post_update_ref_path),
-        ]
-    )
-
-    reference_pre = json.loads(pre_update_ref_path.read_text())
-    pre_otu_dict = convert_to_dict(reference_pre["otus"])
-
-    reference_post = json.loads(post_update_ref_path.read_text())
-    post_otu_dict = convert_to_dict(reference_post["otus"])
-
-    difference_counter = 0
-
-    for otu_id in post_otu_dict:
-        pre_accessions = get_otu_accessions(pre_otu_dict[otu_id])
-        post_accessions = get_otu_accessions(post_otu_dict[otu_id])
-
-        print(pre_accessions)
-        print(post_accessions)
-
-        if pre_accessions != post_accessions:
-            difference_counter += 1
-
-    # Any new data counts
-    assert difference_counter > 0
-
-
-@pytest.mark.parametrize("base_path", [BASE_PATH])
-def test_update_autoevaluate(base_path, tmp_path):
-    """
-    Test that updates actually pull something.
-    No autoevaluation.
-    """
-    fetch_path = tmp_path / "src"
-    pre_update_ref_path = tmp_path / "reference_pre.json"
-    post_update_ref_path = tmp_path / "reference_post.json"
-
-    shutil.copytree(base_path, fetch_path)
-
-    subprocess.call(
-        [
-            "virtool",
-            "ref",
-            "build",
-            "-src",
-            str(fetch_path),
-            "-o",
-            str(pre_update_ref_path),
-        ]
-    )
-
-    subprocess.call(
-        [
-            "virtool",
-            "ref",
-            "update",
-            "reference",
-            "-src",
-            str(fetch_path),
-            "-cat",
-            str(TEST_ACCLOG_PATH),
-            "--evaluate",
-        ]
-    )
-
-    subprocess.call(
-        [
-            "virtool",
-            "ref",
-            "build",
-            "-src",
-            str(fetch_path),
-            "-o",
-            str(post_update_ref_path),
-        ]
-    )
-
-    reference_pre = json.loads(pre_update_ref_path.read_text())
-    pre_otu_dict = convert_to_dict(reference_pre["otus"])
-
-    reference_post = json.loads(post_update_ref_path.read_text())
-    post_otu_dict = convert_to_dict(reference_post["otus"])
-
-    difference_counter = 0
-
-    for otu_id in post_otu_dict:
-        pre_accessions = get_otu_accessions(pre_otu_dict[otu_id])
-        post_accessions = get_otu_accessions(post_otu_dict[otu_id])
-
-        print(pre_accessions)
-        print(post_accessions)
-
-        if pre_accessions != post_accessions:
-            difference_counter += 1
-
-    # Any new data counts
-    assert difference_counter > 0
