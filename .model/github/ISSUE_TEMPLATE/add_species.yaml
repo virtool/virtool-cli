@@ -1,0 +1,51 @@
+name: Add species
+description: Request a new virus species
+title: "[Addition]: "
+labels: ["addition-otu", "addition"]
+# assignees:
+#   - octocat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please refer to the Virtool Documentation for more information
+  - type: input
+    id: taxid
+    attributes:
+      label: Taxon ID
+      description: Corresponding ID number from NCBI's Taxonomy database 
+      placeholder: ex. 438782
+    validations:
+      required: true
+  - type: input
+    id: accessions
+    attributes:
+      label: Accessions
+      description: Accession Ids from NCBI's Nucleotide database
+      placeholder: ex. NC_010318, NC_010319.1
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Virus name
+      description: Searchable name of species
+      placeholder: ex. Abaca bunchy top virus
+    validations:
+      required: false
+  - type: input
+    id: abbreviation
+    attributes:
+      label: Abbreviated name
+      description: Searchable name of species not included in above definition
+      placeholder: ex. ???
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

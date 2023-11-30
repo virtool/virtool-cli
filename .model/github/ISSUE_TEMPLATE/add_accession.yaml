@@ -1,0 +1,35 @@
+name: Add accessions
+description: Request an addition to an existing OTU
+title: "[Addition]: "
+labels: ["addition-accession", "addition"]
+assignees:
+  - sygao-bot
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please refer to the Virtool Documentation for more information
+  - type: input
+    id: accessions
+    attributes:
+      label: Accessions
+      description: Accession Ids from NCBI's Nucleotide database
+      placeholder: NC_010318, NC_010319.1
+    validations:
+      required: true
+  - type: input
+    id: otu_dir
+    attributes:
+      label: OTU directory
+      description: The name of the folder the new items should go under
+      placeholder: abaca_bunchy_top_virus--c93ec9a9
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

@@ -1,0 +1,15 @@
+- name: bug
+  description: Something isn't working
+  color: d73a4a
+- name: documentation
+  description: Improvements or additions to documentation
+  color: 0075ca
+- name: duplicate
+  description: This issue or pull request already exists
+  color: cfd3d7
+- name: addition-otu
+  description: A requested new species-level addition to the reference
+  color: 7057ff
+- name: addition-accession
+  description: Requested new accessions to the reference
+  color: 7057ff
