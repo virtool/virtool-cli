@@ -37,7 +37,6 @@ def reference(src_path, catalog_path, evaluate, debug):
         run_update_all(src_path, catalog_path, auto_evaluate=evaluate, debugging=debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory", err=True)
-        click.echo(e, err=True)
 
 
 @update.command()
@@ -68,7 +67,6 @@ def otu(otu_path, catalog_path, evaluate, debug):
 
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory", err=True)
-        click.echo(e, err=True)
 
 
 if __name__ == "__main__":

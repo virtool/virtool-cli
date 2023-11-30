@@ -29,11 +29,11 @@ def reference(src_path, debug):
     try:
         run_reference(src_path, debug)
 
-    except (FileNotFoundError, NotADirectoryError) as e:
+    except (FileNotFoundError, NotADirectoryError):
         click.echo(
-            ERROR_MESSAGE + f"{str(src_path)} is not a valid reference directory"
+            ERROR_MESSAGE + f"{str(src_path)} is not a valid reference directory",
+            err=True,
         )
-        click.echo(e)
 
 
 @check.command()
@@ -50,11 +50,11 @@ def otu(otu_path, debug):
     try:
         run_otu(otu_path, debug)
 
-    except (FileNotFoundError, NotADirectoryError) as e:
+    except (FileNotFoundError, NotADirectoryError):
         click.echo(
-            ERROR_MESSAGE + f"{str(src_path)} is not a valid reference directory"
+            ERROR_MESSAGE + f"{str(otu_path)} is not a valid OTU directory",
+            err=True,
         )
-        click.echo(e)
 
 
 if __name__ == "__main__":

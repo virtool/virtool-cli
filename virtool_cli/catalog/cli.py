@@ -51,7 +51,9 @@ def init(src_path, catalog_path, debug):
             src_path=Path(src_path), catalog_path=Path(catalog_path), debugging=debug
         )
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
+        click.echo(
+            ERROR_MESSAGE + f"{src_path} is not a valid reference directory", err=True
+        )
 
 
 @catalog.command()
@@ -80,7 +82,8 @@ def update(src_path, catalog_path, debug):
         click.echo(
             ERROR_MESSAGE
             + f"{str(src_path)} is not a valid reference directory"
-            + f"OR {str(catalog_path)} is not a valid catalog directory"
+            + f"OR {str(catalog_path)} is not a valid catalog directory",
+            err=True,
         )
 
 
@@ -99,7 +102,9 @@ def checkup(catalog_path, debug):
     try:
         run_checkup(Path(catalog_path), debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
+        click.echo(
+            ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory", err=True
+        )
 
 
 @catalog.command()
@@ -117,7 +122,9 @@ def repair(catalog_path, debug):
     try:
         run_repair(Path(catalog_path), debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory")
+        click.echo(
+            ERROR_MESSAGE + f"{catalog_path} is not a valid catalog directory", err=True
+        )
 
 
 @catalog.command()
@@ -136,5 +143,6 @@ def exclude(catalog_path, debug):
         run_exclude(catalog_path, debugging=debug)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(
-            ERROR_MESSAGE + f"{str(catalog_path)} is not a valid catalog directory"
+            ERROR_MESSAGE + f"{str(catalog_path)} is not a valid catalog directory",
+            err=True,
         )
