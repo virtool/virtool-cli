@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Optional
 from structlog import get_logger, BoundLogger
 from urllib.error import HTTPError
 
+from virtool_cli.catalog.catalog import search_by_otu_id
 from virtool_cli.utils.reference import get_otu_paths
 from virtool_cli.utils.ncbi import fetch_taxonomy_rank, fetch_upstream_record_taxids
 from virtool_cli.catalog.listings import parse_listing
@@ -26,20 +26,6 @@ def filter_catalog(src_path: Path, catalog_path: Path) -> list:
             included_listings.append(listing_path)
 
     return included_listings
-
-
-def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
-    """
-    Searches records for a matching id and returns the first matching path in the accession records
-
-    :param otu_id: Unique OTU ID string
-    :param catalog_path: Path to an accession catalog directory
-    """
-    matches = list(catalog_path.glob(f"*--{otu_id}.json"))
-    if matches:
-        return matches[0]
-
-    return None
 
 
 async def find_taxid_from_accessions(
