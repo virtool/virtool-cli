@@ -49,7 +49,7 @@ jobs:
   
   trigger-otu-addition:
     needs: parse-otu-form
-    uses: ./.github/workflows/call__add_otu.yml
+    uses: ./.github/workflows/call_add_otu.yml
     with:
       taxon-id: ${{ needs.parse-otu-form.outputs.taxon-id }}
       accessions: ${{ needs.parse-otu-form.outputs.accessions }}
@@ -87,7 +87,7 @@ jobs:
   
   trigger-accession-addition:
     needs: parse-accession-form
-    uses: ./.github/workflows/call__add_accessions.yml
+    uses: ./.github/workflows/call_add_accessions.yml
     with:
       otu-path: ${{ needs.parse-accession-form.outputs.otu-path }}
       accessions: ${{ needs.parse-accession-form.outputs.accessions }}
