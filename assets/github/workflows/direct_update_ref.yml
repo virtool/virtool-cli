@@ -1,4 +1,4 @@
-name: Ref update
+name: Auto-Update
 on: 
   workflow_dispatch:
     inputs:
