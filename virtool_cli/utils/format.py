@@ -83,7 +83,10 @@ async def process_default(
         seq_dict = format_sequence(record=seq_data, qualifiers=seq_qualifier_data)
 
         if "segment" not in seq_dict:
-            seq_dict["segment"] = listing.get("schema")[0]["name"]
+            schema = listing.get("schema", [])
+
+            if schema:
+                seq_dict["segment"] = schema[0]["name"]
 
         seq_dict["isolate"] = isolate
         otu_updates.append(seq_dict)
