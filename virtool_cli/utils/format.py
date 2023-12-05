@@ -86,7 +86,7 @@ async def process_default(
             schema = listing.get("schema", [])
 
             if schema:
-                seq_dict["segment"] = schema[0]["name"]
+                seq_dict["segment"] = schema[0].get("name", "")
             else:
                 logger.warning('Missing schema')
                 seq_dict["segment"] = ""
