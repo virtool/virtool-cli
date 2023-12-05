@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "virtool-cli"
-version = "2.0.0-alpha.2"
+version = "2.0.0-alpha.5"
 authors = [
     "Ian Boyes <igboyes@gmail.com>",
     "Jake Alexander",
@@ -13,7 +13,6 @@ maintainers = [
 description = "CLI Tool for working with Virtool data"
 license = "MIT"
 classifiers = [
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10"
 ]
 
