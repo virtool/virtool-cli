@@ -87,6 +87,9 @@ async def process_default(
 
             if schema:
                 seq_dict["segment"] = schema[0]["name"]
+            else:
+                logger.warning('Missing schema')
+                seq_dict["segment"] = ""
 
         seq_dict["isolate"] = isolate
         otu_updates.append(seq_dict)
