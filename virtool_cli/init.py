@@ -47,7 +47,8 @@ def initialize_reference(repo_path: Path):
     with open(src_path / "meta.json", "w") as f:
         json.dump({"data_type": "genome"}, f)
 
-    model_path = Path(__file__).parents[1] / ".model/github"
+    package_path = Path(__file__).parents[1]
+    model_path = package_path / "assets/github"
     logger.debug(model_path)
 
     github_path = repo_path / ".github"
