@@ -103,7 +103,7 @@ def build(src_path, output, indent, version, debug):
 @click.option("--debug/--no-debug", default=False)
 def divide(file_path, output_path, debug):
     """Divide a reference.json file from Virtool into a reference directory tree."""
-    if file_path.suffix is not ".json":
+    if file_path.suffix != ".json":
         click.echo(ERROR_MESSAGE + f"{file_path} is not a JSON file")
 
     try:
