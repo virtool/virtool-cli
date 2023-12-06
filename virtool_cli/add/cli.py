@@ -42,9 +42,8 @@ def accession(accession, src_path, catalog_path, debug):
     """Takes an accession and retrieves the data."""
     try:
         run_add_accession(accession, src_path, catalog_path, debugging=debug)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo("Not a valid reference directory")
-        click.echo(e)
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo("Not a valid reference directory", err=True)
 
 
 @add.command()
@@ -75,9 +74,8 @@ def accessions(accessions, otu_path, catalog_path, debug):
     """Takes a list of comma-delineated accessions and retrieves the data."""
     try:
         run_add_accessions(accessions, otu_path, catalog_path, debugging=debug)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo("Not a valid reference directory")
-        click.echo(e)
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo("Not a valid reference directory", err=True)
 
 
 @add.command()
@@ -110,9 +108,8 @@ def otu(taxon_id, src_path, catalog_path, debug):
     try:
         run_add_otu(taxon_id, src_path, catalog_path, debugging=debug)
 
-    except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo("Not a valid OTU directory")
-        click.echo(e)
+    except (FileNotFoundError, NotADirectoryError):
+        click.echo("Not a valid OTU directory", err=True)
 
 
 if __name__ == "__main__":

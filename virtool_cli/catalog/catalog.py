@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import Optional
+
 from virtool_cli.catalog.listings import parse_listing
 
 
@@ -43,3 +45,17 @@ def get_taxid_lookup(catalog_path: Path) -> dict:
         lookup_table[taxid] = otu_id
 
     return lookup_table
+
+
+def search_by_otu_id(otu_id: str, catalog_path: Path) -> Optional[Path]:
+    """
+    Searches records for a matching id and returns the first matching path in the accession records
+
+    :param otu_id: Unique OTU ID string
+    :param catalog_path: Path to an accession catalog directory
+    """
+    matches = list(catalog_path.glob(f"*--{otu_id}.json"))
+    if matches:
+        return matches[0]
+
+    return None

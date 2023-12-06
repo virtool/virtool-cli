@@ -4,8 +4,15 @@ import structlog
 from structlog import get_logger, BoundLogger
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import get_otu_paths, search_otu_by_id
-from virtool_cli.utils.storage import read_otu
+from virtool_cli.utils.reference import (
+    get_otu_paths,
+    search_otu_by_id,
+)
+from virtool_cli.utils.storage import (
+    read_otu,
+    get_otu_accessions,
+    get_otu_accessions_metadata,
+)
 from virtool_cli.catalog.listings import (
     parse_listing,
     generate_listing,
@@ -14,8 +21,6 @@ from virtool_cli.catalog.listings import (
 )
 from virtool_cli.catalog.helpers import (
     filter_catalog,
-    get_otu_accessions,
-    get_otu_accessions_metadata,
 )
 from virtool_cli.catalog.catalog import get_catalog_paths
 

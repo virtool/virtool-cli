@@ -8,7 +8,6 @@ from virtool_cli.init import run as run_init
 from virtool_cli.build import run as run_build
 from virtool_cli.divide import run as run_divide
 from virtool_cli.migrate import run as run_migrate
-from virtool_cli.check.check_reference import run as run_checkup
 
 ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
@@ -42,7 +41,8 @@ def init(repo_path, debug):
     except (FileNotFoundError, NotADirectoryError):
         click.echo(
             ERROR_MESSAGE
-            + "Ran into problems with the given reference repository directory"
+            + "Ran into problems with the given reference repository directory",
+            err=True,
         )
 
 
@@ -80,7 +80,9 @@ def build(src_path, output, indent, version, debug):
     try:
         run_build(src_path, output, indent, version, debug)
     except (FileNotFoundError, NotADirectoryError):
-        click.echo(ERROR_MESSAGE + "Source directory contains critical errors")
+        click.echo(
+            ERROR_MESSAGE + "Source directory contains critical errors", err=True
+        )
 
 
 @ref.command()
@@ -101,14 +103,13 @@ def build(src_path, output, indent, version, debug):
 @click.option("--debug/--no-debug", default=False)
 def divide(file_path, output_path, debug):
     """Divide a reference.json file from Virtool into a reference directory tree."""
-    if file_path.suffix is not ".json":
+    if file_path.suffix != ".json":
         click.echo(ERROR_MESSAGE + f"{file_path} is not a JSON file")
 
     try:
         run_divide(file_path, output_path, debug)
     except (TypeError, FileNotFoundError) as e:
-        click.echo(ERROR_MESSAGE + f"{file_path} is not a proper JSON file")
-        click.echo(e)
+        click.echo(ERROR_MESSAGE + f"{file_path} is not a proper JSON file", err=True)
 
 
 @ref.command()
@@ -126,29 +127,9 @@ def migrate(src_path, debug):
         run_migrate(Path(src_path), debug)
 
     except (FileNotFoundError, NotADirectoryError) as e:
-        click.echo(ERROR_MESSAGE + f"{src_path} is not a valid reference directory")
-        click.echo(e)
-
-
-# @ref.command()
-# @click.option(
-#     "-src",
-#     "--src_path",
-#     required=True,
-#     type=click.Path(exists=True, file_okay=False, path_type=Path),
-#     help="the path to a reference directory",
-# )
-# @click.option("--debug/--no-debug", default=False)
-# def checkup(src_path, debug):
-#     """Checks the validity of a reference source"""
-#     try:
-#         run_checkup(src_path, debug)
-#
-#     except (FileNotFoundError, NotADirectoryError) as e:
-#         click.echo(
-#             ERROR_MESSAGE + f"{str(src_path)} is not a valid reference directory"
-#         )
-#         click.echo(e)
+        click.echo(
+            ERROR_MESSAGE + f"{src_path} is not a valid reference directory", err=True
+        )
 
 
 if __name__ == "__main__":

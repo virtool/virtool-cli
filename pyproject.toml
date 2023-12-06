@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "virtool-cli"
-version = "2.0.0-alpha.2"
+version = "2.0.0-alpha.5"
 authors = [
     "Ian Boyes <igboyes@gmail.com>",
     "Jake Alexander",
@@ -13,7 +13,6 @@ maintainers = [
 description = "CLI Tool for working with Virtool data"
 license = "MIT"
 classifiers = [
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10"
 ]
 
@@ -21,21 +20,18 @@ classifiers = [
 python = "^3.10"
 aiofiles = "^23.1"
 aiohttp = "^3.8"
-aiojobs = "^1.1"
-numpy = "^1.25"
 arrow = "^1.1"
 biopython = "^1.81"
 rich = "^13.4.2"
-pytest-asyncio = "^0.21"
-pytest-mock = "^3.11"
 click = "^8.1"
 structlog = "^23.1"
 requests = "^2.31"
-GitPython = "^3.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.3"
 pytest-cov = "^4.1"
+pytest-asyncio = "^0.21"
+pytest-mock = "^3.11"
 pytest-datafiles = "^3.0"
 black = "^23.7"
 pre-commit = "^3.3.3"
