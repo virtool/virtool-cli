@@ -1,0 +1,33 @@
+name: Suggest a correction
+description: Suggest a correction to existing data
+title: "[Correction]: "
+labels: ["correction"]
+assignees:
+  - sygao-bot
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please refer to the Virtool Documentation for more information
+  - type: input
+    id: file_path
+    attributes:
+      label: File Path
+      description: Path within the database folder structure
+      placeholder: src/abaca_bunchy_top_virus--c93ec9a9/4e8amg20/5w3oz9pl.json
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Correction
+      description: Copy-paste suggested correction in full.
+    validations:
+      required: true
+  - type: textarea
+    id: comment
+    attributes:
+      label: Comment
+      description: (Optional) Make a case for the correction here.
+    validations:
+      required: false

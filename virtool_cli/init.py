@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from shutil import copytree
 import structlog
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 
@@ -45,6 +46,13 @@ def initialize_reference(repo_path: Path):
 
     with open(src_path / "meta.json", "w") as f:
         json.dump({"data_type": "genome"}, f)
+
+    package_path = Path(__file__).parents[1]
+    model_path = package_path / "assets/github"
+    logger.debug(model_path)
+
+    github_path = repo_path / ".github"
+    copytree(model_path, github_path)
 
     cache_path = repo_path / ".cache"
     if not cache_path.exists():
