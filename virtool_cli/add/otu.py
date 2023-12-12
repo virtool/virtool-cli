@@ -153,4 +153,7 @@ async def write_otu(otu: dict, src_path: Path) -> Path:
     with open(otu_path / "otu.json", "w") as f:
         json.dump(otu, f, indent=4, sort_keys=True)
 
+    with open(otu_path / "exclusions.json", "w") as f:
+        json.dump([], f, indent=4, sort_keys=True)
+
     return otu_path

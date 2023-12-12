@@ -69,6 +69,10 @@ async def divide_reference_file(reference_path: Path, output_path: Path):
             for sequence in sequences:
                 await build_sequence(isolate_path, sequence)
 
+        # Create empty exclusion list
+        with open(otu_path / "exclusions.json", "w") as f:
+            json.dump([], f, indent=4, sort_keys=True)
+
     meta = {"data_type": data["data_type"], "organism": data["organism"]}
     async with aiofiles.open(output_path / "meta.json", "w") as f:
         await f.write(json.dumps(meta, sort_keys=True))
