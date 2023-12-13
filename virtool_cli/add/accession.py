@@ -88,7 +88,7 @@ async def add_accessions(accessions: list, otu_path: Path):
     """
     logger = base_logger.bind(accessions=accessions)
 
-    otu_accession_list = get_otu_accessions(otu_path)
+    otu_accession_list = await get_otu_accessions(otu_path)
 
     logger.debug(otu_accession_list)
 
@@ -166,7 +166,7 @@ async def add_accession(accession: str, src_path: Path, catalog_path: Path):
         logger.error("No matching OTU found.")
         return
 
-    otu_accession_list = get_otu_accessions(otu_path)
+    otu_accession_list = await get_otu_accessions(otu_path)
     accession_collision = await check_accession_collision(accession, otu_accession_list)
     if accession_collision:
         logger.warning(

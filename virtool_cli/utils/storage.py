@@ -232,3 +232,11 @@ async def get_otu_accessions_metadata(otu_path: Path) -> dict:
             all_metadata[accession] = sequence_metadata
 
     return all_metadata
+
+
+async def fetch_exclusions(otu_path: Path) -> list:
+    async with aiofiles.open(otu_path, "r") as f:
+        contents = await f.read()
+        exclusions = json.loads(contents)
+
+    return exclusions

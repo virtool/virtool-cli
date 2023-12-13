@@ -89,8 +89,10 @@ async def fetcher_loop(src_path: Path, catalog_path: Path, queue: asyncio.Queue)
 
         logger = logger.bind(listing=listing_path.name)
 
-        otu_path = search_otu_by_id(otu_id, src_path)
-        existing_accessions = set(get_otu_accessions(otu_path))
+        if otu_path := search_otu_by_id(otu_id, src_path):
+            existing_accessions_list = await get_otu_accessions(otu_path)
+            existing_accessions = set(existing_accessions_list)
+
         logger.debug(f"current accessions: {existing_accessions}")
 
         listing = await parse_listing(listing_path)

@@ -1,3 +1,4 @@
+from pathlib import Path
 import asyncio
 import structlog
 from structlog import BoundLogger
@@ -8,17 +9,27 @@ from virtool_cli.utils.ncbi import (
     request_from_nucleotide,
     NCBI_REQUEST_INTERVAL,
 )
+from virtool_cli.utils.storage import get_otu_accessions, fetch_exclusions
 
 base_logger = structlog.get_logger()
 
 
-async def request_new_records(listing: dict, logger: BoundLogger = base_logger) -> list:
+async def request_new_records(
+    otu_path: Path, metadata: dict, logger: BoundLogger = base_logger
+) -> list:
     """
     :param listing: Deserialized OTU catalog listing
     :param logger: Optional entry point for a shared BoundLogger
     """
+    taxid = metadata.get('taxid')
+
+    included = await get_otu_accessions(otu_path)
+    excluded = await fetch_exclusions(otu_path)
+
     try:
-        new_accessions = await fetch_upstream_accessions(listing=listing, logger=logger)
+        new_accessions = await fetch_upstream_accessions(
+            taxid=taxid, included=included, excluded=excluded, logger=logger
+        )
         await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
     except HTTPError as e:
@@ -45,7 +56,7 @@ async def request_new_records(listing: dict, logger: BoundLogger = base_logger) 
 
 
 async def fetch_upstream_accessions(
-    listing: dict, logger: BoundLogger = base_logger
+    taxid: int, included: list, excluded: list, logger: BoundLogger = base_logger
 ) -> list:
     """
     Requests a list of all uninspected accessions associated with an OTU's taxon ID
@@ -55,14 +66,8 @@ async def fetch_upstream_accessions(
     :return: A list of accessions from NCBI Genbank for the taxon ID,
         sans included and excluded accessions
     """
-    taxid = listing.get("taxid")
-    included_set = set(listing["accessions"]["included"])
-    excluded_set = set(listing["accessions"]["excluded"])
-
     logger = logger.bind(taxid=taxid)
-    logger.debug(
-        "Exclude catalogued accessions", included=included_set, excluded=excluded_set
-    )
+    included_set = set(included)
 
     try:
         upstream_accessions = await request_linked_accessions(taxon_id=taxid)
@@ -73,3 +78,4 @@ async def fetch_upstream_accessions(
     upstream_set = set(upstream_accessions)
 
     return list(upstream_set.difference(included_set))
+
