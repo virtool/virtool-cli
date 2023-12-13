@@ -6,6 +6,7 @@ from typing import Tuple
 async def process_records(
     records: list,
     metadata: dict,
+    no_fetch_set: set,
     auto_evaluate: bool = True,
     logger: BoundLogger = get_logger(),
 ) -> list:
@@ -24,12 +25,9 @@ async def process_records(
     :param logger: Optional entry point for a shared BoundLogger
     :return: A list of valid sequences formatted for the Virtool reference database
     """
-    # filter_set = set(listing["accessions"]["included"])
-    # filter_set.update(listing["accessions"]["excluded"])
-
     try:
         otu_updates, auto_excluded = await process_default(
-            records, metadata, filter_set, logger
+            records, metadata, no_fetch_set, logger
         )
     except Exception as e:
         logger.exception(e)
@@ -48,13 +46,13 @@ async def process_records(
 
 
 async def process_default(
-    records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
+    records: list, metadata: dict, filter_set: set, logger: BoundLogger = get_logger()
 ) -> Tuple[list, list]:
     """
     Format new sequences from NCBI Taxonomy if they do not already exist in the reference.
 
     :param records: A list of SeqRecords from NCBI Taxonomy
-    :param listing: A deserialized catalog listing for the OTU
+    :param metadata: A deserialized OTU metadata file
     :param filter_set: A set of accessions that should be omitted
     :param logger: Optional entry point for an existing BoundLogger
     :return: A list of processed new sequences/isolates and
@@ -78,7 +76,7 @@ async def process_default(
         seq_dict = format_sequence(record=seq_data, qualifiers=seq_qualifier_data)
 
         if "segment" not in seq_dict:
-            schema = listing.get("schema", [])
+            schema = metadata.get("schema", [])
 
             if schema:
                 seq_dict["segment"] = schema[0].get("name", "")

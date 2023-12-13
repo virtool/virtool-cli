@@ -21,7 +21,7 @@ async def request_linked_accessions(taxon_id: int) -> list:
     # Request results as accessions, not UIDs
     entrez_acclist = Entrez.read(
         Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
+            dbfrom="taxonomy", db="nuccore",
             id=str(taxon_id), idtype="acc")
         )
     
@@ -41,7 +41,7 @@ async def request_from_nucleotide(fetch_list: list) -> list:
     """
     try:
         handle = Entrez.efetch(
-            db="nucleotide", id=fetch_list, 
+            db="nuccore", id=fetch_list,
             rettype="gb", retmode="text"
         )
         ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))

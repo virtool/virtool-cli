@@ -5,8 +5,8 @@ import structlog
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
 from virtool_cli.utils.format import process_records
-from virtool_cli.utils.storage import read_otu, write_records, get_otu_accessions, fetch_exclusions
-from virtool_cli.update.update import request_new_records
+from virtool_cli.utils.storage import read_otu, write_records
+from virtool_cli.update.update import get_no_fetch_set, request_new_records
 # from virtool_cli.catalog.listings import parse_listing
 # from virtool_cli.catalog.catalog import search_by_otu_id
 
@@ -55,17 +55,23 @@ async def update_otu(
     src_path = otu_path.parent
     metadata = await read_otu(otu_path)
 
+    no_fetch = await get_no_fetch_set(otu_path)
+
     otu_id = metadata.get('_id')
     taxid = metadata.get('taxid')
 
     logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
-    record_data = await request_new_records(otu_path, metadata, logger)
+    record_data = await request_new_records(taxid, no_fetch, logger)
     if not record_data:
         return
 
     otu_updates = await process_records(
-        records=record_data, metadata=metadata, auto_evaluate=auto_evaluate, logger=logger
+        records=record_data,
+        metadata=metadata,
+        no_fetch_set=no_fetch,
+        auto_evaluate=auto_evaluate,
+        logger=logger
     )
     if not otu_updates:
         return

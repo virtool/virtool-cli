@@ -174,7 +174,7 @@ async def parse_sequence(path):
     return sequence
 
 
-def get_otu_accessions(otu_path: Path) -> list:
+async def get_otu_accessions(otu_path: Path) -> list:
     """
     Gets all accessions from an OTU directory and returns a list
 
@@ -235,7 +235,7 @@ async def get_otu_accessions_metadata(otu_path: Path) -> dict:
 
 
 async def fetch_exclusions(otu_path: Path) -> list:
-    async with aiofiles.open(otu_path, "r") as f:
+    async with aiofiles.open(otu_path / "exclusions.json", "r") as f:
         contents = await f.read()
         exclusions = json.loads(contents)
 
