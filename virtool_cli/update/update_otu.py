@@ -55,21 +55,26 @@ async def update_otu(
     src_path = otu_path.parent
     metadata = await read_otu(otu_path)
 
-    no_fetch = await get_no_fetch_set(otu_path)
+    no_fetch_set = await get_no_fetch_set(otu_path)
 
     otu_id = metadata.get('_id')
     taxid = metadata.get('taxid')
 
     logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
-    record_data = await request_new_records(taxid, no_fetch, logger)
+    try:
+        record_data = await request_new_records(taxid, no_fetch_set, logger)
+    except Exception as e:
+        logger.exception(e)
+        return
+
     if not record_data:
         return
 
     otu_updates = await process_records(
         records=record_data,
         metadata=metadata,
-        no_fetch_set=no_fetch,
+        no_fetch_set=no_fetch_set,
         auto_evaluate=auto_evaluate,
         logger=logger
     )
