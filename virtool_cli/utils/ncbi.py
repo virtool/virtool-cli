@@ -18,12 +18,19 @@ async def request_linked_accessions(taxon_id: int) -> list:
     """
     upstream_accessions = []
 
-    # Request results as accessions, not UIDs
-    entrez_acclist = Entrez.read(
-        Entrez.elink(
+    try:
+        elink_results = Entrez.elink(
             dbfrom="taxonomy", db="nuccore",
-            id=str(taxon_id), idtype="acc")
+            id=str(taxon_id), idtype="acc"
         )
+        entrez_acclist = Entrez.read(elink_results)
+    except HTTPError:
+        return []
+    except RuntimeError:
+        return []
+
+    if not entrez_acclist:
+        return []
     
     for linksetdb in entrez_acclist[0]["LinkSetDb"][0]["Link"]:
         upstream_accessions.append(str(linksetdb["Id"]))

@@ -31,13 +31,10 @@ async def request_new_records(
     """
     try:
         upstream_accessions = await request_linked_accessions(taxon_id=taxid)
-
         await asyncio.sleep(NCBI_REQUEST_INTERVAL)
-
     except HTTPError as e:
         logger.error(e)
         return []
-
     except Exception as e:
         logger.exception(e)
         return []
@@ -45,6 +42,11 @@ async def request_new_records(
     if upstream_accessions:
         upstream_set = set(upstream_accessions)
         new_accessions = list(upstream_set.difference(no_fetch_set))
+    else:
+        return []
+
+    if not new_accessions:
+        return []
 
     try:
         record_data = await request_from_nucleotide(new_accessions)
