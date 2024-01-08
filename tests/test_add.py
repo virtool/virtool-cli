@@ -163,7 +163,7 @@ class TestAddAccession:
 
     @pytest.mark.parametrize(
         "accession, otu_dirname",
-        [("KT390494", "nanovirus-like_particle--ae0f2a35")],
+        [("KT390494", "nanovirus_like_particle--ae0f2a35")],
     )
     def test_add_isolate_success(
         self, accession, otu_dirname, work_path, work_catalog_path

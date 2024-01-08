@@ -8,7 +8,6 @@ from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import is_v1, generate_otu_dirname, get_unique_otu_ids
 from virtool_cli.utils.id_generator import generate_unique_ids
 from virtool_cli.utils.ncbi import fetch_taxonomy_record
-from virtool_cli.catalog.listings import add_new_listing
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 

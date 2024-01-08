@@ -7,8 +7,6 @@ from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
 from virtool_cli.utils.format import process_records
 from virtool_cli.utils.storage import read_otu, write_records
 from virtool_cli.update.update import get_no_fetch_set, request_new_records
-# from virtool_cli.catalog.listings import parse_listing
-# from virtool_cli.catalog.catalog import search_by_otu_id
 
 base_logger = structlog.get_logger()
 

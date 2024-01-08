@@ -12,8 +12,6 @@ from virtool_cli.utils.reference import (
 from virtool_cli.utils.format import process_records
 from virtool_cli.utils.storage import write_records, read_otu
 from virtool_cli.update.update import request_new_records, get_no_fetch_set
-from virtool_cli.catalog.listings import parse_listing
-from virtool_cli.catalog.helpers import filter_catalog
 
 DEFAULT_INTERVAL = 0.001
 
