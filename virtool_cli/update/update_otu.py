@@ -13,7 +13,6 @@ base_logger = structlog.get_logger()
 
 def run(
     otu_path: Path,
-    catalog_path: Path,
     auto_evaluate: bool = False,
     debugging: bool = False,
 ):
@@ -24,7 +23,6 @@ def run(
     Searches the catalog for a matching catalog listing and requests new updates if it finds one.
 
     :param otu_path: Path to an OTU directory
-    :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
@@ -40,14 +38,13 @@ def run(
 
 
 async def update_otu(
-    otu_path: Path, listing_path: Path = None, auto_evaluate: bool = False
+    otu_path: Path, auto_evaluate: bool = False
 ):
     """
     Requests new records for a single taxon ID
     and writes new data under the corresponding path.
 
     :param otu_path: Path to a OTU directory
-    :param listing_path: Path to a listing in an accession catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
     src_path = otu_path.parent

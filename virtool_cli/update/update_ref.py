@@ -20,7 +20,6 @@ base_logger = structlog.get_logger()
 
 def run(
     src_path: Path,
-    catalog_path: Path,
     auto_evaluate: bool = False,
     debugging: bool = False,
 ):
@@ -30,12 +29,11 @@ def run(
     Requests updates for all OTU directories under a source reference
 
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
+    logger = base_logger.bind(src=str(src_path))
 
     if is_v1(src_path):
         logger.error(
@@ -52,14 +50,12 @@ def run(
     logger.info("Updating src directory accessions using catalog listings...")
 
     asyncio.run(
-        update_reference(
-            src_path=src_path, catalog_path=catalog_path, auto_evaluate=auto_evaluate
-        )
+        update_reference(src_path=src_path, auto_evaluate=auto_evaluate)
     )
 
 
 async def update_reference(
-    src_path: Path, catalog_path: Path = None, auto_evaluate: bool = False
+    src_path: Path, auto_evaluate: bool = False
 ):
     """
     Creates 2 queues:
@@ -79,7 +75,6 @@ async def update_reference(
             src directory
 
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
     # Holds raw NCBI GenBank data
