@@ -25,8 +25,8 @@ async def request_new_records(
     taxid: int, no_fetch_set: set, logger: BoundLogger = base_logger
 ) -> list:
     """
-    :param otu_path:
-    :param metadata:
+    :param taxid:
+    :param no_fetch_set:
     :param logger: Optional entry point for a shared BoundLogger
     """
     try:

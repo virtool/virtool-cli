@@ -34,7 +34,7 @@ def run(
             "Auto-evaluation is in active development and may produce false negatives."
         )
 
-    asyncio.run(update_otu(otu_path, None, auto_evaluate))
+    asyncio.run(update_otu(otu_path, auto_evaluate))
 
 
 async def update_otu(
