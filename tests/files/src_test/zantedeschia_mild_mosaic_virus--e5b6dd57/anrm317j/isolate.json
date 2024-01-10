@@ -1,6 +1,6 @@
 {
+    "default": true,
     "id": "anrm317j",
-    "source_type": "strain",
     "source_name": "TW",
-    "default": true
+    "source_type": "strain"
 }

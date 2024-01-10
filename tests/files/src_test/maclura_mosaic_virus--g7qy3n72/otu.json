@@ -1,11 +1,11 @@
 {
     "_id": "g7qy3n72",
-    "name": "Maclura mosaic virus",
     "abbreviation": "",
+    "name": "Maclura mosaic virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "ssRNA+",
+            "name": "Genome",
             "required": true
         }
     ],

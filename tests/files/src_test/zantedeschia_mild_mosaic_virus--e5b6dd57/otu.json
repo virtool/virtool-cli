@@ -1,11 +1,11 @@
 {
     "_id": "e5b6dd57",
-    "name": "Zantedeschia mild mosaic virus",
     "abbreviation": "ZaMMV",
+    "name": "Zantedeschia mild mosaic virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "ssRNA+",
+            "name": "Genome",
             "required": true
         }
     ],

@@ -1,16 +1,16 @@
 {
     "_id": "d226290f",
-    "name": "Cabbage leaf curl Jamaica virus",
     "abbreviation": "CabLCJV",
+    "name": "Cabbage leaf curl Jamaica virus",
     "schema": [
         {
-            "name": "DNA A",
             "molecule": "ssDNA",
+            "name": "DNA A",
             "required": true
         },
         {
-            "name": "DNA B",
             "molecule": "ssDNA",
+            "name": "DNA B",
             "required": true
         }
     ],

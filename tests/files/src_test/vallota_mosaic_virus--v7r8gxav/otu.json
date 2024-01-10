@@ -1,11 +1,11 @@
 {
     "_id": "v7r8gxav",
-    "name": "Vallota mosaic virus",
     "abbreviation": "",
+    "name": "Vallota mosaic virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "ssRNA+",
+            "name": "Genome",
             "required": true
         }
     ],

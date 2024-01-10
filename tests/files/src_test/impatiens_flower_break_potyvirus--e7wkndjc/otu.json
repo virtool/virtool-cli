@@ -1,11 +1,11 @@
 {
     "_id": "e7wkndjc",
-    "name": "Impatiens flower break potyvirus",
     "abbreviation": "",
+    "name": "Impatiens flower break potyvirus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "ssRNA+",
+            "name": "Genome",
             "required": true
         }
     ],

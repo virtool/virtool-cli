@@ -1,11 +1,11 @@
 {
     "_id": "5d877144",
-    "name": "Yacon necrotic mottle virus",
     "abbreviation": "",
+    "name": "Yacon necrotic mottle virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "dsDNA",
+            "name": "Genome",
             "required": true
         }
     ],

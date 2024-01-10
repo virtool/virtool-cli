@@ -1,6 +1,6 @@
 {
+    "default": false,
     "id": "b4rzunkc",
-    "source_type": "isolate",
     "source_name": "Tochigi",
-    "default": false
+    "source_type": "isolate"
 }

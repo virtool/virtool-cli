@@ -1,11 +1,11 @@
 {
     "_id": "ae0f2a35",
-    "name": "Nanovirus-like particle",
     "abbreviation": "",
+    "name": "Nanovirus-like particle",
     "schema": [
         {
-            "name": "Alphasatellite",
             "molecule": "ssDNA",
+            "name": "Alphasatellite",
             "required": true
         }
     ],
