@@ -55,6 +55,123 @@ def run_build(src_path, build_path):
     )
 
 
+class TestAddAccession:
+    @staticmethod
+    def run_command(accession: str, src_path: Path):
+        subprocess.call(
+            [
+                "virtool",
+                "ref",
+                "add",
+                "accession",
+                "-acc",
+                accession,
+                "-src",
+                str(src_path),
+            ]
+        )
+
+    def run_add_accession(
+        self, accession: str, otu_dirname: str, src_path: Path
+    ):
+        """
+        Add into an existing isolate directory
+        """
+        otu_path = src_path / otu_dirname
+
+        pre_sequence_paths = get_all_sequence_paths(otu_path)
+
+        self.run_command(accession, src_path)
+
+        post_sequence_paths = get_all_sequence_paths(otu_path)
+
+        return pre_sequence_paths, post_sequence_paths
+
+    def run_add_isolate(
+        self, accession: str, otu_subpath: str, src_path: Path
+    ):
+        """
+        Add into a new isolate directory
+        """
+        otu_path = src_path / otu_subpath
+
+        pre_isolate_paths = set(get_isolate_paths(otu_path))
+
+        self.run_command(accession, src_path)
+
+        post_isolate_paths = set(get_isolate_paths(otu_path))
+
+        return pre_isolate_paths, post_isolate_paths
+
+    @pytest.mark.parametrize(
+        "accession, otu_subpath",
+        [
+            ("DQ178612", "cabbage_leaf_curl_jamaica_virus--d226290f"),
+            ("NC_038793", "cabbage_leaf_curl_jamaica_virus--d226290f"),
+        ],
+    )
+    def test_add_accession_success(
+        self, accession, otu_subpath, work_path
+    ):
+        """
+        Check that virtool ref add accession does the job when the isolate exists
+        """
+        pre_sequence_paths, post_sequence_paths = self.run_add_accession(
+            accession, otu_dirname=otu_subpath, src_path=work_path
+        )
+
+        new_sequences = post_sequence_paths.difference(pre_sequence_paths)
+
+        assert new_sequences
+
+    @pytest.mark.parametrize(
+        "accession, isolate_subpath",
+        [
+            ("NC_010319", "abaca_bunchy_top_virus--c93ec9a9/4e8amg20"),
+            ("NC_024301", "pagoda_yellow_mosaic_associated_virus--dd21fd8f"),
+        ],
+    )
+    def test_add_accession_fail(
+        self, accession, isolate_subpath, work_path
+    ):
+        """
+        Check that virtool ref add accession does not add sequences that already exist
+        """
+        pre_sequence_paths, post_sequence_paths = self.run_add_accession(
+            accession,
+            isolate_subpath,
+            src_path=work_path,
+        )
+
+        new_sequences = post_sequence_paths.difference(pre_sequence_paths)
+
+        assert not new_sequences
+
+    @pytest.mark.parametrize(
+        "accession, otu_dirname",
+        [("KT390494", "nanovirus_like_particle--ae0f2a35")],
+    )
+    def test_add_isolate_success(
+        self, accession, otu_dirname, work_path, work_catalog_path
+    ):
+        """
+        Check that virtool ref add accession does the job when the isolate does not exist
+        """
+        pre_isolate_paths, post_isolate_paths = self.run_add_isolate(
+            accession, otu_dirname, src_path=work_path
+        )
+
+        new_isolates = post_isolate_paths.difference(pre_isolate_paths)
+
+        print(pre_isolate_paths)
+
+        print(post_isolate_paths)
+
+        assert new_isolates
+
+        assert (new_isolates.pop() / "isolate.json").exists()
+
+
 class TestAddAccessions:
     @staticmethod
     def run_command(accessions: str, otu_path: Path):
