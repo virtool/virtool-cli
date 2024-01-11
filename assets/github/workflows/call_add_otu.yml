@@ -74,7 +74,7 @@ jobs:
       - name: Add OTU
         id: add-otu
         run: |
-          OTU_PATH=$(virtool ref add otu -taxid $TAXID -src src -cat catalog $FLAGS)
+          OTU_PATH=$(virtool ref add otu -taxid $TAXID -src src $FLAGS)
           echo "otu_path=$OTU_PATH" >> ${GITHUB_OUTPUT}
         env:
           TAXID: ${{ inputs.taxon-id }}
@@ -82,8 +82,7 @@ jobs:
 
       - name: Add accessions
         run: |
-          virtool ref add accessions -acc "$ACCESSIONS" -otu $OTU_PATH -cat catalog $FLAGS
-          virtool catalog update -src src -cat catalog $FLAGS
+          virtool ref add accessions -acc "$ACCESSIONS" -otu $OTU_PATH $FLAGS
         env:
           OTU_PATH: ${{ steps.add-otu.outputs.otu_path }}
           ACCESSIONS: ${{ inputs.accessions }}
