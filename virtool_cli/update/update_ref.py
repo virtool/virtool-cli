@@ -47,7 +47,7 @@ def run(
             "Auto-evaluation is in active development and may produce false negatives."
         )
 
-    logger.info("Updating src directory accessions using catalog listings...")
+    logger.info("Updating src directory accessions...")
 
     asyncio.run(
         update_reference(src_path=src_path, auto_evaluate=auto_evaluate)

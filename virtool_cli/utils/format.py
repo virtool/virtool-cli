@@ -19,7 +19,8 @@ async def process_records(
     WARNING: Auto-evaluation is still under active development, especially multipartite filtering
 
     :param records: SeqRecords retrieved from the NCBI Nucleotide database
-    :param listing: Deserialized OTU catalog listing
+    :param metadata:
+    :param no_fetch_set:
     :param auto_evaluate: Boolean flag for whether automatic evaluation functions
         should be run
     :param logger: Optional entry point for a shared BoundLogger
@@ -35,7 +36,7 @@ async def process_records(
 
     if auto_excluded:
         logger.info(
-            "Consider adding these accessions to the catalog exclusion list",
+            "Consider adding these accessions to the exclusion list",
             auto_excluded=auto_excluded,
         )
 
