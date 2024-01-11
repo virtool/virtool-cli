@@ -64,9 +64,9 @@ class TestAddAccessions:
                 "ref",
                 "add",
                 "accessions",
-                "-acc",
+                "--accessions",
                 accessions,
-                "-otu",
+                "--otu_path",
                 str(otu_path)
             ]
         )
