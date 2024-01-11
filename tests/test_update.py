@@ -9,6 +9,15 @@ from paths import TEST_FILES_PATH
 BASE_PATH = TEST_FILES_PATH / "src_test"
 
 
+@pytest.fixture()
+def scratch_copy_path(tmp_path):
+    fetch_path = tmp_path / "src"
+
+    shutil.copytree(BASE_PATH, fetch_path)
+
+    return fetch_path
+
+
 class TestEmptyRepo:
     def test_empty_success(self, empty_repo_path):
         subprocess.run(["virtool", "ref", "init", "-repo", str(empty_repo_path)])
@@ -20,8 +29,10 @@ class TestEmptyRepo:
 
 class TestUpdateOTU:
     @pytest.mark.parametrize("otu_dirname", ["abaca_bunchy_top_virus--c93ec9a9"])
-    def test_update_otu(self, otu_dirname: str):
-        otu_path = BASE_PATH / otu_dirname
+    def test_update_otu(self, scratch_copy_path, otu_dirname: str):
+        content_set = set((BASE_PATH / otu_dirname).iterdir())
+
+        otu_path = scratch_copy_path / otu_dirname
         subprocess.run([
             "virtool",
             "ref",
@@ -31,7 +42,9 @@ class TestUpdateOTU:
             str(otu_path),
         ])
 
-        assert True
+        updated_set = set(otu_path.iterdir())
+
+        assert updated_set.difference(content_set)
 
 
 # @pytest.mark.parametrize("base_path", [BASE_PATH])
