@@ -28,7 +28,14 @@ class TestEmptyRepo:
 
 
 class TestUpdateOTU:
-    @pytest.mark.parametrize("otu_dirname", ["abaca_bunchy_top_virus--c93ec9a9"])
+    test_dirs = [
+        "abaca_bunchy_top_virus--c93ec9a9",
+        "babaco_mosaic_virus--xcl20vqt",
+        "cabbage_leaf_curl_jamaica_virus--d226290f",
+        "faba_bean_necrotic_stunt_alphasatellite_1--6444acf3",
+    ]
+
+    @pytest.mark.parametrize("otu_dirname", test_dirs)
     def test_update_otu(self, scratch_copy_path, otu_dirname: str):
         content_set = set((BASE_PATH / otu_dirname).iterdir())
 
