@@ -8,6 +8,7 @@ from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import is_v1, generate_otu_dirname, get_unique_otu_ids
 from virtool_cli.utils.id_generator import generate_unique_ids
 from virtool_cli.utils.ncbi import fetch_taxonomy_record
+from virtool_cli.utils.cache import generate_taxid_table
 
 OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
 
@@ -53,6 +54,8 @@ async def add_otu(taxid: int, src_path: Path):
     """
     logger = base_logger.bind(taxon_id=taxid)
 
+    taxid_table = generate_taxid_table(src_path)
+
     try:
         taxonomy_data = await fetch_taxonomy_record(taxon_id=taxid)
         if not taxonomy_data:
@@ -65,12 +68,10 @@ async def add_otu(taxid: int, src_path: Path):
         )
         return
 
-    taxid_matches = list(catalog_path.glob(f"{taxid}--*.json"))
-    if taxid_matches:
-        match = taxid_matches.pop()
+    if taxid in taxid_table:
         logger.error(
             "An OTU with this taxon ID already exists in the reference database.",
-            listing=match.name,
+            otu_dirname=taxid_table[taxid],
         )
         return
 
@@ -93,15 +94,6 @@ async def add_otu(taxid: int, src_path: Path):
     logger.warning(
         'otu_path is empty. Use "virtool ref add accessions" before building, updating or submitting.'
     )
-
-    listing_path = await add_new_listing(
-        otu_path, catalog_path=catalog_path, logger=logger
-    )
-    if listing_path is None:
-        logger.error("Failed to write listing data to catalog")
-        return
-
-    logger.info("Wrote catalog listing", listing=str(listing_path))
 
     # Sent new OTU path to stdout
     print(str(otu_path))

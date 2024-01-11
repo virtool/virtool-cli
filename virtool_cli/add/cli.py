@@ -78,11 +78,11 @@ def accessions(accessions, otu_path, debug):
     help="the path to a reference directory",
 )
 @click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
-def otu(taxon_id, src_path):
+def otu(taxon_id, src_path, debug):
     """Create a new taxon ID and populate with accessions."""
 
     try:
-        run_add_otu(taxon_id, src_path)
+        run_add_otu(taxon_id, src_path, debug)
 
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid OTU directory", err=True)

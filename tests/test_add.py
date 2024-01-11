@@ -58,7 +58,7 @@ def run_build(src_path, build_path):
 class TestAddAccessions:
     @staticmethod
     def run_command(accessions: str, otu_path: Path):
-        subprocess.call(
+        subprocess.run(
             [
                 "virtool",
                 "ref",
@@ -114,7 +114,7 @@ class TestAddAccessions:
 class TestAddOTU:
     @staticmethod
     def run_command(taxon_id: int, src_path: Path):
-        subprocess.call(
+        subprocess.run(
             [
                 "virtool",
                 "ref",
@@ -141,7 +141,7 @@ class TestAddOTU:
         return pre_otu_paths, post_otu_paths
 
     @pytest.mark.parametrize("taxon_id", [908125])
-    def test_add_otu_success(self, taxon_id, work_path, work_catalog_path):
+    def test_add_otu_success(self, taxon_id, work_path):
         """ """
         pre_otu_paths = set(work_path.glob("*--*"))
 
