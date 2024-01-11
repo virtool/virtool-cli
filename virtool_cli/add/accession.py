@@ -13,14 +13,13 @@ base_logger = structlog.get_logger()
 
 
 def run_multiple(
-    accessions_string: str, otu_path: Path, catalog_path: Path, debugging: bool = False
+    accessions_string: str, otu_path: Path, debugging: bool = False
 ):
     """
     CLI entry point for virtool_cli.add.accession.add_accessions()
 
     :param accessions_string: NCBI Taxonomy accessions to be added to the reference
     :param otu_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
@@ -35,10 +34,6 @@ def run_multiple(
 
     else:
         logger.error("Given OTU path does not exist", otu=otu_path)
-
-    logger.debug(
-        "Future placeholder for listing update run", catalog_path=str(catalog_path)
-    )
 
 
 async def add_accessions(accessions: list, otu_path: Path):

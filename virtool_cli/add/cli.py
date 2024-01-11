@@ -60,19 +60,11 @@ def add():
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a reference directory",
 )
-@click.option(
-    "-cat",
-    "--catalog_path",
-    required=False,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    default=".cache/catalog",
-    help="the path to a catalog directory",
-)
 @click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
-def accessions(accessions, otu_path, catalog_path, debug):
+def accessions(accessions, otu_path):
     """Takes a list of comma-delineated accessions and retrieves the data."""
     try:
-        run_add_accessions(accessions, otu_path, catalog_path, debugging=debug)
+        run_add_accessions(accessions, otu_path)
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid reference directory", err=True)
 
@@ -92,20 +84,12 @@ def accessions(accessions, otu_path, catalog_path, debug):
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a reference directory",
 )
-@click.option(
-    "-cat",
-    "--catalog_path",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    default=".cache/catalog",
-    help="the path to a catalog directory",
-)
 @click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
-def otu(taxon_id, src_path, catalog_path, debug):
+def otu(taxon_id, src_path):
     """Create a new taxon ID and populate with accessions."""
 
     try:
-        run_add_otu(taxon_id, src_path, catalog_path, debugging=debug)
+        run_add_otu(taxon_id, src_path)
 
     except (FileNotFoundError, NotADirectoryError):
         click.echo("Not a valid OTU directory", err=True)

@@ -17,18 +17,15 @@ base_logger = structlog.get_logger()
 def run(
     taxid: int,
     src_path: Path,
-    catalog_path: Path,
     debugging: bool = False,
 ):
     """
     CLI entry point for virtool_cli.add.otu module
 
     Requests updates for a single OTU directory
-    Searches the catalog for a matching catalog listing and requests new updates if it finds one.
 
     :param taxid:
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
@@ -43,17 +40,16 @@ def run(
 
     logger.info(f"Creating OTU directory for NCBI Taxonomy uid {taxid}")
 
-    asyncio.run(add_otu(taxid=taxid, src_path=src_path, catalog_path=catalog_path))
+    asyncio.run(add_otu(taxid=taxid, src_path=src_path))
 
 
-async def add_otu(taxid: int, src_path: Path, catalog_path: Path):
+async def add_otu(taxid: int, src_path: Path):
     """
     Fetch NCBI Taxonomy data for a given UID and write the OTU to
     reference directory src and a listing to the catalog
 
     :param taxid:
     :param src_path:
-    :param catalog_path:
     """
     logger = base_logger.bind(taxon_id=taxid)
 
