@@ -21,7 +21,7 @@ def work_path(tmp_path):
 def empty_repo(tmp_path):
     new_repo_path = tmp_path / "new_repo"
 
-    subprocess.call(["virtool", "ref", "init", "-repo", str(new_repo_path)])
+    subprocess.run(["virtool", "ref", "init", "-repo", str(new_repo_path)])
 
     return new_repo_path
 
@@ -42,7 +42,7 @@ def get_all_sequence_paths(otu_path: Path) -> set[Path]:
 
 
 def run_build(src_path, build_path):
-    subprocess.call(
+    subprocess.run(
         [
             "virtool",
             "ref",
@@ -58,7 +58,7 @@ def run_build(src_path, build_path):
 class TestAddAccession:
     @staticmethod
     def run_command(accession: str, src_path: Path):
-        subprocess.call(
+        subprocess.run(
             [
                 "virtool",
                 "ref",
@@ -128,7 +128,7 @@ class TestAddAccession:
         "accession, isolate_subpath",
         [
             ("NC_010319", "abaca_bunchy_top_virus--c93ec9a9/4e8amg20"),
-            ("NC_024301", "pagoda_yellow_mosaic_associated_virus--dd21fd8f"),
+            ("NC-024301", "pagoda_yellow_mosaic_associated_virus--dd21fd8f"),
         ],
     )
     def test_add_accession_fail(
@@ -138,9 +138,7 @@ class TestAddAccession:
         Check that virtool ref add accession does not add sequences that already exist
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accession(
-            accession,
-            isolate_subpath,
-            src_path=work_path,
+            accession, otu_dirname=isolate_subpath, src_path=work_path
         )
 
         new_sequences = post_sequence_paths.difference(pre_sequence_paths)
@@ -152,13 +150,13 @@ class TestAddAccession:
         [("KT390494", "nanovirus_like_particle--ae0f2a35")],
     )
     def test_add_isolate_success(
-        self, accession, otu_dirname, work_path, work_catalog_path
+        self, accession, otu_dirname, work_path
     ):
         """
         Check that virtool ref add accession does the job when the isolate does not exist
         """
         pre_isolate_paths, post_isolate_paths = self.run_add_isolate(
-            accession, otu_dirname, src_path=work_path
+            accession, otu_subpath=otu_dirname, src_path=work_path
         )
 
         new_isolates = post_isolate_paths.difference(pre_isolate_paths)
@@ -298,7 +296,6 @@ class TestInitAdd:
     )
     def test_init_and_add(self, empty_repo, taxon_id, accession):
         src_path = empty_repo / "src"
-        catalog_path = empty_repo / ".cache/catalog"
         build_path = empty_repo / "reference.json"
         TestAddOTU.run_command(taxon_id, src_path)
 

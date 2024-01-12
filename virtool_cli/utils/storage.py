@@ -185,8 +185,13 @@ async def get_otu_accessions(otu_path: Path) -> list:
 
     for isolate_path in get_isolate_paths(otu_path):
         for sequence_path in get_sequence_paths(isolate_path):
-            sequence = json.loads(sequence_path.read_text())
-            accessions.append(sequence["accession"])
+            with open(sequence_path, "r") as f:
+                sequence = json.load(f)
+
+            if "accession" in sequence:
+                accessions.append(sequence)
+            else:
+                raise KeyError
 
     return accessions
 

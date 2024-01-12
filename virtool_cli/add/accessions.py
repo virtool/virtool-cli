@@ -7,6 +7,7 @@ from virtool_cli.utils.reference import is_v1, get_otu_paths, get_unique_ids
 from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_isolate_metadata
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
 from virtool_cli.utils.storage import write_records, get_otu_accessions
+from virtool_cli.add.helpers import is_accession_extant, find_taxon_id
 
 base_logger = structlog.get_logger()
 
@@ -44,10 +45,12 @@ async def add_accessions(accessions: list, otu_path: Path):
     """
     logger = base_logger.bind(accessions=accessions)
 
-    otu_accession_list = await get_otu_accessions(otu_path)
+    try:
+        otu_accession_list = await get_otu_accessions(otu_path)
+    except Exception as e:
+        logger.exception(e)
 
     logger.debug(otu_accession_list)
-
     logger.debug(accessions)
 
     record_list = await request_from_nucleotide(accessions)
@@ -58,7 +61,7 @@ async def add_accessions(accessions: list, otu_path: Path):
         accession = record.id
         logger = logger.bind(accession=accession)
 
-        accession_collision = await check_accession_collision(
+        accession_collision = await is_accession_extant(
             accession, otu_accession_list
         )
         if accession_collision:
@@ -100,20 +103,6 @@ async def add_accessions(accessions: list, otu_path: Path):
 
     except Exception as e:
         logger.exception(e)
-
-
-async def check_accession_collision(new_accession: str, accession_list: list) -> bool:
-    """
-    Check if a new accession already exists in a list of already-assessed accessions.
-
-    :param new_accession: A new accession
-    :param accession_list: A list of accessions that should not be added anew
-    :return: True if the accession collides with the accession list, False if not
-    """
-    return any(
-        new_accession.split(".")[0] == existing_accession.split(".")[0]
-        for existing_accession in accession_list
-    )
 
 
 def split_clean_csv_string(input_string: str, delimiter: str = ",") -> list[str]:

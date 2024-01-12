@@ -8,6 +8,7 @@ from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_isolate_metada
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
 from virtool_cli.utils.storage import write_records, get_otu_accessions
 from virtool_cli.utils.cache import generate_taxid_table
+from virtool_cli.add.helpers import is_accession_extant, find_taxon_id
 
 base_logger = structlog.get_logger()
 
@@ -156,18 +157,3 @@ async def check_accession_collision(new_accession: str, accession_list: list) ->
         new_accession.split(".")[0] == existing_accession.split(".")[0]
         for existing_accession in accession_list
     )
-
-
-def find_taxon_id(db_xref: list[str]) -> int | None:
-    """
-    Searches the database cross-reference data for the associated NCBI taxonomy UID.
-
-    :param db_xref: List of NCBI cross-reference information taken from NCBI taxonomy record
-    :return: NCBI Taxonomy UID as an integer if found, None if not found
-    """
-    for xref in db_xref:
-        [key, value] = xref.split(":")
-        if key == "taxon":
-            return int(value)
-
-    return None
