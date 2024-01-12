@@ -2,12 +2,13 @@ import pytest
 from pathlib import Path
 import shutil
 import subprocess
+import logging
 
 from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
-
 from paths import TEST_FILES_PATH
 
 BASE_PATH = TEST_FILES_PATH / "src_test"
+logger = logging.getLogger()
 
 
 @pytest.fixture()
@@ -54,7 +55,6 @@ def run_build(src_path, build_path):
         ]
     )
 
-
 class TestAddAccession:
     @staticmethod
     def run_command(accession: str, src_path: Path):
@@ -78,6 +78,7 @@ class TestAddAccession:
         Add into an existing isolate directory
         """
         otu_path = src_path / otu_dirname
+        logger.warning(otu_path)
 
         pre_sequence_paths = get_all_sequence_paths(otu_path)
 

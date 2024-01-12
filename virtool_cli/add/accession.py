@@ -63,14 +63,23 @@ async def add_accession(accession: str, src_path: Path):
         logger.error("No matching OTU found.")
         return
 
-    otu_accession_list = await get_otu_accessions(otu_path)
-    accession_collision = await check_accession_collision(accession, otu_accession_list)
-    if accession_collision:
-        logger.warning(
-            "This accession already exists in the reference. Consider editing the existing sequence.",
-            accession=accession,
-        )
-        return
+    try:
+        otu_accession_list = await get_otu_accessions(otu_path)
+    except Exception as e:
+        logger.exception(e)
+        raise e
+
+    try:
+        accession_collision = await is_accession_extant(accession, otu_accession_list)
+        if accession_collision:
+            logger.warning(
+                "This accession already exists in the reference. Consider editing the existing sequence.",
+                accession=accession,
+            )
+            return
+    except Exception as e:
+        logger.exception(e)
+        raise e
 
     seq_qualifiers = get_qualifiers(seq_data.features)
 
@@ -143,17 +152,3 @@ async def get_otu_path(
 
     logger.error("No matching OTU found in src directory.")
     return None
-
-
-async def check_accession_collision(new_accession: str, accession_list: list) -> bool:
-    """
-    Check if a new accession already exists in a list of already-assessed accessions.
-
-    :param new_accession: A new accession
-    :param accession_list: A list of accessions that should not be added anew
-    :return: True if the accession collides with the accession list, False if not
-    """
-    return any(
-        new_accession.split(".")[0] == existing_accession.split(".")[0]
-        for existing_accession in accession_list
-    )

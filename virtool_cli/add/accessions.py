@@ -45,10 +45,7 @@ async def add_accessions(accessions: list, otu_path: Path):
     """
     logger = base_logger.bind(accessions=accessions)
 
-    try:
-        otu_accession_list = await get_otu_accessions(otu_path)
-    except Exception as e:
-        logger.exception(e)
+    otu_accession_list = await get_otu_accessions(otu_path)
 
     logger.debug(otu_accession_list)
     logger.debug(accessions)

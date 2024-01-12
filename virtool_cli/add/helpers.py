@@ -6,9 +6,9 @@ async def is_accession_extant(new_accession: str, accession_list: list) -> bool:
     :param accession_list: A list of accessions that should not be added anew
     :return: True if the accession collides with the accession list, False if not
     """
-    for existing_accession in accession_list:
+    for extant_accession in accession_list:
         new_accession_stripped = new_accession.split(".")
-        extant_accession_stripped = existing_accession.split(".")
+        extant_accession_stripped = extant_accession.split(".")
 
         if new_accession_stripped[0] == extant_accession_stripped[0]:
             return True
