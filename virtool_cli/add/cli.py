@@ -1,9 +1,9 @@
 from pathlib import Path
 import click
 
-from virtool_cli.add.accession import run as run_add_accession
-from virtool_cli.add.accessions import run as run_add_accessions
-from virtool_cli.add.otu import run as run_add_otu
+from virtool_cli.add.add_accession_auto import run as run_add_accession
+from virtool_cli.add.add_accessions import run as run_add_accessions
+from virtool_cli.add.add_otu import run as run_add_otu
 
 
 @click.group("add")

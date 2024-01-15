@@ -6,7 +6,7 @@ from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import get_otu_paths, is_v1, get_unique_ids
 from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_isolate_metadata
 from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
-from virtool_cli.utils.storage import write_records, get_otu_accessions
+from virtool_cli.utils.storage import write_records, get_otu_accessions, fetch_exclusions
 from virtool_cli.utils.cache import generate_taxid_table
 from virtool_cli.add.helpers import is_accession_extant, find_taxon_id
 
@@ -64,22 +64,24 @@ async def add_accession(accession: str, src_path: Path):
         return
 
     try:
-        otu_accession_list = await get_otu_accessions(otu_path)
+        extant_list = await get_otu_accessions(otu_path)
     except Exception as e:
         logger.exception(e)
         raise e
 
     try:
-        accession_collision = await is_accession_extant(accession, otu_accession_list)
+        accession_collision = await is_accession_extant(accession, extant_list)
         if accession_collision:
             logger.warning(
-                "This accession already exists in the reference. Consider editing the existing sequence.",
+                "This accession already exists in the reference.",
                 accession=accession,
             )
             return
     except Exception as e:
         logger.exception(e)
         raise e
+
+    logger.debug("Accession not found in exclusion list")
 
     seq_qualifiers = get_qualifiers(seq_data.features)
 

@@ -1,16 +1,15 @@
-async def is_accession_extant(new_accession: str, accession_list: list) -> bool:
+async def is_accession_extant(new_accession: str, excluded_accessions: list) -> bool:
     """
     Check if a new accession already exists in a list of already-assessed accessions.
 
     :param new_accession: A new accession
-    :param accession_list: A list of accessions that should not be added anew
+    :param excluded_accessions: A list of accessions that should not be added anew
     :return: True if the accession collides with the accession list, False if not
     """
-    for extant_accession in accession_list:
+    for extant_accession in excluded_accessions:
         new_accession_stripped = new_accession.split(".")
-        extant_accession_stripped = extant_accession.split(".")
 
-        if new_accession_stripped[0] == extant_accession_stripped[0]:
+        if new_accession_stripped[0] == extant_accession:
             return True
 
     return False

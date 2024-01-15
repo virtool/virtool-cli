@@ -244,3 +244,4 @@ async def fetch_exclusions(otu_path: Path) -> list:
         exclusions = json.loads(contents)
 
     return exclusions
+
