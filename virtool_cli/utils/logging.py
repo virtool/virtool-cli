@@ -46,3 +46,7 @@ base_logger = structlog.get_logger()
 
 DEFAULT_LOGGER = structlog.make_filtering_bound_logger(logging.INFO)
 DEBUG_LOGGER = structlog.make_filtering_bound_logger(logging.DEBUG)
+
+
+def configure_logger(debug: bool = False):
+    structlog.configure(wrapper_class=DEBUG_LOGGER if debug else DEFAULT_LOGGER)

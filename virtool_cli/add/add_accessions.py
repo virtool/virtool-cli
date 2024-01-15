@@ -2,12 +2,11 @@ from pathlib import Path
 import asyncio
 import structlog
 
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
-from virtool_cli.utils.reference import is_v1, get_otu_paths, get_unique_ids
-from virtool_cli.utils.ncbi import request_from_nucleotide, fetch_isolate_metadata
-from virtool_cli.utils.format import format_sequence, get_qualifiers, check_source_type
-from virtool_cli.utils.storage import write_records, get_otu_accessions
-from virtool_cli.add.helpers import is_accession_extant, find_taxon_id
+from virtool_cli.utils.logging import configure_logger
+from virtool_cli.utils.ncbi import request_from_nucleotide
+from virtool_cli.add.helpers import is_addable, get_no_fetch_lists
+from virtool_cli.add.format import format_record
+from virtool_cli.add.write import write_sequences_to_src
 
 base_logger = structlog.get_logger()
 
@@ -22,7 +21,8 @@ def run(
     :param otu_path: Path to a reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
+
     logger = base_logger.bind(src=str(otu_path))
 
     accession_list = split_clean_csv_string(accessions_string, delimiter=",")
@@ -45,61 +45,36 @@ async def add_accessions(accessions: list, otu_path: Path):
     """
     logger = base_logger.bind(accessions=accessions)
 
-    otu_accession_list = await get_otu_accessions(otu_path)
-
-    logger.debug(otu_accession_list)
-    logger.debug(accessions)
-
     record_list = await request_from_nucleotide(accessions)
+    extant_list, exclusion_list = await get_no_fetch_lists(otu_path)
 
+    # Process all records and add to new sequence list
     new_sequences = []
-
     for record in record_list:
         accession = record.id
         logger = logger.bind(accession=accession)
 
-        accession_collision = await is_accession_extant(
-            accession, otu_accession_list
+        addable = await is_addable(
+            accession,
+            otu_path=otu_path,
+            exclusion_list=exclusion_list,
+            logger=logger
         )
-        if accession_collision:
-            logger.warning(
-                f"{accession} already in OTU, moving on...", accession=accession
-            )
+        if not addable:
+            logger.warning("This accession will not be added.")
             continue
 
-        seq_qualifiers = get_qualifiers(record.features)
-
-        if isolate_type := check_source_type(seq_qualifiers):
-            # Isolate metadata contained in qualifiers
-            isolate = {
-                "source_name": seq_qualifiers.get(isolate_type)[0],
-                "source_type": isolate_type,
-            }
-
-        else:
-            # Extract isolate metadata from NCBI Taxonomy docsum
-            isolate = await fetch_isolate_metadata(
-                find_taxon_id(seq_qualifiers["db_xref"])
-            )
-
-        new_sequence = format_sequence(record=record, qualifiers=seq_qualifiers)
-        new_sequence["isolate"] = isolate
-
+        new_sequence = await format_record(record, logger)
         new_sequences.append(new_sequence)
 
-    isolate_uids, sequence_uids = await get_unique_ids(get_otu_paths(otu_path.parent))
-
-    try:
-        new_sequence_paths = await write_records(
-            otu_path, new_sequences, isolate_uids, sequence_uids, logger=logger
-        )
-        logger.info(f"Accessions written to {otu_path.name}.")
-
-        for path in new_sequence_paths:
-            print(str(path))
-
-    except Exception as e:
-        logger.exception(e)
+    new_sequence_paths = await write_sequences_to_src(
+        sequences=new_sequences,
+        otu_path=otu_path,
+        src_path=otu_path.parent,
+        logger=logger,
+    )
+    for path in new_sequence_paths:
+        print(str(path))
 
 
 def split_clean_csv_string(input_string: str, delimiter: str = ",") -> list[str]:

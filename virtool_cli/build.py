@@ -5,7 +5,7 @@ import arrow
 import aiofiles
 import structlog
 
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import (
     get_otu_paths,
     get_isolate_paths,
@@ -38,7 +38,8 @@ def run(
     :param version: The version string to include in the reference.json file
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
+
     logger = base_logger.bind(src=str(src_path))
 
     if is_v1(src_path):
