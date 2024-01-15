@@ -226,6 +226,27 @@ class TestAddAccessions:
 
         assert new_sequences
 
+    @pytest.mark.parametrize(
+        "accessions, otu_subpath",
+        [
+            ("DQ178611, DQ178610", "cabbage_leaf_curl_jamaica_virus--d226290f"),
+            ("KTX390494, KTX390496, KTX390501", "nanovirus_like_particle--ae0f2a35"),
+        ],
+    )
+    def test_add_accessions_fail(
+            self, accessions, otu_subpath, work_path
+    ):
+        """
+        Check that virtool ref add accessions does the job
+        """
+        pre_sequence_paths, post_sequence_paths = self.run_add_accessions(
+            accessions,
+            otu_dirname=otu_subpath,
+            src_path=work_path,
+        )
+
+        assert post_sequence_paths.union(pre_sequence_paths) == pre_sequence_paths
+
 
 class TestAddOTU:
     @staticmethod

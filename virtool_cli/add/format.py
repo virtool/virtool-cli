@@ -1,4 +1,3 @@
-from pathlib import Path
 from Bio import SeqRecord
 from structlog import BoundLogger, get_logger
 
