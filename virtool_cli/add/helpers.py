@@ -12,6 +12,7 @@ async def get_no_fetch_lists(otu_path):
 
     return extant_list, exclusion_list
 
+
 async def is_addable(
     accession: str,
     otu_path: Path,
@@ -43,6 +44,7 @@ async def is_addable(
         return False
 
     return True
+
 
 async def is_accession_extant(new_accession: str, excluded_accessions: list) -> bool:
     """

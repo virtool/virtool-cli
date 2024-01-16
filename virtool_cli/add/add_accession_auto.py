@@ -19,7 +19,7 @@ def run(
     debugging: bool = False,
 ):
     """
-    CLI entry point for virtool_cli.add.accession.add_accession()
+    CLI entry point for virtool_cli.add.accession.add_accession_auto()
 
     :param accession: NCBI Taxonomy accession to be added to the reference
     :param src_path: Path to a reference directory

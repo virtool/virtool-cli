@@ -13,7 +13,7 @@ async def request_linked_accessions(taxon_id: int) -> list:
     """
     Take an NCBI Taxonomy UID and return a list of linked accessions from the Nucleotide database
     
-    :param taxon_id: NCBI Taxonomy UID
+    :param taxon_id: NCBI Taxonomy UID as an integer
     :return: List of accessions that are linked to the input taxon ID
     """
     upstream_accessions = []

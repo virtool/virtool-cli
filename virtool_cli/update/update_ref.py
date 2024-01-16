@@ -126,10 +126,7 @@ async def fetcher_loop(otu_paths: list, queue: asyncio.Queue):
     logger.debug("Starting fetcher...")
 
     for path in otu_paths:
-        try:
-            otu_metadata = await read_otu(path)
-        except Exception as e:
-            logger.exception(e)
+        otu_metadata = await read_otu(path)
 
         otu_id = otu_metadata.get('_id')
         taxid = otu_metadata.get('taxid')

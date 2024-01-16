@@ -21,11 +21,11 @@ def run(
     debugging: bool = False,
 ):
     """
-    CLI entry point for virtool_cli.add.otu module
+    CLI entry point for virtool_cli.add.add_otu module
 
     Requests updates for a single OTU directory
 
-    :param taxid:
+    :param taxid: NCBI Taxon ID as an integer
     :param src_path: Path to a reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
@@ -46,11 +46,11 @@ def run(
 
 async def add_otu(taxid: int, src_path: Path):
     """
-    Fetch NCBI Taxonomy data for a given UID and write the OTU to
-    reference directory src and a listing to the catalog
+    Fetch NCBI Taxonomy data for a given taxon ID number and
+    write the OTU to the reference directory at src_path
 
-    :param taxid:
-    :param src_path:
+    :param taxid: NCBI Taxon ID as an integer
+    :param src_path: Path to a reference directory
     """
     logger = base_logger.bind(taxon_id=taxid)
 
@@ -106,7 +106,7 @@ def generate_otu(taxonomy_data: dict, new_id: str) -> dict:
 
     :param taxonomy_data: Dictionary containing fetched NCBI Taxonomy metadata
     :param new_id: Pre-generated Virtool OTU Id
-    :return: The contents of a OTU metadata file
+    :return: The deserialized contents of an OTU metadata file
     """
     for key in ["ScientificName", "Id"]:
         if key not in taxonomy_data:
@@ -130,7 +130,7 @@ async def write_otu(otu: dict, src_path: Path) -> Path:
 
     :param otu: Dict of OTU metadata
     :param src_path: Path to a reference directory
-    :return: The new OTU directory path
+    :return: Path of the new OTU directory under src_path
     """
     dirname = generate_otu_dirname(name=otu["name"], otu_id=otu["_id"])
 

@@ -6,6 +6,7 @@ def write_to_cache(data: dict, cache: Path):
     with open(cache / "taxid_table.json", "w") as f:
         json.dump(data, f, indent=2)
 
+
 def generate_taxid_table(src_path: Path):
     """
     :param src_path:
