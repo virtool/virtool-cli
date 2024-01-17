@@ -19,7 +19,7 @@ def check_source_type(qualifiers: dict) -> str | None:
     Determine the source type in a Genbank record
 
     :param qualifiers: Dictionary containing qualifiers in a features section of a Genbank record
-    :return:
+    :return: "isolate" or "strain" if found in the record metadata, None if not found
     """
     for qualifier in ["isolate", "strain"]:
         if qualifier in qualifiers:

@@ -81,8 +81,7 @@ jobs:
 
       - name: Add accessions
         run: |
-          virtool ref add accessions -acc "$ACCESSIONS" -otu $OTU_PATH -cat catalog $FLAGS
-          virtool catalog update -src src -cat catalog $FLAGS
+          virtool ref add accessions -acc "$ACCESSIONS" -otu $OTU_PATH $FLAGS
         env:
           OTU_PATH: ${{ inputs.otu-path }}
           ACCESSIONS: ${{ inputs.accessions }}

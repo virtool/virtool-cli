@@ -1,11 +1,11 @@
 {
     "_id": "e1dfb3ef",
-    "name": "Oat blue dwarf virus",
     "abbreviation": "",
+    "name": "Oat blue dwarf virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "ssRNA+",
+            "name": "Genome",
             "required": true
         }
     ],

@@ -72,7 +72,7 @@ def hmm():
     help="Filter out clusters with fewer records than " "min-sequences",
 )
 def vfam(
-    src_path: str,
+    src_path: Path,
     output: str,
     prefix: str,
     sequence_min_length: int,

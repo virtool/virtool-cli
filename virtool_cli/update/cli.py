@@ -21,20 +21,12 @@ def update():
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a reference directory",
 )
-@click.option(
-    "-cat",
-    "--catalog_path",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    default=".cache/catalog",
-    help="the path to a catalog directory",
-)
 @click.option("--evaluate/--no-evaluate", default=False, help="Enable auto-filtering")
 @click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
-def reference(src_path, catalog_path, evaluate, debug):
+def reference(src_path, evaluate, debug):
     """Fetch new sequences and isolates for all OTU in a given reference directory."""
     try:
-        run_update_all(src_path, catalog_path, auto_evaluate=evaluate, debugging=debug)
+        run_update_all(src_path, auto_evaluate=evaluate, debugging=debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory", err=True)
 
@@ -47,22 +39,14 @@ def reference(src_path, catalog_path, evaluate, debug):
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a single OTU directory",
 )
-@click.option(
-    "-cat",
-    "--catalog_path",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    default=".cache/catalog",
-    help="the path to a catalog directory",
-)
 @click.option("--evaluate/--no-evaluate", default=False, help="Enable auto-filtering")
 @click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
-def otu(otu_path, catalog_path, evaluate, debug):
+def otu(otu_path, evaluate, debug):
     """Fetch new sequences and isolates for a given OTU directory."""
 
     try:
         run_update_single(
-            otu_path, catalog_path, auto_evaluate=evaluate, debugging=debug
+            otu_path, auto_evaluate=evaluate, debugging=debug
         )
 
     except (FileNotFoundError, NotADirectoryError) as e:

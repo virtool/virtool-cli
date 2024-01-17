@@ -1,16 +1,16 @@
 {
     "_id": "3962f6ec",
-    "name": "Jacquemontia mosaic Yucatan virus",
     "abbreviation": "",
+    "name": "Jacquemontia mosaic Yucatan virus",
     "schema": [
         {
-            "name": "DNA A",
             "molecule": "ssDNA",
+            "name": "DNA A",
             "required": true
         },
         {
-            "name": "DNA B",
             "molecule": "ssDNA",
+            "name": "DNA B",
             "required": true
         }
     ],

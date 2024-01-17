@@ -1,11 +1,11 @@
 {
     "_id": "a89b6529",
-    "name": "Habenaria mosaic virus",
     "abbreviation": "HaMV",
+    "name": "Habenaria mosaic virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "ssRNA+",
+            "name": "Genome",
             "required": true
         }
     ],

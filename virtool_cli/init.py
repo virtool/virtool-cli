@@ -59,11 +59,6 @@ def initialize_reference(repo_path: Path):
         cache_path.mkdir()
         logger.debug("Created a new hidden cache directory under repo_path")
 
-    catalog_path = repo_path / ".cache/catalog"
-    if not catalog_path.exists():
-        catalog_path.mkdir()
-        logger.debug("Created a new catalog directory under repo_path's hidden cache")
-
     logger.info("Reference repository at repo_path is now complete.")
 
     # Sent new repo path to stdout

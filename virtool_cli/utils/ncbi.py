@@ -13,17 +13,24 @@ async def request_linked_accessions(taxon_id: int) -> list:
     """
     Take an NCBI Taxonomy UID and return a list of linked accessions from the Nucleotide database
     
-    :param taxon_id: NCBI Taxonomy UID
+    :param taxon_id: NCBI Taxonomy UID as an integer
     :return: List of accessions that are linked to the input taxon ID
     """
     upstream_accessions = []
 
-    # Request results as accessions, not UIDs
-    entrez_acclist = Entrez.read(
-        Entrez.elink(
-            dbfrom="taxonomy", db="nucleotide", 
-            id=str(taxon_id), idtype="acc")
+    try:
+        elink_results = Entrez.elink(
+            dbfrom="taxonomy", db="nuccore",
+            id=str(taxon_id), idtype="acc"
         )
+        entrez_acclist = Entrez.read(elink_results)
+    except HTTPError:
+        return []
+    except RuntimeError:
+        return []
+
+    if not entrez_acclist:
+        return []
     
     for linksetdb in entrez_acclist[0]["LinkSetDb"][0]["Link"]:
         upstream_accessions.append(str(linksetdb["Id"]))
@@ -41,7 +48,7 @@ async def request_from_nucleotide(fetch_list: list) -> list:
     """
     try:
         handle = Entrez.efetch(
-            db="nucleotide", id=fetch_list, 
+            db="nuccore", id=fetch_list,
             rettype="gb", retmode="text"
         )
         ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))

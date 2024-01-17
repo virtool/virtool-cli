@@ -1,11 +1,11 @@
 {
     "_id": "dd21fd8f",
-    "name": "Pagoda yellow mosaic associated virus",
     "abbreviation": "",
+    "name": "Pagoda yellow mosaic associated virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "dsDNA",
+            "name": "Genome",
             "required": true
         }
     ],

@@ -5,7 +5,8 @@ from typing import Tuple
 
 async def process_records(
     records: list,
-    listing: dict,
+    metadata: dict,
+    no_fetch_set: set,
     auto_evaluate: bool = True,
     logger: BoundLogger = get_logger(),
 ) -> list:
@@ -18,31 +19,24 @@ async def process_records(
     WARNING: Auto-evaluation is still under active development, especially multipartite filtering
 
     :param records: SeqRecords retrieved from the NCBI Nucleotide database
-    :param listing: Deserialized OTU catalog listing
+    :param metadata:
+    :param no_fetch_set:
     :param auto_evaluate: Boolean flag for whether automatic evaluation functions
         should be run
     :param logger: Optional entry point for a shared BoundLogger
     :return: A list of valid sequences formatted for the Virtool reference database
     """
-    filter_set = set(listing["accessions"]["included"])
-    filter_set.update(listing["accessions"]["excluded"])
-
     try:
-        if auto_evaluate:
-            otu_updates, auto_excluded = await process_auto_evaluate(
-                records, listing, filter_set, logger
-            )
-        else:
-            otu_updates, auto_excluded = await process_default(
-                records, listing, filter_set, logger
-            )
+        otu_updates, auto_excluded = await process_default(
+            records, metadata, no_fetch_set, logger
+        )
     except Exception as e:
         logger.exception(e)
         raise e
 
     if auto_excluded:
         logger.info(
-            "Consider adding these accessions to the catalog exclusion list",
+            "Consider adding these accessions to the exclusion list",
             auto_excluded=auto_excluded,
         )
 
@@ -53,13 +47,13 @@ async def process_records(
 
 
 async def process_default(
-    records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
+    records: list, metadata: dict, filter_set: set, logger: BoundLogger = get_logger()
 ) -> Tuple[list, list]:
     """
     Format new sequences from NCBI Taxonomy if they do not already exist in the reference.
 
     :param records: A list of SeqRecords from NCBI Taxonomy
-    :param listing: A deserialized catalog listing for the OTU
+    :param metadata: A deserialized OTU metadata file
     :param filter_set: A set of accessions that should be omitted
     :param logger: Optional entry point for an existing BoundLogger
     :return: A list of processed new sequences/isolates and
@@ -83,88 +77,13 @@ async def process_default(
         seq_dict = format_sequence(record=seq_data, qualifiers=seq_qualifier_data)
 
         if "segment" not in seq_dict:
-            schema = listing.get("schema", [])
+            schema = metadata.get("schema", [])
 
             if schema:
                 seq_dict["segment"] = schema[0].get("name", "")
             else:
                 logger.warning('Missing schema')
                 seq_dict["segment"] = ""
-
-        seq_dict["isolate"] = isolate
-        otu_updates.append(seq_dict)
-
-    return otu_updates, auto_excluded
-
-
-async def process_auto_evaluate(
-    records: list, listing: dict, filter_set: set, logger: BoundLogger = get_logger()
-) -> Tuple[list, list]:
-    """
-    Format new sequences from NCBI Taxonomy if they do not already exist in the reference.
-    Automatically evaluate new sequences during formatting.
-
-    :param records: A list of SeqRecords from NCBI Taxonomy
-    :param listing: A deserialized catalog listing for the OTU
-    :param filter_set: A set of accessions that should be omitted
-    :param logger: Optional entry point for an existing BoundLogger
-    :return: A list of processed new sequences/isolates and
-        a set of automatically excluded accessions
-    """
-    auto_excluded = []
-    otu_updates = []
-
-    if not listing.get("schema", []):
-        logger.warning("Missing schema. Moving on...")
-        return [], []
-
-    if len(listing["schema"]) < 1:
-        required_parts = get_lengthdict_multipartite(listing["schema"], logger)
-
-    else:
-        required_parts = get_lengthdict_monopartite(listing["schema"], logger)
-
-    logger = logger.bind(required_parts=required_parts)
-
-    for seq_data in records:
-        [accession, _] = seq_data.id.split(".")
-        seq_qualifier_data = get_qualifiers(seq_data.features)
-
-        if accession in filter_set:
-            logger.debug("Accession already exists", accession=seq_data.id)
-            return [], []
-
-        if "_" in seq_data.id:
-            logger.warning(
-                "This is a RefSeq accession. This data may already exist under a different accession.",
-                accession=seq_data.id,
-            )
-
-        inclusion_passed = evaluate_sequence(
-            seq_data=seq_data,
-            seq_qualifier_data=seq_qualifier_data,
-            required_parts=required_parts,
-            logger=logger,
-        )
-        if not inclusion_passed:
-            logger.debug(
-                f"GenBank #{accession} did not pass the curation test...",
-                accession=accession,
-                including=False,
-            )
-            auto_excluded.append(accession)
-            continue
-
-        isolate_type = check_source_type(seq_qualifier_data)
-        if isolate_type is None:
-            continue
-
-        isolate = find_isolate_metadata(seq_qualifier_data)
-
-        seq_dict = format_sequence(record=seq_data, qualifiers=seq_qualifier_data)
-
-        if "segment" not in seq_dict:
-            seq_dict["segment"] = listing.get("schema")[0]["name"]
 
         seq_dict["isolate"] = isolate
         otu_updates.append(seq_dict)

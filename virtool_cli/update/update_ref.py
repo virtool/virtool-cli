@@ -10,10 +10,8 @@ from virtool_cli.utils.reference import (
     get_unique_ids,
 )
 from virtool_cli.utils.format import process_records
-from virtool_cli.utils.storage import write_records
-from virtool_cli.update.update import request_new_records
-from virtool_cli.catalog.listings import parse_listing
-from virtool_cli.catalog.helpers import filter_catalog
+from virtool_cli.utils.storage import write_records, read_otu
+from virtool_cli.update.update import request_new_records, get_no_fetch_set
 
 DEFAULT_INTERVAL = 0.001
 
@@ -22,7 +20,6 @@ base_logger = structlog.get_logger()
 
 def run(
     src_path: Path,
-    catalog_path: Path,
     auto_evaluate: bool = False,
     debugging: bool = False,
 ):
@@ -32,12 +29,11 @@ def run(
     Requests updates for all OTU directories under a source reference
 
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
     structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
-    logger = base_logger.bind(src=str(src_path), catalog=str(catalog_path))
+    logger = base_logger.bind(src=str(src_path))
 
     if is_v1(src_path):
         logger.error(
@@ -51,24 +47,22 @@ def run(
             "Auto-evaluation is in active development and may produce false negatives."
         )
 
-    logger.info("Updating src directory accessions using catalog listings...")
+    logger.info("Updating src directory accessions...")
 
     asyncio.run(
-        update_reference(
-            src_path=src_path, catalog_path=catalog_path, auto_evaluate=auto_evaluate
-        )
+        update_reference(src_path=src_path, auto_evaluate=auto_evaluate)
     )
 
 
 async def update_reference(
-    src_path: Path, catalog_path: Path, auto_evaluate: bool = False
+    src_path: Path, auto_evaluate: bool = False
 ):
     """
     Creates 2 queues:
         1) upstream: Holds raw NCBI GenBank data,
         2) write: Holds formatted sequence data and isolate data
 
-    Monitors 3 asynchrononous processes:
+    Monitors 3 asynchronous processes:
         1) fetcher:
             Requests and retrieves new accessions from NCBI GenBank
             and pushes results to upstream queue
@@ -81,13 +75,8 @@ async def update_reference(
             src directory
 
     :param src_path: Path to a reference directory
-    :param catalog_path: Path to a catalog directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
-
-    # Filter out cached listings that are not present in this src directory
-    included_listings = filter_catalog(src_path, catalog_path)
-
     # Holds raw NCBI GenBank data
     upstream_queue = asyncio.Queue()
 
@@ -96,7 +85,9 @@ async def update_reference(
 
     # Requests and retrieves new accessions from NCBI GenBank
     # and pushes results to upstream queue
-    fetcher = asyncio.create_task(fetcher_loop(included_listings, queue=upstream_queue))
+    fetcher = asyncio.create_task(
+        fetcher_loop(get_otu_paths(src_path), queue=upstream_queue)
+    )
 
     # Pulls Genbank data from upstream queue, formats into dict form
     # and pushes to write queue
@@ -117,7 +108,7 @@ async def update_reference(
     return
 
 
-async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
+async def fetcher_loop(otu_paths: list, queue: asyncio.Queue):
     """
     Loops through selected OTU listings from accession catalogue,
     indexed by NCBI taxon ID, and:
@@ -128,28 +119,37 @@ async def fetcher_loop(listing_paths: list, queue: asyncio.Queue):
         3) Pushes new records and corresponding OTU information
             to a queue for formatting
 
-    :param listing_paths: A list of paths to listings from the accession catalog
+    :param otu_paths: A list of OTU paths
     :param queue: Queue holding fetched NCBI GenBank data
     """
     logger = structlog.get_logger(__name__ + ".fetcher")
     logger.debug("Starting fetcher...")
 
-    for path in listing_paths:
-        acc_listing = await parse_listing(path)
+    for path in otu_paths:
+        otu_metadata = await read_otu(path)
 
-        # extract taxon ID and _id hash from listing filename
-        [taxid, otu_id] = path.stem.split("--")
+        otu_id = otu_metadata.get('_id')
+        taxid = otu_metadata.get('taxid')
 
         logger = logger.bind(taxid=taxid, otu_id=otu_id)
+        logger.debug("Starting OTU...")
 
-        record_data = await request_new_records(acc_listing, logger)
+        try:
+            no_fetch_set = await get_no_fetch_set(path)
+        except Exception as e:
+            logger.exception(e)
+            continue
+
+        record_data = await request_new_records(taxid, no_fetch_set, logger)
         if not record_data:
             continue
 
         packet = {
             "taxid": taxid,
             "otu_id": otu_id,
-            "listing": acc_listing,
+            "metadata": otu_metadata,
+            "no_fetch_set": no_fetch_set,
+            "listing": otu_metadata,
             "data": record_data,
         }
 
@@ -183,13 +183,15 @@ async def processor_loop(
     while True:
         fetch_packet = await upstream_queue.get()
 
-        taxid = fetch_packet["taxid"]
-        otu_id = fetch_packet["otu_id"]
+        metadata = fetch_packet["metadata"]
+        otu_id = metadata["_id"]
+        taxid = metadata.get("taxid")
         logger = logger.bind(taxid=taxid)
 
         otu_updates = await process_records(
             records=fetch_packet["data"],
-            listing=fetch_packet["listing"],
+            metadata=metadata,
+            no_fetch_set=fetch_packet["no_fetch_set"],
             auto_evaluate=auto_evaluate,
             logger=logger,
         )

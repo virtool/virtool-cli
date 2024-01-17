@@ -131,7 +131,7 @@ def validate_isolate(isolate_path: Path, logger: BoundLogger = get_logger()) -> 
         logger.warning(f"Isolate metadata lacks a source name")
 
     if "default" in isolate:
-        if type(isolate["default"]) != bool:
+        if type(isolate["default"]) is not bool:
             logger.error(f"Isolate metadata lacks a valid default flag")
             is_valid = False
     else:

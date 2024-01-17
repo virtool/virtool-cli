@@ -1,11 +1,11 @@
 {
     "_id": "d86d0412",
-    "name": "Tall oatgrass mosaic virus",
     "abbreviation": "",
+    "name": "Tall oatgrass mosaic virus",
     "schema": [
         {
-            "name": "Genome",
             "molecule": "ssRNA+",
+            "name": "Genome",
             "required": true
         }
     ],
