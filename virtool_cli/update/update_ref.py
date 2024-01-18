@@ -9,9 +9,8 @@ from virtool_cli.utils.reference import (
     is_v1,
     get_unique_ids,
 )
-from virtool_cli.utils.format import process_records
 from virtool_cli.utils.storage import write_records, read_otu
-from virtool_cli.update.update import request_new_records, get_no_fetch_set
+from virtool_cli.update.update import request_new_records, get_no_fetch_set, process_records
 
 DEFAULT_INTERVAL = 0.001
 

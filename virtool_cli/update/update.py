@@ -1,9 +1,10 @@
 from pathlib import Path
 import asyncio
 import structlog
-from structlog import BoundLogger
+from structlog import BoundLogger, get_logger
 from urllib.error import HTTPError
 
+from virtool_cli.utils.format import process_default
 from virtool_cli.utils.ncbi import (
     request_linked_accessions,
     request_from_nucleotide,
@@ -64,3 +65,45 @@ async def request_new_records(
 
     return record_data
 
+
+async def process_records(
+    records: list,
+    metadata: dict,
+    no_fetch_set: set,
+    auto_evaluate: bool = True,
+    logger: BoundLogger = get_logger(),
+) -> list:
+    """
+    Takes sequence records and:
+        1) Evaluates whether those records should be added to the database,
+        2) Formats the records into a smaller dictionary
+        3) Returns new formatted dicts in a list
+
+    WARNING: Auto-evaluation is still under active development, especially multipartite filtering
+
+    :param records: SeqRecords retrieved from the NCBI Nucleotide database
+    :param metadata:
+    :param no_fetch_set:
+    :param auto_evaluate: Boolean flag for whether automatic evaluation functions
+        should be run
+    :param logger: Optional entry point for a shared BoundLogger
+    :return: A list of valid sequences formatted for the Virtool reference database
+    """
+    try:
+        otu_updates, auto_excluded = await process_default(
+            records, metadata, no_fetch_set, logger
+        )
+    except Exception as e:
+        logger.exception(e)
+        raise e
+
+    if auto_excluded:
+        logger.info(
+            "Consider adding these accessions to the exclusion list",
+            auto_excluded=auto_excluded,
+        )
+
+    if otu_updates:
+        return otu_updates
+
+    return []

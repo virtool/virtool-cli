@@ -2,11 +2,10 @@ from pathlib import Path
 import asyncio
 import structlog
 
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
-from virtool_cli.utils.format import process_records
 from virtool_cli.utils.storage import read_otu, write_records
-from virtool_cli.update.update import get_no_fetch_set, request_new_records
+from virtool_cli.update.update import get_no_fetch_set, request_new_records, process_records
 
 base_logger = structlog.get_logger()
 
@@ -19,14 +18,14 @@ def run(
     """
     CLI entry point for update.update.run()
 
-    Requests updates for a single OTU directory
-    Searches the catalog for a matching catalog listing and requests new updates if it finds one.
+    Requests updates for a single OTU directory.
+    Inspects OTU contents and exclusions and requests relevant accession if found.
 
     :param otu_path: Path to an OTU directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
     logger = base_logger.bind(otu_path=str(otu_path))
 
     if auto_evaluate:
@@ -44,10 +43,14 @@ async def update_otu(
     Requests new records for a single taxon ID
     and writes new data under the corresponding path.
 
-    :param otu_path: Path to a OTU directory
+    :param otu_path: Path to an OTU directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
     src_path = otu_path.parent
+
+    # List all isolate and sequence IDs presently in src
+    unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
+
     metadata = await read_otu(otu_path)
 
     no_fetch_set = await get_no_fetch_set(otu_path)
@@ -75,8 +78,5 @@ async def update_otu(
     )
     if not otu_updates:
         return
-
-    # List all isolate and sequence IDs presently in src
-    unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
 
     await write_records(otu_path, otu_updates, unique_iso, unique_seq, logger=logger)
