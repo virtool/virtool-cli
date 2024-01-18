@@ -1,6 +1,7 @@
 from pathlib import Path
 import asyncio
 import structlog
+import json
 
 from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
 from virtool_cli.utils.reference import generate_otu_dirname, is_v1
@@ -49,6 +50,8 @@ async def flatten_src(src_path: Path):
         )
 
         for otu_path in otu_paths:
+            init_exclusions(otu_path)
+
             otu = await read_otu(otu_path)
             new_name = generate_otu_dirname(otu.get("name"), otu.get("_id"))
             new_path = src_path / new_name
@@ -68,3 +71,8 @@ async def flatten_src(src_path: Path):
         except Exception as e:
             alpha_logger.error("Bin deletion failed")
             alpha_logger.exception(e)
+
+
+def init_exclusions(otu_path):
+    with open(otu_path / "exclusions.json", "w") as f:
+        json.dump([], f, indent=4, sort_keys=True)

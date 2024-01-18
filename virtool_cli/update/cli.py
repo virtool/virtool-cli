@@ -21,12 +21,18 @@ def update():
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a reference directory",
 )
+@click.option(
+    "--filter",
+    default="*",
+    type=str,
+    help="entry point for glob filter",
+)
 @click.option("--evaluate/--no-evaluate", default=False, help="Enable auto-filtering")
 @click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
-def reference(src_path, evaluate, debug):
+def reference(src_path, filter, evaluate, debug):
     """Fetch new sequences and isolates for all OTU in a given reference directory."""
     try:
-        run_update_all(src_path, auto_evaluate=evaluate, debugging=debug)
+        run_update_all(src_path, filter, auto_evaluate=evaluate, debugging=debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory", err=True)
 

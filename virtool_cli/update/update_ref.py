@@ -2,11 +2,11 @@ from pathlib import Path
 import asyncio
 import structlog
 
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import (
+    is_v1,
     get_otu_paths,
     search_otu_by_id,
-    is_v1,
     get_unique_ids,
 )
 from virtool_cli.utils.storage import write_records, read_otu
@@ -19,6 +19,7 @@ base_logger = structlog.get_logger()
 
 def run(
     src_path: Path,
+    filter: str = "*",
     auto_evaluate: bool = False,
     debugging: bool = False,
 ):
@@ -31,7 +32,7 @@ def run(
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
     logger = base_logger.bind(src=str(src_path))
 
     if is_v1(src_path):
@@ -49,12 +50,12 @@ def run(
     logger.info("Updating src directory accessions...")
 
     asyncio.run(
-        update_reference(src_path=src_path, auto_evaluate=auto_evaluate)
+        update_reference(src_path=src_path, filter=filter, auto_evaluate=auto_evaluate)
     )
 
 
 async def update_reference(
-    src_path: Path, auto_evaluate: bool = False
+    src_path: Path, filter: str = "*", auto_evaluate: bool = False
 ):
     """
     Creates 2 queues:
@@ -74,6 +75,7 @@ async def update_reference(
             src directory
 
     :param src_path: Path to a reference directory
+    :param filter: Filter criteria for updates
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
     # Holds raw NCBI GenBank data
@@ -82,10 +84,13 @@ async def update_reference(
     # Holds formatted sequence data and isolate data
     write_queue = asyncio.Queue()
 
+    # Applies a glob filter to OTU:
+    otu_paths = await filter_otu_paths(src_path, filter)
+
     # Requests and retrieves new accessions from NCBI GenBank
     # and pushes results to upstream queue
     fetcher = asyncio.create_task(
-        fetcher_loop(get_otu_paths(src_path), queue=upstream_queue)
+        fetcher_loop(otu_paths, queue=upstream_queue)
     )
 
     # Pulls Genbank data from upstream queue, formats into dict form
@@ -238,3 +243,15 @@ async def writer_loop(
 
         await asyncio.sleep(DEFAULT_INTERVAL)
         queue.task_done()
+
+async def filter_otu_paths(src_path: Path, filter: str = "*"):
+    """
+    Takes a glob-formatted filter on directory names
+    """
+    filtered_paths = []
+    for path in src_path.glob(f"{filter}--*"):
+        if path.is_dir():
+            filtered_paths.append(path)
+
+    return filtered_paths
+
