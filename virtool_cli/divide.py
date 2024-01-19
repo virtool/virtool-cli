@@ -5,7 +5,7 @@ import shutil
 import aiofiles
 import structlog
 
-from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
+from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import generate_otu_dirname
 
 base_logger = structlog.get_logger()
@@ -33,7 +33,7 @@ def run(reference_path: Path, output_path: Path, debugging: bool = False):
     :param output_path: Path to the where the src tree should be generated
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
     logger = base_logger.bind(reference=str(reference_path), output=str(output_path))
 
     logger.info(f"Dividing {output_path.name} into {reference_path.name}...")

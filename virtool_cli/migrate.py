@@ -2,7 +2,7 @@ from pathlib import Path
 import asyncio
 import structlog
 
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import generate_otu_dirname, is_v1
 from virtool_cli.utils.storage import read_otu
 
@@ -14,7 +14,7 @@ def run(src_path: Path, debugging: bool = False):
     :param src_path: Path to a src database directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
     logger = base_logger.bind(src_path=str(src_path))
 
     if not is_v1(src_path):

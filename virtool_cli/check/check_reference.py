@@ -1,8 +1,8 @@
 from pathlib import Path
 import structlog
 
+from virtool_cli.utils.logging import configure_logger
 from virtool_cli.check.checkup import check_otu
-from virtool_cli.utils.logging import DEBUG_LOGGER, DEFAULT_LOGGER
 from virtool_cli.utils.reference import get_otu_paths
 
 base_logger = structlog.get_logger()
@@ -15,7 +15,7 @@ def run(src_path: Path, debugging: bool = False):
     :param src_path: Path to a given reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
     logger = base_logger.bind(src=str(src_path), verbose=debugging)
 
     logger.debug("Debug flag is enabled")
