@@ -81,6 +81,11 @@ async def update_reference(
     :param filter: Filter criteria for updates
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
     """
+    # Create cache if necessary
+    cache_path = src_path.parent / ".cache"
+    update_cache_path = cache_path / "updates"
+    update_cache_path.mkdir(exist_ok=True)
+
     # Holds raw NCBI GenBank data
     upstream_queue = asyncio.Queue()
 
@@ -93,7 +98,9 @@ async def update_reference(
     # Requests and retrieves new accessions from NCBI GenBank
     # and pushes results to upstream queue
     fetcher = asyncio.create_task(
-        fetcher_loop(otu_paths, queue=upstream_queue)
+        fetcher_loop(
+            otu_paths, queue=upstream_queue, cache_path=update_cache_path, dry_run=dry_run
+        )
     )
 
     # Pulls Genbank data from upstream queue, formats into dict form
@@ -101,11 +108,6 @@ async def update_reference(
     asyncio.create_task(
         processor_loop(upstream_queue, write_queue, auto_evaluate=auto_evaluate)
     )
-
-    # Create cache if necessary
-    cache_path = src_path.parent / ".cache"
-    update_cache_path = cache_path / "updates"
-    update_cache_path.mkdir(exist_ok=True)
 
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
@@ -120,7 +122,9 @@ async def update_reference(
     return
 
 
-async def fetcher_loop(otu_paths: list, queue: asyncio.Queue):
+async def fetcher_loop(
+    otu_paths: list, queue: asyncio.Queue, cache_path: Path, dry_run: bool = False
+):
     """
     Loops through selected OTU listings from accession catalogue,
     indexed by NCBI taxon ID, and:
@@ -144,6 +148,12 @@ async def fetcher_loop(otu_paths: list, queue: asyncio.Queue):
         taxid = otu_metadata.get('taxid')
 
         logger = logger.bind(taxid=taxid, otu_id=otu_id)
+
+        if dry_run:
+            if (cache_path / f"{otu_id}.json").exists():
+                logger.warning("OTU updates have already been cached. Moving on...")
+                continue
+
         logger.debug("Starting OTU...")
 
         try:
@@ -154,6 +164,7 @@ async def fetcher_loop(otu_paths: list, queue: asyncio.Queue):
 
         record_data = await request_new_records(taxid, no_fetch_set, logger)
         if not record_data:
+            logger.debug("No records found.")
             continue
 
         packet = {
@@ -217,6 +228,7 @@ async def processor_loop(
 
         await downstream_queue.put(processed_packet)
         logger.debug(f"Pushed {len(otu_updates)} new accessions to downstream queue")
+
         await asyncio.sleep(DEFAULT_INTERVAL)
         upstream_queue.task_done()
 
@@ -246,11 +258,18 @@ async def writer_loop(
         sequence_data = packet["data"]
 
         logger = logger.bind(otu_id=otu_id, taxid=taxid, src=str(src_path))
+        logger.debug("Writing packet...")
 
         otu_path = search_otu_by_id(otu_id, src_path)
 
         if dry_run:
             await write_summarized_update(sequence_data, otu_id, cache_path)
+            cached_update_path = (cache_path / f"{otu_id}.json")
+            if cached_update_path.exists():
+                logger.debug(
+                    "Wrote summary to cache.",
+                    cached_update_path=str((cache_path / f"{otu_id}.json"))
+                )
         else:
             await write_records(otu_path, sequence_data, unique_iso, unique_seq, logger)
 

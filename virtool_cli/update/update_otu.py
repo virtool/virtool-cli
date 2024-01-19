@@ -71,6 +71,7 @@ async def update_otu(
         return
 
     if not record_data:
+        logger.debug("No records found.")
         return
 
     otu_updates = await process_records(
@@ -89,5 +90,8 @@ async def update_otu(
         update_cache_path.mkdir(exist_ok=True)
 
         await write_summarized_update(otu_updates, otu_id, update_cache_path)
+
+        if not update_cache_path / f"{otu_id}.json".exists():
+            logger.error("Write failed")
     else:
         await write_records(otu_path, otu_updates, unique_iso, unique_seq, logger=logger)
