@@ -23,11 +23,13 @@ async def request_linked_accessions(taxon_id: int) -> list:
             dbfrom="taxonomy", db="nuccore",
             id=str(taxon_id), idtype="acc"
         )
+    except HTTPError as e:
+        raise e
+
+    try:
         entrez_acclist = Entrez.read(elink_results)
-    except HTTPError:
-        return []
-    except RuntimeError:
-        return []
+    except RuntimeError as e:
+        raise e
 
     if not entrez_acclist:
         return []

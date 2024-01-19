@@ -1,6 +1,7 @@
 from pathlib import Path
 import asyncio
 import structlog
+from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import (
@@ -144,10 +145,16 @@ async def fetcher_loop(
     for path in otu_paths:
         otu_metadata = await read_otu(path)
 
-        otu_id = otu_metadata.get('_id')
-        taxid = otu_metadata.get('taxid')
+        logger.debug(otu_metadata)
 
+        otu_id = otu_metadata['_id']
+        taxid = otu_metadata.get('taxid', None)
         logger = logger.bind(taxid=taxid, otu_id=otu_id)
+
+        if taxid is None:
+            logger.error("NCBI Taxonomy id not found in OTU metadata. Moving on...")
+            continue
+
 
         if dry_run:
             if (cache_path / f"{otu_id}.json").exists():
@@ -162,7 +169,13 @@ async def fetcher_loop(
             logger.exception(e)
             continue
 
-        record_data = await request_new_records(taxid, no_fetch_set, logger)
+        try:
+            record_data = await request_new_records(taxid, no_fetch_set, logger)
+        except HTTPError as e:
+            logger.error(f"{e}: Failed to retrieve new records.")
+            logger.exception(e)
+            continue
+
         if not record_data:
             logger.debug("No records found.")
             continue

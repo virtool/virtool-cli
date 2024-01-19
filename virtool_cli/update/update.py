@@ -32,13 +32,14 @@ async def request_new_records(
     """
     try:
         upstream_accessions = await request_linked_accessions(taxon_id=taxid)
-        await asyncio.sleep(NCBI_REQUEST_INTERVAL)
     except HTTPError as e:
-        logger.error(e)
-        return []
+        logger.exception(e)
+        raise e
     except Exception as e:
         logger.exception(e)
         return []
+
+    await asyncio.sleep(NCBI_REQUEST_INTERVAL)
 
     if upstream_accessions:
         upstream_set = set(upstream_accessions)
