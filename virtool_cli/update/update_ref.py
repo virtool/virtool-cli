@@ -10,7 +10,7 @@ from virtool_cli.utils.reference import (
     get_unique_ids,
 )
 from virtool_cli.utils.storage import write_records, read_otu
-from virtool_cli.update.update import request_new_records, get_no_fetch_set, process_records
+from virtool_cli.update.update import request_new_records, get_no_fetch_set, process_records, write_summarized_update
 
 DEFAULT_INTERVAL = 0.001
 
@@ -21,6 +21,7 @@ def run(
     src_path: Path,
     filter: str = "*",
     auto_evaluate: bool = False,
+    dry_run: bool = False,
     debugging: bool = False,
 ):
     """
@@ -30,6 +31,7 @@ def run(
 
     :param src_path: Path to a reference directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
+    :param dry_run:
     :param debugging: Enables verbose logs for debugging purposes
     """
     configure_logger(debugging)
@@ -50,12 +52,13 @@ def run(
     logger.info("Updating src directory accessions...")
 
     asyncio.run(
-        update_reference(src_path=src_path, filter=filter, auto_evaluate=auto_evaluate)
+        update_reference(
+            src_path=src_path, filter=filter, auto_evaluate=auto_evaluate, dry_run=dry_run)
     )
 
 
 async def update_reference(
-    src_path: Path, filter: str = "*", auto_evaluate: bool = False
+    src_path: Path, filter: str = "*", auto_evaluate: bool = False, dry_run: bool = False
 ):
     """
     Creates 2 queues:
@@ -99,9 +102,14 @@ async def update_reference(
         processor_loop(upstream_queue, write_queue, auto_evaluate=auto_evaluate)
     )
 
+    # Create cache if necessary
+    cache_path = src_path.parent / ".cache"
+    update_cache_path = cache_path / "updates"
+    update_cache_path.mkdir(exist_ok=True)
+
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
-    asyncio.create_task(writer_loop(src_path, write_queue))
+    asyncio.create_task(writer_loop(src_path, write_queue, update_cache_path, dry_run))
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 
@@ -216,6 +224,8 @@ async def processor_loop(
 async def writer_loop(
     src_path: Path,
     queue: asyncio.Queue,
+    cache_path: Path,
+    dry_run: bool = False
 ):
     """
     Awaits new sequence data for each OTU and writes new data into JSON files with unique Virtool IDs
@@ -239,7 +249,10 @@ async def writer_loop(
 
         otu_path = search_otu_by_id(otu_id, src_path)
 
-        await write_records(otu_path, sequence_data, unique_iso, unique_seq, logger)
+        if dry_run:
+            await write_summarized_update(sequence_data, otu_id, cache_path)
+        else:
+            await write_records(otu_path, sequence_data, unique_iso, unique_seq, logger)
 
         await asyncio.sleep(DEFAULT_INTERVAL)
         queue.task_done()

@@ -6,6 +6,7 @@ from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
 from virtool_cli.utils.storage import read_otu, write_records
 from virtool_cli.update.update import get_no_fetch_set, request_new_records, process_records
+from virtool_cli.update.update import write_summarized_update
 
 base_logger = structlog.get_logger()
 
@@ -13,6 +14,7 @@ base_logger = structlog.get_logger()
 def run(
     otu_path: Path,
     auto_evaluate: bool = False,
+    dry_run: bool = False,
     debugging: bool = False,
 ):
     """
@@ -23,6 +25,7 @@ def run(
 
     :param otu_path: Path to an OTU directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
+    :param dry_run:
     :param debugging: Enables verbose logs for debugging purposes
     """
     configure_logger(debugging)
@@ -33,11 +36,11 @@ def run(
             "Auto-evaluation is in active development and may produce false negatives."
         )
 
-    asyncio.run(update_otu(otu_path, auto_evaluate))
+    asyncio.run(update_otu(otu_path, auto_evaluate, dry_run))
 
 
 async def update_otu(
-    otu_path: Path, auto_evaluate: bool = False
+    otu_path: Path, auto_evaluate: bool = False, dry_run: bool = False
 ):
     """
     Requests new records for a single taxon ID
@@ -45,6 +48,7 @@ async def update_otu(
 
     :param otu_path: Path to an OTU directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
+    :param dry_run:
     """
     src_path = otu_path.parent
 
@@ -79,4 +83,11 @@ async def update_otu(
     if not otu_updates:
         return
 
-    await write_records(otu_path, otu_updates, unique_iso, unique_seq, logger=logger)
+    if dry_run:
+        cache_path = src_path.parent / ".cache"
+        update_cache_path = cache_path / "updates"
+        update_cache_path.mkdir(exist_ok=True)
+
+        await write_summarized_update(otu_updates, otu_id, update_cache_path)
+    else:
+        await write_records(otu_path, otu_updates, unique_iso, unique_seq, logger=logger)

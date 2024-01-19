@@ -1,6 +1,6 @@
 from pathlib import Path
 import asyncio
-import structlog
+import json
 from structlog import BoundLogger, get_logger
 from urllib.error import HTTPError
 
@@ -11,8 +11,6 @@ from virtool_cli.utils.ncbi import (
     NCBI_REQUEST_INTERVAL,
 )
 from virtool_cli.utils.storage import get_otu_accessions, fetch_exclusions
-
-base_logger = structlog.get_logger()
 
 
 async def get_no_fetch_set(otu_path: Path):
@@ -25,7 +23,7 @@ async def get_no_fetch_set(otu_path: Path):
 
 
 async def request_new_records(
-    taxid: int, no_fetch_set: set, logger: BoundLogger = base_logger
+    taxid: int, no_fetch_set: set, logger: BoundLogger = get_logger()
 ) -> list:
     """
     :param taxid:
@@ -79,7 +77,8 @@ async def process_records(
         2) Formats the records into a smaller dictionary
         3) Returns new formatted dicts in a list
 
-    WARNING: Auto-evaluation is still under active development, especially multipartite filtering
+    WARNING: Auto-evaluation is still under active development,
+        especially multipartite filtering
 
     :param records: SeqRecords retrieved from the NCBI Nucleotide database
     :param metadata:
@@ -107,3 +106,12 @@ async def process_records(
         return otu_updates
 
     return []
+
+
+async def write_summarized_update(
+    processed_updates: list, otu_id: str, cache_path: Path
+):
+    summary_path = cache_path / (otu_id + ".json")
+
+    with open(summary_path, "w") as f:
+        json.dump(processed_updates, f, indent=2, sort_keys=True)
