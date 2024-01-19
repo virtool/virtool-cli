@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from shutil import copytree
 import structlog
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+from virtool_cli.utils.logging import configure_logger
 
 base_logger = structlog.get_logger()
 
@@ -14,7 +14,7 @@ def run(repo_path: Path, debugging: bool = False):
     :param repo_path: Path to repository src directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
     logger = base_logger.bind(repo=str(repo_path))
 
     try:
