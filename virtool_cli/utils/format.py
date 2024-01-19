@@ -20,7 +20,7 @@ async def process_default(
     otu_updates = []
 
     for seq_data in records:
-        [accession, _] = seq_data.id.split(".")
+        accession = seq_data.id.split(".")[0]
         seq_qualifier_data = get_qualifiers(seq_data.features)
 
         if accession in filter_set:
