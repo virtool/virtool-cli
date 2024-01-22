@@ -4,14 +4,10 @@ import structlog
 from urllib.error import HTTPError
 
 from virtool_cli.utils.logging import configure_logger
-from virtool_cli.utils.reference import (
-    is_v1,
-    get_otu_paths,
-    search_otu_by_id,
-    get_unique_ids,
-)
-from virtool_cli.utils.storage import write_records, read_otu
-from virtool_cli.update.update import request_new_records, get_no_fetch_set, process_records, write_summarized_update
+from virtool_cli.utils.reference import is_v1
+from virtool_cli.utils.storage import read_otu
+from virtool_cli.update.update import request_new_records, get_no_fetch_set, process_records
+from virtool_cli.update.writer import writer_loop
 
 DEFAULT_INTERVAL = 0.001
 
@@ -138,6 +134,8 @@ async def fetcher_loop(
 
     :param otu_paths: A list of OTU paths
     :param queue: Queue holding fetched NCBI GenBank data
+    :param cache_path:
+    :param dry_run:
     """
     logger = structlog.get_logger(__name__ + ".fetcher")
     logger.debug("Starting fetcher...")
@@ -154,7 +152,6 @@ async def fetcher_loop(
         if taxid is None:
             logger.error("NCBI Taxonomy id not found in OTU metadata. Moving on...")
             continue
-
 
         if dry_run:
             if (cache_path / f"{otu_id}.json").exists():
@@ -237,7 +234,7 @@ async def processor_loop(
             upstream_queue.task_done()
             continue
 
-        processed_packet = {"taxid": taxid, "otu_id": otu_id, "data": otu_updates}
+        processed_packet = {"otu_id": otu_id, "data": otu_updates}
 
         await downstream_queue.put(processed_packet)
         logger.debug(f"Pushed {len(otu_updates)} new accessions to downstream queue")
@@ -246,52 +243,12 @@ async def processor_loop(
         upstream_queue.task_done()
 
 
-async def writer_loop(
-    src_path: Path,
-    queue: asyncio.Queue,
-    cache_path: Path,
-    dry_run: bool = False
-):
-    """
-    Awaits new sequence data for each OTU and writes new data into JSON files with unique Virtool IDs
-
-    :param src_path: Path to a reference directory
-    :param queue: Queue holding formatted sequence and isolate data processed by this loop
-    """
-    logger = structlog.get_logger(__name__ + ".writer")
-    logger.debug("Starting writer...")
-
-    unique_iso, unique_seq = await get_unique_ids(get_otu_paths(src_path))
-
-    while True:
-        packet = await queue.get()
-
-        taxid = packet["taxid"]
-        otu_id = packet["otu_id"]
-        sequence_data = packet["data"]
-
-        logger = logger.bind(otu_id=otu_id, taxid=taxid, src=str(src_path))
-        logger.debug("Writing packet...")
-
-        otu_path = search_otu_by_id(otu_id, src_path)
-
-        if dry_run:
-            await write_summarized_update(sequence_data, otu_id, cache_path)
-            cached_update_path = (cache_path / f"{otu_id}.json")
-            if cached_update_path.exists():
-                logger.debug(
-                    "Wrote summary to cache.",
-                    cached_update_path=str((cache_path / f"{otu_id}.json"))
-                )
-        else:
-            await write_records(otu_path, sequence_data, unique_iso, unique_seq, logger)
-
-        await asyncio.sleep(DEFAULT_INTERVAL)
-        queue.task_done()
-
-async def filter_otu_paths(src_path: Path, filter: str = "*"):
+async def filter_otu_paths(src_path: Path, filter: str = "*") -> list[Path]:
     """
     Takes a glob-formatted filter on directory names
+
+    :param src_path:
+    :param filter:
     """
     filtered_paths = []
     for path in src_path.glob(f"{filter}--*"):

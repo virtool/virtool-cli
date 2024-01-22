@@ -1,6 +1,5 @@
 from pathlib import Path
 import asyncio
-import json
 from structlog import BoundLogger, get_logger
 from urllib.error import HTTPError
 
@@ -107,12 +106,3 @@ async def process_records(
         return otu_updates
 
     return []
-
-
-async def write_summarized_update(
-    processed_updates: list, otu_id: str, cache_path: Path
-):
-    summary_path = cache_path / (otu_id + ".json")
-
-    with open(summary_path, "w") as f:
-        json.dump(processed_updates, f, indent=2, sort_keys=True)

@@ -3,6 +3,7 @@ import click
 
 from virtool_cli.update.update_ref import run as run_update_all
 from virtool_cli.update.update_otu import run as run_update_single
+from virtool_cli.update.uncache import run as run_update_uncache
 
 
 @click.group("update")
@@ -57,6 +58,31 @@ def otu(otu_path, evaluate, dry, debug):
             otu_path, auto_evaluate=evaluate, dry_run=dry, debugging=debug
         )
 
+    except (FileNotFoundError, NotADirectoryError) as e:
+        click.echo("Not a valid reference directory", err=True)
+
+
+@update.command()
+@click.option(
+    "-cache",
+    "--cache_path",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="the path to a cache directory",
+)
+@click.option(
+    "-src",
+    "--src_path",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="the path to a reference directory",
+)
+@click.option("--evaluate/--no-evaluate", default=False, help="Enable auto-filtering")
+@click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
+def uncache(cache_path, src_path, evaluate, debug):
+    """Fetch new sequences and isolates for all OTU in a given reference directory."""
+    try:
+        run_update_uncache(cache_path, src_path, auto_evaluate=evaluate, debugging=debug)
     except (FileNotFoundError, NotADirectoryError) as e:
         click.echo("Not a valid reference directory", err=True)
 

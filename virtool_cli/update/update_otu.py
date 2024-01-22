@@ -6,7 +6,7 @@ from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
 from virtool_cli.utils.storage import read_otu, write_records
 from virtool_cli.update.update import get_no_fetch_set, request_new_records, process_records
-from virtool_cli.update.update import write_summarized_update
+from virtool_cli.update.writer import write_summarized_update
 
 base_logger = structlog.get_logger()
 
