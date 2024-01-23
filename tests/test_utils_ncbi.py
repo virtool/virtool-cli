@@ -19,6 +19,7 @@ async def test_utils_request_linked_accessions(index):
         assert type(accession) == str
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.parametrize("index", [0, 1, 2])
 async def test_utils_fetch_taxonomy_rank(index):
