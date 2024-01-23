@@ -119,5 +119,3 @@ async def get_unique_otu_ids(src_path: Path) -> list:
         if otu_path.is_dir()
     ]
     return unique_otus
-
-

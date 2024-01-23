@@ -45,9 +45,11 @@ async def writer_loop(
 
         logger.debug("Writing packet...")
         await write_records(
-            otu_path,
-            sequence_data, unique_iso, unique_seq,
-            logger
+            otu_path=otu_path,
+            new_sequences=sequence_data,
+            unique_iso=unique_iso,
+            unique_seq=unique_seq,
+            logger=logger
         )
 
         await asyncio.sleep(DEFAULT_INTERVAL)
