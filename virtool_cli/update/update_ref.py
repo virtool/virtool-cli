@@ -7,7 +7,7 @@ from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import is_v1
 from virtool_cli.utils.storage import read_otu
 from virtool_cli.update.update import request_new_records, get_no_fetch_set, process_records
-from virtool_cli.update.writer import writer_loop
+from virtool_cli.update.writer import writer_loop, cacher_loop
 
 DEFAULT_INTERVAL = 0.001
 
@@ -108,7 +108,14 @@ async def update_reference(
 
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
-    asyncio.create_task(writer_loop(src_path, write_queue, update_cache_path, dry_run))
+    if dry_run:
+        asyncio.create_task(
+            cacher_loop(src_path, update_cache_path, write_queue)
+        )
+    else:
+        asyncio.create_task(
+            writer_loop(src_path, write_queue)
+        )
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 

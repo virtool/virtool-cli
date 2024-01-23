@@ -68,7 +68,9 @@ async def update_reference_from_cache(
 
     # Pulls formatted sequences from write queue, checks isolate metadata
     # and writes json to the correct location in the src directory
-    asyncio.create_task(writer_loop(src_path, queue, cache_path, dry_run=False))
+    asyncio.create_task(
+        writer_loop(src_path, queue)
+    )
 
     await asyncio.gather(*[fetcher], return_exceptions=True)
 
