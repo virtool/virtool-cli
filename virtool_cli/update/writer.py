@@ -18,7 +18,8 @@ async def writer_loop(
     queue: asyncio.Queue,
 ):
     """
-    Awaits new sequence data for each OTU and writes new data into JSON files with unique Virtool IDs
+    Awaits new sequence data per OTU and writes new data
+    to the correct location under the reference directory
 
     :param src_path: Path to a reference directory
     :param queue: Queue holding formatted sequence and isolate data processed by this loop
@@ -62,9 +63,10 @@ async def cacher_loop(
     queue: asyncio.Queue,
 ):
     """
-    Awaits new sequence data for each OTU and writes new data into JSON files with unique Virtool IDs
+    Awaits new sequence data per OTU and writes new data into one JSON file per OTU
 
     :param src_path: Path to a reference directory
+    :param cache_path: Path to a directory containing cached update lists
     :param queue: Queue holding formatted sequence and isolate data processed by this loop
     """
     logger = structlog.get_logger()
@@ -86,7 +88,7 @@ async def cacher_loop(
         logger = logger.bind(otu_path=str(otu_path))
         logger.debug("Writing packet...")
 
-        await write_summarized_update(sequence_data, otu_id, cache_path)
+        await cache_new_sequences(sequence_data, otu_id, cache_path)
         cached_update_path = (cache_path / f"{otu_id}.json")
         if cached_update_path.exists():
             logger.debug(
@@ -115,9 +117,16 @@ async def process_packet(packet):
     return otu_id, sequence_data
 
 
-async def write_summarized_update(
-    processed_updates: list, otu_id: str, cache_path: Path
+async def cache_new_sequences(
+    processed_updates: list[dict], otu_id: str, cache_path: Path
 ):
+    """
+    Takes a list of processed update data and caches it under a given cache path
+
+    :param processed_updates: Preprocessed sequence records
+    :param otu_id: Unique OTU identifier
+    :param cache_path: Path to a directory containing cached update lists
+    """
     summary_path = cache_path / (otu_id + ".json")
 
     with open(summary_path, "w") as f:

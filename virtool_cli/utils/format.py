@@ -74,7 +74,7 @@ def format_sequence(record: SeqRecord, qualifiers: dict) -> dict:
 
 def format_isolate(source_name: str, source_type: str, isolate_id: str) -> dict:
     """
-    Formats a
+    Formats raw isolate data for storage in a reference directory
 
     :param source_name: Assigned source name for an accession
     :param source_type: Assigned source type for an accession

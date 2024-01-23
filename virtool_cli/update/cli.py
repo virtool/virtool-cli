@@ -28,11 +28,23 @@ def update():
     type=str,
     help="entry point for glob filter",
 )
-@click.option("--dry/--not-dry", default=False, help="Write to cache instead of reference")
-@click.option("--evaluate/--no-evaluate", default=False, help="Enable auto-filtering")
-@click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
+@click.option(
+    "--dry/--not-dry",
+    default=False,
+    help="Write to default cache directory instead of reference directory"
+)
+@click.option(
+    "--evaluate/--no-evaluate",
+    default=False,
+    help="Enable auto-evaluation"
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable debugging logs"
+)
 def reference(src_path, filter, evaluate, dry, debug):
-    """Fetch new sequences and isolates for all OTU in a given reference directory."""
+    """Fetch new NCBI data for all OTU in a given reference directory."""
     try:
         run_update_all(src_path, filter, auto_evaluate=evaluate, dry_run=dry, debugging=debug)
     except (FileNotFoundError, NotADirectoryError) as e:
@@ -47,11 +59,23 @@ def reference(src_path, filter, evaluate, dry, debug):
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a single OTU directory",
 )
-@click.option("--dry/--not-dry", default=False, help="Write to cache instead of reference")
-@click.option("--evaluate/--no-evaluate", default=False, help="Enable auto-filtering")
-@click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
+@click.option(
+    "--dry/--not-dry",
+    default=False,
+    help="Write to default cache directory instead of reference directory"
+)
+@click.option(
+    "--evaluate/--no-evaluate",
+    default=False,
+    help="Enable auto-evaluation"
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable debugging logs"
+)
 def otu(otu_path, evaluate, dry, debug):
-    """Fetch new sequences and isolates for a given OTU directory."""
+    """Fetch new NCBI data for a given OTU directory."""
 
     try:
         run_update_single(
@@ -77,10 +101,21 @@ def otu(otu_path, evaluate, dry, debug):
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="the path to a reference directory",
 )
-@click.option("--evaluate/--no-evaluate", default=False, help="Enable auto-filtering")
-@click.option("--debug/--no-debug", default=False, help="Enable debugging logs")
+@click.option(
+    "--evaluate/--no-evaluate",
+    default=False,
+    help="Enable auto-evaluation ()"
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable debugging logs"
+)
 def uncache(cache_path, src_path, evaluate, debug):
-    """Fetch new sequences and isolates for all OTU in a given reference directory."""
+    """
+        Write cached sequence data under reference directory.
+        Read cached sequence data from a cache directory and write to a reference directory.
+    """
     try:
         run_update_uncache(cache_path, src_path, auto_evaluate=evaluate, debugging=debug)
     except (FileNotFoundError, NotADirectoryError) as e:

@@ -27,8 +27,13 @@ def run(
     Requests updates for all OTU directories under a source reference
 
     :param src_path: Path to a reference directory
+    :param filter: Changing this parameter defines which paths are added to otu_paths;
+        e.g. `a*` will update only OTUs that start with `a`.
+        defaults to `*` (wildcard)
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
-    :param dry_run:
+    :param dry_run: Caching flag, writes update data for each OTU
+        under "../.cache/updates/{otu_id}.json",
+        instead of the reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     configure_logger(debugging)
@@ -55,7 +60,10 @@ def run(
 
 
 async def update_reference(
-    src_path: Path, filter: str = "*", auto_evaluate: bool = False, dry_run: bool = False
+    src_path: Path,
+    filter: str = "*",
+    auto_evaluate: bool = False,
+    dry_run: bool = False
 ):
     """
     Creates 2 queues:
@@ -76,7 +84,11 @@ async def update_reference(
 
     :param src_path: Path to a reference directory
     :param filter: Filter criteria for updates
-    :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
+    :param auto_evaluate: Auto-evaluation flag,
+        enables automatic filtering for fetched results
+    :param dry_run: Caching flag, writes update data for each OTU
+        under "../.cache/updates/{otu_id}.json",
+        instead of the reference directory
     """
     # Create cache if necessary
     cache_path = src_path.parent / ".cache"
@@ -106,13 +118,15 @@ async def update_reference(
         processor_loop(upstream_queue, write_queue, auto_evaluate=auto_evaluate)
     )
 
-    # Pulls formatted sequences from write queue, checks isolate metadata
-    # and writes json to the correct location in the src directory
     if dry_run:
+        # Pulls formatted sequence list from write queue and
+        # writes the list to "{otu_id}.json" under the cache path
         asyncio.create_task(
             cacher_loop(src_path, update_cache_path, write_queue)
         )
     else:
+        # Pulls formatted sequences from write queue, checks isolate metadata
+        # and writes json to the correct location in the src directory
         asyncio.create_task(
             writer_loop(src_path, write_queue)
         )

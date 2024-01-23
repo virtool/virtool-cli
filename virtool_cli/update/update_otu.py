@@ -6,7 +6,7 @@ from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
 from virtool_cli.utils.storage import read_otu, write_records
 from virtool_cli.update.update import get_no_fetch_set, request_new_records, process_records
-from virtool_cli.update.writer import write_summarized_update
+from virtool_cli.update.writer import cache_new_sequences
 
 base_logger = structlog.get_logger()
 
@@ -25,7 +25,9 @@ def run(
 
     :param otu_path: Path to an OTU directory
     :param auto_evaluate: Auto-evaluation flag, enables automatic filtering for fetched results
-    :param dry_run:
+    :param dry_run: Caching flag, writes all update data to a single file under
+        "{repo_path}/.cache/updates/{otu_id}.json",
+        instead of the reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
     configure_logger(debugging)
@@ -89,7 +91,7 @@ async def update_otu(
         update_cache_path = cache_path / "updates"
         update_cache_path.mkdir(exist_ok=True)
 
-        await write_summarized_update(otu_updates, otu_id, update_cache_path)
+        await cache_new_sequences(otu_updates, otu_id, update_cache_path)
 
         if not update_cache_path / f"{otu_id}.json".exists():
             logger.error("Write failed")
