@@ -3,49 +3,6 @@ from structlog import BoundLogger, get_logger
 from typing import Tuple
 
 
-async def process_records(
-    records: list,
-    metadata: dict,
-    no_fetch_set: set,
-    auto_evaluate: bool = True,
-    logger: BoundLogger = get_logger(),
-) -> list:
-    """
-    Takes sequence records and:
-        1) Evaluates whether those records should be added to the database,
-        2) Formats the records into a smaller dictionary
-        3) Returns new formatted dicts in a list
-
-    WARNING: Auto-evaluation is still under active development, especially multipartite filtering
-
-    :param records: SeqRecords retrieved from the NCBI Nucleotide database
-    :param metadata:
-    :param no_fetch_set:
-    :param auto_evaluate: Boolean flag for whether automatic evaluation functions
-        should be run
-    :param logger: Optional entry point for a shared BoundLogger
-    :return: A list of valid sequences formatted for the Virtool reference database
-    """
-    try:
-        otu_updates, auto_excluded = await process_default(
-            records, metadata, no_fetch_set, logger
-        )
-    except Exception as e:
-        logger.exception(e)
-        raise e
-
-    if auto_excluded:
-        logger.info(
-            "Consider adding these accessions to the exclusion list",
-            auto_excluded=auto_excluded,
-        )
-
-    if otu_updates:
-        return otu_updates
-
-    return []
-
-
 async def process_default(
     records: list, metadata: dict, filter_set: set, logger: BoundLogger = get_logger()
 ) -> Tuple[list, list]:
@@ -63,7 +20,7 @@ async def process_default(
     otu_updates = []
 
     for seq_data in records:
-        [accession, _] = seq_data.id.split(".")
+        accession = seq_data.id.split(".")[0]
         seq_qualifier_data = get_qualifiers(seq_data.features)
 
         if accession in filter_set:
@@ -117,7 +74,7 @@ def format_sequence(record: SeqRecord, qualifiers: dict) -> dict:
 
 def format_isolate(source_name: str, source_type: str, isolate_id: str) -> dict:
     """
-    Formats a
+    Formats raw isolate data for storage in a reference directory
 
     :param source_name: Assigned source name for an accession
     :param source_type: Assigned source type for an accession

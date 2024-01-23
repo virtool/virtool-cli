@@ -4,7 +4,7 @@ import asyncio
 import structlog
 from urllib.error import HTTPError
 
-from virtool_cli.utils.logging import DEFAULT_LOGGER, DEBUG_LOGGER
+from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import is_v1, generate_otu_dirname, get_unique_otu_ids
 from virtool_cli.utils.id_generator import generate_unique_ids
 from virtool_cli.utils.ncbi import fetch_taxonomy_record
@@ -29,7 +29,7 @@ def run(
     :param src_path: Path to a reference directory
     :param debugging: Enables verbose logs for debugging purposes
     """
-    structlog.configure(wrapper_class=DEBUG_LOGGER if debugging else DEFAULT_LOGGER)
+    configure_logger(debugging)
     logger = base_logger.bind(src=str(src_path))
 
     if is_v1(src_path):

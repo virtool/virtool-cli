@@ -2,6 +2,7 @@ import os
 import asyncio
 from Bio import Entrez, SeqIO
 from urllib.error import HTTPError
+from http.client import IncompleteRead
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -23,11 +24,15 @@ async def request_linked_accessions(taxon_id: int) -> list:
             dbfrom="taxonomy", db="nuccore",
             id=str(taxon_id), idtype="acc"
         )
+    except IncompleteRead:
+        raise HTTPError("IncompleteRead")
+    except HTTPError as e:
+        raise e
+
+    try:
         entrez_acclist = Entrez.read(elink_results)
-    except HTTPError:
-        return []
-    except RuntimeError:
-        return []
+    except RuntimeError as e:
+        raise e
 
     if not entrez_acclist:
         return []
@@ -54,6 +59,8 @@ async def request_from_nucleotide(fetch_list: list) -> list:
         ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
         handle.close()
 
+    except IncompleteRead:
+        raise HTTPError("IncompleteRead")
     except HTTPError as e:
         raise e
 
@@ -81,7 +88,9 @@ async def fetch_taxid(name: str) -> int:
         handle = Entrez.esearch(db="taxonomy", term=name)
         record = Entrez.read(handle)
         handle.close()
-    except Exception as e:
+    except IncompleteRead:
+        raise HTTPError("IncompleteRead")
+    except HTTPError as e:
         raise e
 
     try:
@@ -103,6 +112,8 @@ async def fetch_taxonomy_record(taxon_id) -> dict:
         handle = Entrez.efetch(db="taxonomy", id=taxon_id, rettype="docsum", retmode="xml")
         record = Entrez.read(handle)
         handle.close()
+    except IncompleteRead:
+        raise HTTPError("IncompleteRead")
     except HTTPError:
         raise HTTPError
 

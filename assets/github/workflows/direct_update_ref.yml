@@ -3,8 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        required: true
-        default: '2.0.0a5'
+        type: string
       suffix:
         required: false
         default: ''
@@ -63,8 +62,9 @@ jobs:
           python-version: '3.10'
           
       - name: Install virtool-cli
-        run: pip install virtool-cli==$VERSION
+        run: pip install virtool-cli $PIP_FLAGS
         env:
+          PIP_FLAGS: --pre
           VERSION: ${{ inputs.version }}
       
       - name: Run update
