@@ -184,7 +184,7 @@ def get_otu_accessions(otu_path: Path) -> list[str]:
             with open(sequence_path, "r") as f:
                 sequence = json.load(f)
 
-            accession_list.append(sequence.get("accession"))
+            accession_list.append(sequence["accession"])
 
     return sorted(accession_list)
 

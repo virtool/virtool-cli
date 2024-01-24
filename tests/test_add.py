@@ -68,13 +68,13 @@ class TestAddAccession:
         ],
     )
     def test_add_accession_success(
-        self, accession: str, otu_subpath, src_test_path: Path
+        self, accession: str, otu_subpath, src_scratch_path: Path
     ):
         """
-        Check that virtool ref add accession does the job when the isolate exists
+        Check that virtool ref add accession does the job when the isolate exists.
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accession(
-            accession, otu_dirname=otu_subpath, src_path=src_test_path
+            accession, otu_dirname=otu_subpath, src_path=src_scratch_path
         )
 
         assert post_sequence_paths.difference(pre_sequence_paths)
@@ -86,12 +86,14 @@ class TestAddAccession:
             ("NC-024301", "pagoda_yellow_mosaic_associated_virus--dd21fd8f"),
         ],
     )
-    def test_add_accession_fail(self, accession, isolate_subpath, src_test_path: Path):
+    def test_add_accession_fail(
+        self, accession, isolate_subpath, src_scratch_path: Path
+    ):
         """
         Check that virtool ref add accession does not add sequences that already exist
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accession(
-            accession, otu_dirname=isolate_subpath, src_path=src_test_path
+            accession, otu_dirname=isolate_subpath, src_path=src_scratch_path
         )
 
         new_sequences = post_sequence_paths.difference(pre_sequence_paths)
@@ -102,16 +104,16 @@ class TestAddAccession:
         "accession, otu_dirname",
         [("KT390494", "nanovirus_like_particle--ae0f2a35")],
     )
-    def test_add_isolate_success(self, accession, otu_dirname, src_test_path: Path):
+    def test_add_isolate_success(self, accession, otu_dirname, src_scratch_path: Path):
         """
         Check that virtool ref add accession does the job when the isolate does not exist
         """
 
-        otu_path = src_test_path / otu_dirname
+        otu_path = src_scratch_path / otu_dirname
 
         pre_isolate_paths = set(get_isolate_paths(otu_path))
 
-        self.run_command(accession, src_test_path)
+        self.run_command(accession, src_scratch_path)
 
         post_isolate_paths = set(get_isolate_paths(otu_path))
 
@@ -158,14 +160,16 @@ class TestAddAccessions:
             ("KT390494, KT390496, KT390501", "nanovirus_like_particle--ae0f2a35"),
         ],
     )
-    def test_add_accessions_success(self, accessions, otu_subpath, src_test_path: Path):
+    def test_add_accessions_success(
+        self, accessions, otu_subpath, src_scratch_path: Path
+    ):
         """
         Check that virtool ref add accessions does the job
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accessions(
             accessions,
             otu_dirname=otu_subpath,
-            src_path=src_test_path,
+            src_path=src_scratch_path,
         )
 
         new_sequences = post_sequence_paths.difference(pre_sequence_paths)
@@ -179,14 +183,14 @@ class TestAddAccessions:
             ("KTX390494, KTX390496, KTX390501", "nanovirus_like_particle--ae0f2a35"),
         ],
     )
-    def test_add_accessions_fail(self, accessions, otu_subpath, src_test_path: Path):
+    def test_add_accessions_fail(self, accessions, otu_subpath, src_scratch_path: Path):
         """
         Check that virtool ref add accessions does the job
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accessions(
             accessions,
             otu_dirname=otu_subpath,
-            src_path=src_test_path,
+            src_path=src_scratch_path,
         )
 
         assert post_sequence_paths.union(pre_sequence_paths) == pre_sequence_paths
@@ -221,15 +225,15 @@ class TestAddOTU:
 
         return pre_otu_paths, post_otu_paths
 
-    def test_add_otu_success(self, src_test_path: Path):
+    def test_add_otu_success(self, src_scratch_path: Path):
         """ """
         taxon_id = 908125
 
-        pre_otu_paths = set(src_test_path.glob("*--*"))
+        pre_otu_paths = set(src_scratch_path.glob("*--*"))
 
-        self.run_add_otu(taxon_id=taxon_id, src_path=src_test_path)
+        self.run_add_otu(taxon_id=taxon_id, src_path=src_scratch_path)
 
-        post_otu_paths = set(src_test_path.glob("*--*"))
+        post_otu_paths = set(src_scratch_path.glob("*--*"))
 
         new_otus = post_otu_paths.difference(pre_otu_paths)
 
@@ -240,13 +244,13 @@ class TestAddOTU:
         assert (otu_path / "otu.json").exists()
 
     @pytest.mark.parametrize("taxon_id", [345184])
-    def test_add_otu_conflict(self, taxon_id, src_test_path: Path):
+    def test_add_otu_conflict(self, taxon_id, src_scratch_path: Path):
         """Don't add taxon IDs that already exist"""
-        pre_otu_paths = set(src_test_path.glob("*--*"))
+        pre_otu_paths = set(src_scratch_path.glob("*--*"))
 
-        self.run_add_otu(taxon_id=taxon_id, src_path=src_test_path)
+        self.run_add_otu(taxon_id=taxon_id, src_path=src_scratch_path)
 
-        post_otu_paths = set(src_test_path.glob("*--*"))
+        post_otu_paths = set(src_scratch_path.glob("*--*"))
 
         new_otus = post_otu_paths.difference(pre_otu_paths)
 

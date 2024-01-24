@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 import pytest
@@ -23,3 +24,11 @@ def src_malformed_path(test_files_path: Path):
 @pytest.fixture()
 def src_test_path(test_files_path: Path):
     return test_files_path / "src_test"
+
+
+@pytest.fixture()
+def src_scratch_path(src_test_path: Path, tmp_path: Path):
+    path = tmp_path / "src_scratch"
+    shutil.copytree(src_test_path, path)
+
+    return path

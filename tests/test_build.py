@@ -12,7 +12,7 @@ def output_path(tmp_path):
 
 
 @pytest.fixture()
-def command(output_path: Path, src_test_path: Path):
+def command(output_path: Path, src_scratch_path: Path):
     return [
         "virtool",
         "ref",
@@ -20,7 +20,7 @@ def command(output_path: Path, src_test_path: Path):
         "--output",
         str(output_path),
         "--src_path",
-        str(src_test_path),
+        str(src_scratch_path),
     ]
 
 
@@ -54,7 +54,7 @@ def test_created_at(command, output_path):
     assert (arrow.utcnow() - created_at).seconds == 0
 
 
-def test_indent(command, src_test_path: Path, tmp_path: Path):
+def test_indent(command, src_scratch_path: Path, tmp_path: Path):
     """
     Test that the indent in the reference.json file is properly set
     """
@@ -69,7 +69,7 @@ def test_indent(command, src_test_path: Path, tmp_path: Path):
             "--output",
             str(output_path),
             "--src_path",
-            str(src_test_path),
+            str(src_scratch_path),
         ]
     )
 
@@ -81,7 +81,7 @@ def test_indent(command, src_test_path: Path, tmp_path: Path):
             "--output",
             str(output_indented_path),
             "--src_path",
-            str(src_test_path),
+            str(src_scratch_path),
             "--indent",
         ]
     )
