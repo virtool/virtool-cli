@@ -1,11 +1,10 @@
+from pathlib import Path
+
 import pytest
 import subprocess
-from paths import TEST_FILES_PATH
 
-TEST_SRC_PATH = TEST_FILES_PATH / "src_test"
-TEST_BAD_SRC_PATH = TEST_FILES_PATH / "src_malformed"
 
-TEST_DIRS = [
+OTU_DIR_NAMES = [
     "abaca_bunchy_top_virus--c93ec9a9",
     "babaco_mosaic_virus--xcl20vqt",
     "cabbage_leaf_curl_jamaica_virus--d226290f",
@@ -13,26 +12,26 @@ TEST_DIRS = [
 ]
 
 
-@pytest.fixture()
-def command(otu_path):
-    return ["virtool", "ref", "check", "otu", "--otu_path", str(otu_path)]
-
-
-@pytest.mark.parametrize("otu_dir", TEST_DIRS)
-def test_otu_check_success(otu_dir):
-    otu_path = TEST_SRC_PATH / otu_dir
+@pytest.mark.parametrize("otu_dir", OTU_DIR_NAMES)
+def test_otu_check_success(otu_dir: str, src_test_path: Path):
     output = subprocess.check_output(
-        ["virtool", "ref", "check", "otu", "--otu_path", str(otu_path)]
+        ["virtool", "ref", "check", "otu", "--otu_path", str(src_test_path / otu_dir)]
     ).decode("utf-8")
 
     assert output.strip() == "True"
 
 
-@pytest.mark.parametrize("otu_dir", TEST_DIRS)
-def test_otu_check_fail(otu_dir):
-    otu_path = TEST_BAD_SRC_PATH / otu_dir
+@pytest.mark.parametrize("otu_dir", OTU_DIR_NAMES)
+def test_otu_check_fail(otu_dir: str, src_malformed_path: Path):
     output = subprocess.check_output(
-        ["virtool", "ref", "check", "otu", "--otu_path", str(otu_path)]
+        [
+            "virtool",
+            "ref",
+            "check",
+            "otu",
+            "--otu_path",
+            str(src_malformed_path / otu_dir),
+        ]
     ).decode("utf-8")
 
     assert output.strip() == "False"

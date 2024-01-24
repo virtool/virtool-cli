@@ -1,202 +1,52 @@
-from pathlib import Path
-import pytest
 import shutil
-import json
 import subprocess
+from pathlib import Path
 
-from paths import TEST_FILES_PATH
-
-BASE_PATH = TEST_FILES_PATH / "src_test"
-
-
-@pytest.fixture()
-def scratch_copy_path(tmp_path):
-    fetch_path = tmp_path / "src"
-
-    shutil.copytree(BASE_PATH, fetch_path)
-
-    return fetch_path
+import pytest
 
 
-class TestEmptyRepo:
-    def test_empty_success(self, empty_repo_path):
-        subprocess.run(["virtool", "ref", "init", "-repo", str(empty_repo_path)])
+def test_empty_success(tmp_path: Path):
+    subprocess.run(["virtool", "ref", "init", "-repo", str(tmp_path)])
 
-        completed_process = run_update_with_process(src_path=empty_repo_path / "src")
-
-        assert completed_process.returncode == 0
-
-
-class TestUpdateOTU:
-    test_dirs = [
-        "abaca_bunchy_top_virus--c93ec9a9",
-        "babaco_mosaic_virus--xcl20vqt",
-        "cabbage_leaf_curl_jamaica_virus--d226290f",
-        "faba_bean_necrotic_stunt_alphasatellite_1--6444acf3",
-    ]
-
-    @pytest.mark.parametrize("otu_dirname", test_dirs)
-    def test_update_otu(self, scratch_copy_path, otu_dirname: str):
-        content_set = set((BASE_PATH / otu_dirname).iterdir())
-
-        otu_path = scratch_copy_path / otu_dirname
-        subprocess.run([
-            "virtool",
-            "ref",
-            "update",
-            "otu",
-            "-otu",
-            str(otu_path),
-        ])
-
-        updated_set = set(otu_path.iterdir())
-
-        assert updated_set.difference(content_set)
-
-
-# @pytest.mark.parametrize("base_path", [BASE_PATH])
-# def test_update_basic(base_path, tmp_path):
-#     """
-#     Test that updates actually pull something.
-#     """
-#     fetch_path = tmp_path / "src"
-#     pre_update_ref_path = tmp_path / "reference_pre.json"
-#     post_update_ref_path = tmp_path / "reference_post.json"
-#
-#     shutil.copytree(base_path, fetch_path)
-#
-#     run_build(src_path=fetch_path, output_path=pre_update_ref_path)
-#
-#     completed_process = run_update(src_path=fetch_path)
-#     assert completed_process.returncode == 0
-#
-#     run_build(src_path=fetch_path, output_path=post_update_ref_path)
-#
-#     reference_pre = json.loads(pre_update_ref_path.read_text())
-#     pre_otu_dict = convert_to_dict(reference_pre["otus"])
-#
-#     reference_post = json.loads(post_update_ref_path.read_text())
-#     post_otu_dict = convert_to_dict(reference_post["otus"])
-#
-#     difference_counter = 0
-#
-#     for otu_id in post_otu_dict:
-#         pre_accessions = get_otu_accessions(pre_otu_dict[otu_id])
-#         post_accessions = get_otu_accessions(post_otu_dict[otu_id])
-#
-#         print(pre_accessions)
-#         print(post_accessions)
-#
-#         if pre_accessions != post_accessions:
-#             difference_counter += 1
-#
-#     # Any new data counts
-#     assert difference_counter > 0
-#
-#
-# @pytest.mark.skip()
-# @pytest.mark.parametrize("base_path", [BASE_PATH])
-# def test_update_autoevaluate(base_path, tmp_path):
-#     """
-#     Test that updates actually pull something.
-#     Autoevaluation.
-#     """
-#     fetch_path = tmp_path / "src"
-#     pre_update_ref_path = tmp_path / "reference_pre.json"
-#     post_update_ref_path = tmp_path / "reference_post.json"
-#
-#     shutil.copytree(base_path, fetch_path)
-#
-#     run_build(src_path=fetch_path, output_path=pre_update_ref_path)
-#
-#     run_update(src_path=fetch_path)
-#
-#     run_build(src_path=fetch_path, output_path=post_update_ref_path)
-#
-#     reference_pre = json.loads(pre_update_ref_path.read_text())
-#     pre_otu_dict = convert_to_dict(reference_pre["otus"])
-#
-#     reference_post = json.loads(post_update_ref_path.read_text())
-#     post_otu_dict = convert_to_dict(reference_post["otus"])
-#
-#     difference_counter = 0
-#
-#     for otu_id in post_otu_dict:
-#         pre_accessions = get_otu_accessions(pre_otu_dict[otu_id])
-#         post_accessions = get_otu_accessions(post_otu_dict[otu_id])
-#
-#         print(pre_accessions)
-#         print(post_accessions)
-#
-#         if pre_accessions != post_accessions:
-#             difference_counter += 1
-#
-#     # Any new data counts
-#     assert difference_counter > 0
-
-#
-@pytest.fixture()
-def empty_repo_path(tmp_path):
-    return tmp_path / "repo_empty"
-
-
-def run_update_with_process(src_path) -> subprocess.CompletedProcess:
-    complete_process = subprocess.run(
+    p = subprocess.run(
         [
             "virtool",
             "ref",
             "update",
             "reference",
             "-src",
-            str(src_path),
+            str(tmp_path / "src"),
         ],
         capture_output=True,
     )
 
-    return complete_process
+    assert p.returncode == 0
 
 
-def run_build(src_path, output_path) -> subprocess.CompletedProcess:
-    complete_process = subprocess.run(
+@pytest.mark.parametrize(
+    "otu_dirname",
+    [
+        "abaca_bunchy_top_virus--c93ec9a9",
+        "babaco_mosaic_virus--xcl20vqt",
+        "cabbage_leaf_curl_jamaica_virus--d226290f",
+        "faba_bean_necrotic_stunt_alphasatellite_1--6444acf3",
+    ],
+)
+def test_update_otu(otu_dirname: str, src_test_path: Path, tmp_path: Path):
+    src_path = tmp_path / "src"
+    shutil.copytree(src_test_path, src_path)
+
+    otu_path = src_path / otu_dirname
+
+    subprocess.run(
         [
             "virtool",
             "ref",
-            "build",
-            "-src",
-            str(src_path),
-            "--output",
-            str(output_path),
-        ],
-        capture_output=True,
+            "update",
+            "otu",
+            "-otu",
+            str(otu_path),
+        ]
     )
 
-    return complete_process
-
-
-def convert_to_dict(otu_list: list) -> dict:
-    """
-    Converts a list of OTUs to a dict keyed by Virtool ID
-
-    :param otu_list: A list of deserialized OTU data
-    :return: The contents of otu_list keyed by OTU id
-    """
-    otu_dict = {}
-    for otu in otu_list:
-        otu_dict[otu["_id"]] = otu
-    return otu_dict
-
-
-def get_otu_accessions(otu_dict: dict) -> set:
-    """
-    Gets all accessions from an OTU directory and returns a list
-
-    :param otu_dict: Deserialized OTU data
-    :return: The accessions included under the OTU directory in a set
-    """
-    accessions = set()
-
-    for isolate in otu_dict["isolates"]:
-        for sequence in isolate["sequences"]:
-            accessions.add(sequence["accession"])
-
-    return accessions
+    assert set(otu_path.iterdir()) - set((src_test_path / otu_dirname).iterdir())

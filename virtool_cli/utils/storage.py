@@ -87,18 +87,14 @@ async def write_records(
         unique_seq.add(seq_hash)
         sequence_path = iso_path / f"{seq_hash}.json"
 
-        logger.info(
-            f"Wrote new sequence '{seq_hash}'", path=str(sequence_path)
-        )
+        logger.info(f"Wrote new sequence '{seq_hash}'", path=str(sequence_path))
 
         new_sequence_paths.append(sequence_path)
 
     return new_sequence_paths
 
 
-async def store_isolate(
-    isolate: dict, isolate_id: str, otu_path: Path
-):
+async def store_isolate(isolate: dict, isolate_id: str, otu_path: Path):
     """
     Creates a new isolate directory and metadata file under an OTU directory,
     then returns the metadata in dict form
@@ -174,7 +170,7 @@ async def parse_sequence(path):
     return sequence
 
 
-async def get_otu_accessions(otu_path: Path) -> list:
+def get_otu_accessions(otu_path: Path) -> list[str]:
     """
     Gets all accessions from an OTU directory and returns a list
 
@@ -188,11 +184,9 @@ async def get_otu_accessions(otu_path: Path) -> list:
             with open(sequence_path, "r") as f:
                 sequence = json.load(f)
 
-            accession_list.append(
-                sequence.get('accession')
-            )
+            accession_list.append(sequence.get("accession"))
 
-    return accession_list
+    return sorted(accession_list)
 
 
 async def get_sequence_metadata(sequence_path: Path) -> dict:
@@ -244,4 +238,3 @@ async def fetch_exclusions(otu_path: Path) -> list:
         exclusions = json.loads(contents)
 
     return exclusions
-
