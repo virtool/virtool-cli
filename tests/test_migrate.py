@@ -1,18 +1,8 @@
-import pytest
+from pathlib import Path
+
 import json
 import shutil
 import subprocess
-
-from paths import TEST_FILES_PATH
-
-SRC_V1_PATH = TEST_FILES_PATH / "src_v1"
-REF_V1_PATH = TEST_FILES_PATH / "reference_v1.json"
-
-OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
-
-ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
-
-SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def convert_to_dict(otu_list: list):
@@ -40,19 +30,17 @@ def convert_to_dict(otu_list: list):
     return otu_dict
 
 
-@pytest.mark.parametrize("base_path", [SRC_V1_PATH])
-def test_migrate(base_path, tmp_path):
+def test_migrate(test_files_path: Path, tmp_path):
     """
     Test that the generated catalog creates all the same filenames as
     the control catalog
     """
     migrate_path = tmp_path / "migration"
-
-    shutil.copytree(base_path, migrate_path)
+    shutil.copytree(test_files_path / "src_v1", migrate_path)
 
     assert len([migrate_path.glob("[a-z]")]) > 0
 
-    reference_v1 = json.loads(REF_V1_PATH.read_text())
+    reference_v1 = json.load(open(test_files_path / "reference_v1.json"))
 
     v1_otu_set = convert_to_dict(reference_v1["otus"])
 

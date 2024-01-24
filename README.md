@@ -50,23 +50,6 @@ To update an existing reference source directory at **DIRECTORY_PATH** generated
 virtool ref migrate -src DIRECTORY_PATH
 ```
 
-#### Catalog
-
-Commands related to building, maintaining and pulling helpful metadata 
-in sources. Used by update processes.
-
-##### Initialize
-
-```shell script
-virtool catalog init -src SOURCE_PATH --catalog_path CATALOG_PATH
-```
-
-##### Update
-
-```shell script
-virtool catalog init -src SOURCE_PATH --catalog_path CATALOG_PATH
-```
-
 #### Command subgroup: Update
 
 ##### Fetch updates for a single OTU
@@ -92,3 +75,16 @@ increase the allowed rate to 10 requests per second.
 | `NCBI_EMAIL` | The e-mail address used for your NCBI account |
 | `NCBI_API_KEY` | The [API key](https://www.ncbi.nlm.nih.gov/account/settings/) associated with your NCBI account. |
 
+## Tests
+
+We prefer running the test suite in Docker.
+
+1. Make sure the image builds:
+   ```
+   docker build -q --target test .
+   ```
+   
+2. Run Pytest in the container:
+   ```
+   docker run --rm -t $(docker build -q --target test .) pytest
+   ```

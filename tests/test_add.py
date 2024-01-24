@@ -1,59 +1,20 @@
 import pytest
 from pathlib import Path
-import shutil
 import subprocess
-import logging
 
 from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
-from paths import TEST_FILES_PATH
-
-BASE_PATH = TEST_FILES_PATH / "src_test"
-logger = logging.getLogger()
-
-
-@pytest.fixture()
-def work_path(tmp_path):
-    test_src_path = tmp_path / "src"
-    shutil.copytree(BASE_PATH, test_src_path)
-    return test_src_path
-
-
-@pytest.fixture()
-def empty_repo(tmp_path):
-    new_repo_path = tmp_path / "new_repo"
-
-    subprocess.run(["virtool", "ref", "init", "-repo", str(new_repo_path)])
-
-    return new_repo_path
 
 
 def get_all_sequence_paths(otu_path: Path) -> set[Path]:
     sequence_paths = set()
 
     for isolate_path in otu_path.iterdir():
-        if not isolate_path.is_dir():
-            continue
-
-        for sequence_path in get_sequence_paths(isolate_path):
-            sequence_paths.add(sequence_path)
-
-    print(sequence_paths)
+        if isolate_path.is_dir():
+            for sequence_path in get_sequence_paths(isolate_path):
+                sequence_paths.add(sequence_path)
 
     return sequence_paths
 
-
-def run_build(src_path, build_path):
-    subprocess.run(
-        [
-            "virtool",
-            "ref",
-            "build",
-            "-o",
-            str(build_path),
-            "-src",
-            str(src_path),
-        ]
-    )
 
 class TestAddAccession:
     @staticmethod
@@ -71,14 +32,11 @@ class TestAddAccession:
             ]
         )
 
-    def run_add_accession(
-        self, accession: str, otu_dirname: str, src_path: Path
-    ):
+    def run_add_accession(self, accession: str, otu_dirname: str, src_path: Path):
         """
         Add into an existing isolate directory
         """
         otu_path = src_path / otu_dirname
-        logger.warning(otu_path)
 
         pre_sequence_paths = get_all_sequence_paths(otu_path)
 
@@ -88,9 +46,7 @@ class TestAddAccession:
 
         return pre_sequence_paths, post_sequence_paths
 
-    def run_add_isolate(
-        self, accession: str, otu_subpath: str, src_path: Path
-    ):
+    def run_add_isolate(self, accession: str, otu_subpath: str, src_path: Path):
         """
         Add into a new isolate directory
         """
@@ -112,18 +68,16 @@ class TestAddAccession:
         ],
     )
     def test_add_accession_success(
-        self, accession, otu_subpath, work_path
+        self, accession: str, otu_subpath, src_scratch_path: Path
     ):
         """
-        Check that virtool ref add accession does the job when the isolate exists
+        Check that virtool ref add accession does the job when the isolate exists.
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accession(
-            accession, otu_dirname=otu_subpath, src_path=work_path
+            accession, otu_dirname=otu_subpath, src_path=src_scratch_path
         )
 
-        new_sequences = post_sequence_paths.difference(pre_sequence_paths)
-
-        assert new_sequences
+        assert post_sequence_paths.difference(pre_sequence_paths)
 
     @pytest.mark.parametrize(
         "accession, isolate_subpath",
@@ -133,13 +87,13 @@ class TestAddAccession:
         ],
     )
     def test_add_accession_fail(
-        self, accession, isolate_subpath, work_path
+        self, accession, isolate_subpath, src_scratch_path: Path
     ):
         """
         Check that virtool ref add accession does not add sequences that already exist
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accession(
-            accession, otu_dirname=isolate_subpath, src_path=work_path
+            accession, otu_dirname=isolate_subpath, src_path=src_scratch_path
         )
 
         new_sequences = post_sequence_paths.difference(pre_sequence_paths)
@@ -150,24 +104,22 @@ class TestAddAccession:
         "accession, otu_dirname",
         [("KT390494", "nanovirus_like_particle--ae0f2a35")],
     )
-    def test_add_isolate_success(
-        self, accession, otu_dirname, work_path
-    ):
+    def test_add_isolate_success(self, accession, otu_dirname, src_scratch_path: Path):
         """
         Check that virtool ref add accession does the job when the isolate does not exist
         """
-        pre_isolate_paths, post_isolate_paths = self.run_add_isolate(
-            accession, otu_subpath=otu_dirname, src_path=work_path
-        )
+
+        otu_path = src_scratch_path / otu_dirname
+
+        pre_isolate_paths = set(get_isolate_paths(otu_path))
+
+        self.run_command(accession, src_scratch_path)
+
+        post_isolate_paths = set(get_isolate_paths(otu_path))
 
         new_isolates = post_isolate_paths.difference(pre_isolate_paths)
 
-        print(pre_isolate_paths)
-
-        print(post_isolate_paths)
-
         assert new_isolates
-
         assert (new_isolates.pop() / "isolate.json").exists()
 
 
@@ -183,13 +135,11 @@ class TestAddAccessions:
                 "--accessions",
                 accessions,
                 "--otu_path",
-                str(otu_path)
+                str(otu_path),
             ]
         )
 
-    def run_add_accessions(
-        self, accessions: str, otu_dirname: str, src_path: Path
-    ):
+    def run_add_accessions(self, accessions: str, otu_dirname: str, src_path: Path):
         """
         Add into an existing isolate directory
         """
@@ -211,7 +161,7 @@ class TestAddAccessions:
         ],
     )
     def test_add_accessions_success(
-        self, accessions, otu_subpath, work_path
+        self, accessions, otu_subpath, src_scratch_path: Path
     ):
         """
         Check that virtool ref add accessions does the job
@@ -219,7 +169,7 @@ class TestAddAccessions:
         pre_sequence_paths, post_sequence_paths = self.run_add_accessions(
             accessions,
             otu_dirname=otu_subpath,
-            src_path=work_path,
+            src_path=src_scratch_path,
         )
 
         new_sequences = post_sequence_paths.difference(pre_sequence_paths)
@@ -233,16 +183,14 @@ class TestAddAccessions:
             ("KTX390494, KTX390496, KTX390501", "nanovirus_like_particle--ae0f2a35"),
         ],
     )
-    def test_add_accessions_fail(
-            self, accessions, otu_subpath, work_path
-    ):
+    def test_add_accessions_fail(self, accessions, otu_subpath, src_scratch_path: Path):
         """
         Check that virtool ref add accessions does the job
         """
         pre_sequence_paths, post_sequence_paths = self.run_add_accessions(
             accessions,
             otu_dirname=otu_subpath,
-            src_path=work_path,
+            src_path=src_scratch_path,
         )
 
         assert post_sequence_paths.union(pre_sequence_paths) == pre_sequence_paths
@@ -260,7 +208,7 @@ class TestAddOTU:
                 "-taxid",
                 str(taxon_id),
                 "-src",
-                str(src_path)
+                str(src_path),
             ]
         )
 
@@ -277,16 +225,15 @@ class TestAddOTU:
 
         return pre_otu_paths, post_otu_paths
 
-    @pytest.mark.parametrize("taxon_id", [908125])
-    def test_add_otu_success(self, taxon_id, work_path):
+    def test_add_otu_success(self, src_scratch_path: Path):
         """ """
-        pre_otu_paths = set(work_path.glob("*--*"))
+        taxon_id = 908125
 
-        self.run_add_otu(
-            taxon_id=taxon_id, src_path=work_path
-        )
+        pre_otu_paths = set(src_scratch_path.glob("*--*"))
 
-        post_otu_paths = set(work_path.glob("*--*"))
+        self.run_add_otu(taxon_id=taxon_id, src_path=src_scratch_path)
+
+        post_otu_paths = set(src_scratch_path.glob("*--*"))
 
         new_otus = post_otu_paths.difference(pre_otu_paths)
 
@@ -297,32 +244,45 @@ class TestAddOTU:
         assert (otu_path / "otu.json").exists()
 
     @pytest.mark.parametrize("taxon_id", [345184])
-    def test_add_otu_conflict(self, taxon_id, work_path):
+    def test_add_otu_conflict(self, taxon_id, src_scratch_path: Path):
         """Don't add taxon IDs that already exist"""
-        pre_otu_paths = set(work_path.glob("*--*"))
+        pre_otu_paths = set(src_scratch_path.glob("*--*"))
 
-        self.run_add_otu(
-            taxon_id=taxon_id, src_path=work_path
-        )
+        self.run_add_otu(taxon_id=taxon_id, src_path=src_scratch_path)
 
-        post_otu_paths = set(work_path.glob("*--*"))
+        post_otu_paths = set(src_scratch_path.glob("*--*"))
 
         new_otus = post_otu_paths.difference(pre_otu_paths)
 
         assert not new_otus
 
 
-class TestInitAdd:
-    @pytest.mark.parametrize(
-        "taxon_id, accession", [(908125, "NC_031754"), (1016856, "NC_015504")]
+@pytest.mark.parametrize(
+    "taxon_id, accession", [(908125, "NC_031754"), (1016856, "NC_015504")]
+)
+def test_init_and_add(taxon_id: int, accession: str, tmp_path: Path):
+    empty_repo_path = tmp_path / "empty"
+
+    subprocess.run(["virtool", "ref", "init", "-repo", str(empty_repo_path)])
+
+    src_path = empty_repo_path / "src"
+
+    TestAddOTU.run_command(taxon_id, src_path)
+
+    TestAddAccessions.run_command(accession, src_path)
+
+    build_path = tmp_path / "reference.json"
+
+    subprocess.run(
+        [
+            "virtool",
+            "ref",
+            "build",
+            "-o",
+            str(build_path),
+            "-src",
+            str(src_path),
+        ]
     )
-    def test_init_and_add(self, empty_repo, taxon_id, accession):
-        src_path = empty_repo / "src"
-        build_path = empty_repo / "reference.json"
-        TestAddOTU.run_command(taxon_id, src_path)
 
-        TestAddAccessions.run_command(accession, src_path)
-
-        run_build(src_path, build_path)
-
-        assert build_path.exists()
+    assert build_path.exists()

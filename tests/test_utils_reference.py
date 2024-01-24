@@ -1,17 +1,14 @@
-import pytest
 from pathlib import Path
 
+import pytest
+
+from virtool_cli.utils.id_generator import generate_unique_ids
 from virtool_cli.utils.reference import (
     is_v1,
     search_otu_by_id,
     get_otu_paths,
     get_isolate_paths,
 )
-from virtool_cli.utils.id_generator import generate_unique_ids
-from paths import TEST_FILES_PATH
-
-SRC_PATH = TEST_FILES_PATH / "src_test"
-SRC_V1_PATH = TEST_FILES_PATH / "src_v1"
 
 
 def get_subdir(path: Path) -> list:
@@ -24,32 +21,30 @@ def get_subdir(path: Path) -> list:
     return [subdir for subdir in path.iterdir() if subdir.is_dir()]
 
 
-def test_utils_is_v1():
-    assert is_v1(SRC_V1_PATH)
+def test_utils_is_v1(test_files_path: Path):
+    assert is_v1(test_files_path / "src_v1")
 
 
-def test_utils_is_v2():
-    assert not is_v1(SRC_PATH)
+def test_utils_is_v2(src_test_path: Path):
+    assert not is_v1(src_test_path)
 
 
 @pytest.mark.parametrize("otu_id", ["f8a56910", "3962f6ec"])
-def test_utils_search_by_id_success(otu_id):
-    assert search_otu_by_id(otu_id, SRC_PATH) is not None
+def test_utils_search_by_id_success(otu_id: str, src_test_path: Path):
+    assert search_otu_by_id(otu_id, src_test_path) is not None
 
 
 @pytest.mark.parametrize("otu_id", ["bbbbbbbb", "777777tt"])
-def test_utils_search_by_id_fail(otu_id):
-    assert search_otu_by_id(otu_id, SRC_PATH) is None
+def test_utils_search_by_id_fail(otu_id: str, src_test_path: Path):
+    assert search_otu_by_id(otu_id, src_test_path) is None
 
 
-@pytest.mark.parametrize("src", [SRC_PATH])
-def test_utils_get_otu_paths(src):
-    assert set(get_otu_paths(src)) == set(get_subdir(src))
+def test_utils_get_otu_paths(src_test_path: Path):
+    assert set(get_otu_paths(src_test_path)) == set(get_subdir(src_test_path))
 
 
-@pytest.mark.parametrize("src", [SRC_PATH])
-def test_utils_get_isolate_paths(src):
-    assert set(get_isolate_paths(src)) == set(get_subdir(src))
+def test_utils_get_isolate_paths(src_test_path: Path):
+    assert set(get_isolate_paths(src_test_path)) == set(get_subdir(src_test_path))
 
 
 def test_utils_hashing():

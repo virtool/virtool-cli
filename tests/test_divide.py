@@ -1,34 +1,30 @@
-import pytest
-import subprocess
 import filecmp
+import subprocess
+from pathlib import Path
 
-from paths import TEST_FILES_PATH
-
-TEST_PATH = TEST_FILES_PATH / "reference.json"
-TEST_WITH_INDENT_PATH = TEST_FILES_PATH / "reference_with_indent.json"
-TEST_DIRECTORY_PATH = TEST_FILES_PATH / "src_test"
+import pytest
 
 
-@pytest.fixture()
-def output(tmpdir):
-    return tmpdir.join("src")
-
-
-@pytest.fixture()
-def command(output):
-    return ["virtool", "ref", "divide", "-o", str(output), "-f"]
-
-
-@pytest.mark.parametrize("src", [TEST_PATH, TEST_WITH_INDENT_PATH])
-def test_divide(command, src, output, tmpdir):
+@pytest.mark.parametrize("src", ["reference.json", "reference_with_indent.json"])
+def test_divide(src, src_test_path: Path, test_files_path: Path, tmpdir):
     """
     Tests the divide operation to see if it produces a valid directory
 
     """
-    command.append(src)
+    output_path = tmpdir / "divide_output"
 
-    subprocess.call(command)
+    subprocess.call(
+        [
+            "virtool",
+            "ref",
+            "divide",
+            "-o",
+            str(output_path),
+            "-f",
+            str(test_files_path / src),
+        ]
+    )
 
-    comparison = filecmp.dircmp(TEST_DIRECTORY_PATH, output)
+    cmp = filecmp.dircmp(src_test_path, output_path)
 
-    assert len(comparison.diff_files) == 0
+    assert len(cmp.diff_files) == 0
