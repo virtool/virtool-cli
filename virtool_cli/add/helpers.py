@@ -1,5 +1,6 @@
 from pathlib import Path
 import structlog
+from Bio.SeqRecord import SeqRecord
 from structlog import BoundLogger, get_logger
 
 from virtool_cli.utils.storage import get_otu_accessions, fetch_exclusions
@@ -67,7 +68,7 @@ def find_taxon_id(db_xref: list[str]) -> int | None:
     """
     Searches the database cross-reference data for the associated NCBI taxonomy UID.
 
-    :param db_xref: List of NCBI cross-reference information taken from NCBI taxonomy record
+    :param db_xref: List of NCBI cross-reference information from NCBI taxonomy records
     :return: NCBI Taxonomy UID as an integer if found, None if not found
     """
     for xref in db_xref:
@@ -79,13 +80,16 @@ def find_taxon_id(db_xref: list[str]) -> int | None:
 
 
 async def search_otu_path(
-    seq_data, src_path: Path, taxid_table: dict, logger: BoundLogger = get_logger()
+    seq_data: SeqRecord,
+    src_path: Path,
+    taxid_table: dict,
+    logger: BoundLogger = get_logger(),
 ) -> Path | None:
     """
     Find an OTU directory in the reference using metadata
     from NCBI Nucleotide sequence records (such as Taxonomy UID and name).
 
-    :param seq_data: Sequence data retrieved from NCBI Nucleotide and parsed as SeqRecord
+    :param seq_data: Sequence data from NCBI Nucleotide
     :param src_path: Path to a reference directory
     :param taxid_table:
     :param logger: Optional entry point for an existing BoundLogger

@@ -195,7 +195,7 @@ async def get_sequence_metadata(sequence_path: Path) -> dict:
     and returns it in a dict
 
     :param sequence_path: Path to a sequence file
-    :return: A dict containing the sequence accession, sequence length and segment name if present
+    :return: the sequence accession, sequence length and segment name if present
     """
     sequence = await parse_sequence(sequence_path)
 

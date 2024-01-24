@@ -41,7 +41,7 @@ def test_migrate(test_files_path: Path, tmp_path):
 
     assert len([migrate_path.glob("[a-z]")]) > 0
 
-    reference_v1 = json.loads(open(test_files_path / "reference_v1.json").read())
+    reference_v1 = json.load(open(test_files_path / "reference_v1.json"))
 
     v1_otu_set = convert_to_dict(reference_v1["otus"])
 

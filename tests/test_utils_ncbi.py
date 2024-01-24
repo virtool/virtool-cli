@@ -15,11 +15,10 @@ def taxon_ids(test_files_path: Path) -> list[int]:
 
 @pytest.mark.parametrize("index", [0, 1, 2])
 async def test_utils_request_linked_accessions(index: int, taxon_ids: list[int]):
-    linked_accessions = await request_linked_accessions(taxon_ids[index])
-    assert type(linked_accessions) is list
+    accessions = await request_linked_accessions(taxon_ids[index])
 
-    for accession in linked_accessions:
-        assert type(accession) == str
+    assert isinstance(accessions, list)
+    assert all(isinstance(accession, str) for accession in accessions)
 
 
 @pytest.mark.skip
