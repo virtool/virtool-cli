@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 import pytest
@@ -13,16 +14,7 @@ OTU_DIR_NAMES = [
 
 
 @pytest.mark.parametrize("otu_dir", OTU_DIR_NAMES)
-def test_otu_check_success(otu_dir: str, src_test_path: Path):
-    output = subprocess.check_output(
-        ["virtool", "ref", "check", "otu", "--otu_path", str(src_test_path / otu_dir)]
-    ).decode("utf-8")
-
-    assert output.strip() == "True"
-
-
-@pytest.mark.parametrize("otu_dir", OTU_DIR_NAMES)
-def test_otu_check_fail(otu_dir: str, src_malformed_path: Path):
+def test_otu_check_success(otu_dir: str, src_scratch_path: Path):
     output = subprocess.check_output(
         [
             "virtool",
@@ -30,7 +22,26 @@ def test_otu_check_fail(otu_dir: str, src_malformed_path: Path):
             "check",
             "otu",
             "--otu_path",
-            str(src_malformed_path / otu_dir),
+            str(src_scratch_path / otu_dir),
+        ]
+    ).decode("utf-8")
+
+    assert output.strip() == "True"
+
+
+@pytest.mark.parametrize("otu_dir", OTU_DIR_NAMES)
+def test_otu_check_fail(otu_dir: str, src_malformed_path: Path, tmp_path: Path):
+    malformed_scratch_path = tmp_path / "malformed_scratch"
+    shutil.copytree(src_malformed_path, malformed_scratch_path)
+
+    output = subprocess.check_output(
+        [
+            "virtool",
+            "ref",
+            "check",
+            "otu",
+            "--otu_path",
+            str(malformed_scratch_path / otu_dir),
         ]
     ).decode("utf-8")
 

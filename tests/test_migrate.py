@@ -36,7 +36,6 @@ def test_migrate(test_files_path: Path, tmp_path):
     the control catalog
     """
     migrate_path = tmp_path / "migration"
-
     shutil.copytree(test_files_path / "src_v1", migrate_path)
 
     assert len([migrate_path.glob("[a-z]")]) > 0

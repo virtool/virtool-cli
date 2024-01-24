@@ -13,17 +13,17 @@ def test_divide(src, src_test_path: Path, test_files_path: Path, tmpdir):
     """
     output_path = tmpdir / "divide_output"
 
-    command = [
-        "virtool",
-        "ref",
-        "divide",
-        "-o",
-        str(output_path),
-        "-f",
-        str(test_files_path / src),
-    ]
-
-    subprocess.call(command)
+    subprocess.call(
+        [
+            "virtool",
+            "ref",
+            "divide",
+            "-o",
+            str(output_path),
+            "-f",
+            str(test_files_path / src),
+        ]
+    )
 
     cmp = filecmp.dircmp(src_test_path, output_path)
 
