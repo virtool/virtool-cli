@@ -1,65 +1,40 @@
 import json
 from pathlib import Path
 from shutil import copytree
-import structlog
-from virtool_cli.utils.logging import configure_logger
 
-base_logger = structlog.get_logger()
+from structlog import get_logger
 
 
-def run(repo_path: Path, debugging: bool = False):
+def init_reference(path: Path):
+    """Create an empty reference repository.
+
+    :param path: the path to initialize the repository at
     """
-    Creates an empty repository for Virtool reference data
+    logger = get_logger("Initialize reference", path=str(path))
 
-    :param repo_path: Path to repository src directory
-    :param debugging: Enables verbose logs for debugging purposes
-    """
-    configure_logger(debugging)
-    logger = base_logger.bind(repo=str(repo_path))
+    logger.info("Initializing new reference repository")
 
-    try:
-        logger.info("Creating new reference database at path...")
-        initialize_reference(repo_path)
-    except FileNotFoundError as e:
-        logger.exception(e)
-    except Exception as e:
-        logger.exception(e)
+    if path.is_file():
+        logger.error("The target path is a file")
+        return
 
+    path.mkdir(parents=True, exist_ok=True)
 
-def initialize_reference(repo_path: Path):
-    """
-    Creates an empty directory structure for Virtool reference data,
-    complete with hidden .cache/catalog subdirectories
+    if any(path.iterdir()):
+        logger.error("The directory is not empty")
+        return
 
-    :param repo_path: Path to repository src directory
-    """
-    logger = base_logger.bind(repo=str(repo_path))
+    with open(path / ".gitignore", "w") as f:
+        f.write(".cache\n")
 
-    if not repo_path.exists():
-        repo_path.mkdir()
-        logger.info("Created a new directory at repo_path")
-
-    src_path = repo_path / "src"
-    if not src_path.exists():
-        src_path.mkdir()
-        logger.debug("Created a new src directory under repo_path")
+    src_path = path / "src"
+    src_path.mkdir()
 
     with open(src_path / "meta.json", "w") as f:
         json.dump({"data_type": "genome"}, f)
 
-    package_path = Path(__file__).parents[1]
-    model_path = package_path / "assets/github"
-    logger.debug(model_path)
+    copytree(Path(__file__).parent.parent / "assets/github", path / ".github")
 
-    github_path = repo_path / ".github"
-    copytree(model_path, github_path)
+    (path / ".cache").mkdir()
 
-    cache_path = repo_path / ".cache"
-    if not cache_path.exists():
-        cache_path.mkdir()
-        logger.debug("Created a new hidden cache directory under repo_path")
-
-    logger.info("Reference repository at repo_path is now complete.")
-
-    # Sent new repo path to stdout
-    print(str(repo_path))
+    logger.info("Complete")
