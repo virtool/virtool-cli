@@ -16,7 +16,7 @@ ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
 @click.group("ref")
 def ref():
-    """Manage Virtool references"""
+    """Manage references"""
 
 
 ref.add_command(update)
