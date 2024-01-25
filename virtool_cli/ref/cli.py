@@ -3,11 +3,11 @@ from pathlib import Path
 import click
 
 from virtool_cli.add.cli import add
-from virtool_cli.build import run as run_build
 from virtool_cli.check.cli import check
-from virtool_cli.divide import run as run_divide
-from virtool_cli.init import init_reference
-from virtool_cli.migrate import run as run_migrate
+from virtool_cli.ref.build import run as run_build
+from virtool_cli.ref.divide import run as run_divide
+from virtool_cli.ref.init import init_reference
+from virtool_cli.ref.migrate import run as run_migrate
 from virtool_cli.update.cli import update
 from virtool_cli.utils.logging import configure_logger
 
@@ -16,7 +16,7 @@ ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
 @click.group("ref")
 def ref():
-    """Commands related to reference files."""
+    """Manage Virtool references"""
 
 
 ref.add_command(update)
