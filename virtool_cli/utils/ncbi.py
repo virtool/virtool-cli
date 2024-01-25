@@ -1,8 +1,9 @@
-import os
 import asyncio
-from Bio import Entrez, SeqIO
-from urllib.error import HTTPError
+import os
 from http.client import IncompleteRead
+from urllib.error import HTTPError
+
+from Bio import Entrez, SeqIO
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -11,8 +12,7 @@ NCBI_REQUEST_INTERVAL = 0.3 if Entrez.email and Entrez.api_key else 0.8
 
 
 async def request_linked_accessions(taxon_id: int) -> list:
-    """
-    Take an NCBI Taxonomy UID and return a list of linked accessions from the Nucleotide database
+    """Take an NCBI Taxonomy UID and return a list of linked accessions from the Nucleotide database
 
     :param taxon_id: NCBI Taxonomy UID as an integer
     :return: List of accessions that are linked to the input taxon ID
@@ -21,7 +21,10 @@ async def request_linked_accessions(taxon_id: int) -> list:
 
     try:
         elink_results = Entrez.elink(
-            dbfrom="taxonomy", db="nuccore", id=str(taxon_id), idtype="acc"
+            dbfrom="taxonomy",
+            db="nuccore",
+            id=str(taxon_id),
+            idtype="acc",
         )
     except IncompleteRead:
         raise HTTPError("IncompleteRead")
@@ -43,8 +46,7 @@ async def request_linked_accessions(taxon_id: int) -> list:
 
 
 async def request_from_nucleotide(fetch_list: list) -> list:
-    """
-    Take a list of accession numbers and request the corresponding records from NCBI Nucleotide
+    """Take a list of accession numbers and request the corresponding records from NCBI Nucleotide
 
     :param fetch_list: List of accession numbers to fetch from GenBank
     :return: A list of GenBank data converted from GenBank entries to dicts if possible,
@@ -52,11 +54,13 @@ async def request_from_nucleotide(fetch_list: list) -> list:
     """
     try:
         handle = Entrez.efetch(
-            db="nuccore", id=fetch_list, rettype="gb", retmode="text"
+            db="nuccore",
+            id=fetch_list,
+            rettype="gb",
+            retmode="text",
         )
         ncbi_records = SeqIO.to_dict(SeqIO.parse(handle, "gb"))
         handle.close()
-
     except IncompleteRead:
         raise HTTPError("IncompleteRead")
     except HTTPError as e:
@@ -74,8 +78,7 @@ async def request_from_nucleotide(fetch_list: list) -> list:
 
 
 async def fetch_taxid(name: str) -> int:
-    """
-    Searches the NCBI taxonomy database for a given OTU name,
+    """Searches the NCBI taxonomy database for a given OTU name,
     then fetches and returns its taxon id.
     Returns None if no taxon id is found.
 
@@ -100,15 +103,17 @@ async def fetch_taxid(name: str) -> int:
 
 
 async def fetch_taxonomy_record(taxon_id) -> dict:
-    """
-    Fetches a record from NCBI Taxonomy and returns the contents as a dictionary if found
+    """Fetches a record from NCBI Taxonomy and returns the contents as a dictionary if found
 
     :param taxon_id: NCBI Taxonomy UID
     :return: The taxonomic rank of this Taxonomy record as a string
     """
     try:
         handle = Entrez.efetch(
-            db="taxonomy", id=taxon_id, rettype="docsum", retmode="xml"
+            db="taxonomy",
+            id=taxon_id,
+            rettype="docsum",
+            retmode="xml",
         )
         record = Entrez.read(handle)
         handle.close()
@@ -124,8 +129,7 @@ async def fetch_taxonomy_record(taxon_id) -> dict:
 
 
 async def fetch_taxonomy_species(taxon_id: str) -> int:
-    """
-    Fetches a record from NCBI Taxonomy and extracts the species taxid
+    """Fetches a record from NCBI Taxonomy and extracts the species taxid
     from its lineage list.
 
     :param taxon_id: NCBI Taxonomy UID
@@ -157,8 +161,7 @@ async def fetch_taxonomy_species(taxon_id: str) -> int:
 
 
 async def fetch_taxonomy_rank(taxon_id) -> str:
-    """
-    Fetches a record from NCBI Taxonomy and extracts its taxonomic rank
+    """Fetches a record from NCBI Taxonomy and extracts its taxonomic rank
 
     :param taxon_id: NCBI Taxonomy UID
     :return: The taxonomic rank of this Taxonomy record as a string
@@ -177,8 +180,7 @@ async def fetch_taxonomy_rank(taxon_id) -> str:
 
 
 async def fetch_upstream_record_taxids(fetch_list: list) -> list:
-    """
-    Take a list of accession numbers and request the records from NCBI GenBank
+    """Take a list of accession numbers and request the records from NCBI GenBank
 
     :param fetch_list: List of accession numbers to fetch from GenBank
     :return: A list of GenBank data converted from XML to dicts if possible,
@@ -202,8 +204,7 @@ async def fetch_upstream_record_taxids(fetch_list: list) -> list:
 
 
 async def get_spelling(name: str, db: str = "taxonomy") -> str:
-    """
-    Takes the name of an OTU, requests an alternative spelling
+    """Takes the name of an OTU, requests an alternative spelling
     from the Entrez ESpell utility and returns the suggestion
 
     :param name: The OTU name that requires correcting
@@ -222,8 +223,7 @@ async def get_spelling(name: str, db: str = "taxonomy") -> str:
 
 
 async def fetch_isolate_metadata(taxid: int) -> dict:
-    """
-    :param taxid: NCBI taxon ID in integer form
+    """:param taxid: NCBI taxon ID in integer form
     :return: Dict of isolate name and type
     """
     taxid_docsum = await fetch_taxonomy_record(str(taxid))

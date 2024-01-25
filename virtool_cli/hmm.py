@@ -1,7 +1,8 @@
 import subprocess
 import sys
-import click
 from pathlib import Path
+
+import click
 
 from virtool_cli.vfam.cmd import run
 
@@ -10,12 +11,11 @@ ERROR_MESSAGE = click.style("ERROR: ", fg="red")
 
 @click.group("hmm")
 def hmm():
-    """
-    Commands related to Hidden Markov Models.
+    """Manage HMMs
 
     Requires bioconda packages: cd-hit, hmmer, blast, mcl, muscle
     """
-    pass
+    ...
 
 
 @hmm.command()
@@ -23,16 +23,16 @@ def hmm():
     "--src-path",
     default=None,
     help="Path to input reference directory if not gathering from NCBI",
-    type=click.Path(exists=True)
+    type=click.Path(exists=True),
 )
 @click.option(
     "-o",
     "--output",
     required=True,
-    help="Path to output directory for profile HMMs and " "intermediate files",
+    help="Path to output directory for profile HMMs and intermediate files",
 )
 @click.option(
-    "-p", "--prefix", default=None, help="Prefix for intermediate and result files"
+    "-p", "--prefix", default=None, help="Prefix for intermediate and result files",
 )
 @click.option(
     "--sequence-min-length",
@@ -45,7 +45,7 @@ def hmm():
     help="Filter out phage sequences based on record description",
 )
 @click.option(
-    "--fraction-coverage", default=None, help="Fraction coverage for cd-hit step"
+    "--fraction-coverage", default=None, help="Fraction coverage for cd-hit step",
 )
 @click.option("--fraction-id", default=1.0, help="Fraction ID for cd-hit step")
 @click.option(
@@ -57,19 +57,19 @@ def hmm():
 @click.option(
     "--no-named-polyproteins",
     default=False,
-    help="Filter out polyprotein sequences based on " "record description",
+    help="Filter out polyprotein sequences based on record description",
 )
 @click.option(
-    "--inflation-num", default=None, help="Inflation number to be used in mcl step"
+    "--inflation-num", default=None, help="Inflation number to be used in mcl step",
 )
 @click.option(
-    "--filter-clusters", default=False, help="Filter clustered fasta files on coverage"
+    "--filter-clusters", default=False, help="Filter clustered fasta files on coverage",
 )
 @click.option(
     "-min-seqs",
     "--min-sequences",
     default=2,
-    help="Filter out clusters with fewer records than " "min-sequences",
+    help="Filter out clusters with fewer records than min-sequences",
 )
 def vfam(
     src_path: Path,
@@ -85,8 +85,7 @@ def vfam(
     filter_clusters: bool,
     min_sequences: int,
 ):
-    """
-    Build profile HMMs from FASTAs
+    """Build profile HMMs from FASTAs
     """
     try:
         check_vfam_dependencies()
@@ -116,14 +115,14 @@ def vfam(
 
 def check_vfam_dependencies():
     """Check external dependencies for VFam pipeline"""
-    subprocess.run(["hmmstat", "-h"])
-    subprocess.run(["cd-hit", "-h"])
-    subprocess.run(["makeblastdb", "-h"])
-    subprocess.run(["blastp", "-h"])
-    subprocess.run(["mcxload", "-h"])
-    subprocess.run(["mcl", "-h"])
-    subprocess.run(["muscle", "-h"])
-    subprocess.run(["hmmbuild", "-h"])
+    subprocess.run(["hmmstat", "-h"], check=False)
+    subprocess.run(["cd-hit", "-h"], check=False)
+    subprocess.run(["makeblastdb", "-h"], check=False)
+    subprocess.run(["blastp", "-h"], check=False)
+    subprocess.run(["mcxload", "-h"], check=False)
+    subprocess.run(["mcl", "-h"], check=False)
+    subprocess.run(["muscle", "-h"], check=False)
+    subprocess.run(["hmmbuild", "-h"], check=False)
 
 
 if __name__ == "__main__":
