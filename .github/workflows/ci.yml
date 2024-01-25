@@ -6,6 +6,15 @@ on:
     branches: [main, alpha]
 
 jobs:
+  commitlint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Commitlint
+        uses: wagoid/commitlint-github-action@v5
   test:
     runs-on: ubuntu-22.04
     container:
@@ -14,7 +23,7 @@ jobs:
         NODE_ENV: development
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install conda and poetry
         run: |
           conda install -c bioconda cd-hit hmmer blast mcl muscle -q -y
@@ -26,17 +35,18 @@ jobs:
   release:
     if: github.event_name == 'push'
     needs:
+      - commitlint
       - test
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - name: Install semantic-release
-        run: npm i semantic-release@v18.0.0 conventional-changelog-conventionalcommits@4.6.1
+        run: npm i semantic-release@v23.0.0 conventional-changelog-conventionalcommits@7.0.2
       - name: Release
         env:
           GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
