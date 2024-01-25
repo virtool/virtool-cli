@@ -33,7 +33,7 @@ def init_reference(path: Path):
     with open(src_path / "meta.json", "w") as f:
         json.dump({"data_type": "genome"}, f)
 
-    copytree(Path(__file__).parent.parent / "assets/github", path / ".github")
+    copytree(Path(__file__).parent.parent.parent / "assets/github", path / ".github")
 
     (path / ".cache").mkdir()
 

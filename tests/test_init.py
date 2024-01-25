@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from virtool_cli.init import init_reference
+from virtool_cli.ref.init import init_reference
 
 
 @pytest.fixture()

@@ -1,7 +1,8 @@
-import json
-from pathlib import Path
 import asyncio
+import json
 import shutil
+from pathlib import Path
+
 import aiofiles
 import structlog
 
@@ -26,8 +27,7 @@ SEQUENCE_KEYS = [
 
 
 def run(reference_path: Path, output_path: Path, debugging: bool = False):
-    """
-    Divide a reference.json file from Virtool into a src tree structure.
+    """Divide a reference.json file from Virtool into a src tree structure.
 
     :param reference_path: Path to a reference.json file
     :param output_path: Path to the where the src tree should be generated
@@ -81,8 +81,7 @@ async def divide_reference_file(reference_path: Path, output_path: Path):
 
 
 async def build_otu(src_path: Path, otu: dict) -> Path:
-    """
-    Creates a directory for all OTUs that begin with a particular
+    """Creates a directory for all OTUs that begin with a particular
     letter if it doesn't already exist. Generates a directory for a
     given OTU and copies key information about it to a otu.json file.
 
@@ -105,8 +104,7 @@ async def build_otu(src_path: Path, otu: dict) -> Path:
 
 
 async def build_isolate(otu_path: Path, isolate: dict) -> Path:
-    """
-    Creates a directory for a given isolate and generates
+    """Creates a directory for a given isolate and generates
     a isolate.json with key information about it.
 
     :param otu_path: A path to an OTU directory under a src reference directory
@@ -124,8 +122,7 @@ async def build_isolate(otu_path: Path, isolate: dict) -> Path:
 
 
 async def build_sequence(isolate_path: Path, sequence: dict):
-    """
-    Generates a JSON file for a sequence under an isolate directory
+    """Generates a JSON file for a sequence under an isolate directory
 
     :param isolate_path: A path to a specified isolate directory under an OTU directory
     :param sequence: A dictionary containing sequence information
