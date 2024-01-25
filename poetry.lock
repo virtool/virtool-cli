@@ -772,6 +772,21 @@ pytest = ">=5.0"
 dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
+name = "pytest-structlog"
+version = "0.6"
+description = "Structured logging assertions"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-structlog-0.6.tar.gz", hash = "sha256:10a641728b31835fedfa121336f2f6f47c3a4f54c1747d913ac8c3af8cbf27c0"},
+    {file = "pytest_structlog-0.6-py2.py3-none-any.whl", hash = "sha256:03fa8335ee4ca2287f73344c718eb015218c0969a8dddf7447d05e87c9bb7c19"},
+]
+
+[package.dependencies]
+pytest = "*"
+structlog = "*"
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -978,4 +993,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "8e627fe95c545bd21a26a9c96ad0ef7cc436f075470dba833b212b1fbc02f67a"
+content-hash = "859eed15b225ac5ff86e50c2cafb874e59abccf55f203c6998b0c9e6226124d1"
