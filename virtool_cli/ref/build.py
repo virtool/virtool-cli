@@ -1,25 +1,20 @@
 import asyncio
 import json
 from pathlib import Path
-import arrow
+
 import aiofiles
+import arrow
 import structlog
 
 from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import (
-    get_otu_paths,
     get_isolate_paths,
+    get_otu_paths,
     get_sequence_paths,
     is_v1,
 )
 
 base_logger = structlog.get_logger()
-
-OTU_KEYS = ["_id", "name", "abbreviation", "schema", "taxid"]
-
-ISOLATE_KEYS = ["id", "source_type", "source_name", "default"]
-
-SEQUENCE_KEYS = ["_id", "accession", "definition", "host", "sequence"]
 
 
 def run(
@@ -29,8 +24,7 @@ def run(
     version: str,
     debugging: bool = False,
 ):
-    """
-    Build a Virtool reference JSON file from a data directory.
+    """Build a Virtool reference JSON file from a data directory.
 
     :param src_path: Path to database src directory
     :param output_path: The output path for the reference.json file
@@ -45,7 +39,7 @@ def run(
     if is_v1(src_path):
         logger.error(
             "This reference database is a deprecated v1 reference."
-            + 'Run "virtool ref migrate" before trying again.'
+            + 'Run "virtool ref migrate" before trying again.',
         )
         return
 
@@ -58,8 +52,7 @@ def run(
 
 
 async def build_from_src(src_path: Path, output_path: Path, indent: bool, version: str):
-    """
-    Build a Virtool reference JSON file from a data directory.
+    """Build a Virtool reference JSON file from a data directory.
 
     :param src_path: Path to database src directory
     :param output_path: The output path for the reference.json file
@@ -71,7 +64,9 @@ async def build_from_src(src_path: Path, output_path: Path, indent: bool, versio
     meta = await parse_meta(src_path)
     if meta:
         logger.debug(
-            "Metadata parsed", meta=meta, metadata_path=str(src_path / "meta.json")
+            "Metadata parsed",
+            meta=meta,
+            metadata_path=str(src_path / "meta.json"),
         )
         data = {
             "data_type": meta.get("data_type", "genome"),
@@ -107,13 +102,13 @@ async def build_from_src(src_path: Path, output_path: Path, indent: bool, versio
         )
 
     data.update(
-        {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()}
+        {"otus": otus, "name": version, "created_at": arrow.utcnow().isoformat()},
     )
 
     try:
         async with aiofiles.open(output_path, "w") as f:
             await f.write(
-                json.dumps(data, indent=4 if indent else None, sort_keys=True)
+                json.dumps(data, indent=4 if indent else None, sort_keys=True),
             )
 
         logger.info("Reference file built at output")
@@ -125,8 +120,7 @@ async def build_from_src(src_path: Path, output_path: Path, indent: bool, versio
 
 
 async def parse_meta(src_path: Path) -> dict:
-    """
-    Deserializes and returns meta.json if found, else returns an empty dictionary.
+    """Deserializes and returns meta.json if found, else returns an empty dictionary.
 
     :param src_path: Path to database src directory
     :return: The deserialized meta.json object or an empty dictionary
@@ -141,8 +135,7 @@ async def parse_meta(src_path: Path) -> dict:
 
 
 def parse_alpha(alpha: Path) -> list:
-    """
-    Generates and returns a list with every OTU in the directory of the given alpha.
+    """Generates and returns a list with every OTU in the directory of the given alpha.
     Deprecated as of v2.
 
     :param alpha: Path to a given alpha directory in a reference
@@ -152,8 +145,7 @@ def parse_alpha(alpha: Path) -> list:
 
 
 async def parse_otu_contents(otu_path: Path) -> dict:
-    """
-    Traverses, deserializes and returns all data under an OTU directory.
+    """Traverses, deserializes and returns all data under an OTU directory.
 
     :param otu_path: Path to an OTU directory
     :return: All isolate and sequence data under an OTU,
@@ -193,8 +185,7 @@ async def parse_otu_contents(otu_path: Path) -> dict:
 
 
 async def parse_sequence(path):
-    """
-    Asynchronously reads a sequence file and returns the contents as a dictionary.
+    """Asynchronously reads a sequence file and returns the contents as a dictionary.
 
     :param path:
     :return: A deserialized sequence
