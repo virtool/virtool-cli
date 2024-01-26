@@ -17,16 +17,30 @@ OTU_DIR_NAMES = [
 
 
 @pytest.fixture()
-def malformed_src(tmp_path, src_scratch_path):
-    delete_isolates(src_scratch_path / OTU_DIR_NAMES[0])
+def malformed_src(src_scratch_path):
+    # Malformation 1: Remove all isolates
+    for isolate_path in get_isolate_paths(src_scratch_path / OTU_DIR_NAMES[0]):
+        shutil.rmtree(isolate_path)
 
-    remove_otu_id(test_src_path / OTU_DIR_NAMES[1])
+    # Malformation 2: Remove isolate metadata file
+    for isolate_path in get_isolate_paths(src_scratch_path / OTU_DIR_NAMES[1]):
+        (isolate_path / "isolate.json").unlink()
 
-    delete_isolate_metadata(test_src_path / OTU_DIR_NAMES[2])
+    # Malformation 3: Remove critical value from OTU metadata
+    otu_path = src_scratch_path / OTU_DIR_NAMES[2]
+    otu = json.loads((otu_path / 'otu.json').read_text())
+    otu["_id"] = ""
+    with open(otu_path / 'otu.json', "w") as f:
+        json.dump(otu, f, indent=4)
 
-    remove_isolate_id(test_src_path / OTU_DIR_NAMES[3])
+    # Malformation 4: Remove critical value from isolate metadata
+    for isolate_path in get_isolate_paths(src_scratch_path / OTU_DIR_NAMES[3]):
+        isolate = json.loads((isolate_path / 'isolate.json').read_text())
+        isolate["id"] = ""
+        with open(isolate_path / 'isolate.json', "w") as f:
+            json.dump(isolate, f, indent=4)
 
-    return test_src_path
+    return src_scratch_path
 
 
 @pytest.mark.parametrize("otu_dir", OTU_DIR_NAMES)
@@ -46,7 +60,7 @@ def test_otu_check_success(otu_dir: str, src_scratch_path: Path):
 
 
 @pytest.mark.parametrize("otu_dir", OTU_DIR_NAMES)
-def test_otu_check_fail(otu_dir: str, malformed_src: Path, tmp_path: Path):
+def test_otu_check_fail(otu_dir: str, malformed_src: Path):
     otu_path = malformed_src / otu_dir
 
     output = subprocess.check_output(
@@ -61,28 +75,3 @@ def test_otu_check_fail(otu_dir: str, malformed_src: Path, tmp_path: Path):
     ).decode("utf-8")
 
     assert output.strip() == "False"
-
-
-def delete_isolates(otu_path):
-    for isolate_path in get_isolate_paths(otu_path):
-        shutil.rmtree(isolate_path)
-
-
-def delete_isolate_metadata(otu_path):
-    for isolate_path in get_isolate_paths(otu_path):
-        (isolate_path / "isolate.json").unlink()
-
-
-def remove_otu_id(otu_path):
-    otu = json.loads((otu_path / 'otu.json').read_text())
-    otu["_id"] = ""
-    with open(otu_path / 'otu.json', "w") as f:
-        json.dump(otu, f, indent=4)
-
-
-def remove_isolate_id(otu_path):
-    for isolate_path in get_isolate_paths(otu_path):
-        isolate = json.loads((isolate_path / 'isolate.json').read_text())
-        isolate["id"] = ""
-        with open(isolate_path / 'isolate.json', "w") as f:
-            json.dump(isolate, f, indent=4)
