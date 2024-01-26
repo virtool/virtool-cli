@@ -18,10 +18,7 @@ OTU_DIR_NAMES = [
 
 @pytest.fixture()
 def malformed_src(tmp_path, src_scratch_path):
-    test_src_path = tmp_path / "src"
-    shutil.copytree(src_scratch_path, test_src_path)
-
-    delete_isolates(test_src_path / OTU_DIR_NAMES[0])
+    delete_isolates(src_scratch_path / OTU_DIR_NAMES[0])
 
     remove_otu_id(test_src_path / OTU_DIR_NAMES[1])
 
