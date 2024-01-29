@@ -33,6 +33,7 @@ pytest-cov = "^4.1"
 pytest-datafiles = "^3.0"
 pytest-mock = "^3.11"
 pytest-structlog = "^0.6"
+syrupy = "^4.6.0"
 
 [tool.poetry.scripts]
 virtool = "virtool_cli.cli:entry"

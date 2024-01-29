@@ -1,12 +1,17 @@
-from pathlib import Path
 import asyncio
+from pathlib import Path
+
 import structlog
 
+from virtool_cli.update.update import (
+    get_no_fetch_set,
+    process_records,
+    request_new_records,
+)
+from virtool_cli.update.writer import cache_new_sequences
 from virtool_cli.utils.logging import configure_logger
 from virtool_cli.utils.reference import get_otu_paths, get_unique_ids
 from virtool_cli.utils.storage import read_otu, write_records
-from virtool_cli.update.update import get_no_fetch_set, request_new_records, process_records
-from virtool_cli.update.writer import cache_new_sequences
 
 base_logger = structlog.get_logger()
 
@@ -17,8 +22,7 @@ def run(
     dry_run: bool = False,
     debugging: bool = False,
 ):
-    """
-    CLI entry point for update.update.run()
+    """CLI entry point for update.update.run()
 
     Requests updates for a single OTU directory.
     Inspects OTU contents and exclusions and requests relevant accession if found.
@@ -35,17 +39,16 @@ def run(
 
     if auto_evaluate:
         logger.warning(
-            "Auto-evaluation is in active development and may produce false negatives."
+            "Auto-evaluation is in active development and may produce false negatives.",
         )
 
     asyncio.run(update_otu(otu_path, auto_evaluate, dry_run))
 
 
 async def update_otu(
-    otu_path: Path, auto_evaluate: bool = False, dry_run: bool = False
+    otu_path: Path, auto_evaluate: bool = False, dry_run: bool = False,
 ):
-    """
-    Requests new records for a single taxon ID
+    """Requests new records for a single taxon ID
     and writes new data under the corresponding path.
 
     :param otu_path: Path to an OTU directory
@@ -61,8 +64,8 @@ async def update_otu(
 
     no_fetch_set = await get_no_fetch_set(otu_path)
 
-    otu_id = metadata.get('_id')
-    taxid = metadata.get('taxid')
+    otu_id = metadata.get("_id")
+    taxid = metadata.get("taxid")
 
     logger = base_logger.bind(taxid=taxid, otu_id=otu_id)
 
@@ -81,8 +84,9 @@ async def update_otu(
         metadata=metadata,
         no_fetch_set=no_fetch_set,
         auto_evaluate=auto_evaluate,
-        logger=logger
+        logger=logger,
     )
+
     if not otu_updates:
         return
 
