@@ -86,6 +86,8 @@ class RepoIsolate:
                 ),
             )
 
+        self.sequences.sort(key=lambda s: s.accession)
+
     @property
     def name(self) -> str:
         """The formatted isolate name."""
