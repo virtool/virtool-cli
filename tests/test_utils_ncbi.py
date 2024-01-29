@@ -1,16 +1,19 @@
-from pathlib import Path
-
 import pytest
 
 from virtool_cli.utils.ncbi import request_linked_accessions, fetch_taxonomy_rank
+from virtool_cli.utils.reference import get_otu_paths
+from virtool_cli.utils.storage import read_otu
 
 
 @pytest.fixture()
-def taxon_ids(test_files_path: Path) -> list[int]:
-    return [
-        int(listing.stem.split("--")[0])
-        for listing in (test_files_path / "catalog").glob("*--*.json")
-    ]
+async def taxon_ids(src_test_path) -> list[int]:
+    taxon_ids = []
+
+    for otu_path in get_otu_paths(src_test_path):
+        otu = await read_otu(otu_path)
+        taxon_ids.append(otu["taxid"])
+
+    return taxon_ids
 
 
 @pytest.mark.parametrize("index", [0, 1, 2])
