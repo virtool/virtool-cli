@@ -1,19 +1,11 @@
 import pytest
 
 from virtool_cli.utils.ncbi import request_linked_accessions, fetch_taxonomy_rank
-from virtool_cli.utils.reference import get_otu_paths
-from virtool_cli.utils.storage import read_otu
 
 
 @pytest.fixture()
 async def taxon_ids(src_test_path) -> list[int]:
-    taxon_ids = []
-
-    for otu_path in get_otu_paths(src_test_path):
-        otu = await read_otu(otu_path)
-        taxon_ids.append(otu["taxid"])
-
-    return taxon_ids
+    return [438782, 2060511, 345184, 1278205, 223262]
 
 
 @pytest.mark.parametrize("index", [0, 1, 2])
@@ -24,7 +16,6 @@ async def test_utils_request_linked_accessions(index: int, taxon_ids: list[int])
     assert all(isinstance(accession, str) for accession in accessions)
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("index", [0, 1, 2])
 async def test_utils_fetch_taxonomy_rank(index: int, taxon_ids: list[int]):
     taxon_id = taxon_ids[index]
