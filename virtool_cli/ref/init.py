@@ -1,3 +1,8 @@
+"""Initialize new reference repositories.
+
+TODO: Add command line options for setting the data_type and organism.
+
+"""
 import json
 from pathlib import Path
 from shutil import copytree
@@ -31,7 +36,7 @@ def init_reference(path: Path):
     src_path.mkdir()
 
     with open(src_path / "meta.json", "w") as f:
-        json.dump({"data_type": "genome"}, f)
+        json.dump({"data_type": "genome", "organism": ""}, f)
 
     copytree(Path(__file__).parent.parent.parent / "assets/github", path / ".github")
 

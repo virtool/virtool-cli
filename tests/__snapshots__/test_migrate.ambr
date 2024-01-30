@@ -1,0 +1,29 @@
+# serializer version: 1
+# name: test_migrate
+  dict({
+    '0925e7b6': 'vanilla_distortion_mosaic_virus--0925e7b6',
+    '0bfdb8bc': 'wasabi_mottle_virus--0bfdb8bc',
+    '2031cb7f': 'impatiens_necrotic_spot_virus--2031cb7f',
+    '34f59aff': 'fig_mosaic_virus--34f59aff',
+    '3962f6ec': 'jacquemontia_mosaic_yucatan_virus--3962f6ec',
+    '407d8a21': 'kalanchoe_latent_virus--407d8a21',
+    '5d877144': 'yacon_necrotic_mottle_virus--5d877144',
+    '6bc81904': 'saccharum_streak_virus--6bc81904',
+    '71d15b86': 'ugandan_cassava_brown_streak_virus--71d15b86',
+    '7d0ffa77': 'east_asian_passiflora_virus--7d0ffa77',
+    '9da7c10d': 'radish_leaf_curl_betasatellite--9da7c10d',
+    'a89b6529': 'habenaria_mosaic_virus--a89b6529',
+    'ab6bd88a': 'dahlia_latent_viroid--ab6bd88a',
+    'ae0f2a35': 'nanovirus_like_particle--ae0f2a35',
+    'c55afad6': 'bamboo_mosaic_virus--c55afad6',
+    'c93ec9a9': 'abaca_bunchy_top_virus--c93ec9a9',
+    'd226290f': 'cabbage_leaf_curl_jamaica_virus--d226290f',
+    'd86d0412': 'tall_oatgrass_mosaic_virus--d86d0412',
+    'dd21fd8f': 'pagoda_yellow_mosaic_associated_virus--dd21fd8f',
+    'e1dfb3ef': 'oat_blue_dwarf_virus--e1dfb3ef',
+    'e5b6dd57': 'zantedeschia_mild_mosaic_virus--e5b6dd57',
+    'edfaaf2b': 'macroptilium_golden_mosaic_virus--edfaaf2b',
+    'f8a56910': 'gaillardia_latent_virus--f8a56910',
+    'fbd9391c': 'lamium_leaf_distortion_virus--fbd9391c',
+  })
+# ---
