@@ -44,6 +44,8 @@ def build_json(indent: bool, output_path: Path, path: Path, version: str):
                 },
             )
 
+        isolates.sort(key=lambda x: x["id"])
+
         otus.append(
             {
                 "_id": otu.id,
@@ -54,6 +56,8 @@ def build_json(indent: bool, output_path: Path, path: Path, version: str):
                 "taxid": otu.taxid,
             },
         )
+
+    otus.sort(key=lambda x: x["name"])
 
     with open(output_path, "w") as f:
         json.dump(
