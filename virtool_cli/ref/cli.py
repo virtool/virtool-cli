@@ -4,7 +4,8 @@ import click
 
 from virtool_cli.add.cli import add
 from virtool_cli.check.cli import check
-from virtool_cli.ref.build import run as run_build
+from virtool_cli.options import path_option
+from virtool_cli.ref.build import build_json
 from virtool_cli.ref.divide import run as run_divide
 from virtool_cli.ref.init import init_reference
 from virtool_cli.ref.migrate import run as run_migrate
@@ -40,18 +41,11 @@ def init(debug: bool, path: Path):
 
 @ref.command()
 @click.option(
-    "-src",
-    "--src_path",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    help="the path to a database reference directory",
-)
-@click.option(
     "-o",
-    "--output",
-    type=click.Path(dir_okay=False, path_type=Path),
+    "--output-path",
+    type=click.Path(exists=False, path_type=Path),
     default="reference.json",
-    help="the output path for a reference.json file",
+    help="the output path for the reference.json file",
 )
 @click.option(
     "-i",
@@ -62,20 +56,14 @@ def init(debug: bool, path: Path):
 @click.option(
     "-V",
     "--version",
-    default=None,
+    default="",
     type=str,
-    help="the version string to include in the reference.json file",
+    help="a version string to include in the reference.json file",
 )
-@click.option("--debug/--no-debug", default=False)
-def build(src_path, output, indent, version, debug):
-    """Build a Virtool reference JSON file from a source directory."""
-    try:
-        run_build(src_path, output, indent, version, debug)
-    except (FileNotFoundError, NotADirectoryError):
-        click.echo(
-            ERROR_MESSAGE + "Source directory contains critical errors",
-            err=True,
-        )
+@path_option
+def build(output_path: Path, path: Path, indent: bool, version: str):
+    """Build a Virtool reference.json file from a reference repository."""
+    build_json(indent, output_path, path, version)
 
 
 @ref.command()

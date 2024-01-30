@@ -3,6 +3,7 @@
 This is a work in progress.
 
 TODO: Check if excluded accessions exist in the repo.
+TODO: Check that OTUs have only one default isolate.
 TODO: Support writing sequences.
 TODO: Support writing isolates.
 
@@ -15,7 +16,7 @@ from pathlib import Path
 from virtool_cli.utils.id_generator import (
     generate_random_alphanumeric,
 )
-from virtool_cli.utils.reference import generate_otu_dirname
+from virtool_cli.utils.reference import generate_otu_dirname, is_v1
 
 
 @dataclass
@@ -47,6 +48,7 @@ class RepoIsolate:
     def __init__(
         self,
         id: str,
+        default: bool,
         otu: "RepoOTU",
         path: Path,
         source_name: str,
@@ -54,6 +56,9 @@ class RepoIsolate:
     ):
         self.id = id
         """The isolate id."""
+
+        self.default = default
+        """Indicates whether the isolate is the Virtool default for the OTU."""
 
         self.otu = otu
         """The isolate's parent OTU."""
@@ -118,6 +123,7 @@ class RepoOTU:
 
             isolate = RepoIsolate(
                 id=isolate_data["id"],
+                default=isolate_data["default"],
                 path=isolate_path,
                 otu=self,
                 source_name=isolate_data["source_name"],
@@ -141,6 +147,8 @@ class RepoOTU:
 
             self.name = data["name"]
             """The OTU name (eg. Tobacco mosaic virus)."""
+
+            self.schema = data["schema"]
 
             self.taxid: int = int(data["taxid"])
             """The OTU taxonomy ID."""
@@ -210,6 +218,11 @@ class RepoOTU:
 
 class RepoMaps:
     def __init__(self, path: Path):
+        if is_v1(path / "src"):
+            raise ValueError(
+                "This reference database is a deprecated v1 reference. Run 'virtool ref migrate' before trying again.",
+            )
+
         self.otu_id_to_path: dict[str, Path] = {}
         """Maps otu ids to their respective paths."""
 
@@ -350,3 +363,8 @@ class Repo:
             raise e
 
         return self.get_otu_by_id(otu_id)
+
+    def iter_otus(self):
+        """Iterate over all OTUs."""
+        for otu_id in self.maps.otu_id_to_path:
+            yield self.get_otu_by_id(otu_id)

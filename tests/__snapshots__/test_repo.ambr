@@ -11,6 +11,7 @@
     id='3962f6ec',
     isolates=list([
       RepoIsolate(
+        default=True,
         id='dbf54ede',
         name='isolate Mexico',
         otu=...,
@@ -23,6 +24,18 @@
       ),
     ]),
     name='Jacquemontia mosaic Yucatan virus',
+    schema=list([
+      dict({
+        'molecule': 'ssDNA',
+        'name': 'DNA A',
+        'required': True,
+      }),
+      dict({
+        'molecule': 'ssDNA',
+        'name': 'DNA B',
+        'required': True,
+      }),
+    ]),
     taxid=1198450,
   )
 # ---
@@ -37,6 +50,7 @@
     id='ab6bd88a',
     isolates=list([
       RepoIsolate(
+        default=True,
         id='fwth8bdi',
         name='isolate 4706174',
         otu=...,
@@ -48,6 +62,13 @@
       ),
     ]),
     name='Dahlia latent viroid',
+    schema=list([
+      dict({
+        'molecule': 'ssRNA+',
+        'name': 'Viroid',
+        'required': True,
+      }),
+    ]),
     taxid=1278205,
   )
 # ---
@@ -61,6 +82,8 @@
     isolates=list([
     ]),
     name='Tobacco mosaic virus',
+    schema=list([
+    ]),
     taxid=512,
   )
 # ---

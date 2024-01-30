@@ -16,7 +16,7 @@ def assert_repo_valid():
         assert (path / ".github").exists()
 
         with open(path / "src" / "meta.json") as f:
-            assert json.load(f) == {"data_type": "genome"}
+            assert json.load(f) == {"data_type": "genome", "organism": ""}
 
     return func
 

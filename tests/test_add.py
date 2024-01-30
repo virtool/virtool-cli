@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from virtool_cli.ref.build import build_json
 from virtool_cli.ref.init import init_reference
 from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 
@@ -226,6 +227,8 @@ def test_init_and_add(taxon_id: int, accession: str, tmp_path: Path):
 
     build_path = tmp_path / "reference.json"
 
+    build_json(False, build_path, path, "")
+
     subprocess.run(
         [
             "virtool",
@@ -233,10 +236,10 @@ def test_init_and_add(taxon_id: int, accession: str, tmp_path: Path):
             "build",
             "-o",
             str(build_path),
-            "-src",
-            str(path / "src"),
+            "--path",
+            str(path),
         ],
-        check=False,
+        check=True,
     )
 
     assert build_path.exists()
