@@ -17,20 +17,18 @@ jobs:
         uses: wagoid/commitlint-github-action@v5
   test:
     runs-on: ubuntu-22.04
-    container:
-      image: continuumio/miniconda3:latest
-      env:
-        NODE_ENV: development
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install conda and poetry
-        run: |
-          conda install -c bioconda cd-hit hmmer blast mcl muscle -q -y
-          pip install poetry
-      - name: Install package
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Install packages
         run: poetry install
-      - name: Run tests
+      - name: Test
         run: poetry run pytest
   release:
     if: github.event_name == 'push'
