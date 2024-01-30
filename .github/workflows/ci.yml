@@ -17,10 +17,6 @@ jobs:
         uses: wagoid/commitlint-github-action@v5
   test:
     runs-on: ubuntu-22.04
-    container:
-      image: continuumio/miniconda3:latest
-      env:
-        NODE_ENV: development
     steps:
       - name: Checkout
         uses: actions/checkout@v4
