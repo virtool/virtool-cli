@@ -33,7 +33,7 @@ class TestGetOTUByID:
         """Test that an OTU is retrieved correctly."""
         otu = Repo(scratch_path).get_otu_by_id("3962f6ec")
 
-        assert otu == snapshot(name="otu", exclude=props("path"))
+        assert otu.to_dict() == snapshot(name="otu", exclude=props("path", "repo"))
 
         assert otu.path.name == "jacquemontia_mosaic_yucatan_virus--3962f6ec"
         assert otu.path.parent == scratch_path / "src"
@@ -51,7 +51,7 @@ class TestGetOTUByTaxid:
         """Test that an OTU is retrieved correctly."""
         otu = Repo(scratch_path).get_otu_by_taxid(1278205)
 
-        assert otu == snapshot(name="otu", exclude=props("path"))
+        assert otu.to_dict() == snapshot(name="otu", exclude=props("isolate", "path"))
 
         assert otu.path.name == "dahlia_latent_viroid--ab6bd88a"
         assert otu.path.parent == scratch_path / "src"
@@ -70,7 +70,7 @@ def test_create_otu(scratch_path: Path, snapshot: SnapshotAssertion):
 
     otu = repo.create_otu("Tobacco mosaic virus", 512, "TMV")
 
-    assert otu == snapshot(name="otu", exclude=props("id", "path"))
+    assert otu.to_dict() == snapshot(name="otu", exclude=props("id", "path", "repo"))
 
     assert otu.path.name == f"tobacco_mosaic_virus--{otu.id}"
     assert otu.path.parent.name == "src"

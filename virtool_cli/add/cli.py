@@ -26,6 +26,7 @@ def accession(accession_: str, debug: bool, path: Path):
     """Retrieves data for the accession."""
     configure_logger(debug)
 
+
     try:
         asyncio.run(add_accession(accession_, path))
     except (FileNotFoundError, NotADirectoryError):

@@ -1,3 +1,4 @@
+
 from Bio import SeqRecord
 
 from virtool_cli.add.helpers import find_taxon_id
@@ -5,11 +6,11 @@ from virtool_cli.utils.format import check_source_type, format_sequence, get_qua
 from virtool_cli.utils.ncbi import fetch_isolate_metadata
 
 
-async def format_record(data: SeqRecord) -> dict:
-    seq_qualifiers = get_qualifiers(data.features)
+async def format_record(record: SeqRecord) -> dict:
+    seq_qualifiers = get_qualifiers(record.features)
 
     return {
-        **format_sequence(record=data, qualifiers=seq_qualifiers),
+        **format_sequence(record=record, qualifiers=seq_qualifiers),
         "isolate": await format_isolate_metadata(qualifiers=seq_qualifiers),
     }
 
