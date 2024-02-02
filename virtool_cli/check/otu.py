@@ -62,8 +62,7 @@ def validate_otu(otu_path: Path) -> bool:
     """Checks OTU metadata for bad content and logs a warning if problems are found.
 
     :param otu_path: the path to an otu directory to validate
-    :return: True if an OTU's metadata is valid and there are sequences assigned under it,
-        False if a problem is found
+    :return: whether the otu is valid
     """
     otu_metadata_path = otu_path / "otu.json"
 
@@ -147,8 +146,7 @@ def validate_sequence(sequence_path: Path) -> bool:
     """Checks a sequence file for bad content and logs a warning if problems are found.
 
     :param sequence_path: A path to a sequence file under an isolate directory
-    :param logger: Optional entry point for a shared BoundLogger
-    :return: True if a sequence's metadata is valid, False if a problem is found
+    :return: whether the sequence metadata is valid
     """
     is_valid = True
 
