@@ -10,9 +10,7 @@ from virtool_cli.ref.divide import run as run_divide
 from virtool_cli.ref.init import init_reference
 from virtool_cli.ref.migrate import run as run_migrate
 from virtool_cli.update.cli import update
-from virtool_cli.utils.logging import configure_logger
-
-ERROR_MESSAGE = click.style("ERROR: ", fg="red")
+from virtool_cli.utils.logging import configure_logger, error_message_style
 
 
 @click.group("ref")
@@ -85,12 +83,15 @@ def build(output_path: Path, path: Path, indent: bool, version: str):
 def divide(file_path, output_path, debug):
     """Divide a reference.json file from Virtool into a reference directory tree."""
     if file_path.suffix != ".json":
-        click.echo(ERROR_MESSAGE + f"{file_path} is not a JSON file")
+        click.echo(f"{error_message_style}{file_path} is not a JSON file")
 
     try:
         run_divide(file_path, output_path, debug)
     except (TypeError, FileNotFoundError):
-        click.echo(ERROR_MESSAGE + f"{file_path} is not a proper JSON file", err=True)
+        click.echo(
+            f"{error_message_style}{file_path} is not a proper JSON file",
+            err=True,
+        )
 
 
 @ref.command()
@@ -109,10 +110,6 @@ def migrate(src_path, debug):
 
     except (FileNotFoundError, NotADirectoryError):
         click.echo(
-            ERROR_MESSAGE + f"{src_path} is not a valid reference directory",
+            f"{error_message_style}{src_path} is not a valid reference directory",
             err=True,
         )
-
-
-if __name__ == "__main__":
-    ref()
