@@ -5,65 +5,90 @@ from structlog import get_logger
 
 from virtool_cli.add.format import format_record
 from virtool_cli.add.helpers import (
+    find_taxon_id,
     get_no_fetch_lists,
     is_addable,
-    search_otu_path,
     write_sequences_to_src,
 )
 from virtool_cli.check.checkup import verify_accession
-from virtool_cli.utils.cache import generate_taxid_table
+from virtool_cli.repo.cls import Repo, RepoSequence
+from virtool_cli.utils.format import get_qualifiers
 from virtool_cli.utils.ncbi import request_from_nucleotide
-from virtool_cli.utils.reference import is_v1
 
 
-async def add_accession(accession: str, path: Path):
-    """Takes a specified accession, fetches the corresponding record from NCBI Nucleotide.
-    Finds a matching OTU directory in the reference and writes the new accession data
-    under the existing OTU directory.
+async def add_accession(accession: str, path: Path) -> RepoSequence | None:
+    """Attempts to add the NCBI record associated with the ``accession`` to the
+    reference.
 
-    :param accession: NCBI Taxonomy accession to be added to the reference
+    :param accession: the NCBI accession to be added to the reference
     :param path: the path to a reference repository
     """
     logger = get_logger(accession=accession)
 
-    src_path = path / "src"
+    repo = Repo(path)
 
-    if is_v1(src_path):
-        click.echo(
-            "Repository is a deprecated v1 reference.",
-            err=True,
-        )
-        return
+    logger.info("Adding accession")
 
     if not verify_accession(accession):
         click.echo("Invalid accession", err=True)
-        return
+        return None
 
     record_list = await request_from_nucleotide([accession])
-    record_list = record_list.pop()
+    record = record_list.pop()
 
-    otu_path = await search_otu_path(
-        record_list,
-        src_path,
-        taxid_table=generate_taxid_table(src_path),
-        logger=logger,
+    taxid = find_taxon_id(get_qualifiers(record.features)["db_xref"])
+
+    if not taxid:
+        click.echo("No taxon id found in record.", err=True)
+        return None
+
+    try:
+        otu = repo.get_otu_by_taxid(taxid)
+    except ValueError:
+        logger.warning(
+            "No matching OTU found for taxonomy ID.",
+            accession=accession,
+            taxid=taxid,
+        )
+        return None
+
+    click.echo(f"Found matching OTU '{otu.name}' for accession '{accession}'.")
+
+    if accession in otu.exclusions:
+        logger.warning(
+            "This accession has been previously excluded.",
+            otu_name=otu.name,
+            accession=accession,
+        )
+        return None
+
+    sequence = await format_record(record)
+
+    source_type = sequence["isolate"]["source_type"]
+    source_name = sequence["isolate"]["source_name"]
+
+    isolate = otu.get_isolate_by_name(source_type, source_name)
+
+    if isolate is None:
+        isolate = otu.add_isolate(source_type, source_name)
+        click.echo(f"Created new isolate '{isolate.name}' with ID '{isolate.id}'.")
+    else:
+        click.echo(f"Found matching isolate '{isolate.name}' with ID '{isolate.id}'.")
+
+    sequence = isolate.add_sequence(
+        sequence["accession"],
+        sequence["definition"],
+        sequence["host"],
+        sequence.get("segment", ""),
+        sequence["sequence"],
     )
 
-    if not otu_path:
-        click.echo("No matching OTU found.", err=True)
-
-    elif not await is_addable(accession, otu_path, logger=logger):
-        click.echo("This accession will not be added.")
-
-    else:
-        new_sequence = await format_record(record_list)
-
-        await write_sequences_to_src(
-            sequences=[new_sequence],
-            otu_path=otu_path,
-            src_path=otu_path.parent,
-            logger=logger,
+    if sequence:
+        click.echo(
+            f"Added sequence '{sequence.accession}' to isolate '{isolate.name}'.",
         )
+
+    return sequence
 
 
 async def add_accessions(accessions: list, otu_path: Path):

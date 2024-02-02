@@ -1,102 +1,134 @@
+import asyncio
+import json
 import subprocess
 from pathlib import Path
 
 import pytest
+from syrupy import SnapshotAssertion
+from syrupy.filters import props
 
+from virtool_cli.add.accessions import add_accession
 from virtool_cli.ref.build import build_json
 from virtool_cli.ref.init import init_reference
-from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
+from virtool_cli.utils.reference import get_sequence_paths
 
 
 def get_all_sequence_paths(otu_path: Path) -> set[Path]:
-    sequence_paths = set()
-
-    for isolate_path in otu_path.iterdir():
-        if isolate_path.is_dir():
-            for sequence_path in get_sequence_paths(isolate_path):
-                sequence_paths.add(sequence_path)
-
-    return sequence_paths
+    return {
+        sequence_path
+        for isolate_path in otu_path.iterdir()
+        if isolate_path.is_dir()
+        for sequence_path in get_sequence_paths(isolate_path)
+    }
 
 
 class TestAddAccession:
-    @staticmethod
-    def run_add_accession(accession: str, path: Path):
-        subprocess.run(
-            [
-                "virtool",
-                "ref",
-                "add",
-                "accession",
-                "--path",
-                str(path),
-                accession,
-            ],
-            check=True,
-        )
-
-    @pytest.mark.parametrize(
-        "accession",
-        ["DQ178612", "NC_038793"],
-    )
-    def test_success(
+    def test_add_new_isolate(
         self,
-        accession: str,
         scratch_path: Path,
+        snapshot: SnapshotAssertion,
     ):
         """Test that an accession is added when the parent isolate already exists."""
         otu_path = scratch_path / "src" / "cabbage_leaf_curl_jamaica_virus--d226290f"
 
-        pre_sequence_paths = get_all_sequence_paths(otu_path)
+        asyncio.run(add_accession("NC_038793", scratch_path))
 
-        self.run_add_accession(accession, scratch_path)
+        new_isolate_filenames = set(p.name for p in otu_path.iterdir()) - {
+            "496550f5",
+            "d293d531",
+            "exclusions.json",
+            "otu.json",
+        }
 
-        post_sequence_paths = get_all_sequence_paths(otu_path)
+        assert len(new_isolate_filenames) == 1
 
-        assert post_sequence_paths - pre_sequence_paths
+        isolate_id = new_isolate_filenames.pop()
 
-    @pytest.mark.parametrize(
-        "accession, otu_dirname",
-        [("KT390494", "nanovirus_like_particle--ae0f2a35")],
-    )
-    def test_success_new_isolate(self, accession, otu_dirname, scratch_path: Path):
-        """Test that an accession is added when the parent isolate does not exist"""
-        otu_path = scratch_path / "src" / otu_dirname
+        with open(otu_path / isolate_id / "isolate.json") as f:
+            assert json.load(f) == {
+                "default": False,
+                "id": isolate_id,
+                "source_name": "CUc-3",
+                "source_type": "isolate",
+            }
 
-        pre_isolate_paths = set(get_isolate_paths(otu_path))
+        new_sequence_filenames = set(
+            p.name for p in (otu_path / isolate_id).iterdir()
+        ) - {
+            "isolate.json",
+        }
 
-        self.run_add_accession(accession, scratch_path)
+        assert len(new_sequence_filenames) == 1
 
-        new_isolates = set(get_isolate_paths(otu_path)) - pre_isolate_paths
+        sequence_id = new_sequence_filenames.pop().replace(".json", "")
 
-        assert len(new_isolates) == 1
-        assert (new_isolates.pop() / "isolate.json").exists()
+        with open(otu_path / isolate_id / f"{sequence_id}.json") as f:
+            data = json.load(f)
+            assert data == snapshot(name="sequence.json", exclude=props("_id"))
+            assert data["_id"] == sequence_id
+            assert data["accession"] == "NC_038793.1"
 
-    def test_invalid_accession(self, scratch_path: Path):
+    def test_add_to_existing_isolate(
+        self,
+        scratch_path: Path,
+        snapshot: SnapshotAssertion,
+    ):
+        """Test that an accession is added when the parent isolate already exists."""
+        asyncio.run(add_accession("DQ178612", scratch_path))
+
+        otu_path = scratch_path / "src" / "cabbage_leaf_curl_jamaica_virus--d226290f"
+
+        assert not (
+            set(p.name for p in otu_path.iterdir())
+            - {
+                "496550f5",
+                "d293d531",
+                "exclusions.json",
+                "otu.json",
+            }
+        )
+
+        new_sequence_filenames = set(
+            p.name for p in (otu_path / "d293d531").iterdir()
+        ) - {
+            "isolate.json",
+            "ndaxyl7f.json",
+            "pyf9x4wh.json",
+        }
+
+        assert len(new_sequence_filenames) == 1
+
+        sequence_id = new_sequence_filenames.pop().replace(".json", "")
+
+        with open(otu_path / "d293d531" / f"{sequence_id}.json") as f:
+            data = json.load(f)
+            assert data == snapshot(name="sequence.json", exclude=props("_id"))
+            assert data["_id"] == sequence_id
+
+    def test_accession_is_invalid(self, scratch_path: Path):
+        """Test that adding an accession fails when it is invalid."""
         otu_path = (
             scratch_path / "src" / "pagoda_yellow_mosaic_associated_virus--dd21fd8f"
         )
 
-        pre_sequence_paths = get_all_sequence_paths(otu_path)
+        before = get_all_sequence_paths(otu_path)
 
-        self.run_add_accession("NC-024301", scratch_path)
+        asyncio.run(add_accession("NC-024301", scratch_path))
 
-        assert get_all_sequence_paths(otu_path) == pre_sequence_paths
+        assert get_all_sequence_paths(otu_path) == before
 
-    def test_add_accession_fail(
+    def test_accession_already_exists(
         self,
         scratch_path: Path,
     ):
-        """Test that sequences cannot be added that already exist."""
+        """Test that an accession cannot be added if it already exists."""
         otu_path = scratch_path / "src" / "abaca_bunchy_top_virus--c93ec9a9"
 
-        pre_sequence_paths = get_all_sequence_paths(otu_path)
+        before = get_all_sequence_paths(otu_path)
 
-        self.run_add_accession("NC_010319", scratch_path)
+        asyncio.run(add_accession("NC_010319", scratch_path))
 
-        post_sequence_paths = get_all_sequence_paths(otu_path)
-
-        assert post_sequence_paths == pre_sequence_paths
+        assert get_all_sequence_paths(otu_path) == before
 
 
 class TestAddAccessions:
