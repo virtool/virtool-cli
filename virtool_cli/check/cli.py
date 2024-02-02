@@ -1,61 +1,47 @@
 from pathlib import Path
+
 import click
 
-from virtool_cli.check.check_otu import run as run_otu
-from virtool_cli.check.check_reference import run as run_reference
-
-ERROR_MESSAGE = click.style("ERROR: ", fg="red")
+from virtool_cli.check.otu import check_otu
+from virtool_cli.check.reference import check_reference
+from virtool_cli.options import debug_option, path_option
+from virtool_cli.utils.logging import configure_logger, error_message_style
 
 
 @click.group("check")
 def check():
-    """
-    Commands related to validation checks
-    """
-    pass
+    """Check the validity of reference data"""
 
 
 @check.command()
-@click.option(
-    "-src",
-    "--src_path",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    help="the path to a reference directory",
-)
-@click.option("--debug/--no-debug", default=False)
-def reference(src_path, debug):
+@debug_option
+@path_option
+def reference(path: Path, debug: bool):
     """Checks the validity of a reference source"""
-    try:
-        run_reference(src_path, debug)
+    configure_logger(debug)
 
-    except (FileNotFoundError, NotADirectoryError):
-        click.echo(
-            ERROR_MESSAGE + f"{str(src_path)} is not a valid reference directory",
-            err=True,
-        )
+    try:
+        check_reference(path)
+    except FileNotFoundError:
+        click.echo(f"{error_message_style}{path!s} could not be found", err=True)
+    except NotADirectoryError:
+        click.echo(f"{error_message_style}{path!s} is not a directory", err=True)
 
 
 @check.command()
-@click.option(
-    "-otu",
-    "--otu_path",
-    required=True,
+@click.argument(
+    "otu_path",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
-    help="the path to a single OTU directory",
 )
-@click.option("--debug/--no-debug", default=False)
-def otu(otu_path, debug):
+@debug_option
+def otu(otu_path: Path, debug: bool):
     """Checks the validity of a reference source"""
-    try:
-        run_otu(otu_path, debug)
+    configure_logger(debug)
 
+    try:
+        check_otu(otu_path)
     except (FileNotFoundError, NotADirectoryError):
         click.echo(
-            ERROR_MESSAGE + f"{str(otu_path)} is not a valid OTU directory",
+            f"{error_message_style}{otu_path!s} is not a valid OTU directory",
             err=True,
         )
-
-
-if __name__ == "__main__":
-    check()

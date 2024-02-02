@@ -1,7 +1,11 @@
+import logging
 import os
 import sys
+
+import click
 import structlog
-import logging
+
+error_message_style = click.style("ERROR: ", fg="red")
 
 logging.basicConfig(
     format="%(message)s",
@@ -17,16 +21,16 @@ shared_processors = [
     structlog.processors.StackInfoRenderer(),
     structlog.processors.UnicodeDecoder(),
     structlog.processors.CallsiteParameterAdder(
-            {
-                structlog.processors.CallsiteParameter.FILENAME,
-                structlog.processors.CallsiteParameter.FUNC_NAME,
-                structlog.processors.CallsiteParameter.LINENO,
-            }
-        ),
+        {
+            structlog.processors.CallsiteParameter.FILENAME,
+            structlog.processors.CallsiteParameter.FUNC_NAME,
+            structlog.processors.CallsiteParameter.LINENO,
+        },
+    ),
 ]
 if sys.stderr.isatty() and not os.environ.get("NO_COLOR"):
     processors = shared_processors + [
-        structlog.dev.ConsoleRenderer()
+        structlog.dev.ConsoleRenderer(),
     ]
 else:
     processors = shared_processors + [
@@ -42,15 +46,9 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-base_logger = structlog.get_logger()
-
-DEFAULT_LOGGER = structlog.make_filtering_bound_logger(logging.INFO)
-DEBUG_LOGGER = structlog.make_filtering_bound_logger(logging.DEBUG)
-
 
 def configure_logger(debug: bool = False):
-    """
-    Wrapper for structlog configuration, determines logging level for the task.
+    """Wrapper for structlog configuration, determines logging level for the task.
     Allows for cleaner imports.
 
     :param debug: Debugging flag. Defaults to False.
@@ -61,5 +59,5 @@ def configure_logger(debug: bool = False):
         logger_level = logging.INFO
 
     structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(logger_level)
+        wrapper_class=structlog.make_filtering_bound_logger(logger_level),
     )
