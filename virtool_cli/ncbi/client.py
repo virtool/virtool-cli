@@ -96,7 +96,8 @@ class NCBIClient:
 
     async def _fetch_serialized_records(self, accessions: list) -> list[dict]:
         """
-        Requests XML GenBank records for a list of accessions and returns serialized results
+        Requests XML GenBank records for a list of accessions
+        and returns serialized results
 
         :param accessions: A list of accessions
         :return: A dictionary of accession-record key-pairs
@@ -112,10 +113,11 @@ class NCBIClient:
 
     async def _fetch_raw_records(self, accessions: list) -> str:
         """
-        Requests XML GenBank records for a list of accessions and returns results as unparsed XML
+        Requests XML GenBank records for a list of accessions
+        and returns results as unparsed XML
 
         :param accessions: A list of accessions
-        :return: A dictionary of accession-record key-pairs
+        :return: XML data as an unparsed string
         """
         with Entrez.efetch(
             db="nuccore", id=accessions, rettype="gb", retmode="xml"
