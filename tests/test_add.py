@@ -12,8 +12,6 @@ from virtool_cli.ref.build import build_json
 from virtool_cli.ref.init import init_reference
 from virtool_cli.utils.reference import get_sequence_paths
 
-FILE_IGNORE_LIST = [".DS_Store", "Thumbs.db"]
-
 
 def get_all_sequence_paths(otu_path: Path) -> set[Path]:
     return {
@@ -25,6 +23,12 @@ def get_all_sequence_paths(otu_path: Path) -> set[Path]:
 
 
 class TestAddAccession:
+    @staticmethod
+    def get_all_filenames_in_dir(path: Path) -> set[str]:
+        ignore_list = [".DS_Store", "Thumbs.db"]
+
+        return {p.name for p in path.iterdir() if p.name not in ignore_list}
+
     def test_add_new_isolate(
         self,
         scratch_path: Path,
@@ -35,9 +39,7 @@ class TestAddAccession:
 
         asyncio.run(add_accession("NC_038793", scratch_path))
 
-        new_isolate_filenames = set(
-            p.name for p in otu_path.iterdir() if p.name not in FILE_IGNORE_LIST
-        ) - {
+        new_isolate_filenames = self.get_all_filenames_in_dir(otu_path) - {
             "496550f5",
             "d293d531",
             "exclusions.json",
@@ -56,8 +58,8 @@ class TestAddAccession:
                 "source_type": "isolate",
             }
 
-        new_sequence_filenames = set(
-            p.name for p in (otu_path / isolate_id).iterdir()
+        new_sequence_filenames = self.get_all_filenames_in_dir(
+            otu_path / isolate_id
         ) - {
             "isolate.json",
         }
@@ -83,7 +85,7 @@ class TestAddAccession:
         otu_path = scratch_path / "src" / "cabbage_leaf_curl_jamaica_virus--d226290f"
 
         assert not (
-            set(p.name for p in otu_path.iterdir() if p.name not in FILE_IGNORE_LIST)
+            self.get_all_filenames_in_dir(otu_path)
             - {
                 "496550f5",
                 "d293d531",
@@ -92,10 +94,8 @@ class TestAddAccession:
             }
         )
 
-        new_sequence_filenames = set(
-            p.name
-            for p in (otu_path / "d293d531").iterdir()
-            if p.name not in FILE_IGNORE_LIST
+        new_sequence_filenames = self.get_all_filenames_in_dir(
+            otu_path / "d293d531"
         ) - {
             "isolate.json",
             "ndaxyl7f.json",
