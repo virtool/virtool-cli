@@ -10,25 +10,25 @@ class NCBIRank(str, Enum):
 
 
 class NCBISourceType(str, Enum):
-    CLONE = "clone"
-    GENOTYPE = "genotype"
     ISOLATE = "isolate"
     STRAIN = "strain"
+    CLONE = "clone"
+    GENOTYPE = "genotype"
 
 
 class NCBISource(BaseModel):
     type: NCBISourceType
     name: str
-    host: str
-    segment: str | None
     taxid: int
+    host: str = ""
+    segment: str = ""
 
 
 class NCBIAccession(BaseModel):
     accession: str
     definition: str
     sequence: str
-    comment: str
+    comment: str = ""
 
 
 class NCBITaxonomy(BaseModel):
