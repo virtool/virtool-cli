@@ -45,6 +45,7 @@ class NCBIClient:
             raise RuntimeError("IncompleteRead")
         except HTTPError as e:
             raise e
+
         await asyncio.sleep(self.pause)
 
         if not elink_results:
@@ -111,6 +112,22 @@ class NCBIClient:
 
         return records
 
+    async def fetch_taxonomy(self, taxon_id: int, long=False) -> dict:
+        """Requests a taxonomy record from NCBI Taxonomy"""
+        try:
+            if long:
+                taxonomy = await self._fetch_taxon_long(taxon_id)
+
+            else:
+                taxonomy = await self._fetch_taxon_docsum(taxon_id)
+
+        except IncompleteRead:
+            raise RuntimeError("IncompleteRead")
+        except HTTPError:
+            raise HTTPError
+
+        return taxonomy
+
     async def _fetch_raw_records(self, accessions: list) -> str:
         """
         Requests XML GenBank records for a list of accessions
@@ -128,24 +145,6 @@ class NCBIClient:
 
         return raw_records
 
-    async def fetch_taxonomy(self, taxon_id: int, long=False) -> dict:
-        """Requests a taxonomy record from NCBI Taxonomy"""
-        try:
-            if long:
-                taxonomy = await self._fetch_taxon_long(taxon_id)
-
-            else:
-                taxonomy = await self._fetch_taxon_docsum(taxon_id)
-
-            await asyncio.sleep(self.pause)
-
-        except IncompleteRead:
-            raise RuntimeError("IncompleteRead")
-        except HTTPError:
-            raise HTTPError
-
-        return taxonomy
-
     async def fetch_taxonomy_id_by_name(self, name: str) -> int | None:
         """Returns a best-guess taxon ID for a given OTU name.
 
@@ -157,8 +156,16 @@ class NCBIClient:
         :param name: the name of an otu
         :return: The taxonomy id for the given otu name
         """
-        with Entrez.esearch(db="taxonomy", term=name) as f:
-            record = Entrez.read(f)
+        try:
+            with Entrez.esearch(db="taxonomy", term=name) as f:
+                record = Entrez.read(f)
+
+            await asyncio.sleep(self.pause)
+
+        except IncompleteRead:
+            raise RuntimeError("IncompleteRead")
+        except HTTPError:
+            raise HTTPError
 
         try:
             taxid = int(record["IdList"][0])
@@ -177,20 +184,28 @@ class NCBIClient:
             )
         )
 
+        await asyncio.sleep(self.pause)
+
         return record[0]
 
     async def _fetch_taxon_long(self, taxon_id) -> dict:
         with Entrez.efetch(db="taxonomy", id=taxon_id, rettype="null") as f:
             record = Entrez.read(f)
 
+        await asyncio.sleep(self.pause)
+
         return record[0]
 
     async def fetch_taxon_rank(self, taxon_id: int) -> str:
-        with Entrez.efetch(
-            db="taxonomy", id=taxon_id, rettype="docsum", retmode="xml"
-        ) as f:
-            for r in Entrez.parse(f):
-                return r["Rank"]
+        try:
+            taxonomy = await self._fetch_taxon_docsum(taxon_id)
+
+        except IncompleteRead:
+            raise RuntimeError("IncompleteRead")
+        except HTTPError:
+            raise HTTPError
+
+        return taxonomy["Rank"]
 
     async def fetch_species_taxid(self, taxid: str) -> int | None:
         """Gets the species taxid for the given lower-rank taxid.
@@ -198,21 +213,25 @@ class NCBIClient:
         :param taxid: NCBI Taxonomy UID
         :return: The NCBI Taxonomy ID of the OTU's species
         """
-        with Entrez.efetch(db="taxonomy", id=taxid, rettype="null") as f:
-            record = Entrez.parse(f)
+        try:
+            taxonomy = await self._fetch_taxon_long(taxid)
 
-            for r in record:
-                if r["Rank"] == "species":
-                    return int(r["TaxId"])
+        except IncompleteRead:
+            raise RuntimeError("IncompleteRead")
+        except HTTPError:
+            raise HTTPError
 
-                for line in r["LineageEx"]:
-                    if line["Rank"] == "species":
-                        return int(line["TaxId"])
+        for r in taxonomy:
+            if r["Rank"] == "species":
+                return int(r["TaxId"])
+
+            for line in r["LineageEx"]:
+                if line["Rank"] == "species":
+                    return int(line["TaxId"])
 
         return None
 
-    @staticmethod
-    async def check_spelling(name: str, db: str = "taxonomy") -> str:
+    async def check_spelling(self, name: str, db: str = "taxonomy") -> str:
         """Takes the name of an OTU, requests an alternative spelling
         from the Entrez ESpell utility and returns the suggestion
 
@@ -220,8 +239,15 @@ class NCBIClient:
         :param db: NCBI Database to check against. Defaults to 'taxonomy'.
         :return: String containing NCBI-suggested spelling changes
         """
-        with Entrez.espell(db=db, term=quote_plus(name)) as f:
-            record = Entrez.read(f)
+        try:
+            with Entrez.espell(db=db, term=quote_plus(name)) as f:
+                record = Entrez.read(f)
+
+            await asyncio.sleep(self.pause)
+        except IncompleteRead:
+            raise RuntimeError("IncompleteRead")
+        except HTTPError:
+            raise HTTPError
 
         if record:
             return record["CorrectedQuery"]

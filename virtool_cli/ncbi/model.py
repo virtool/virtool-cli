@@ -1,7 +1,6 @@
 from enum import Enum
 
 from pydantic import BaseModel
-from dataclasses import dataclass
 
 
 class NCBIRank(str, Enum):
