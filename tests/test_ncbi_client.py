@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 import pytest
 
 from virtool_cli.ncbi.client import NCBIClient

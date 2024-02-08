@@ -58,13 +58,12 @@ class NCBIClient:
 
                 return [keypair["Id"] for keypair in id_table]
 
-            else:
-                raise ValueError("Retrieved incompatible link data")
+            raise ValueError("Retrieved incompatible link data")
 
     async def fetch_accessions(self, accessions: list) -> list:
         """
-        Take a list of accession numbers, download the corresponding records from GenBank as XML
-        and return the parsed records
+        Take a list of accession numbers, download the corresponding records
+        from GenBank as XML and return the parsed records
 
         :param accessions: List of accession numbers to fetch from GenBank
         :return: A list of deserialized sequence records from NCBI Nucleotide
