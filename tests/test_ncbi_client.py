@@ -4,18 +4,19 @@ from virtool_cli.ncbi.client import NCBIClient
 
 
 @pytest.fixture()
-def client():
+def test_client():
     return NCBIClient()
 
 
-class TestClient:
-    @pytest.fixture()
-    def accession_list(self):
-        return ["KT390494", "KT390496", "KT390501"]
+@pytest.fixture()
+def accession_list():
+    return ["KT390494", "KT390496", "KT390501"]
 
+
+class TestClient:
     @pytest.mark.asyncio
-    async def test_fetch_accessions(self, client, accession_list):
-        records = await client.fetch_accessions(accession_list)
+    async def test_fetch_accessions(self, test_client, accession_list):
+        records = await test_client.fetch_accessions(accession_list)
 
         for record in records:
             assert record.get("GBSeq_locus", None)
@@ -23,8 +24,8 @@ class TestClient:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxon_id", [908125, 1016856])
-    async def test_fetch_taxonomy(self, client, taxon_id):
-        taxonomy = await client.fetch_taxonomy(taxon_id, long=True)
+    async def test_fetch_taxonomy(self, test_client, taxon_id):
+        taxonomy = await test_client.fetch_taxonomy(taxon_id, long=True)
 
         assert taxonomy.get("TaxId", None) is not None
         assert taxonomy.get("ScientificName", None) is not None
@@ -38,10 +39,8 @@ class TestClient:
             ("Rhynchosia golden mosaic virus", 117198),
         ],
     )
-    async def test_fetch_taxonomy_by_name(self, client, name, taxid):
-        taxon_id_by_name = await client.fetch_taxonomy_id_by_name(name)
-
-        assert taxon_id_by_name == taxid
+    async def test_fetch_taxonomy_by_name(self, test_client, name, taxid):
+        assert await test_client.fetch_taxonomy_id_by_name(name) == taxid
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -51,8 +50,8 @@ class TestClient:
             (1016856, "isolate"),
         ],
     )
-    async def test_fetch_taxonomy_rank(self, client, taxid, rank):
-        fetched_rank = await client.fetch_taxon_rank(taxid)
+    async def test_fetch_taxonomy_rank(self, test_client, taxid, rank):
+        fetched_rank = await test_client.fetch_taxon_rank(taxid)
 
         assert fetched_rank == rank
 
@@ -67,7 +66,7 @@ class TestClient:
             ("Angelica bush stunt virus", "Angelica bushy stunt virus"),
         ],
     )
-    async def test_check_spelling(self, client, misspelled, expected):
-        taxon_name = await client.check_spelling(name=misspelled)
+    async def test_check_spelling(self, test_client, misspelled, expected):
+        taxon_name = await test_client.check_spelling(name=misspelled)
 
         assert taxon_name.lower() == expected.lower()
