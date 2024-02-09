@@ -2,9 +2,8 @@ import os
 from Bio import Entrez
 
 from structlog import get_logger, BoundLogger
-from http.client import IncompleteRead
-from urllib.error import HTTPError
 from urllib.parse import quote_plus
+from urllib.error import URLError
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -17,8 +16,6 @@ class NCBIClient:
         self,
         logger: BoundLogger = get_logger(),
     ):
-        self.pause = 0.3 if Entrez.email and Entrez.api_key else 0.8
-
         self.logger = logger
 
     @staticmethod
@@ -30,19 +27,14 @@ class NCBIClient:
         :param taxon_id: A NCBI Taxonomy ID
         :return: A list of accessions linked to the Taxon Id
         """
-        try:
-            elink_results = Entrez.read(
-                Entrez.elink(
-                    dbfrom="taxonomy",
-                    db="nuccore",
-                    id=str(taxon_id),
-                    idtype="acc",
-                )
+        elink_results = Entrez.read(
+            Entrez.elink(
+                dbfrom="taxonomy",
+                db="nuccore",
+                id=str(taxon_id),
+                idtype="acc",
             )
-        except IncompleteRead:
-            raise RuntimeError("IncompleteRead")
-        except HTTPError as e:
-            raise e
+        )
 
         if not elink_results:
             return []
@@ -67,15 +59,8 @@ class NCBIClient:
         if not accessions:
             return []
 
-        try:
-            ncbi_records = self._fetch_serialized_records(accessions)
-        except (HTTPError, IncompleteRead) as e:
-            raise e
-
-        if ncbi_records:
-            return ncbi_records
-
-        return []
+        ncbi_records = self._fetch_serialized_records(accessions)
+        return ncbi_records
 
     async def fetch_accession(self, accession: str) -> dict:
         """
@@ -87,34 +72,35 @@ class NCBIClient:
             return record[0]
 
     @staticmethod
-    def _fetch_serialized_records(accessions: list) -> list[dict]:
+    def _fetch_serialized_records(accessions: list) -> list[dict] | None:
         """
         Requests XML GenBank records for a list of accessions
-        and returns serialized results
+        and returns an equal-length list of serialized records.
 
-        :param accessions: A list of accessions
-        :return: A dictionary of accession-record key-pairs
+        Raises an URLError if fewer records are fetched than accessions.
+
+        :param accessions: A list of n accessions
+        :return: A list of n deserialized records
         """
+
         with Entrez.efetch(
             db="nuccore", id=accessions, rettype="gb", retmode="xml"
         ) as f:
             records = Entrez.read(f)
 
-        return records
+        # Handle cases where not all accessions can be fetched
+        if len(records) == len(accessions):
+            return records
+
+        raise URLError(f"List contains bad accessions: {accessions}")
 
     async def fetch_taxonomy(self, taxon_id: int, long=False) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""
-        try:
-            if long:
-                taxonomy = await self._fetch_taxon_long(taxon_id)
+        if long:
+            taxonomy = await self._fetch_taxon_long(taxon_id)
 
-            else:
-                taxonomy = await self._fetch_taxon_docsum(taxon_id)
-
-        except IncompleteRead:
-            raise RuntimeError("IncompleteRead")
-        except HTTPError:
-            raise HTTPError
+        else:
+            taxonomy = await self._fetch_taxon_docsum(taxon_id)
 
         return taxonomy
 
@@ -146,14 +132,8 @@ class NCBIClient:
         :param name: the name of an otu
         :return: The taxonomy id for the given otu name
         """
-        try:
-            with Entrez.esearch(db="taxonomy", term=name) as f:
-                record = Entrez.read(f)
-
-        except IncompleteRead:
-            raise RuntimeError("IncompleteRead")
-        except HTTPError:
-            raise HTTPError
+        with Entrez.esearch(db="taxonomy", term=name) as f:
+            record = Entrez.read(f)
 
         try:
             taxid = int(record["IdList"][0])
@@ -183,13 +163,7 @@ class NCBIClient:
         return record[0]
 
     async def fetch_taxon_rank(self, taxon_id: int) -> str:
-        try:
-            taxonomy = await self._fetch_taxon_docsum(taxon_id)
-
-        except IncompleteRead:
-            raise RuntimeError("IncompleteRead")
-        except HTTPError:
-            raise HTTPError
+        taxonomy = await self._fetch_taxon_docsum(taxon_id)
 
         return taxonomy["Rank"]
 
@@ -199,13 +173,7 @@ class NCBIClient:
         :param taxid: NCBI Taxonomy UID
         :return: The NCBI Taxonomy ID of the OTU's species
         """
-        try:
-            taxonomy = await self._fetch_taxon_long(taxid)
-
-        except IncompleteRead:
-            raise RuntimeError("IncompleteRead")
-        except HTTPError:
-            raise HTTPError
+        taxonomy = await self._fetch_taxon_long(taxid)
 
         if taxonomy["Rank"] == "species":
             return int(taxonomy["TaxId"])
@@ -225,14 +193,8 @@ class NCBIClient:
         :param db: NCBI Database to check against. Defaults to 'taxonomy'.
         :return: String containing NCBI-suggested spelling changes
         """
-        try:
-            with Entrez.espell(db=db, term=quote_plus(name)) as f:
-                record = Entrez.read(f)
-
-        except IncompleteRead:
-            raise RuntimeError("IncompleteRead")
-        except HTTPError:
-            raise HTTPError
+        with Entrez.espell(db=db, term=quote_plus(name)) as f:
+            record = Entrez.read(f)
 
         if record:
             return record["CorrectedQuery"]
