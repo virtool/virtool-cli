@@ -3,7 +3,8 @@ from Bio import Entrez
 
 from structlog import get_logger, BoundLogger
 from urllib.parse import quote_plus
-from urllib.error import URLError
+
+from virtool_cli.ncbi.error import IncompleteRecordsError
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -48,7 +49,7 @@ class NCBIClient:
 
             raise ValueError("Retrieved incompatible link data")
 
-    async def fetch_accessions(self, accessions: list) -> list:
+    async def fetch_accessions(self, accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, download the corresponding records
         from GenBank as XML and return the parsed records
@@ -59,8 +60,20 @@ class NCBIClient:
         if not accessions:
             return []
 
-        ncbi_records = self._fetch_serialized_records(accessions)
-        return ncbi_records
+        logger = self.logger.bind(accessions=accessions)
+
+        try:
+            records = self._fetch_serialized_records(accessions)
+            return records
+
+        except IncompleteRecordsError as e:
+            logger.error(e.message)
+
+            if e.data:
+                logger.debug("Partial results fetched, returning results...")
+                return e.data
+
+        return []
 
     async def fetch_accession(self, accession: str) -> dict:
         """
@@ -82,7 +95,6 @@ class NCBIClient:
         :param accessions: A list of n accessions
         :return: A list of n deserialized records
         """
-
         with Entrez.efetch(
             db="nuccore", id=accessions, rettype="gb", retmode="xml"
         ) as f:
@@ -92,7 +104,7 @@ class NCBIClient:
         if len(records) == len(accessions):
             return records
 
-        raise URLError(f"List contains bad accessions: {accessions}")
+        raise IncompleteRecordsError(f"Bad accession in list", data=records)
 
     async def fetch_taxonomy(self, taxon_id: int, long=False) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""

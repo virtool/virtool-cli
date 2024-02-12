@@ -1,4 +1,5 @@
 import pytest
+from urllib.error import HTTPError
 
 from virtool_cli.ncbi.client import NCBIClient
 
@@ -21,6 +22,26 @@ class TestClient:
         for record in records:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
+
+    @pytest.mark.asyncio
+    async def test_fetch_accessions_partial(self, test_client, accession_list):
+        partial_accession_list = accession_list
+        partial_accession_list[0] = partial_accession_list[0][:3]
+
+        records = await test_client.fetch_accessions(accession_list)
+
+        assert len(records) == len(accession_list) - 1
+
+        for record in records:
+            assert record.get("GBSeq_locus", None)
+            assert record.get("GBSeq_sequence", None)
+
+    @pytest.mark.asyncio
+    async def test_fetch_accessions_fail(self, test_client):
+        accession_list = ["friday", "paella", "111"]
+
+        with pytest.raises(HTTPError):
+            await test_client.fetch_accessions(accession_list)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxon_id", [908125, 1016856])
