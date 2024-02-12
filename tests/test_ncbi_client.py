@@ -40,13 +40,12 @@ class TestClient:
     async def test_fetch_accessions_fail(self, test_client):
         accession_list = ["friday", "paella", "111"]
 
-        with pytest.raises(HTTPError):
-            await test_client.fetch_accessions(accession_list)
+        assert not await test_client.fetch_accessions(accession_list)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxon_id", [908125, 1016856])
     async def test_fetch_taxonomy(self, test_client, taxon_id):
-        taxonomy = await test_client.fetch_taxonomy(taxon_id, long=True)
+        taxonomy = await test_client.fetch_taxonomy(taxon_id)
 
         assert taxonomy.get("TaxId", None) is not None
         assert taxonomy.get("ScientificName", None) is not None

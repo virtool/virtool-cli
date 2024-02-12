@@ -3,6 +3,7 @@ from Bio import Entrez
 
 from structlog import get_logger, BoundLogger
 from urllib.parse import quote_plus
+from urllib.error import HTTPError
 
 from virtool_cli.ncbi.error import IncompleteRecordsError
 
@@ -73,6 +74,9 @@ class NCBIClient:
                 logger.debug("Partial results fetched, returning results...")
                 return e.data
 
+        except HTTPError:
+            logger.error(f"Bad accession list")
+
         return []
 
     async def fetch_accession(self, accession: str) -> dict:
@@ -90,7 +94,7 @@ class NCBIClient:
         Requests XML GenBank records for a list of accessions
         and returns an equal-length list of serialized records.
 
-        Raises an URLError if fewer records are fetched than accessions.
+        Raises an error if fewer records are fetched than accessions.
 
         :param accessions: A list of n accessions
         :return: A list of n deserialized records
@@ -106,15 +110,9 @@ class NCBIClient:
 
         raise IncompleteRecordsError(f"Bad accession in list", data=records)
 
-    async def fetch_taxonomy(self, taxon_id: int, long=False) -> dict:
+    async def fetch_taxonomy(self, taxon_id: int) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""
-        if long:
-            taxonomy = await self._fetch_taxon_long(taxon_id)
-
-        else:
-            taxonomy = await self._fetch_taxon_docsum(taxon_id)
-
-        return taxonomy
+        return await self._fetch_taxon_long(taxon_id)
 
     @staticmethod
     def _fetch_raw_records(accessions: list) -> str:
