@@ -1,5 +1,4 @@
 import pytest
-from urllib.error import HTTPError
 
 from virtool_cli.ncbi.client import NCBIClient
 

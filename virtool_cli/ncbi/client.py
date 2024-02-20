@@ -74,8 +74,11 @@ class NCBIClient:
                 logger.debug("Partial results fetched, returning results...")
                 return e.data
 
-        except HTTPError:
-            logger.error(f"Bad accession list")
+        except HTTPError as e:
+            if e.code == 400:
+                logger.error(f"{e}. Bad accessions?")
+            else:
+                logger.error(e)
 
         return []
 
