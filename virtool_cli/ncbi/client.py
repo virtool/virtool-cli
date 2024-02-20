@@ -1,7 +1,7 @@
 import os
 from Bio import Entrez
 
-from structlog import get_logger, BoundLogger
+from structlog import get_logger
 from urllib.parse import quote_plus
 from urllib.error import HTTPError
 
@@ -12,14 +12,10 @@ Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
 DEFAULT_INTERVAL = 0.001
 
+base_logger = get_logger()
+
 
 class NCBIClient:
-    def __init__(
-        self,
-        logger: BoundLogger = get_logger(),
-    ):
-        self.logger = logger
-
     @staticmethod
     async def link_accessions(taxon_id: int) -> list:
         """
@@ -48,8 +44,6 @@ class NCBIClient:
 
                 return [keypair["Id"] for keypair in id_table]
 
-            raise ValueError("Retrieved incompatible link data")
-
     async def fetch_accessions(self, accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, download the corresponding records
@@ -61,7 +55,7 @@ class NCBIClient:
         if not accessions:
             return []
 
-        logger = self.logger.bind(accessions=accessions)
+        logger = base_logger.bind(accessions=accessions)
 
         try:
             records = self._fetch_serialized_records(accessions)
