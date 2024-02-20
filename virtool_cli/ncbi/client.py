@@ -111,7 +111,7 @@ class NCBIClient:
         if len(records) == len(accessions):
             return records
 
-        raise IncompleteRecordsError(f"Bad accession in list", data=records)
+        raise IncompleteRecordsError("Bad accession in list", data=records)
 
     async def fetch_taxonomy(self, taxon_id: int) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""
