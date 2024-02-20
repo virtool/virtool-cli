@@ -197,7 +197,7 @@ class NCBIClient:
         from the Entrez ESpell utility and returns the suggestion
 
         :param name: The OTU name that requires correcting
-        :param db: NCBI Database to check against. Defaults to 'taxonomy'.
+        :param db: Database to check against. Defaults to 'taxonomy'.
         :return: String containing NCBI-suggested spelling changes
         """
         with Entrez.espell(db=db, term=quote_plus(name)) as f:
