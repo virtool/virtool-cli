@@ -24,10 +24,10 @@ class NCBICache:
         shutil.rmtree(self.path)
         self.path.mkdir()
 
-    def cache_records(self, records: list[dict], filestem: str, indent=False):
+    def cache_records(self, records: list[dict], filestem: str):
         """Add a list of NCBI Nucleotide records to the cache."""
         with open(self._get_nuccore_path(filestem), "w") as f:
-            json.dump(records, f, indent=2 if indent else None)
+            json.dump(records, f)
 
     def load_records(self, filestem: str) -> list[dict] | None:
         """
@@ -40,12 +40,13 @@ class NCBICache:
         except FileNotFoundError:
             return None
 
-    def cache_taxonomy(self, taxonomy: dict, taxon_id: int, indent=False):
+    def cache_taxonomy(self, taxonomy: dict, taxon_id: int):
         """Add a NCBI Taxonomy record to the cache"""
         with open(self._get_taxonomy_path(taxon_id), "w") as f:
-            json.dump(taxonomy, f, indent=2 if indent else None)
+            json.dump(taxonomy, f)
 
     def load_taxonomy(self, taxon_id: int) -> dict | None:
+        """Load data from a cached record fetch"""
         try:
             with open(self._get_taxonomy_path(taxon_id), "r") as f:
                 return json.load(f)
