@@ -37,9 +37,9 @@ class TestCache:
 
         cache.clear()
 
-        assert not cache.nuccore.glob("*.json")
+        assert not list(cache.nuccore.glob("*.json"))
 
-        assert not cache.taxonomy.glob("*.json")
+        assert not list(cache.taxonomy.glob("*.json"))
 
     @pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
     def test_cache_nuccore_load(self, record_otu, cache_scratch_path):
