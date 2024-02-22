@@ -7,7 +7,7 @@ on:
 jobs:
   pypi:
     runs-on: ubuntu-22.04
-    container: python:3.10
+    container: python:3.12
     steps:
       - name: Checkout
         uses: actions/checkout@v3
