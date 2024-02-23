@@ -20,69 +20,69 @@ def get_test_taxonomy(taxon_id: int, cache_example_path):
         return json.load(f)
 
 
-class TestCache:
-    def test_cache_init(self, empty_cache_path):
-        cache = NCBICache(path=empty_cache_path)
+def test_cache_init(empty_cache_path):
+    cache = NCBICache(path=empty_cache_path)
 
-        assert cache.nuccore.is_dir()
+    assert cache.nuccore.is_dir()
 
-        assert cache.taxonomy.is_dir()
+    assert cache.taxonomy.is_dir()
 
-        assert cache.nuccore.exists()
+    assert cache.nuccore.exists()
 
-        assert cache.taxonomy.exists()
+    assert cache.taxonomy.exists()
 
-    def test_cache_clear(self, cache_scratch_path):
-        cache = NCBICache(path=cache_scratch_path)
 
-        cache.clear()
+def test_cache_clear(cache_scratch_path):
+    cache = NCBICache(path=cache_scratch_path)
 
-        assert not list(cache.nuccore.glob("*.json"))
+    cache.clear()
 
-        assert not list(cache.taxonomy.glob("*.json"))
+    assert not list(cache.nuccore.glob("*.json"))
 
-    @pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
-    def test_cache_nuccore_load(self, record_otu, cache_scratch_path):
-        scratch_cache = NCBICache(cache_scratch_path)
+    assert not list(cache.taxonomy.glob("*.json"))
 
-        records = scratch_cache.load_records(record_otu)
 
-        assert type(records) is list
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+def test_cache_nuccore_load(record_otu, cache_scratch_path):
+    scratch_cache = NCBICache(cache_scratch_path)
 
-        for record in records:
-            assert type(record) is dict
+    records = scratch_cache.load_records(record_otu)
 
-    @pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
-    def test_cache_nuccore_cache(
-        self, record_otu, cache_example_path, empty_cache_path
-    ):
-        fresh_cache = NCBICache(empty_cache_path)
+    assert type(records) is list
 
-        records = get_test_record_set(record_otu, cache_example_path)
+    for record in records:
+        assert type(record) is dict
 
-        fresh_cache.cache_records(records, filestem=record_otu)
 
-        assert (fresh_cache.nuccore / f"{record_otu}.json").exists()
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+def test_cache_nuccore_cache(record_otu, cache_example_path, empty_cache_path):
+    fresh_cache = NCBICache(empty_cache_path)
 
-    @pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
-    def test_cache_taxonomy_load(self, record_otu, cache_scratch_path):
-        scratch_cache = NCBICache(cache_scratch_path)
+    records = get_test_record_set(record_otu, cache_example_path)
 
-        records = scratch_cache.load_records(record_otu)
+    fresh_cache.cache_records(records, filestem=record_otu)
 
-        assert type(records) is list
+    assert (fresh_cache.nuccore / f"{record_otu}.json").exists()
 
-        for record in records:
-            assert type(record) is dict
 
-    @pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
-    def test_cache_taxonomy_cache(
-        self, record_otu, cache_example_path, empty_cache_path
-    ):
-        fresh_cache = NCBICache(empty_cache_path)
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+def test_cache_taxonomy_load(record_otu, cache_scratch_path):
+    scratch_cache = NCBICache(cache_scratch_path)
 
-        records = get_test_record_set(record_otu, cache_example_path)
+    records = scratch_cache.load_records(record_otu)
 
-        fresh_cache.cache_records(records, filestem=record_otu)
+    assert type(records) is list
 
-        assert (fresh_cache.nuccore / f"{record_otu}.json").exists()
+    for record in records:
+        assert type(record) is dict
+
+
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+def test_cache_taxonomy_cache(record_otu, cache_example_path, empty_cache_path):
+    fresh_cache = NCBICache(empty_cache_path)
+
+    records = get_test_record_set(record_otu, cache_example_path)
+
+    fresh_cache.cache_records(records, filestem=record_otu)
+
+    assert (fresh_cache.nuccore / f"{record_otu}.json").exists()
