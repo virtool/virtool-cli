@@ -13,11 +13,11 @@ maintainers = [
 description = "CLI Tool for working with Virtool data"
 license = "MIT"
 classifiers = [
-    "Programming Language :: Python :: 3.10"
+    "Programming Language :: Python :: 3.12"
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 aiofiles = "^23.1"
 aiohttp = "^3.8"
 arrow = "^1.1"
