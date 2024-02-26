@@ -155,13 +155,15 @@ class SourceParser(FeatureParser):
     def get_segment(self) -> str:
         return self.dictionary.get("segment", "")
 
-    def get_taxid(self) -> int:
+    def get_taxid(self) -> int | None:
         value = self.dictionary["db_xref"]
 
         key, taxid = value.split(":")
 
         if key == "taxon":
             return taxid
+
+        return None
 
     def get_source_type(self) -> NCBISourceType:
         for key in self.dictionary:
