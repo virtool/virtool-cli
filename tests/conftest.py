@@ -44,3 +44,16 @@ def scratch_path(src_test_path: Path, tmp_path: Path):
     shutil.copytree(src_test_path, path / "src", dirs_exist_ok=True)
 
     return path
+
+
+@pytest.fixture()
+def cache_example_path(test_files_path: Path):
+    return test_files_path / "cache_test"
+
+
+@pytest.fixture()
+def cache_scratch_path(cache_example_path, tmp_path: Path):
+    path = tmp_path / "cache_scratch"
+    shutil.copytree(cache_example_path, path)
+
+    return path

@@ -20,9 +20,12 @@ class NCBICache:
         self.taxonomy.mkdir(exist_ok=True)
 
     def clear(self):
-        """Clear the cache."""
+        """Clear and reset the cache."""
         shutil.rmtree(self.path)
         self.path.mkdir()
+
+        self.nuccore.mkdir()
+        self.taxonomy.mkdir()
 
     def cache_records(self, records: list[dict], filestem: str):
         """Add a list of NCBI Nucleotide records to the cache."""
