@@ -103,7 +103,9 @@ class FeatureParser:
         self.dictionary = self.to_dict(data)
 
     def read(self):
-        pass
+        """
+        Placeholder. One-step parse into an object.
+        """
 
     @staticmethod
     def to_dict(feature: dict) -> dict:
@@ -222,9 +224,6 @@ class TaxonomyParser:
 class CDSParser(FeatureParser):
     def __init__(self, data):
         super().__init__(data)
-
-    def read(self):
-        pass
 
     def get_codon_start(self):
         return self.dictionary["codon_start"]

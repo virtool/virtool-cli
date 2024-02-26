@@ -71,6 +71,10 @@ class TestRecordParser:
 
             primary, source = record_parser.read()
 
+            assert type(primary) is NCBIAccession
+
+            assert type(source) is NCBISource
+
             assert type(primary.accession) is str
 
             assert type(source.taxid) is int
