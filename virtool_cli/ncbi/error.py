@@ -10,3 +10,9 @@ class IncompleteRecordsError(NCBIClientError):
             self.data = []
         else:
             self.data = data
+
+
+class NCBIParseError(Exception):
+    def __init__(self, keys, message: str = ""):
+        self.keys = list(keys)
+        self.message = message

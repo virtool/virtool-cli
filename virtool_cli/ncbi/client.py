@@ -5,7 +5,9 @@ from structlog import get_logger
 from urllib.parse import quote_plus
 from urllib.error import HTTPError
 
-from virtool_cli.ncbi.error import IncompleteRecordsError
+from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
+from virtool_cli.ncbi.utils import parse_nuccore
+from virtool_cli.ncbi.cache import NCBICache
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -16,6 +18,55 @@ base_logger = get_logger()
 
 
 class NCBIClient:
+    def __init__(self, repo):
+        self.repo = repo
+        self.cache = NCBICache(repo.path / ".cache/ncbi")
+
+    async def fetch_from_otu_id(self, otu_id: str, use_cached=True):
+        logger = base_logger.bind(otu_id=otu_id)
+
+        taxon_id = self.repo.get_otu_by_id(otu_id).taxid
+
+        records = await self._retrieve_records(otu_id, taxon_id, use_cached)
+
+        for record in records:
+            try:
+                ncbi_sequence, ncbi_source = parse_nuccore(record)
+            except NCBIParseError as e:
+                logger.error(f"Parse failure: {e}")
+                continue
+
+            print(ncbi_sequence)
+            print(ncbi_source)
+
+    async def fetch_from_taxon_id(self, taxon_id: int, use_cached=True):
+        logger = base_logger.bind(taxid=taxon_id)
+
+        otu_id = self.repo.maps.taxid_to_otu_id[taxon_id]
+
+        records = await self._retrieve_records(otu_id, taxon_id, use_cached)
+
+        for record in records:
+            try:
+                ncbi_sequence, ncbi_source = parse_nuccore(record)
+            except NCBIParseError as e:
+                logger.error(f"Parse failure: {e}")
+                continue
+
+            print(ncbi_sequence)
+            print(ncbi_source)
+
+    async def _retrieve_records(self, otu_id: str, taxon_id: int, use_cached=True):
+        records = None
+        if use_cached:
+            records = self.cache.load_records(otu_id)
+
+        if not records:
+            accessions = await self.link_accessions(taxon_id)
+            records = await self.fetch_accessions(accessions)
+
+        return records
+
     @staticmethod
     async def link_accessions(taxon_id: int) -> list:
         """
