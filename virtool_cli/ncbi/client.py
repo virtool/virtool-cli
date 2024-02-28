@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from collections import namedtuple
 from Bio import Entrez
 
 from structlog import get_logger
@@ -7,7 +8,7 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
-from virtool_cli.ncbi.utils import parse_nuccore
+from virtool_cli.ncbi.utils import parse_nuccore, NuccorePacket
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.repo.cls import Repo, RepoOTU
 
@@ -28,30 +29,72 @@ class NCBIClient:
         """Initialize NCBIClient from a repo path"""
         return NCBIClient(repo.path / ".cache/ncbi")
 
-    async def fetch_taxon_records(self, taxon_id: int) -> list[dict]:
-        """Fetch all records linked to a taxonomy record.
-
-        :param taxon_id: Taxonomy UID
-        :return: A list of records
+    async def procure_from_taxonomy(
+        self, taxon_id: int, use_cached: bool = True
+    ) -> list[NuccorePacket]:
         """
-        accessions = await self.link_accessions(taxon_id)
+        Fetch all linked accessions for an organism in NCBI Taxonomy
+        and return results as a set of NCBIAccession and NCBISource
 
-        base_logger.debug(
-            "Fetching accessions...", taxid=taxon_id, accessions=accessions
-        )
+        :param taxon_id: NCBI Taxonomy UID as an integer
+        :param use_cached: Cache use flag
+        """
 
-        records = await self.fetch_accessions(accessions)
+        logger = base_logger.bind(taxid=taxon_id)
+        if use_cached:
+            records = self.cache.load_records(str(taxon_id))
+            if records:
+                logger.info("Cached records found", n_records=len(records))
 
-        return records
+        records = await NCBIClient.fetch_taxon_records(taxon_id)
 
-    async def fetch_otu_updates(self, otu: RepoOTU, use_cached: bool = True):
-        """Fetch updates for an extant OTU.git
+        return NCBIClient.process_records(records)
+
+    async def procure_updates(
+        self, otu: RepoOTU, use_cached: bool = True
+    ) -> list[NuccorePacket]:
+        """
+        Fetch updates for an extant OTU and return results
+        as a set of NCBIAccession and NCBISource
         Excludes blocked accessions automatically.
 
         :param otu: OTU data from repo
         :param use_cached: Cache use flag
         """
         logger = base_logger.bind(otu_id=otu.id)
+
+        if use_cached:
+            records = self.cache.load_records(otu.id)
+            if records:
+                logger.info("Cached records found", n_records=len(records))
+
+                return NCBIClient.process_records(records)
+
+        taxid_accessions = await NCBIClient.link_accessions(otu.taxid)
+
+        new_accessions = NCBIClient.filter_accessions(otu, taxid_accessions)
+
+        logger.debug("Fetching accessions...", new_accessions=new_accessions)
+
+        if new_accessions:
+            records = await NCBIClient.fetch_accessions(list(new_accessions))
+
+            return NCBIClient.process_records(records)
+
+    async def cache_from_taxonomy(self, taxon_id: int):
+        records = await NCBIClient.fetch_taxon_records(taxon_id)
+
+        self.cache.cache_records(records, str(taxon_id))
+
+    async def cache_otu_updates(self, otu: RepoOTU, use_cached: bool = True):
+        """Fetch and cache updates for an extant OTU.
+        Excludes blocked accessions automatically.
+
+        :param otu: OTU data from repo
+        :param use_cached: Cache use flag
+        """
+        logger = base_logger.bind(otu_id=otu.id)
+
         if use_cached:
             records = self.cache.load_records(otu.id)
             if records:
@@ -67,7 +110,26 @@ class NCBIClient:
         if new_accessions:
             records = await NCBIClient.fetch_accessions(list(new_accessions))
 
-            return records
+            self.cache.cache_records(records, otu.id)
+
+            logger.debug("Cached records", n_records=len(records))
+
+    @staticmethod
+    async def fetch_taxon_records(taxon_id: int) -> list[dict]:
+        """Fetch all records linked to a taxonomy record.
+
+        :param taxon_id: Taxonomy UID
+        :return: A list of records
+        """
+        accessions = await NCBIClient.link_accessions(taxon_id)
+
+        base_logger.debug(
+            "Fetching accessions...", taxid=taxon_id, accessions=accessions
+        )
+
+        records = await NCBIClient.fetch_accessions(accessions)
+
+        return records
 
     @staticmethod
     async def fetch_accessions(accessions: list[str]) -> list[dict]:
@@ -113,6 +175,19 @@ class NCBIClient:
             return record[0]
 
     @staticmethod
+    def process_records(records: list[dict]):
+        clean_records = []
+
+        for record in records:
+            try:
+                clean_records.append(parse_nuccore(record))
+
+            except NCBIParseError as e:
+                base_logger.error(f"Parse failure: {e}")
+
+        return clean_records
+
+    @staticmethod
     def process_record(record: dict):
         try:
             return parse_nuccore(record)
@@ -128,19 +203,6 @@ class NCBIClient:
         blocked_set = set(otu.blocked_accessions)
 
         return list(blocked_set.difference(accession_set))
-
-    @staticmethod
-    def process_records(records: list[dict]):
-        clean_records = []
-
-        for record in records:
-            try:
-                clean_records.append(parse_nuccore(record))
-
-            except NCBIParseError as e:
-                base_logger.error(f"Parse failure: {e}")
-
-        return clean_records
 
     @staticmethod
     async def link_accessions(taxon_id: int) -> list:
@@ -261,13 +323,14 @@ class NCBIClient:
 
         return taxonomy["Rank"]
 
-    async def fetch_species_taxid(self, taxid: int) -> int | None:
+    @staticmethod
+    async def fetch_species_taxid(taxid: int) -> int | None:
         """Gets the species taxid for the given lower-rank taxid.
 
         :param taxid: NCBI Taxonomy UID
         :return: The NCBI Taxonomy ID of the OTU's species
         """
-        taxonomy = await self._fetch_taxon_long(taxid)
+        taxonomy = await NCBIClient._fetch_taxon_long(taxid)
 
         if taxonomy["Rank"] == "species":
             return int(taxonomy["TaxId"])
