@@ -45,7 +45,7 @@ class NCBIClient:
         return records
 
     async def fetch_otu_updates(self, otu: RepoOTU, use_cached: bool = True):
-        """Fetch updates for an extant OTU.
+        """Fetch updates for an extant OTU.git
         Excludes blocked accessions automatically.
 
         :param otu: OTU data from repo
@@ -58,74 +58,16 @@ class NCBIClient:
                 logger.info("Cached records found", n_records=len(records))
                 return records
 
-        taxid_accessions = await self.link_accessions(otu.taxid)
+        taxid_accessions = await NCBIClient.link_accessions(otu.taxid)
 
-        new_accessions = self.filter_accessions(otu, taxid_accessions)
+        new_accessions = NCBIClient.filter_accessions(otu, taxid_accessions)
 
         logger.debug("Fetching accessions...", new_accessions=new_accessions)
 
         if new_accessions:
-            records = await self.fetch_accessions(list(new_accessions))
+            records = await NCBIClient.fetch_accessions(list(new_accessions))
 
             return records
-
-    @staticmethod
-    def filter_accessions(otu: RepoOTU, accessions: list | set) -> list:
-        """
-        Takes a list of accessions and removes blocked accessions
-        """
-        accession_set = set(accessions)
-        blocked_set = set(otu.blocked_accessions)
-
-        return list(blocked_set.difference(accession_set))
-
-    @staticmethod
-    def process_record(record: dict):
-        try:
-            return parse_nuccore(record)
-        except NCBIParseError as e:
-            base_logger.error(f"Parse failure: {e}")
-
-    @staticmethod
-    def process_records(records: list[dict]):
-        clean_records = []
-
-        for record in records:
-            try:
-                clean_records.append(parse_nuccore(record))
-
-            except NCBIParseError as e:
-                base_logger.error(f"Parse failure: {e}")
-
-        return clean_records
-
-    @staticmethod
-    async def link_accessions(taxon_id: int) -> list:
-        """
-        Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
-        and returns the results as a list.
-
-        :param taxon_id: A NCBI Taxonomy ID
-        :return: A list of accessions linked to the Taxon Id
-        """
-        elink_results = Entrez.read(
-            Entrez.elink(
-                dbfrom="taxonomy",
-                db="nuccore",
-                id=str(taxon_id),
-                idtype="acc",
-            )
-        )
-
-        if not elink_results:
-            return []
-
-        # Discards unneeded tables and formats needed table as a list
-        for link_set_db in elink_results[0]["LinkSetDb"]:
-            if link_set_db["LinkName"] == "taxonomy_nuccore":
-                id_table = link_set_db["Link"]
-
-                return [keypair["Id"] for keypair in id_table]
 
     @staticmethod
     async def fetch_accessions(accessions: list[str]) -> list[dict]:
@@ -169,6 +111,64 @@ class NCBIClient:
 
         if record:
             return record[0]
+
+    @staticmethod
+    def process_record(record: dict):
+        try:
+            return parse_nuccore(record)
+        except NCBIParseError as e:
+            base_logger.error(f"Parse failure: {e}")
+
+    @staticmethod
+    def filter_accessions(otu: RepoOTU, accessions: list | set) -> list:
+        """
+        Takes a list of accessions and removes blocked accessions
+        """
+        accession_set = set(accessions)
+        blocked_set = set(otu.blocked_accessions)
+
+        return list(blocked_set.difference(accession_set))
+
+    @staticmethod
+    def process_records(records: list[dict]):
+        clean_records = []
+
+        for record in records:
+            try:
+                clean_records.append(parse_nuccore(record))
+
+            except NCBIParseError as e:
+                base_logger.error(f"Parse failure: {e}")
+
+        return clean_records
+
+    @staticmethod
+    async def link_accessions(taxon_id: int) -> list:
+        """
+        Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
+        and returns the results as a list.
+
+        :param taxon_id: A NCBI Taxonomy ID
+        :return: A list of accessions linked to the Taxon Id
+        """
+        elink_results = Entrez.read(
+            Entrez.elink(
+                dbfrom="taxonomy",
+                db="nuccore",
+                id=str(taxon_id),
+                idtype="acc",
+            )
+        )
+
+        if not elink_results:
+            return []
+
+        # Discards unneeded tables and formats needed table as a list
+        for link_set_db in elink_results[0]["LinkSetDb"]:
+            if link_set_db["LinkName"] == "taxonomy_nuccore":
+                id_table = link_set_db["Link"]
+
+                return [keypair["Id"] for keypair in id_table]
 
     @staticmethod
     def _fetch_serialized_records(accessions: list) -> list[dict] | None:
