@@ -28,12 +28,12 @@ def parse_nuccore(raw: dict) -> NuccorePacket:
         comment=raw.get(GBSeq.COMMENT, ""),
     )
 
-    source = get_source(feature_table_to_dict(get_source_table(raw)))
+    source = parse_source(feature_table_to_dict(get_source_table(raw)))
 
     return NuccorePacket(sequence, source)
 
 
-def get_source(source_dict: dict) -> NCBISource:
+def parse_source(source_dict: dict) -> NCBISource:
     try:
         source_type = get_source_type(source_dict)
         source_name = source_dict[source_type]
@@ -48,7 +48,7 @@ def get_source(source_dict: dict) -> NCBISource:
         name=source_name,
         host=source_dict.get("host", ""),
         segment=source_dict.get("segment", ""),
-        taxid=get_taxid(source_dict),
+        taxid=parse_taxid(source_dict),
     )
 
 
@@ -101,7 +101,7 @@ def feature_table_to_dict(feature: dict) -> dict:
     return qualifier_dict
 
 
-def get_taxid(source_feature) -> int | None:
+def parse_taxid(source_feature) -> int | None:
     value = source_feature["db_xref"]
 
     key, taxid = value.split(":")
