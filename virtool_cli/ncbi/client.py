@@ -8,6 +8,7 @@ from urllib.error import HTTPError
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
 from virtool_cli.ncbi.utils import parse_nuccore
 from virtool_cli.ncbi.cache import NCBICache
+from virtool_cli.repo.cls import Repo, RepoOTU
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -18,54 +19,49 @@ base_logger = get_logger()
 
 
 class NCBIClient:
-    def __init__(self, repo):
+    def __init__(self, repo: Repo):
         self.repo = repo
         self.cache = NCBICache(repo.path / ".cache/ncbi")
 
     async def fetch_from_otu_id(self, otu_id: str, use_cached=True):
-        logger = base_logger.bind(otu_id=otu_id)
+        otu = self.repo.get_otu_by_id(otu_id)
 
-        taxon_id = self.repo.get_otu_by_id(otu_id).taxid
-
-        records = await self._retrieve_records(otu_id, taxon_id, use_cached)
+        records = await self._retrieve_records(otu, use_cached)
 
         for record in records:
-            try:
-                ncbi_sequence, ncbi_source = parse_nuccore(record)
-            except NCBIParseError as e:
-                logger.error(f"Parse failure: {e}")
-                continue
-
-            print(ncbi_sequence)
-            print(ncbi_source)
+            self.process_record(record)
 
     async def fetch_from_taxon_id(self, taxon_id: int, use_cached=True):
-        logger = base_logger.bind(taxid=taxon_id)
-
         otu_id = self.repo.maps.taxid_to_otu_id[taxon_id]
 
-        records = await self._retrieve_records(otu_id, taxon_id, use_cached)
+        await self.fetch_from_otu_id(otu_id, use_cached)
 
-        for record in records:
-            try:
-                ncbi_sequence, ncbi_source = parse_nuccore(record)
-            except NCBIParseError as e:
-                logger.error(f"Parse failure: {e}")
-                continue
+    async def _retrieve_records(self, otu: RepoOTU, use_cached=True) -> list[dict]:
+        records = []
+        if use_cached:
+            records = self.cache.load_records(otu.id)
+
+        if not records:
+            taxid_accessions = set(await self.link_accessions(otu.taxid))
+
+            new_accessions = set(otu.blocked_accessions()).difference(taxid_accessions)
+
+            if new_accessions:
+                records = await self.fetch_accessions(list(new_accessions))
+
+        return records
+
+    @staticmethod
+    def process_record(record: dict):
+        logger = base_logger
+
+        try:
+            ncbi_sequence, ncbi_source = parse_nuccore(record)
 
             print(ncbi_sequence)
             print(ncbi_source)
-
-    async def _retrieve_records(self, otu_id: str, taxon_id: int, use_cached=True):
-        records = None
-        if use_cached:
-            records = self.cache.load_records(otu_id)
-
-        if not records:
-            accessions = await self.link_accessions(taxon_id)
-            records = await self.fetch_accessions(accessions)
-
-        return records
+        except NCBIParseError as e:
+            logger.error(f"Parse failure: {e}")
 
     @staticmethod
     async def link_accessions(taxon_id: int) -> list:
@@ -95,7 +91,8 @@ class NCBIClient:
 
                 return [keypair["Id"] for keypair in id_table]
 
-    async def fetch_accessions(self, accessions: list[str]) -> list[dict]:
+    @staticmethod
+    async def fetch_accessions(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, download the corresponding records
         from GenBank as XML and return the parsed records
@@ -109,7 +106,7 @@ class NCBIClient:
         logger = base_logger.bind(accessions=accessions)
 
         try:
-            records = self._fetch_serialized_records(accessions)
+            records = NCBIClient._fetch_serialized_records(accessions)
             return records
 
         except IncompleteRecordsError as e:
@@ -127,11 +124,12 @@ class NCBIClient:
 
         return []
 
-    async def fetch_accession(self, accession: str) -> dict:
+    @staticmethod
+    async def fetch_accession(accession: str) -> dict:
         """
         A wrapper for the fetching of a single accession
         """
-        record = await self.fetch_accessions([accession])
+        record = await NCBIClient.fetch_accessions([accession])
 
         if record:
             return record[0]
@@ -158,10 +156,6 @@ class NCBIClient:
 
         raise IncompleteRecordsError("Bad accession in list", data=records)
 
-    async def fetch_taxonomy(self, taxon_id: int) -> dict:
-        """Requests a taxonomy record from NCBI Taxonomy"""
-        return await self._fetch_taxon_long(taxon_id)
-
     @staticmethod
     def _fetch_raw_records(accessions: list) -> str:
         """
@@ -177,6 +171,10 @@ class NCBIClient:
             raw_records = f.read()
 
         return raw_records
+
+    async def fetch_taxonomy(self, taxon_id: int) -> dict:
+        """Requests a taxonomy record from NCBI Taxonomy"""
+        return await self._fetch_taxon_long(taxon_id)
 
     @staticmethod
     async def fetch_taxonomy_id_by_name(name: str) -> int | None:
