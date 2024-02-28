@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from Bio import Entrez
 
 from structlog import get_logger
@@ -19,81 +20,84 @@ base_logger = get_logger()
 
 
 class NCBIClient:
-    def __init__(self, repo: Repo):
-        self.repo = repo
-        self.cache = NCBICache(repo.path / ".cache/ncbi")
+    def __init__(self, cache_path: Path):
+        self.cache = NCBICache(cache_path)
+
+    @classmethod
+    def for_repo(cls, repo: Repo):
+        """Initialize NCBIClient from a repo path"""
+        return NCBIClient(repo.path / ".cache/ncbi")
+
+    async def fetch_taxon_records(self, taxon_id: int) -> list[dict]:
+        """Fetch all records linked to a taxonomy record.
+
+        :param taxon_id: Taxonomy UID
+        :return: A list of records
+        """
+        accessions = await self.link_accessions(taxon_id)
+
+        base_logger.debug(
+            "Fetching accessions...", taxid=taxon_id, accessions=accessions
+        )
+
+        records = await self.fetch_accessions(accessions)
+
+        return records
 
     async def fetch_otu_updates(self, otu: RepoOTU, use_cached: bool = True):
-        """Fetch OTU updates"""
-        records = []
-        if use_cached:
-            records = self.cache.load_records(str(otu.taxid))
+        """Fetch updates for an extant OTU.
+        Excludes blocked accessions automatically.
 
-        if not records:
-            taxid_accessions = await self.link_accessions(otu.taxid)
-
-            new_accessions = set(otu.blocked_accessions()).difference(taxid_accessions)
-            if new_accessions:
-                records = await self.fetch_accessions(list(new_accessions))
-
-        return records
-
-    async def fetch_taxon_records(
-        self, taxon_id: int, use_cached: bool = True
-    ) -> list[dict]:
-        """Fetch all records linked to a taxonomy record."""
-        records = []
-        if use_cached:
-            records = self.cache.load_records(str(taxon_id))
-
-        if not records:
-            taxid_accessions = await self.link_accessions(taxon_id)
-
-            records = await self.fetch_accessions(taxid_accessions)
-
-        return records
-
-    async def fetch_from_otu_id(self, otu_id: str, use_cached: bool = True):
-        otu = self.repo.get_otu_by_id(otu_id)
-
-        records = await self._retrieve_records(otu, use_cached)
-
-        for record in records:
-            self.process_record(record)
-
-    async def fetch_from_taxon_id(self, taxon_id: int, use_cached: bool = True):
-        otu_id = self.repo.maps.taxid_to_otu_id[taxon_id]
-
-        await self.fetch_from_otu_id(otu_id, use_cached)
-
-    async def _retrieve_records(
-        self, otu: RepoOTU, use_cached: bool = True
-    ) -> list[dict]:
-        records = []
+        :param otu: OTU data from repo
+        :param use_cached: Cache use flag
+        """
+        logger = base_logger.bind(otu_id=otu.id)
         if use_cached:
             records = self.cache.load_records(otu.id)
+            if records:
+                logger.info("Cached records found", n_records=len(records))
+                return records
 
-        if not records:
-            taxid_accessions = set(await self.link_accessions(otu.taxid))
+        taxid_accessions = await self.link_accessions(otu.taxid)
 
-            new_accessions = set(otu.blocked_accessions()).difference(taxid_accessions)
+        new_accessions = self.filter_accessions(otu, taxid_accessions)
 
-            if new_accessions:
-                records = await self.fetch_accessions(list(new_accessions))
+        logger.debug("Fetching accessions...", new_accessions=new_accessions)
 
-        return records
+        if new_accessions:
+            records = await self.fetch_accessions(list(new_accessions))
+
+            return records
+
+    @staticmethod
+    def filter_accessions(otu: RepoOTU, accessions: list | set) -> list:
+        """
+        Takes a list of accessions and removes blocked accessions
+        """
+        accession_set = set(accessions)
+        blocked_set = set(otu.blocked_accessions)
+
+        return list(blocked_set.difference(accession_set))
 
     @staticmethod
     def process_record(record: dict):
-        logger = base_logger
-
         try:
-            ncbi_sequence, ncbi_source = parse_nuccore(record)
-
-            print(ncbi_sequence)
-            print(ncbi_source)
+            return parse_nuccore(record)
         except NCBIParseError as e:
-            logger.error(f"Parse failure: {e}")
+            base_logger.error(f"Parse failure: {e}")
+
+    @staticmethod
+    def process_records(records: list[dict]):
+        clean_records = []
+
+        for record in records:
+            try:
+                clean_records.append(parse_nuccore(record))
+
+            except NCBIParseError as e:
+                base_logger.error(f"Parse failure: {e}")
+
+        return clean_records
 
     @staticmethod
     async def link_accessions(taxon_id: int) -> list:
@@ -204,9 +208,10 @@ class NCBIClient:
 
         return raw_records
 
-    async def fetch_taxonomy(self, taxon_id: int) -> dict:
+    @staticmethod
+    async def fetch_taxonomy(taxon_id: int) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""
-        return await self._fetch_taxon_long(taxon_id)
+        return await NCBIClient._fetch_taxon_long(taxon_id)
 
     @staticmethod
     async def fetch_taxonomy_id_by_name(name: str) -> int | None:
@@ -250,8 +255,9 @@ class NCBIClient:
 
         return record[0]
 
-    async def fetch_taxon_rank(self, taxon_id: int) -> str:
-        taxonomy = await self._fetch_taxon_docsum(taxon_id)
+    @staticmethod
+    async def fetch_taxon_rank(taxon_id: int) -> str:
+        taxonomy = await NCBIClient._fetch_taxon_docsum(taxon_id)
 
         return taxonomy["Rank"]
 

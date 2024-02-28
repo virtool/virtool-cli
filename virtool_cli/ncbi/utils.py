@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import StrEnum
 
 from virtool_cli.ncbi.error import NCBIParseError
@@ -13,7 +14,13 @@ class GBSeq(StrEnum):
     FEATURE_TABLE = "GBSeq_feature-table"
 
 
-def parse_nuccore(raw: dict) -> tuple[NCBIAccession, NCBISource]:
+@dataclass
+class NuccorePacket:
+    sequence: NCBIAccession
+    source: NCBISource
+
+
+def parse_nuccore(raw: dict) -> NuccorePacket:
     sequence = NCBIAccession(
         accession=raw[GBSeq.ACCESSION],
         definition=raw[GBSeq.DEFINITION],
@@ -23,7 +30,7 @@ def parse_nuccore(raw: dict) -> tuple[NCBIAccession, NCBISource]:
 
     source = get_source(feature_table_to_dict(get_source_table(raw)))
 
-    return sequence, source
+    return NuccorePacket(sequence, source)
 
 
 def get_source(source_dict: dict) -> NCBISource:
@@ -78,8 +85,6 @@ def get_feature_table_keys(raw):
 
 def feature_table_to_dict(feature: dict) -> dict:
     """Converts the feature table format to a dict"""
-    print(feature)
-
     qualifier_dict = {}
     for qualifier in feature["GBFeature_quals"]:
         qual_name = qualifier["GBQualifier_name"]
