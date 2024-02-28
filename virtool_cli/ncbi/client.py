@@ -23,7 +23,37 @@ class NCBIClient:
         self.repo = repo
         self.cache = NCBICache(repo.path / ".cache/ncbi")
 
-    async def fetch_from_otu_id(self, otu_id: str, use_cached=True):
+    async def fetch_otu_updates(self, otu: RepoOTU, use_cached: bool = True):
+        """Fetch OTU updates"""
+        records = []
+        if use_cached:
+            records = self.cache.load_records(str(otu.taxid))
+
+        if not records:
+            taxid_accessions = await self.link_accessions(otu.taxid)
+
+            new_accessions = set(otu.blocked_accessions()).difference(taxid_accessions)
+            if new_accessions:
+                records = await self.fetch_accessions(list(new_accessions))
+
+        return records
+
+    async def fetch_taxon_records(
+        self, taxon_id: int, use_cached: bool = True
+    ) -> list[dict]:
+        """Fetch all records linked to a taxonomy record."""
+        records = []
+        if use_cached:
+            records = self.cache.load_records(str(taxon_id))
+
+        if not records:
+            taxid_accessions = await self.link_accessions(taxon_id)
+
+            records = await self.fetch_accessions(taxid_accessions)
+
+        return records
+
+    async def fetch_from_otu_id(self, otu_id: str, use_cached: bool = True):
         otu = self.repo.get_otu_by_id(otu_id)
 
         records = await self._retrieve_records(otu, use_cached)
@@ -31,12 +61,14 @@ class NCBIClient:
         for record in records:
             self.process_record(record)
 
-    async def fetch_from_taxon_id(self, taxon_id: int, use_cached=True):
+    async def fetch_from_taxon_id(self, taxon_id: int, use_cached: bool = True):
         otu_id = self.repo.maps.taxid_to_otu_id[taxon_id]
 
         await self.fetch_from_otu_id(otu_id, use_cached)
 
-    async def _retrieve_records(self, otu: RepoOTU, use_cached=True) -> list[dict]:
+    async def _retrieve_records(
+        self, otu: RepoOTU, use_cached: bool = True
+    ) -> list[dict]:
         records = []
         if use_cached:
             records = self.cache.load_records(otu.id)
