@@ -36,7 +36,7 @@ def parse_nuccore(raw: dict) -> NuccorePacket:
 def get_source(source_dict: dict) -> NCBISource:
     try:
         source_type = get_source_type(source_dict)
-        source_name = source_dict[source_type.value]
+        source_name = source_dict[source_type]
     except KeyError:
         raise NCBIParseError(
             keys=source_dict.keys,
@@ -52,15 +52,22 @@ def get_source(source_dict: dict) -> NCBISource:
     )
 
 
-def get_source_type(source_feature) -> NCBISourceType:
-    for key in source_feature:
-        try:
-            return NCBISourceType(key)
-        except ValueError:
-            continue
+def get_source_type(source_qualifiers: dict) -> NCBISourceType:
+    """Return a NCBISourceType, prioritizing ISOLATE over other options."""
+    if NCBISourceType.ISOLATE in source_qualifiers:
+        return NCBISourceType.ISOLATE
+
+    if NCBISourceType.STRAIN in source_qualifiers:
+        return NCBISourceType.STRAIN
+
+    if NCBISourceType.CLONE in source_qualifiers:
+        return NCBISourceType.CLONE
+
+    if NCBISourceType.GENOTYPE in source_qualifiers:
+        return NCBISourceType.GENOTYPE
 
     raise NCBIParseError(
-        keys=source_feature.keys, message="Missing source type qualifier"
+        keys=list(source_qualifiers.keys()), message="Missing source type qualifier"
     )
 
 
