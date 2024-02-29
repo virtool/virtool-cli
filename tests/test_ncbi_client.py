@@ -1,8 +1,7 @@
 import pytest
 from pathlib import Path
 
-from virtool_cli.ncbi.client import NCBIClient
-from virtool_cli.ncbi.utils import NuccorePacket
+from virtool_cli.ncbi.client import NCBIClient, NuccorePacket
 from virtool_cli.ncbi.model import NCBIAccession, NCBISource, NCBITaxonomy, NCBIRank
 
 
@@ -30,9 +29,7 @@ class TestClientMain:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxon_id", [1016856])
     async def test_procure_from_taxonomy(self, taxon_id, test_client):
-        clean_records = await test_client.procure_from_taxonomy(
-            taxon_id, use_cached=False
-        )
+        clean_records = await test_client.procure_from_taxid(taxon_id, use_cached=False)
 
         assert type(clean_records) is list
 

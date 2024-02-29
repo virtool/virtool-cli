@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from collections import namedtuple
+from enum import StrEnum
 from Bio import Entrez
 
 from structlog import get_logger
@@ -8,7 +9,7 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
-from virtool_cli.ncbi.utils import parse_nuccore, NuccorePacket
+from virtool_cli.ncbi.model import NCBIAccession, NCBISource, NCBISourceType
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.repo.cls import Repo, RepoOTU
 
@@ -20,6 +21,9 @@ DEFAULT_INTERVAL = 0.001
 base_logger = get_logger()
 
 
+NuccorePacket = namedtuple("NuccorePacket", ["sequence", "source"])
+
+
 class NCBIClient:
     def __init__(self, cache_path: Path):
         self.cache = NCBICache(cache_path)
@@ -29,24 +33,24 @@ class NCBIClient:
         """Initialize NCBIClient from a repo path"""
         return NCBIClient(repo.path / ".cache/ncbi")
 
-    async def procure_from_taxonomy(
-        self, taxon_id: int, use_cached: bool = True
+    async def procure_from_taxid(
+        self, taxid: int, use_cached: bool = True
     ) -> list[NuccorePacket]:
         """
         Fetch all linked accessions for an organism in NCBI Taxonomy
         and return results as a set of NCBIAccession and NCBISource
 
-        :param taxon_id: NCBI Taxonomy UID as an integer
+        :param taxid: NCBI Taxonomy UID as an integer
         :param use_cached: Cache use flag
         """
 
-        logger = base_logger.bind(taxid=taxon_id)
+        logger = base_logger.bind(taxid=taxid)
         if use_cached:
-            records = self.cache.load_records(str(taxon_id))
+            records = self.cache.load_records(str(taxid))
             if records:
                 logger.info("Cached records found", n_records=len(records))
 
-        records = await NCBIClient.fetch_taxon_records(taxon_id)
+        records = await NCBIClient.fetch_taxon_records(taxid)
 
         return NCBIClient.process_records(records)
 
@@ -81,10 +85,10 @@ class NCBIClient:
 
             return NCBIClient.process_records(records)
 
-    async def cache_from_taxonomy(self, taxon_id: int):
-        records = await NCBIClient.fetch_taxon_records(taxon_id)
+    async def cache_from_taxid(self, taxid: int):
+        records = await NCBIClient.fetch_taxon_records(taxid)
 
-        self.cache.cache_records(records, str(taxon_id))
+        self.cache.cache_records(records, str(taxid))
 
     async def cache_otu_updates(self, otu: RepoOTU, use_cached: bool = True):
         """Fetch and cache updates for an extant OTU.
@@ -115,17 +119,15 @@ class NCBIClient:
             logger.debug("Cached records", n_records=len(records))
 
     @staticmethod
-    async def fetch_taxon_records(taxon_id: int) -> list[dict]:
+    async def fetch_taxon_records(taxid: int) -> list[dict]:
         """Fetch all records linked to a taxonomy record.
 
-        :param taxon_id: Taxonomy UID
+        :param taxid: Taxonomy UID
         :return: A list of records
         """
-        accessions = await NCBIClient.link_accessions(taxon_id)
+        accessions = await NCBIClient.link_accessions(taxid)
 
-        base_logger.debug(
-            "Fetching accessions...", taxid=taxon_id, accessions=accessions
-        )
+        base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
 
         records = await NCBIClient.fetch_accessions(accessions)
 
@@ -357,3 +359,101 @@ class NCBIClient:
             return record["CorrectedQuery"]
 
         return name
+
+
+class GBSeq(StrEnum):
+    ACCESSION = "GBSeq_accession-version"
+    DEFINITION = "GBSeq_definition"
+    SEQUENCE = "GBSeq_sequence"
+    LENGTH = "GBSeq_length"
+    COMMENT = "GBSeq_comment"
+    FEATURE_TABLE = "GBSeq_feature-table"
+
+
+def parse_nuccore(raw: dict) -> NuccorePacket:
+    sequence = NCBIAccession(
+        accession=raw[GBSeq.ACCESSION],
+        definition=raw[GBSeq.DEFINITION],
+        sequence=raw[GBSeq.SEQUENCE],
+        comment=raw.get(GBSeq.COMMENT, ""),
+    )
+
+    source = parse_source(feature_table_to_dict(get_source_table(raw)))
+
+    return NuccorePacket(sequence, source)
+
+
+def parse_source(source_dict: dict) -> NCBISource:
+    try:
+        source_type = get_source_type(source_dict)
+        source_name = source_dict[source_type]
+    except KeyError:
+        raise NCBIParseError(
+            keys=source_dict.keys,
+            message="Not enough data in this source table",
+        )
+
+    return NCBISource(
+        type=source_type,
+        name=source_name,
+        host=source_dict.get("host", ""),
+        segment=source_dict.get("segment", ""),
+        taxid=parse_taxid(source_dict),
+    )
+
+
+def get_source_type(source_qualifiers: dict) -> NCBISourceType:
+    """Return a NCBISourceType, prioritizing ISOLATE over other options."""
+    if NCBISourceType.ISOLATE in source_qualifiers:
+        return NCBISourceType.ISOLATE
+
+    if NCBISourceType.STRAIN in source_qualifiers:
+        return NCBISourceType.STRAIN
+
+    if NCBISourceType.CLONE in source_qualifiers:
+        return NCBISourceType.CLONE
+
+    if NCBISourceType.GENOTYPE in source_qualifiers:
+        return NCBISourceType.GENOTYPE
+
+    raise NCBIParseError(
+        keys=list(source_qualifiers.keys()), message="Missing source type qualifier"
+    )
+
+
+def get_source_table(raw) -> dict | None:
+    for feature in raw[GBSeq.FEATURE_TABLE]:
+        if feature["GBFeature_key"] == "source":
+            return feature
+
+    raise NCBIParseError(
+        keys=get_feature_table_keys(raw),
+        message="Feature table does not contain source data",
+    )
+
+
+def get_feature_table_keys(raw):
+    keys = []
+    for feature in raw[GBSeq.FEATURE_TABLE]:
+        keys.append(feature["GBFeature_key"])
+
+    return keys
+
+
+def feature_table_to_dict(feature: dict) -> dict:
+    """Converts the feature table format to a dict"""
+    qualifier_dict = {}
+    for qualifier in feature["GBFeature_quals"]:
+        qual_name = qualifier["GBQualifier_name"]
+        qual_value = qualifier["GBQualifier_value"]
+        qualifier_dict[qual_name] = qual_value
+
+    return qualifier_dict
+
+
+def parse_taxid(source_feature) -> int | None:
+    value = source_feature["db_xref"]
+
+    key, taxid = value.split(":")
+
+    return taxid
