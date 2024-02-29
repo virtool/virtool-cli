@@ -57,20 +57,20 @@ class TestClientProcureFromTaxid:
         assert test_client.cache.load_records(taxon_id)
 
 
-@pytest.mark.parametrize(
-    "otu_id, use_cached",
-    (
-        [
-            ("0bfdb8bc", True),
-            ("0bfdb8bc", False),
-            ("4c9ddfb7", True),
-            ("4c9ddfb7", False),
-            ("d226290f", True),
-        ]
-    ),
-)
 class TestClientProcureUpdates:
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "otu_id, use_cached",
+        (
+            [
+                ("0bfdb8bc", True),
+                ("0bfdb8bc", False),
+                ("4c9ddfb7", True),
+                ("4c9ddfb7", False),
+                ("d226290f", True),
+            ]
+        ),
+    )
     async def test_procure_updates(self, otu_id, use_cached, scratch_repo):
         client = NCBIClient.for_repo(scratch_repo)
 
@@ -85,8 +85,9 @@ class TestClientProcureUpdates:
 
             assert type(packet.source) is NCBISource
 
+    @pytest.mark.parametrize("otu_id", ["0bfdb8bc", "4c9ddfb7", "d226290f"])
     @pytest.mark.asyncio
-    async def test_cache_updates(self, otu_id, use_cached, scratch_repo):
+    async def test_cache_updates(self, otu_id, scratch_repo):
         client = NCBIClient.for_repo(scratch_repo)
 
         otu = scratch_repo.get_otu_by_id(otu_id)
@@ -96,7 +97,11 @@ class TestClientProcureUpdates:
         assert client.cache.load_records(otu_id)
 
 
-class TestClientUtilities:
+@pytest.mark.parametrize(
+    "accession_list",
+    [["KT390494", "KT390496", "KT390501"], ["KY702580", "MZ148028.1", "KF915809"]],
+)
+class TestClientRecordUtilities:
     @pytest.mark.asyncio
     async def test_fetch_accessions(self, accession_list):
         records = await NCBIClient.fetch_accessions(accession_list)
@@ -118,6 +123,8 @@ class TestClientUtilities:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
 
+
+class TestClientTaxonomyUtilities:
     @pytest.mark.asyncio
     async def test_fetch_accessions_fail(self):
         accession_list = ["friday", "paella", "111"]
