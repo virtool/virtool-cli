@@ -32,9 +32,8 @@ class NCBICache:
     ):
         """Add a list of NCBI Nucleotide records to the cache."""
         cached_record_path = self._get_nuccore_path(f"{filestem}")
-        if overwrite_enabled:
-            if cached_record_path.exists():
-                raise FileExistsError
+        if overwrite_enabled and cached_record_path.exists():
+            raise FileExistsError
 
         with open(cached_record_path, "w") as f:
             json.dump(records, f)
@@ -58,9 +57,8 @@ class NCBICache:
     ):
         """Add a NCBI Taxonomy record to the cache"""
         cached_taxonomy_path = self._get_taxonomy_path(taxon_id)
-        if overwrite_enabled:
-            if cached_taxonomy_path.exists():
-                raise FileExistsError
+        if overwrite_enabled and cached_taxonomy_path.exists():
+            raise FileExistsError
 
         with open(cached_taxonomy_path, "w") as f:
             json.dump(taxonomy, f)

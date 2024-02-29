@@ -190,11 +190,13 @@ class NCBIClient:
         return clean_records
 
     @staticmethod
-    def process_record(record: dict):
+    def process_record(record: dict) -> NuccorePacket | None:
         try:
             return parse_nuccore(record)
         except NCBIParseError as e:
             base_logger.error(f"Parse failure: {e}")
+
+            return None
 
     @staticmethod
     def filter_accessions(otu: RepoOTU, accessions: list | set) -> list:
@@ -454,6 +456,4 @@ def feature_table_to_dict(feature: dict) -> dict:
 def parse_taxid(source_feature) -> int | None:
     value = source_feature["db_xref"]
 
-    key, taxid = value.split(":")
-
-    return taxid
+    return value.split(":")[1]

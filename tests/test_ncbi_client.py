@@ -51,7 +51,7 @@ class TestClientProcureFromTaxid:
             assert type(packet.source.taxid) is int
 
     @pytest.mark.asyncio
-    async def test_procure_from_taxid(self, taxon_id, test_client):
+    async def test_cache_from_taxid(self, taxon_id, test_client):
         await test_client.cache_from_taxid(taxon_id)
 
         assert test_client.cache.load_nuccore(taxon_id)
