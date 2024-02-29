@@ -7,8 +7,8 @@ from virtool_cli.ncbi.model import NCBIAccession, NCBISource
 
 
 @pytest.fixture()
-def test_client(test_files_path):
-    return NCBIClient(test_files_path / "cache_test")
+def test_client(cache_scratch_path):
+    return NCBIClient(cache_scratch_path / "cache_test")
 
 
 @pytest.fixture
@@ -31,9 +31,9 @@ def scratch_repo(scratch_path):
     return Repo(scratch_path)
 
 
-class TestClientMain:
+@pytest.mark.parametrize("taxon_id", [1016856, 429130])
+class TestClientProcureFromTaxid:
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("taxon_id", [1016856])
     async def test_procure_from_taxid(self, taxon_id, test_client):
         clean_records = await test_client.procure_from_taxid(taxon_id, use_cached=False)
 
@@ -51,18 +51,26 @@ class TestClientMain:
             assert type(packet.source.taxid) is int
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "otu_id, use_cached",
-        (
-            [
-                ("0bfdb8bc", True),
-                ("0bfdb8bc", False),
-                ("4c9ddfb7", True),
-                ("4c9ddfb7", False),
-                ("d226290f", True),
-            ]
-        ),
-    )
+    async def test_procure_from_taxid(self, taxon_id, test_client):
+        await test_client.cache_from_taxid(taxon_id)
+
+        assert test_client.cache.load_records(taxon_id)
+
+
+@pytest.mark.parametrize(
+    "otu_id, use_cached",
+    (
+        [
+            ("0bfdb8bc", True),
+            ("0bfdb8bc", False),
+            ("4c9ddfb7", True),
+            ("4c9ddfb7", False),
+            ("d226290f", True),
+        ]
+    ),
+)
+class TestClientProcureUpdates:
+    @pytest.mark.asyncio
     async def test_procure_updates(self, otu_id, use_cached, scratch_repo):
         client = NCBIClient.for_repo(scratch_repo)
 
@@ -78,18 +86,6 @@ class TestClientMain:
             assert type(packet.source) is NCBISource
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "otu_id, use_cached",
-        (
-            [
-                ("0bfdb8bc", True),
-                ("0bfdb8bc", False),
-                ("4c9ddfb7", True),
-                ("4c9ddfb7", False),
-                ("d226290f", True),
-            ]
-        ),
-    )
     async def test_cache_updates(self, otu_id, use_cached, scratch_repo):
         client = NCBIClient.for_repo(scratch_repo)
 
