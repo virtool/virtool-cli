@@ -77,6 +77,28 @@ class TestClientMain:
 
             assert type(packet.source) is NCBISource
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "otu_id, use_cached",
+        (
+            [
+                ("0bfdb8bc", True),
+                ("0bfdb8bc", False),
+                ("4c9ddfb7", True),
+                ("4c9ddfb7", False),
+                ("d226290f", True),
+            ]
+        ),
+    )
+    async def test_cache_updates(self, otu_id, use_cached, scratch_repo):
+        client = NCBIClient.for_repo(scratch_repo)
+
+        otu = scratch_repo.get_otu_by_id(otu_id)
+
+        await client.cache_updates(otu)
+
+        assert client.cache.load_records(otu_id)
+
 
 class TestClientUtilities:
     @pytest.mark.asyncio

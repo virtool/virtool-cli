@@ -90,7 +90,7 @@ class NCBIClient:
 
         self.cache.cache_records(records, str(taxid))
 
-    async def cache_otu_updates(self, otu: RepoOTU, use_cached: bool = True):
+    async def cache_updates(self, otu: RepoOTU, use_cached: bool = True):
         """Fetch and cache updates for an extant OTU.
         Excludes blocked accessions automatically.
 
