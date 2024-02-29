@@ -27,7 +27,7 @@ class NCBICache:
         self.nuccore.mkdir()
         self.taxonomy.mkdir()
 
-    def cache_records(
+    def cache_nuccore(
         self, records: list[dict], filestem: str | int, overwrite_enabled: bool = True
     ):
         """Add a list of NCBI Nucleotide records to the cache."""
@@ -42,7 +42,7 @@ class NCBICache:
             if not cached_record_path.exists():
                 raise FileNotFoundError
 
-    def load_records(self, filestem: str) -> list[dict] | None:
+    def load_nuccore(self, filestem: str) -> list[dict] | None:
         """
         Retrieve a list of NCBI Nucleotide records from the cache.
         Returns None if the records are not found in the cache.

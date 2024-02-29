@@ -46,7 +46,7 @@ class NCBIClient:
 
         logger = base_logger.bind(taxid=taxid)
         if use_cached:
-            records = self.cache.load_records(str(taxid))
+            records = self.cache.load_nuccore(str(taxid))
             if records:
                 logger.info("Cached records found", n_records=len(records))
 
@@ -68,7 +68,7 @@ class NCBIClient:
         logger = base_logger.bind(otu_id=otu.id)
 
         if use_cached:
-            records = self.cache.load_records(otu.id)
+            records = self.cache.load_nuccore(otu.id)
             if records:
                 logger.info("Cached records found", n_records=len(records))
 
@@ -88,7 +88,7 @@ class NCBIClient:
     async def cache_from_taxid(self, taxid: int):
         records = await NCBIClient.fetch_taxon_records(taxid)
 
-        self.cache.cache_records(records, str(taxid))
+        self.cache.cache_nuccore(records, str(taxid))
 
     async def cache_updates(self, otu: RepoOTU, use_cached: bool = True):
         """Fetch and cache updates for an extant OTU.
@@ -100,7 +100,7 @@ class NCBIClient:
         logger = base_logger.bind(otu_id=otu.id)
 
         if use_cached:
-            records = self.cache.load_records(otu.id)
+            records = self.cache.load_nuccore(otu.id)
             if records:
                 logger.info("Cached records found", n_records=len(records))
                 return records
@@ -114,7 +114,7 @@ class NCBIClient:
         if new_accessions:
             records = await NCBIClient.fetch_accessions(list(new_accessions))
 
-            self.cache.cache_records(records, otu.id)
+            self.cache.cache_nuccore(records, otu.id)
 
             logger.debug("Cached records", n_records=len(records))
 

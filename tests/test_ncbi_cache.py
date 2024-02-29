@@ -47,7 +47,7 @@ class TestCacheOperations:
     def test_cache_nuccore_load(self, record_otu, cache_scratch_path):
         scratch_cache = NCBICache(cache_scratch_path)
 
-        records = scratch_cache.load_records(record_otu)
+        records = scratch_cache.load_nuccore(record_otu)
 
         assert type(records) is list
 
@@ -61,14 +61,14 @@ class TestCacheOperations:
 
         records = get_test_record_set(record_otu, cache_example_path)
 
-        fresh_cache.cache_records(records, filestem=record_otu)
+        fresh_cache.cache_nuccore(records, filestem=record_otu)
 
         assert (fresh_cache.nuccore / f"{record_otu}.json").exists()
 
     def test_cache_taxonomy_load(self, record_otu, cache_scratch_path):
         scratch_cache = NCBICache(cache_scratch_path)
 
-        records = scratch_cache.load_records(record_otu)
+        records = scratch_cache.load_nuccore(record_otu)
 
         assert type(records) is list
 
@@ -82,6 +82,6 @@ class TestCacheOperations:
 
         records = get_test_record_set(record_otu, cache_example_path)
 
-        fresh_cache.cache_records(records, filestem=record_otu)
+        fresh_cache.cache_nuccore(records, filestem=record_otu)
 
         assert (fresh_cache.nuccore / f"{record_otu}.json").exists()

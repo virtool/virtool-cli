@@ -54,7 +54,7 @@ class TestClientProcureFromTaxid:
     async def test_procure_from_taxid(self, taxon_id, test_client):
         await test_client.cache_from_taxid(taxon_id)
 
-        assert test_client.cache.load_records(taxon_id)
+        assert test_client.cache.load_nuccore(taxon_id)
 
 
 class TestClientProcureUpdates:
@@ -94,7 +94,7 @@ class TestClientProcureUpdates:
 
         await client.cache_updates(otu)
 
-        assert client.cache.load_records(otu_id)
+        assert client.cache.load_nuccore(otu_id)
 
 
 @pytest.mark.parametrize(
