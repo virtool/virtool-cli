@@ -27,10 +27,20 @@ class NCBICache:
         self.nuccore.mkdir()
         self.taxonomy.mkdir()
 
-    def cache_records(self, records: list[dict], filestem: str):
+    def cache_records(
+        self, records: list[dict], filestem: str | int, overwrite_enabled: bool = True
+    ):
         """Add a list of NCBI Nucleotide records to the cache."""
-        with open(self._get_nuccore_path(filestem), "w") as f:
+        cached_record_path = self._get_nuccore_path(f"{filestem}")
+        if overwrite_enabled:
+            if cached_record_path.exists():
+                raise FileExistsError
+
+        with open(cached_record_path, "w") as f:
             json.dump(records, f)
+
+            if not cached_record_path.exists():
+                raise FileNotFoundError
 
     def load_records(self, filestem: str) -> list[dict] | None:
         """
@@ -43,10 +53,20 @@ class NCBICache:
         except FileNotFoundError:
             return None
 
-    def cache_taxonomy(self, taxonomy: dict, taxon_id: int):
+    def cache_taxonomy(
+        self, taxonomy: dict, taxon_id: int, overwrite_enabled: bool = True
+    ):
         """Add a NCBI Taxonomy record to the cache"""
-        with open(self._get_taxonomy_path(taxon_id), "w") as f:
+        cached_taxonomy_path = self._get_taxonomy_path(taxon_id)
+        if overwrite_enabled:
+            if cached_taxonomy_path.exists():
+                raise FileExistsError
+
+        with open(cached_taxonomy_path, "w") as f:
             json.dump(taxonomy, f)
+
+        if not cached_taxonomy_path.exists():
+            raise FileNotFoundError
 
     def load_taxonomy(self, taxon_id: int) -> dict | None:
         """Load data from a cached record fetch"""
