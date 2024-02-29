@@ -1,8 +1,9 @@
 import pytest
 from pathlib import Path
 
+from virtool_cli.repo.cls import Repo
 from virtool_cli.ncbi.client import NCBIClient, NuccorePacket
-from virtool_cli.ncbi.model import NCBIAccession, NCBISource, NCBITaxonomy, NCBIRank
+from virtool_cli.ncbi.model import NCBIAccession, NCBISource
 
 
 @pytest.fixture()
@@ -25,10 +26,15 @@ def accession_list():
     return ["KT390494", "KT390496", "KT390501"]
 
 
+@pytest.fixture()
+def scratch_repo(scratch_path):
+    return Repo(scratch_path)
+
+
 class TestClientMain:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxon_id", [1016856])
-    async def test_procure_from_taxonomy(self, taxon_id, test_client):
+    async def test_procure_from_taxid(self, taxon_id, test_client):
         clean_records = await test_client.procure_from_taxid(taxon_id, use_cached=False)
 
         assert type(clean_records) is list
@@ -43,6 +49,33 @@ class TestClientMain:
             assert type(packet.sequence.accession) is str
 
             assert type(packet.source.taxid) is int
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "otu_id, use_cached",
+        (
+            [
+                ("0bfdb8bc", True),
+                ("0bfdb8bc", False),
+                ("4c9ddfb7", True),
+                ("4c9ddfb7", False),
+                ("d226290f", True),
+            ]
+        ),
+    )
+    async def test_procure_updates(self, otu_id, use_cached, scratch_repo):
+        client = NCBIClient.for_repo(scratch_repo)
+
+        otu = scratch_repo.get_otu_by_id(otu_id)
+
+        clean_records = await client.procure_updates(otu, use_cached=use_cached)
+
+        assert type(clean_records) is list
+
+        for packet in clean_records:
+            assert type(packet.sequence) is NCBIAccession
+
+            assert type(packet.source) is NCBISource
 
 
 class TestClientUtilities:

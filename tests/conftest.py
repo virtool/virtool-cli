@@ -37,11 +37,12 @@ def src_scratch_path(src_test_path: Path, tmp_path: Path):
 
 
 @pytest.fixture()
-def scratch_path(src_test_path: Path, tmp_path: Path):
+def scratch_path(src_test_path: Path, cache_example_path: Path, tmp_path: Path):
     path = tmp_path / "reference"
     init_reference(path)
 
     shutil.copytree(src_test_path, path / "src", dirs_exist_ok=True)
+    shutil.copytree(cache_example_path, path / ".cache", dirs_exist_ok=True)
 
     return path
 

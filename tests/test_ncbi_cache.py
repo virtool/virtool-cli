@@ -42,7 +42,7 @@ def test_cache_clear(cache_scratch_path):
     assert not list(cache.taxonomy.glob("*.json"))
 
 
-@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "4c9ddfb7"])
 def test_cache_nuccore_load(record_otu, cache_scratch_path):
     scratch_cache = NCBICache(cache_scratch_path)
 
@@ -54,7 +54,7 @@ def test_cache_nuccore_load(record_otu, cache_scratch_path):
         assert type(record) is dict
 
 
-@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "4c9ddfb7"])
 def test_cache_nuccore_cache(record_otu, cache_example_path, empty_cache_path):
     fresh_cache = NCBICache(empty_cache_path)
 
@@ -65,7 +65,7 @@ def test_cache_nuccore_cache(record_otu, cache_example_path, empty_cache_path):
     assert (fresh_cache.nuccore / f"{record_otu}.json").exists()
 
 
-@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "4c9ddfb7"])
 def test_cache_taxonomy_load(record_otu, cache_scratch_path):
     scratch_cache = NCBICache(cache_scratch_path)
 
@@ -77,7 +77,7 @@ def test_cache_taxonomy_load(record_otu, cache_scratch_path):
         assert type(record) is dict
 
 
-@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "2ksa35mn"])
+@pytest.mark.parametrize("record_otu", ["0bfdb8bc", "4c9ddfb7"])
 def test_cache_taxonomy_cache(record_otu, cache_example_path, empty_cache_path):
     fresh_cache = NCBICache(empty_cache_path)
 
