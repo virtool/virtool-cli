@@ -21,11 +21,18 @@ base_logger = get_logger()
 
 class NCBIClient:
     def __init__(self, cache_path: Path):
+        """
+        :param cache_path: A path to a directory to be used as a cache
+        """
         self.cache = NCBICache(cache_path)
 
     @classmethod
     def for_repo(cls, repo: Repo):
-        """Initialize NCBIClient from a repo path"""
+        """Initializes the NCBI cache in the default subpath
+        under a given repository
+
+        :param repo: A Repo instance
+        """
         return NCBIClient(repo.path / ".cache/ncbi")
 
     async def procure_from_taxid(
