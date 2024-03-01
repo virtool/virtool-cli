@@ -3,7 +3,7 @@ from pathlib import Path
 
 from virtool_cli.repo.cls import Repo
 from virtool_cli.ncbi.client import NCBIClient
-from virtool_cli.ncbi.model import NCBINuccore
+from virtool_cli.ncbi.model import NCBINuccore, NCBISource
 
 
 @pytest.fixture()
@@ -44,7 +44,9 @@ class TestClientProcureFromTaxid:
 
             assert type(record.accession) is str
 
-            assert type(record.taxid) is int
+            assert type(record.source) is NCBISource
+
+            assert type(record.source.taxid) is int
 
     @pytest.mark.asyncio
     async def test_cache_from_taxid(self, taxon_id, test_client):
@@ -81,7 +83,9 @@ class TestClientProcureUpdates:
 
             assert type(record.accession) is str
 
-            assert type(record.taxid) is int
+            assert type(record.source) is NCBISource
+
+            assert type(record.source.taxid) is int
 
     @pytest.mark.parametrize("otu_id", ["0bfdb8bc", "4c9ddfb7", "d226290f"])
     @pytest.mark.asyncio
@@ -99,10 +103,10 @@ class TestClientProcureUpdates:
     "accession_list",
     [["KT390494", "KT390496", "KT390501"], ["KY702580", "MZ148028.1", "KF915809"]],
 )
-class TestClientRecordUtilities:
+class TestClientFetchAccessionSets:
     @pytest.mark.asyncio
     async def test_fetch_accessions(self, accession_list):
-        records = await NCBIClient.fetch_accessions(accession_list)
+        records = await NCBIClient.fetch_by_accessions(accession_list)
 
         for record in records:
             assert record.get("GBSeq_locus", None)
@@ -113,7 +117,7 @@ class TestClientRecordUtilities:
         partial_accession_list = accession_list
         partial_accession_list[0] = partial_accession_list[0][:3]
 
-        records = await NCBIClient.fetch_accessions(accession_list)
+        records = await NCBIClient.fetch_by_accessions(accession_list)
 
         assert len(records) == len(accession_list) - 1
 
@@ -122,17 +126,18 @@ class TestClientRecordUtilities:
             assert record.get("GBSeq_sequence", None)
 
 
+@pytest.mark.asyncio
+async def test_fetch_accessions_fail():
+    accession_list = ["friday", "paella", "111"]
+
+    assert not await NCBIClient.fetch_by_accessions(accession_list)
+
+
 class TestClientTaxonomyUtilities:
-    @pytest.mark.asyncio
-    async def test_fetch_accessions_fail(self):
-        accession_list = ["friday", "paella", "111"]
-
-        assert not await NCBIClient.fetch_accessions(accession_list)
-
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxon_id", [908125, 1016856])
     async def test_fetch_taxonomy(self, taxon_id):
-        taxonomy = await NCBIClient.fetch_taxonomy(taxon_id)
+        taxonomy = await NCBIClient.fetch_taxonomy_by_taxid(taxon_id)
 
         assert taxonomy.get("TaxId", None) is not None
         assert taxonomy.get("ScientificName", None) is not None

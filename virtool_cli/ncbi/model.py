@@ -28,8 +28,8 @@ class NCBINuccore(BaseModel):
     accession: str
     definition: str
     sequence: str
-    comment: str = ""
     source: NCBISource
+    comment: str = ""
 
 
 class NCBITaxonomy(BaseModel):

@@ -6,9 +6,10 @@ from Bio import Entrez
 from structlog import get_logger
 from urllib.parse import quote_plus
 from urllib.error import HTTPError
+from pydantic import ValidationError
 
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
-from virtool_cli.ncbi.model import NCBINuccore
+from virtool_cli.ncbi.model import NCBINuccore, NCBISource
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.repo.cls import Repo, RepoOTU
 
@@ -44,7 +45,7 @@ class NCBIClient:
             if records:
                 logger.info("Cached records found", n_records=len(records))
 
-        records = await NCBIClient.fetch_taxon_records(taxid)
+        records = await NCBIClient.fetch_by_taxid(taxid)
 
         return NCBIClient.process_records(records)
 
@@ -75,12 +76,12 @@ class NCBIClient:
         logger.debug("Fetching accessions...", new_accessions=new_accessions)
 
         if new_accessions:
-            records = await NCBIClient.fetch_accessions(list(new_accessions))
+            records = await NCBIClient.fetch_by_accessions(list(new_accessions))
 
             return NCBIClient.process_records(records)
 
     async def cache_from_taxid(self, taxid: int):
-        records = await NCBIClient.fetch_taxon_records(taxid)
+        records = await NCBIClient.fetch_by_taxid(taxid)
 
         self.cache.cache_nuccore(records, str(taxid))
 
@@ -106,15 +107,16 @@ class NCBIClient:
         logger.debug("Fetching accessions...", new_accessions=new_accessions)
 
         if new_accessions:
-            records = await NCBIClient.fetch_accessions(list(new_accessions))
+            records = await NCBIClient.fetch_by_accessions(list(new_accessions))
 
             self.cache.cache_nuccore(records, otu.id)
 
             logger.debug("Cached records", n_records=len(records))
 
     @staticmethod
-    async def fetch_taxon_records(taxid: int) -> list[dict]:
+    async def fetch_by_taxid(taxid: int) -> list[dict]:
         """Fetch all records linked to a taxonomy record.
+        Usable when an OTU does not exist
 
         :param taxid: Taxonomy UID
         :return: A list of records
@@ -123,12 +125,12 @@ class NCBIClient:
 
         base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
 
-        records = await NCBIClient.fetch_accessions(accessions)
+        records = await NCBIClient.fetch_by_accessions(accessions)
 
         return records
 
     @staticmethod
-    async def fetch_accessions(accessions: list[str]) -> list[dict]:
+    async def fetch_by_accessions(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, download the corresponding records
         from GenBank as XML and return the parsed records
@@ -161,11 +163,11 @@ class NCBIClient:
         return []
 
     @staticmethod
-    async def fetch_accession(accession: str) -> dict:
+    async def fetch_by_accession(accession: str) -> dict:
         """
         A wrapper for the fetching of a single accession
         """
-        record = await NCBIClient.fetch_accessions([accession])
+        record = await NCBIClient.fetch_by_accessions([accession])
 
         if record:
             return record[0]
@@ -176,21 +178,13 @@ class NCBIClient:
 
         for record in records:
             try:
-                clean_records.append(parse_nuccore(record))
+                clean_records.append(NCBIClient.__parse_nuccore(record))
 
-            except NCBIParseError as e:
-                base_logger.error(f"Parse failure: {e}")
+            except (ValidationError, NCBIParseError) as exc:
+                accession = record.get(GBSeq.ACCESSION, "?")
+                base_logger.error(f"{exc}", accession=accession)
 
         return clean_records
-
-    @staticmethod
-    def process_record(record: dict) -> NCBINuccore | None:
-        try:
-            return parse_nuccore(record)
-        except NCBIParseError as e:
-            base_logger.error(f"Parse failure: {e}")
-
-            return None
 
     @staticmethod
     def filter_accessions(otu: RepoOTU, accessions: list | set) -> list:
@@ -269,7 +263,7 @@ class NCBIClient:
         return raw_records
 
     @staticmethod
-    async def fetch_taxonomy(taxon_id: int) -> dict:
+    async def fetch_taxonomy_by_taxid(taxon_id: int) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""
         return await NCBIClient._fetch_taxon_long(taxon_id)
 
@@ -356,6 +350,83 @@ class NCBIClient:
 
         return name
 
+    @staticmethod
+    def __get_source_table(raw) -> dict | None:
+        for feature in raw[GBSeq.FEATURE_TABLE]:
+            if feature["GBFeature_key"] == "source":
+                return feature
+
+        raise NCBIParseError(
+            keys=NCBIClient.__get_feature_table_keys(raw),
+            message="Feature table does not contain source data",
+        )
+
+    @staticmethod
+    def __parse_nuccore(raw: dict) -> NCBINuccore:
+        source_dict = NCBIClient.__feature_table_to_dict(
+            NCBIClient.__get_source_table(raw)
+        )
+
+        source = NCBISource(taxid=NCBIClient.__parse_taxid(source_dict))
+
+        if "isolate" in source_dict:
+            source.isolate = source_dict["isolate"]
+
+        if "strain" in source_dict:
+            source.strain = source_dict["strain"]
+
+        if "clone" in source_dict:
+            source.strain = source_dict["clone"]
+
+        if "host" in source_dict:
+            source.isolate = source_dict["host"]
+
+        if "segment" in source_dict:
+            source.segment = source_dict["segment"]
+
+        record = NCBINuccore(
+            accession=raw[GBSeq.ACCESSION],
+            definition=raw[GBSeq.DEFINITION],
+            sequence=raw[GBSeq.SEQUENCE],
+            source=source,
+        )
+
+        if GBSeq.COMMENT in raw:
+            record.comment = raw[GBSeq.COMMENT]
+
+        return record
+
+    @staticmethod
+    def __feature_table_to_dict(feature: dict) -> dict:
+        """Converts the feature table format to a dict"""
+        qualifier_dict = {}
+        for qualifier in feature["GBFeature_quals"]:
+            qual_name = qualifier["GBQualifier_name"]
+            qual_value = qualifier["GBQualifier_value"]
+            qualifier_dict[qual_name] = qual_value
+
+        return qualifier_dict
+
+    @staticmethod
+    def __parse_taxid(source_feature) -> int | None:
+        return int(NCBIClient.__split_db_xref(source_feature["db_xref"])[1])
+
+    @staticmethod
+    def __split_db_xref(entry: str) -> list[str]:
+        xref = entry.split(":")
+        if len(xref) != 2:
+            raise NCBIParseError
+
+        return xref
+
+    @staticmethod
+    def __get_feature_table_keys(raw: dict):
+        keys = []
+        for feature in raw[GBSeq.FEATURE_TABLE]:
+            keys.append(feature["GBFeature_key"])
+
+        return keys
+
 
 class GBSeq(StrEnum):
     ACCESSION = "GBSeq_accession-version"
@@ -364,70 +435,3 @@ class GBSeq(StrEnum):
     LENGTH = "GBSeq_length"
     COMMENT = "GBSeq_comment"
     FEATURE_TABLE = "GBSeq_feature-table"
-
-
-def parse_nuccore(raw: dict) -> NCBINuccore:
-    source_dict = feature_table_to_dict(get_source_table(raw))
-
-    record = NCBINuccore(
-        accession=raw[GBSeq.ACCESSION],
-        definition=raw[GBSeq.DEFINITION],
-        sequence=raw[GBSeq.SEQUENCE],
-        taxid=parse_taxid(source_dict),
-    )
-
-    if GBSeq.COMMENT in raw:
-        record.comment = raw[GBSeq.COMMENT]
-
-    if "isolate" in source_dict:
-        record.isolate = source_dict["isolate"]
-
-    if "strain" in source_dict:
-        record.strain = source_dict["strain"]
-
-    if "clone" in source_dict:
-        record.strain = source_dict["clone"]
-
-    if "host" in source_dict:
-        record.isolate = source_dict["host"]
-
-    if "segment" in source_dict:
-        record.segment = source_dict["segment"]
-
-    return record
-
-
-def get_source_table(raw) -> dict | None:
-    for feature in raw[GBSeq.FEATURE_TABLE]:
-        if feature["GBFeature_key"] == "source":
-            return feature
-
-    raise NCBIParseError(
-        keys=get_feature_table_keys(raw),
-        message="Feature table does not contain source data",
-    )
-
-
-def get_feature_table_keys(raw):
-    keys = []
-    for feature in raw[GBSeq.FEATURE_TABLE]:
-        keys.append(feature["GBFeature_key"])
-
-    return keys
-
-
-def feature_table_to_dict(feature: dict) -> dict:
-    """Converts the feature table format to a dict"""
-    qualifier_dict = {}
-    for qualifier in feature["GBFeature_quals"]:
-        qual_name = qualifier["GBQualifier_name"]
-        qual_value = qualifier["GBQualifier_value"]
-        qualifier_dict[qual_name] = qual_value
-
-    return qualifier_dict
-
-
-def parse_taxid(source_feature) -> int | None:
-    value = source_feature["db_xref"]
-
-    return value.split(":")[1]
