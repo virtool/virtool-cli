@@ -2,8 +2,8 @@ import pytest
 from pathlib import Path
 
 from virtool_cli.repo.cls import Repo
-from virtool_cli.ncbi.client import NCBIClient, NuccorePacket
-from virtool_cli.ncbi.model import NCBINuccore, NCBIAccession, NCBISource
+from virtool_cli.ncbi.client import NCBIClient
+from virtool_cli.ncbi.model import NCBINuccore
 
 
 @pytest.fixture()
