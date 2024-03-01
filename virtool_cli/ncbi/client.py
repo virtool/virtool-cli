@@ -37,6 +37,7 @@ class NCBIClient:
 
         :param taxid: NCBI Taxonomy UID as an integer
         :param use_cached: Cache use flag
+        :return: A list of NCBINuccore parsed records
         """
 
         logger = base_logger.bind(taxid=taxid)
@@ -47,18 +48,19 @@ class NCBIClient:
 
         records = await NCBIClient.fetch_by_taxid(taxid)
 
-        return NCBIClient.process_records(records)
+        return NCBIClient.validate_records(records)
 
     async def procure_updates(
         self, otu: RepoOTU, use_cached: bool = True
     ) -> list[NCBINuccore]:
         """
-        Fetch updates for an extant OTU and return results
-        as a set of NCBIAccession and NCBISource
+        Fetch updates for an extant OTU and return results as
+        a list of NCBINuccore parsed records
         Excludes blocked accessions automatically.
 
         :param otu: OTU data from repo
         :param use_cached: Cache use flag
+        :return: A list of parsed records
         """
         logger = base_logger.bind(otu_id=otu.id)
 
@@ -67,7 +69,7 @@ class NCBIClient:
             if records:
                 logger.info("Cached records found", n_records=len(records))
 
-                return NCBIClient.process_records(records)
+                return NCBIClient.validate_records(records)
 
         taxid_accessions = await NCBIClient.link_accessions(otu.taxid)
 
@@ -78,9 +80,14 @@ class NCBIClient:
         if new_accessions:
             records = await NCBIClient.fetch_by_accessions(list(new_accessions))
 
-            return NCBIClient.process_records(records)
+            return NCBIClient.validate_records(records)
 
     async def cache_from_taxid(self, taxid: int):
+        """Fetch all linked accessions for an organism in NCBI Taxonomy
+        and cache the results
+
+        :param taxid: NCBI Taxonomy UID as an integer
+        """
         records = await NCBIClient.fetch_by_taxid(taxid)
 
         self.cache.cache_nuccore(records, str(taxid))
@@ -118,25 +125,23 @@ class NCBIClient:
         """Fetch all records linked to a taxonomy record.
         Usable when an OTU does not exist
 
-        :param taxid: Taxonomy UID
-        :return: A list of records
+        :param taxid: A Taxonomy UID
+        :return: A list of Entrez-parsed records
         """
         accessions = await NCBIClient.link_accessions(taxid)
 
         base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
 
-        records = await NCBIClient.fetch_by_accessions(accessions)
-
-        return records
+        return await NCBIClient.fetch_by_accessions(accessions)
 
     @staticmethod
     async def fetch_by_accessions(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, download the corresponding records
-        from GenBank as XML and return the parsed records
+        from GenBank as XML and return Genbank XML-parsed records
 
         :param accessions: List of accession numbers to fetch from GenBank
-        :return: A list of deserialized sequence records from NCBI Nucleotide
+        :return: A list of deserialized records from NCBI Nucleotide
         """
         if not accessions:
             return []
@@ -165,7 +170,11 @@ class NCBIClient:
     @staticmethod
     async def fetch_by_accession(accession: str) -> dict:
         """
-        A wrapper for the fetching of a single accession
+        Wrapper that fetches a single accession and returns
+        a single NCBI Genbank-parsed record
+
+        :param accession: A single accession
+        :return: A single NCBI Genbank-parsed record
         """
         record = await NCBIClient.fetch_by_accessions([accession])
 
@@ -173,12 +182,20 @@ class NCBIClient:
             return record[0]
 
     @staticmethod
-    def process_records(records: list[dict]) -> list[NCBINuccore]:
+    def validate_records(records: list[dict]) -> list[NCBINuccore]:
+        """
+        Process a list of raw Genbank dicts into validated NCBINuccore records.
+        Logs an error if there is an issue with validation or parsing,
+        but does not fail out.
+
+        :param records: A list of NCBI Genbank dict records
+        :return: A list of validated records as NCBINuccore
+        """
         clean_records = []
 
         for record in records:
             try:
-                clean_records.append(NCBIClient.__parse_nuccore(record))
+                clean_records.append(NCBIClient.validate_nuccore(record))
 
             except (ValidationError, NCBIParseError) as exc:
                 accession = record.get(GBSeq.ACCESSION, "?")
@@ -189,12 +206,59 @@ class NCBIClient:
     @staticmethod
     def filter_accessions(otu: RepoOTU, accessions: list | set) -> list:
         """
-        Takes a list of accessions and removes blocked accessions
+        Takes a list of accessions and filters blocked accessions from it,
+        leaving only new accessions
+
+        :param otu: An OTU from a repo instance
+        :param accessions: A list of accessions
+        :return: A list of new accessions
         """
         accession_set = set(accessions)
         blocked_set = set(otu.blocked_accessions)
 
         return list(blocked_set.difference(accession_set))
+
+    @staticmethod
+    def validate_nuccore(raw: dict) -> NCBINuccore:
+        """
+        Parses an NCBI Genbank record from a Genbank dict to a
+        validated NCBINuccore
+
+        :param raw: A NCBI Genbank dict record, parsed by Bio.Entrez.Parser
+        :return: A validated subset of Genbank record data
+        """
+        source_dict = NCBIClient.__feature_table_to_dict(
+            NCBIClient.__get_source_table(raw)
+        )
+
+        source = NCBISource(taxid=NCBIClient.__parse_taxid(source_dict))
+
+        if "isolate" in source_dict:
+            source.isolate = source_dict["isolate"]
+
+        if "strain" in source_dict:
+            source.strain = source_dict["strain"]
+
+        if "clone" in source_dict:
+            source.strain = source_dict["clone"]
+
+        if "host" in source_dict:
+            source.isolate = source_dict["host"]
+
+        if "segment" in source_dict:
+            source.segment = source_dict["segment"]
+
+        record = NCBINuccore(
+            accession=raw[GBSeq.ACCESSION],
+            definition=raw[GBSeq.DEFINITION],
+            sequence=raw[GBSeq.SEQUENCE],
+            source=source,
+        )
+
+        if GBSeq.COMMENT in raw:
+            record.comment = raw[GBSeq.COMMENT]
+
+        return record
 
     @staticmethod
     async def link_accessions(taxon_id: int) -> list:
@@ -360,41 +424,6 @@ class NCBIClient:
             keys=NCBIClient.__get_feature_table_keys(raw),
             message="Feature table does not contain source data",
         )
-
-    @staticmethod
-    def __parse_nuccore(raw: dict) -> NCBINuccore:
-        source_dict = NCBIClient.__feature_table_to_dict(
-            NCBIClient.__get_source_table(raw)
-        )
-
-        source = NCBISource(taxid=NCBIClient.__parse_taxid(source_dict))
-
-        if "isolate" in source_dict:
-            source.isolate = source_dict["isolate"]
-
-        if "strain" in source_dict:
-            source.strain = source_dict["strain"]
-
-        if "clone" in source_dict:
-            source.strain = source_dict["clone"]
-
-        if "host" in source_dict:
-            source.isolate = source_dict["host"]
-
-        if "segment" in source_dict:
-            source.segment = source_dict["segment"]
-
-        record = NCBINuccore(
-            accession=raw[GBSeq.ACCESSION],
-            definition=raw[GBSeq.DEFINITION],
-            sequence=raw[GBSeq.SEQUENCE],
-            source=source,
-        )
-
-        if GBSeq.COMMENT in raw:
-            record.comment = raw[GBSeq.COMMENT]
-
-        return record
 
     @staticmethod
     def __feature_table_to_dict(feature: dict) -> dict:
