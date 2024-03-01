@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from collections import namedtuple
 from enum import StrEnum
 from Bio import Entrez
 
@@ -10,19 +9,13 @@ from urllib.error import HTTPError
 
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
 from virtool_cli.ncbi.model import NCBINuccore
-
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.repo.cls import Repo, RepoOTU
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
-DEFAULT_INTERVAL = 0.001
-
 base_logger = get_logger()
-
-
-NuccorePacket = namedtuple("NuccorePacket", ["sequence", "source"])
 
 
 class NCBIClient:
