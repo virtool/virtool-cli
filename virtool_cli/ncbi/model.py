@@ -31,17 +31,17 @@ class NCBIAccession(BaseModel):
     comment: Optional[str] = ""
 
 
-class NCBIRecords(BaseModel):
+class NCBINuccore(BaseModel):
     accession: str
     definition: str
     sequence: str
     taxid: int
-    host: Optional[str]
-    segment: Optional[str]
-    isolate: Optional[str]
-    strain: Optional[str]
-    clone: Optional[str]
-    comment: Optional[str]
+    host: str = ""
+    segment: str = ""
+    isolate: str = ""
+    strain: str = ""
+    clone: str = ""
+    comment: str = ""
 
 
 class NCBITaxonomy(BaseModel):

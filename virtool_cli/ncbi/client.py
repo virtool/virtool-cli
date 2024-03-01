@@ -9,7 +9,8 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
-from virtool_cli.ncbi.model import NCBIAccession, NCBISource, NCBISourceType
+from virtool_cli.ncbi.model import NCBINuccore
+
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.repo.cls import Repo, RepoOTU
 
@@ -35,7 +36,7 @@ class NCBIClient:
 
     async def procure_from_taxid(
         self, taxid: int, use_cached: bool = True
-    ) -> list[NuccorePacket]:
+    ) -> list[NCBINuccore]:
         """
         Fetch all linked accessions for an organism in NCBI Taxonomy
         and return results as a set of NCBIAccession and NCBISource
@@ -56,7 +57,7 @@ class NCBIClient:
 
     async def procure_updates(
         self, otu: RepoOTU, use_cached: bool = True
-    ) -> list[NuccorePacket]:
+    ) -> list[NCBINuccore]:
         """
         Fetch updates for an extant OTU and return results
         as a set of NCBIAccession and NCBISource
@@ -177,7 +178,7 @@ class NCBIClient:
             return record[0]
 
     @staticmethod
-    def process_records(records: list[dict]):
+    def process_records(records: list[dict]) -> list[NCBINuccore]:
         clean_records = []
 
         for record in records:
@@ -190,7 +191,7 @@ class NCBIClient:
         return clean_records
 
     @staticmethod
-    def process_record(record: dict) -> NuccorePacket | None:
+    def process_record(record: dict) -> NCBINuccore | None:
         try:
             return parse_nuccore(record)
         except NCBIParseError as e:
@@ -372,55 +373,35 @@ class GBSeq(StrEnum):
     FEATURE_TABLE = "GBSeq_feature-table"
 
 
-def parse_nuccore(raw: dict) -> NuccorePacket:
-    sequence = NCBIAccession(
+def parse_nuccore(raw: dict) -> NCBINuccore:
+    source_dict = feature_table_to_dict(get_source_table(raw))
+
+    record = NCBINuccore(
         accession=raw[GBSeq.ACCESSION],
         definition=raw[GBSeq.DEFINITION],
         sequence=raw[GBSeq.SEQUENCE],
-        comment=raw.get(GBSeq.COMMENT, ""),
-    )
-
-    source = parse_source(feature_table_to_dict(get_source_table(raw)))
-
-    return NuccorePacket(sequence, source)
-
-
-def parse_source(source_dict: dict) -> NCBISource:
-    try:
-        source_type = get_source_type(source_dict)
-        source_name = source_dict[source_type]
-    except KeyError:
-        raise NCBIParseError(
-            keys=source_dict.keys,
-            message="Not enough data in this source table",
-        )
-
-    return NCBISource(
-        type=source_type,
-        name=source_name,
-        host=source_dict.get("host", ""),
-        segment=source_dict.get("segment", ""),
         taxid=parse_taxid(source_dict),
     )
 
+    if GBSeq.COMMENT in raw:
+        record.comment = raw[GBSeq.COMMENT]
 
-def get_source_type(source_qualifiers: dict) -> NCBISourceType:
-    """Return a NCBISourceType, prioritizing ISOLATE over other options."""
-    if NCBISourceType.ISOLATE in source_qualifiers:
-        return NCBISourceType.ISOLATE
+    if "isolate" in source_dict:
+        record.isolate = source_dict["isolate"]
 
-    if NCBISourceType.STRAIN in source_qualifiers:
-        return NCBISourceType.STRAIN
+    if "strain" in source_dict:
+        record.strain = source_dict["strain"]
 
-    if NCBISourceType.CLONE in source_qualifiers:
-        return NCBISourceType.CLONE
+    if "clone" in source_dict:
+        record.strain = source_dict["clone"]
 
-    if NCBISourceType.GENOTYPE in source_qualifiers:
-        return NCBISourceType.GENOTYPE
+    if "host" in source_dict:
+        record.isolate = source_dict["host"]
 
-    raise NCBIParseError(
-        keys=list(source_qualifiers.keys()), message="Missing source type qualifier"
-    )
+    if "segment" in source_dict:
+        record.segment = source_dict["segment"]
+
+    return record
 
 
 def get_source_table(raw) -> dict | None:

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from virtool_cli.repo.cls import Repo
 from virtool_cli.ncbi.client import NCBIClient, NuccorePacket
-from virtool_cli.ncbi.model import NCBIAccession, NCBISource
+from virtool_cli.ncbi.model import NCBINuccore, NCBIAccession, NCBISource
 
 
 @pytest.fixture()
@@ -39,16 +39,12 @@ class TestClientProcureFromTaxid:
 
         assert type(clean_records) is list
 
-        for packet in clean_records:
-            assert type(packet) is NuccorePacket
+        for record in clean_records:
+            assert type(record) is NCBINuccore
 
-            assert type(packet.sequence) is NCBIAccession
+            assert type(record.accession) is str
 
-            assert type(packet.source) is NCBISource
-
-            assert type(packet.sequence.accession) is str
-
-            assert type(packet.source.taxid) is int
+            assert type(record.taxid) is int
 
     @pytest.mark.asyncio
     async def test_cache_from_taxid(self, taxon_id, test_client):
@@ -80,10 +76,12 @@ class TestClientProcureUpdates:
 
         assert type(clean_records) is list
 
-        for packet in clean_records:
-            assert type(packet.sequence) is NCBIAccession
+        for record in clean_records:
+            assert type(record) is NCBINuccore
 
-            assert type(packet.source) is NCBISource
+            assert type(record.accession) is str
+
+            assert type(record.taxid) is int
 
     @pytest.mark.parametrize("otu_id", ["0bfdb8bc", "4c9ddfb7", "d226290f"])
     @pytest.mark.asyncio
