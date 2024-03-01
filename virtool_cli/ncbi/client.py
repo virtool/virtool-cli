@@ -144,7 +144,7 @@ class NCBIClient:
         logger = base_logger.bind(accessions=accessions)
 
         try:
-            records = NCBIClient._fetch_serialized_records(accessions)
+            records = NCBIClient.__fetch_serialized_records(accessions)
             return records
 
         except IncompleteRecordsError as e:
@@ -225,7 +225,7 @@ class NCBIClient:
                 return [keypair["Id"] for keypair in id_table]
 
     @staticmethod
-    def _fetch_serialized_records(accessions: list) -> list[dict] | None:
+    def __fetch_serialized_records(accessions: list) -> list[dict] | None:
         """
         Requests XML GenBank records for a list of accessions
         and returns an equal-length list of serialized records.
@@ -247,7 +247,7 @@ class NCBIClient:
         raise IncompleteRecordsError("Bad accession in list", data=records)
 
     @staticmethod
-    def _fetch_raw_records(accessions: list) -> str:
+    def __fetch_raw_records(accessions: list) -> str:
         """
         Requests XML GenBank records for a list of accessions
         and returns results as unparsed XML
@@ -265,7 +265,7 @@ class NCBIClient:
     @staticmethod
     async def fetch_taxonomy_by_taxid(taxon_id: int) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""
-        return await NCBIClient._fetch_taxon_long(taxon_id)
+        return await NCBIClient.__fetch_taxon_long(taxon_id)
 
     @staticmethod
     async def fetch_taxonomy_id_by_name(name: str) -> int | None:
@@ -290,7 +290,7 @@ class NCBIClient:
         return taxid
 
     @staticmethod
-    async def _fetch_taxon_docsum(taxon_id: int):
+    async def __fetch_taxon_docsum(taxon_id: int):
         record = Entrez.read(
             Entrez.efetch(
                 db="taxonomy",
@@ -303,7 +303,7 @@ class NCBIClient:
         return record[0]
 
     @staticmethod
-    async def _fetch_taxon_long(taxon_id: int) -> dict:
+    async def __fetch_taxon_long(taxon_id: int) -> dict:
         with Entrez.efetch(db="taxonomy", id=taxon_id, rettype="null") as f:
             record = Entrez.read(f)
 
@@ -311,7 +311,7 @@ class NCBIClient:
 
     @staticmethod
     async def fetch_taxon_rank(taxon_id: int) -> str:
-        taxonomy = await NCBIClient._fetch_taxon_docsum(taxon_id)
+        taxonomy = await NCBIClient.__fetch_taxon_docsum(taxon_id)
 
         return taxonomy["Rank"]
 
@@ -322,7 +322,7 @@ class NCBIClient:
         :param taxid: NCBI Taxonomy UID
         :return: The NCBI Taxonomy ID of the OTU's species
         """
-        taxonomy = await NCBIClient._fetch_taxon_long(taxid)
+        taxonomy = await NCBIClient.__fetch_taxon_long(taxid)
 
         if taxonomy["Rank"] == "species":
             return int(taxonomy["TaxId"])
