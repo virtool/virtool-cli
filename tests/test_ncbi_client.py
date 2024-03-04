@@ -70,11 +70,15 @@ class TestClientProcureUpdates:
         ),
     )
     async def test_procure_updates(self, otu_id, use_cached, scratch_repo):
-        client = NCBIClient.for_repo(scratch_repo)
-
         otu = scratch_repo.get_otu_by_id(otu_id)
+        client = NCBIClient.for_repo(scratch_repo.path)
 
-        clean_records = await client.procure_updates(otu, use_cached=use_cached)
+        clean_records = await client.procure_updates(
+            otu_id=otu.id,
+            taxid=otu.taxid,
+            blocked_accessions=otu.blocked_accessions,
+            use_cached=use_cached,
+        )
 
         assert type(clean_records) is list
 
@@ -90,11 +94,15 @@ class TestClientProcureUpdates:
     @pytest.mark.parametrize("otu_id", ["0bfdb8bc", "4c9ddfb7", "d226290f"])
     @pytest.mark.asyncio
     async def test_cache_updates(self, otu_id, scratch_repo):
-        client = NCBIClient.for_repo(scratch_repo)
-
         otu = scratch_repo.get_otu_by_id(otu_id)
 
-        await client.cache_updates(otu)
+        client = NCBIClient.for_repo(scratch_repo.path)
+
+        await client.cache_updates(
+            otu_id=otu.id,
+            taxid=otu.taxid,
+            blocked_accessions=otu.blocked_accessions,
+        )
 
         assert client.cache.load_nuccore(otu_id)
 

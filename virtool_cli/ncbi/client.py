@@ -11,7 +11,6 @@ from pydantic import ValidationError
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
 from virtool_cli.ncbi.model import NCBINuccore, NCBISource
 from virtool_cli.ncbi.cache import NCBICache
-from virtool_cli.repo.cls import Repo, RepoOTU
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
@@ -27,13 +26,13 @@ class NCBIClient:
         self.cache = NCBICache(cache_path)
 
     @classmethod
-    def for_repo(cls, repo: Repo):
+    def for_repo(cls, repo_path: Path):
         """Initializes the NCBI cache in the default subpath
         under a given repository
 
-        :param repo: A Repo instance
+        :param repo_path: A path to a reference repository
         """
-        return NCBIClient(repo.path / ".cache/ncbi")
+        return NCBIClient(repo_path / ".cache/ncbi")
 
     async def procure_from_taxid(
         self, taxid: int, use_cached: bool = True
@@ -58,29 +57,37 @@ class NCBIClient:
         return NCBIClient.validate_records(records)
 
     async def procure_updates(
-        self, otu: RepoOTU, use_cached: bool = True
+        self,
+        otu_id: str,
+        taxid: int,
+        blocked_accessions: list[str],
+        use_cached: bool = True,
     ) -> list[NCBINuccore]:
         """
         Fetch updates for an extant OTU and return results as
-        a list of NCBINuccore parsed records
+        a list of NCBINuccore validated records
         Excludes blocked accessions automatically.
 
-        :param otu: OTU data from repo
+        :param otu_id: OTU data from repo
+        :param taxid: NCBI Taxonomy UID as an integer
+        :param blocked_accessions: A list of accessions to exclude from this operation
         :param use_cached: Cache use flag
         :return: A list of parsed records
         """
-        logger = base_logger.bind(otu_id=otu.id)
+        logger = base_logger.bind(otu_id=otu_id)
 
         if use_cached:
-            records = self.cache.load_nuccore(otu.id)
+            records = self.cache.load_nuccore(otu_id)
             if records:
                 logger.info("Cached records found", n_records=len(records))
 
                 return NCBIClient.validate_records(records)
 
-        taxid_accessions = await NCBIClient.link_accessions(otu.taxid)
+        taxid_accessions = await NCBIClient.link_accessions(taxid)
 
-        new_accessions = NCBIClient.filter_accessions(otu, taxid_accessions)
+        new_accessions = NCBIClient.filter_accessions(
+            blocked_accessions, taxid_accessions
+        )
 
         logger.debug("Fetching accessions...", new_accessions=new_accessions)
 
@@ -99,31 +106,41 @@ class NCBIClient:
 
         self.cache.cache_nuccore(records, str(taxid))
 
-    async def cache_updates(self, otu: RepoOTU, use_cached: bool = True):
+    async def cache_updates(
+        self,
+        otu_id: str,
+        taxid: int,
+        blocked_accessions: list[str],
+        use_cached: bool = True,
+    ):
         """Fetch and cache updates for an extant OTU.
         Excludes blocked accessions automatically.
 
-        :param otu: OTU data from repo
+        :param otu_id: OTU data from repo
+        :param taxid: NCBI Taxonomy UID as an integer
+        :param blocked_accessions: A list of accessions to exclude from this operation
         :param use_cached: Cache use flag
         """
-        logger = base_logger.bind(otu_id=otu.id)
+        logger = base_logger.bind(otu_id=otu_id)
 
         if use_cached:
-            records = self.cache.load_nuccore(otu.id)
+            records = self.cache.load_nuccore(otu_id)
             if records:
                 logger.info("Cached records found", n_records=len(records))
                 return records
 
-        taxid_accessions = await NCBIClient.link_accessions(otu.taxid)
+        taxid_accessions = await NCBIClient.link_accessions(taxid)
 
-        new_accessions = NCBIClient.filter_accessions(otu, taxid_accessions)
+        new_accessions = NCBIClient.filter_accessions(
+            blocked_accessions, taxid_accessions
+        )
 
         logger.debug("Fetching accessions...", new_accessions=new_accessions)
 
         if new_accessions:
             records = await NCBIClient.fetch_by_accessions(list(new_accessions))
 
-            self.cache.cache_nuccore(records, otu.id)
+            self.cache.cache_nuccore(records, otu_id)
 
             logger.debug("Cached records", n_records=len(records))
 
@@ -211,19 +228,22 @@ class NCBIClient:
         return clean_records
 
     @staticmethod
-    def filter_accessions(otu: RepoOTU, accessions: list | set) -> list:
+    def filter_accessions(new: list | set, blocked: list | set | None = None) -> list:
         """
         Takes a list of accessions and filters blocked accessions from it,
         leaving only new accessions
 
-        :param otu: An OTU from a repo instance
-        :param accessions: A list of accessions
-        :return: A list of new accessions
+        :param new: A list of accessions
+        :param blocked: A list of blocked accessions
+        :return: All accessions in the "new" list that are
+            not also in the "blocked" list
         """
-        accession_set = set(accessions)
-        blocked_set = set(otu.blocked_accessions)
+        if blocked is None:
+            blocked = set()
+        new_set = set(new)
+        blocked_set = set(blocked)
 
-        return list(blocked_set.difference(accession_set))
+        return list(blocked_set.difference(new_set))
 
     @staticmethod
     def validate_nuccore(raw: dict) -> NCBINuccore:
