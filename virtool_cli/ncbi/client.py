@@ -247,10 +247,10 @@ class NCBIClient:
             source.strain = source_dict["strain"]
 
         if "clone" in source_dict:
-            source.strain = source_dict["clone"]
+            source.clone = source_dict["clone"]
 
         if "host" in source_dict:
-            source.isolate = source_dict["host"]
+            source.host = source_dict["host"]
 
         if "segment" in source_dict:
             source.segment = source_dict["segment"]
