@@ -34,27 +34,52 @@ class NCBIClient:
         """
         return NCBIClient(repo_path / ".cache/ncbi")
 
+    @staticmethod
+    async def procure_accessions(
+        requested: list[str],
+        blocked: list[str] | None = None,
+    ) -> list[NCBINuccore]:
+        """
+        Filter an accession list, then fetch and validate NCBI Genbank records
+
+        :param requested:
+        :param blocked:
+        """
+        if blocked is None:
+            blocked = []
+
+        records = await NCBIClient.fetch_by_accessions(
+            NCBIClient.filter_accessions(requested, blocked)
+        )
+
+        return NCBIClient.validate_records(records)
+
     async def procure_from_taxid(
-        self, taxid: int, use_cached: bool = True
+        self,
+        taxid: int,
+        blocked_accessions: list[str] | None = None,
+        use_cached: bool = True,
     ) -> list[NCBINuccore]:
         """
         Fetch all linked accessions for an organism in NCBI Taxonomy
         and return results as a set of NCBIAccession and NCBISource
 
         :param taxid: NCBI Taxonomy UID as an integer
+        :param blocked_accessions:
         :param use_cached: Cache use flag
         :return: A list of NCBINuccore parsed records
         """
-
         logger = base_logger.bind(taxid=taxid)
         if use_cached:
             records = self.cache.load_nuccore(str(taxid))
             if records:
                 logger.info("Cached records found", n_records=len(records))
 
-        records = await NCBIClient.fetch_by_taxid(taxid)
+        all_accessions = await NCBIClient.link_accessions(taxid)
 
-        return NCBIClient.validate_records(records)
+        return await NCBIClient.procure_accessions(
+            requested=all_accessions, blocked=blocked_accessions
+        )
 
     async def procure_updates(
         self,
@@ -89,20 +114,30 @@ class NCBIClient:
             blocked_accessions, taxid_accessions
         )
 
-        logger.debug("Fetching accessions...", new_accessions=new_accessions)
-
         if new_accessions:
+            logger.debug("Fetching accessions...", new_accessions=new_accessions)
+
             records = await NCBIClient.fetch_by_accessions(list(new_accessions))
 
             return NCBIClient.validate_records(records)
 
-    async def cache_from_taxid(self, taxid: int):
+    async def cache_from_taxid(
+        self, taxid: int, blocked_accessions: list[str] | None = None
+    ):
         """Fetch all linked accessions for an organism in NCBI Taxonomy
         and cache the results
 
         :param taxid: NCBI Taxonomy UID as an integer
+        :param blocked_accessions:
         """
-        records = await NCBIClient.fetch_by_taxid(taxid)
+        all_accessions = await NCBIClient.link_accessions(taxid)
+
+        if blocked_accessions is None:
+            blocked_accessions = []
+
+        records = await NCBIClient.fetch_by_accessions(
+            NCBIClient.filter_accessions(all_accessions, blocked_accessions)
+        )
 
         self.cache.cache_nuccore(records, str(taxid))
 
