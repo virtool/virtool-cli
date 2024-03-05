@@ -26,11 +26,12 @@ class NCBIClient:
         self.cache = NCBICache(cache_path)
 
     @classmethod
-    def for_repo(cls, repo_path: Path):
+    def from_repo(cls, repo_path: Path) -> Repo:
         """Initializes the NCBI cache in the default subpath
         under a given repository
 
         :param repo_path: A path to a reference repository
+        :return:
         """
         return NCBIClient(repo_path / ".cache/ncbi")
 
@@ -41,6 +42,11 @@ class NCBIClient:
     ) -> list[NCBINuccore]:
         """
         Filter an accession list, then fetch and validate NCBI Genbank records
+
+        :TODO: Get rid of filtering. Just fetch records by a list of accessions.
+        :TODO: Cache on accession per file for easier lookup in `NCBICache`.
+        :TODO: Merge other accession fetching, caching, updating methods into this one and call this method
+               `fetch_accessions`.
 
         :param requested:
         :param blocked:
@@ -70,6 +76,10 @@ class NCBIClient:
         """
         Fetch all linked accessions for an organism in NCBI Taxonomy
         and return results as a set of NCBIAccession and NCBISource
+
+        :TODO: Merge cache, fetch, procure into one method here. Rename.
+        :TODO: Return a list of plain associated accessions. Leaving subsequent fetch of full Genbank records to the
+               caller.
 
         :param taxid: NCBI Taxonomy UID as an integer
         :param blocked_accessions:
@@ -294,6 +304,9 @@ class NCBIClient:
         Parses an NCBI Genbank record from a Genbank dict to a
         validated NCBINuccore
 
+        :TODO: End function with `return NCBISource(**{...})`. Pydantic can take expanded dict and validate and get rid
+               of unwanted fields.
+
         :param raw: A NCBI Genbank dict record, parsed by Bio.Entrez.Parser
         :return: A validated subset of Genbank record data
         """
@@ -325,6 +338,8 @@ class NCBIClient:
         Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
 
+        :TODO: Merge into caller
+
         :param taxon_id: A NCBI Taxonomy ID
         :return: A list of accessions linked to the Taxon Id
         """
@@ -355,6 +370,9 @@ class NCBIClient:
 
         Raises an error if fewer records are fetched than accessions.
 
+        :TODO: Merge up into caller. This will make exception handler a bit cleaner.
+        :TODO: Change to single underscore for private methods.
+
         :param accessions: A list of n accessions
         :return: A list of n deserialized records
         """
@@ -374,6 +392,8 @@ class NCBIClient:
         """
         Requests XML GenBank records for a list of accessions
         and returns results as unparsed XML
+
+        :TODO: Remove? It doesn't appear to be used anywhere.
 
         :param accessions: A list of accessions
         :return: XML data as an unparsed string
@@ -434,6 +454,9 @@ class NCBIClient:
 
     @staticmethod
     async def fetch_taxon_rank(taxon_id: int) -> str:
+        """
+        :TODO: Merge into one taxonomy method.
+        """
         taxonomy = await NCBIClient.__fetch_taxon_docsum(taxon_id)
 
         return taxonomy["Rank"]
@@ -441,6 +464,8 @@ class NCBIClient:
     @staticmethod
     async def fetch_species_taxid(taxid: int) -> int | None:
         """Gets the species taxid for the given lower-rank taxid.
+
+        :TODO: Merge into one taxonomy method.
 
         :param taxid: NCBI Taxonomy UID
         :return: The NCBI Taxonomy ID of the OTU's species
@@ -460,6 +485,8 @@ class NCBIClient:
     async def check_spelling(name: str, db: str = "taxonomy") -> str:
         """Takes the name of an OTU, requests an alternative spelling
         from the Entrez ESpell utility and returns the suggestion
+
+        :TODO: Use `Enum` for `db`.
 
         :param name: The OTU name that requires correcting
         :param db: Database to check against. Defaults to 'taxonomy'.
@@ -509,11 +536,7 @@ class NCBIClient:
 
     @staticmethod
     def __get_feature_table_keys(raw: dict):
-        keys = []
-        for feature in raw[GBSeq.FEATURE_TABLE]:
-            keys.append(feature["GBFeature_key"])
-
-        return keys
+        return [feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]]
 
 
 class GBSeq(StrEnum):
