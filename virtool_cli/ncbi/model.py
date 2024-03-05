@@ -1,5 +1,4 @@
 from enum import StrEnum
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -17,30 +16,19 @@ class NCBISourceType(StrEnum):
 
 
 class NCBISource(BaseModel):
-    type: NCBISourceType
-    name: str
     taxid: int
-    host: str = ""
-    segment: str = ""
-
-
-class NCBIAccession(BaseModel):
-    accession: str
-    definition: str
-    sequence: str
-    comment: Optional[str] = ""
+    host: str | None = None
+    segment: str | None = None
+    isolate: str | None = None
+    strain: str | None = None
+    clone: str | None = None
 
 
 class NCBINuccore(BaseModel):
     accession: str
     definition: str
     sequence: str
-    taxid: int
-    host: str = ""
-    segment: str = ""
-    isolate: str = ""
-    strain: str = ""
-    clone: str = ""
+    source: NCBISource
     comment: str = ""
 
 
