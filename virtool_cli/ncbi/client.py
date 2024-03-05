@@ -247,7 +247,7 @@ class NCBIClient:
         record = NCBINuccore(
             accession=raw[GBSeq.ACCESSION],
             definition=raw[GBSeq.DEFINITION],
-            sequence=raw[GBSeq.SEQUENCE],
+            sequence=raw[GBSeq.SEQUENCE].upper(),
             source=source,
         )
 
