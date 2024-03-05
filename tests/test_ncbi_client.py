@@ -6,6 +6,12 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBINuccore, NCBISource
 
 
+ACCESSION_LISTS = [
+    ["KT390494", "KT390496", "KT390501"],
+    ["KY702580", "MZ148028.1", "KF915809"],
+]
+
+
 @pytest.fixture()
 def test_client(cache_scratch_path):
     return NCBIClient(cache_scratch_path / "cache_test")
@@ -29,6 +35,23 @@ def accession_list():
 @pytest.fixture()
 def scratch_repo(scratch_path):
     return Repo(scratch_path)
+
+
+@pytest.mark.parametrize("accession_list", ACCESSION_LISTS)
+class TestClientProcureAccessions:
+    async def test_procure_accessions(self, accession_list, test_client):
+        clean_records = await test_client.procure_accessions(requested=accession_list)
+
+        assert clean_records
+
+        for record in clean_records:
+            assert type(record) is NCBINuccore
+
+            assert type(record.accession) is str
+
+            assert type(record.source) is NCBISource
+
+            assert type(record.source.taxid) is int
 
 
 @pytest.mark.parametrize("taxon_id", [1016856, 429130])
@@ -107,10 +130,7 @@ class TestClientProcureUpdates:
         assert client.cache.load_nuccore(otu_id)
 
 
-@pytest.mark.parametrize(
-    "accession_list",
-    [["KT390494", "KT390496", "KT390501"], ["KY702580", "MZ148028.1", "KF915809"]],
-)
+@pytest.mark.parametrize("accession_list", ACCESSION_LISTS)
 class TestClientFetchAccessionSets:
     @pytest.mark.asyncio
     async def test_fetch_accessions(self, accession_list):
@@ -132,6 +152,29 @@ class TestClientFetchAccessionSets:
         for record in records:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
+
+
+@pytest.mark.parametrize(
+    "requested, blocked",
+    [
+        (ACCESSION_LISTS[0], None),
+        (ACCESSION_LISTS[0], []),
+        (ACCESSION_LISTS[0], ACCESSION_LISTS[0][:1]),
+        (ACCESSION_LISTS[1], None),
+        (ACCESSION_LISTS[1], []),
+        (ACCESSION_LISTS[1], ACCESSION_LISTS[0][:2]),
+    ],
+)
+def test_filter_accessions(requested, blocked):
+    filtered = NCBIClient.filter_accessions(requested, blocked)
+
+    assert filtered
+
+    if blocked is None:
+        return
+
+    for blocked_accession in blocked:
+        assert blocked_accession not in filtered
 
 
 @pytest.mark.asyncio

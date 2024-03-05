@@ -47,12 +47,19 @@ class NCBIClient:
         """
         if blocked is None:
             blocked = []
+        logger = base_logger.bind(requested=requested, blocked=blocked)
 
-        records = await NCBIClient.fetch_by_accessions(
-            NCBIClient.filter_accessions(requested, blocked)
-        )
+        accessions = NCBIClient.filter_accessions(requested, blocked)
+        if not accessions:
+            logger.warning("No new accessions")
+            return []
 
-        return NCBIClient.validate_records(records)
+        records = await NCBIClient.fetch_by_accessions(accessions)
+
+        if records:
+            return NCBIClient.validate_records(records)
+        else:
+            return []
 
     async def procure_from_taxid(
         self,
@@ -273,12 +280,13 @@ class NCBIClient:
         :return: All accessions in the "new" list that are
             not also in the "blocked" list
         """
-        if blocked is None:
-            blocked = set()
         new_set = set(new)
-        blocked_set = set(blocked)
+        if blocked is None:
+            blocked_set = set()
+        else:
+            blocked_set = set(blocked)
 
-        return list(blocked_set.difference(new_set))
+        return list(new_set.difference(blocked_set))
 
     @staticmethod
     def validate_nuccore(raw: dict) -> NCBINuccore:
