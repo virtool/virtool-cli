@@ -240,20 +240,9 @@ class NCBIClient:
 
         source = NCBISource(taxid=NCBIClient.__parse_taxid(source_dict))
 
-        if "isolate" in source_dict:
-            source.isolate = source_dict["isolate"]
-
-        if "strain" in source_dict:
-            source.strain = source_dict["strain"]
-
-        if "clone" in source_dict:
-            source.clone = source_dict["clone"]
-
-        if "host" in source_dict:
-            source.host = source_dict["host"]
-
-        if "segment" in source_dict:
-            source.segment = source_dict["segment"]
+        for source_key in ("isolate", "strain", "clone", "host", "segment"):
+            if source_key in source_dict:
+                setattr(source, source_key, source_dict[source_key])
 
         record = NCBINuccore(
             accession=raw[GBSeq.ACCESSION],
