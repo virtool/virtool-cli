@@ -42,35 +42,6 @@ class NCBIClient:
         """
         return NCBIClient(repo_path / ".cache/ncbi")
 
-    @staticmethod
-    async def link_accessions(taxon_id: int) -> list:
-        """
-        Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
-        and returns the results as a list.
-
-        :TODO: Merge into caller
-
-        :param taxon_id: A NCBI Taxonomy ID
-        :return: A list of accessions linked to the Taxon Id
-        """
-        elink_results = Entrez.read(
-            Entrez.elink(
-                dbfrom="taxonomy",
-                db="nuccore",
-                id=str(taxon_id),
-                idtype="acc",
-            )
-        )
-        if not elink_results:
-            return []
-
-        # Discards unneeded tables and formats needed table as a list
-        for link_set_db in elink_results[0]["LinkSetDb"]:
-            if link_set_db["LinkName"] == "taxonomy_nuccore":
-                id_table = link_set_db["Link"]
-
-                return [keypair["Id"] for keypair in id_table]
-
     async def fetch_accessions(
         self,
         accessions: list[str],
@@ -94,7 +65,7 @@ class NCBIClient:
             records = self.cache.load_nuccore_records(accessions)
             if records:
                 logger.info("Cached records found")
-                return NCBIClient.validate_records(records)
+                return NCBIClient.validate_genbank_records(records)
 
         records = await NCBIClient.fetch_unvalidated_accessions(accessions)
         if records:
@@ -102,7 +73,7 @@ class NCBIClient:
                 self.cache.cache_nuccore_records(records)
                 logger.debug("Records cached", n_records=len(records))
 
-            return NCBIClient.validate_records(records)
+            return NCBIClient.validate_genbank_records(records)
 
         return []
 
@@ -138,9 +109,37 @@ class NCBIClient:
         return []
 
     @staticmethod
+    async def link_accessions(taxon_id: int) -> list:
+        """
+        Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
+        and returns the results as a list.
+
+        :TODO: Merge into caller
+
+        :param taxon_id: A NCBI Taxonomy ID
+        :return: A list of accessions linked to the Taxon Id
+        """
+        elink_results = Entrez.read(
+            Entrez.elink(
+                dbfrom="taxonomy",
+                db="nuccore",
+                id=str(taxon_id),
+                idtype="acc",
+            )
+        )
+        if not elink_results:
+            return []
+
+        # Discards unneeded tables and formats needed table as a list
+        for link_set_db in elink_results[0]["LinkSetDb"]:
+            if link_set_db["LinkName"] == "taxonomy_nuccore":
+                id_table = link_set_db["Link"]
+
+                return [keypair["Id"] for keypair in id_table]
+
+    @staticmethod
     async def fetch_by_taxid(taxid: int) -> list[dict]:
-        """Fetch all records linked to a taxonomy record.
-        Usable when an OTU does not exist
+        """Fetch all records linked to a taxonomy record. Usable without preexisting OTU data.
 
         :param taxid: A Taxonomy UID
         :return: A list of Entrez-parsed records
@@ -152,7 +151,7 @@ class NCBIClient:
         return await NCBIClient.fetch_unvalidated_accessions(accessions)
 
     @staticmethod
-    def validate_records(records: list[dict]) -> list[NCBINuccore]:
+    def validate_genbank_records(records: list[dict]) -> list[NCBINuccore]:
         """
         Process a list of raw Genbank dicts into validated NCBINuccore records.
         Logs an error if there is an issue with validation or parsing,
@@ -165,7 +164,7 @@ class NCBIClient:
 
         for record in records:
             try:
-                clean_records.append(NCBIClient.validate_record(record))
+                clean_records.append(NCBIClient.validate_genbank_record(record))
 
             except (ValidationError, NCBIParseError) as exc:
                 accession = record.get(GBSeq.ACCESSION, "?")
@@ -174,7 +173,7 @@ class NCBIClient:
         return clean_records
 
     @staticmethod
-    def validate_record(raw: dict) -> NCBINuccore:
+    def validate_genbank_record(raw: dict) -> NCBINuccore:
         """
         Parses an NCBI Genbank record from a Genbank dict to
         a validated NCBINuccore
@@ -227,7 +226,7 @@ class NCBIClient:
             self.cache.cache_taxonomy(record, taxid)
 
         try:
-            return NCBIClient.validate_taxonomy(record)
+            return NCBIClient.validate_taxonomy_record(record)
 
         except ValidationError as exc:
             logger.debug("Proper rank not found in record", error=exc.errors())
@@ -246,16 +245,18 @@ class NCBIClient:
                 )
                 return None
         try:
-            return NCBIClient.validate_taxonomy(record, rank)
+            return NCBIClient.validate_taxonomy_record(record, rank)
         except ValidationError as exc:
             logger.error("Failed to find a valid rank. Returning empty...", error=exc)
             return None
 
     @staticmethod
-    def validate_taxonomy(record: dict, rank: NCBIRank | None = None) -> NCBITaxonomy:
+    def validate_taxonomy_record(
+        record: dict, rank: NCBIRank | None = None
+    ) -> NCBITaxonomy:
         """
         :param record: Taxonomy record in dict form
-        :param rank: Optional variable, overrides inline rank data
+        :param rank: Optional variable. Overrides inline rank data.
         :return: A validated NCBI
         """
         species = None
@@ -286,10 +287,9 @@ class NCBIClient:
                         name=record["ScientificName"],
                         rank=record["Rank"],
                     )
+                logger.debug("Rank data found in record", rank=rank)
             except ValueError:
-                logger.warning("Rank data not included")
-
-        logger.debug("Check rank", rank=rank)
+                logger.warning("Rank data not found in record")
 
         return NCBITaxonomy(
             id=int(record["TaxId"]),
@@ -403,10 +403,6 @@ class NCBIClient:
             keys=[feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]],
             message="Feature table does not contain source data",
         )
-
-    @staticmethod
-    def _parse_taxid(source_feature) -> int | None:
-        return int(source_feature["db_xref"].split(":")[1])
 
 
 class GBSeq(StrEnum):

@@ -42,7 +42,7 @@ class NCBITaxonomy(BaseModel):
     id: int
     rank: NCBIRank
     lineage: list[NCBILineage]
-    species: NCBILineage | None
+    species: NCBILineage
 
 
 class NCBIDB(StrEnum):
