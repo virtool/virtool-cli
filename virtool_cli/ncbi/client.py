@@ -111,15 +111,16 @@ class NCBIClient:
         logger = base_logger.bind(accessions=accessions)
 
         try:
-            records = NCBIClient.__fetch_serialized_records(accessions)
-            return records
+            with Entrez.efetch(
+                db="nuccore", id=accessions, rettype="gb", retmode="xml"
+            ) as f:
+                records = Entrez.read(f)
 
-        except IncompleteRecordsError as e:
-            logger.error(e.message)
-
-            if e.data:
+            # Handle cases where not all accessions can be fetched
+            if len(records) != len(accessions):
                 logger.debug("Partial results fetched, returning results...")
-                return e.data
+
+            return records
 
         except HTTPError as e:
             if e.code == 400:
@@ -130,18 +131,34 @@ class NCBIClient:
         return []
 
     @staticmethod
-    async def fetch_by_accession(accession: str) -> dict:
+    async def link_accessions(taxon_id: int) -> list:
         """
-        Wrapper that fetches a single accession and returns
-        a single NCBI Genbank-parsed record
+        Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
+        and returns the results as a list.
 
-        :param accession: A single accession
-        :return: A single NCBI Genbank-parsed record
+        :TODO: Merge into caller
+
+        :param taxon_id: A NCBI Taxonomy ID
+        :return: A list of accessions linked to the Taxon Id
         """
-        record = await NCBIClient.fetch_raw_via_accessions([accession])
+        elink_results = Entrez.read(
+            Entrez.elink(
+                dbfrom="taxonomy",
+                db="nuccore",
+                id=str(taxon_id),
+                idtype="acc",
+            )
+        )
 
-        if record:
-            return record[0]
+        if not elink_results:
+            return []
+
+        # Discards unneeded tables and formats needed table as a list
+        for link_set_db in elink_results[0]["LinkSetDb"]:
+            if link_set_db["LinkName"] == "taxonomy_nuccore":
+                id_table = link_set_db["Link"]
+
+                return [keypair["Id"] for keypair in id_table]
 
     @staticmethod
     def validate_records(records: list[dict]) -> list[NCBINuccore]:
@@ -181,11 +198,7 @@ class NCBIClient:
             NCBIClient.__get_source_table(raw)
         )
 
-        source = NCBISource(taxid=NCBIClient.__parse_taxid(source_dict))
-
-        for source_key in ("isolate", "strain", "clone", "host", "segment"):
-            if source_key in source_dict:
-                setattr(source, source_key, source_dict[source_key])
+        source = NCBISource(taxid=NCBIClient.__parse_taxid(source_dict), **source_dict)
 
         record = NCBINuccore(
             accession=raw[GBSeq.ACCESSION],
@@ -200,64 +213,23 @@ class NCBIClient:
         return record
 
     @staticmethod
-    async def link_accessions(taxon_id: int) -> list:
-        """
-        Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
-        and returns the results as a list.
-
-        :TODO: Merge into caller
-
-        :param taxon_id: A NCBI Taxonomy ID
-        :return: A list of accessions linked to the Taxon Id
-        """
-        elink_results = Entrez.read(
-            Entrez.elink(
-                dbfrom="taxonomy",
-                db="nuccore",
-                id=str(taxon_id),
-                idtype="acc",
-            )
-        )
-
-        if not elink_results:
-            return []
-
-        # Discards unneeded tables and formats needed table as a list
-        for link_set_db in elink_results[0]["LinkSetDb"]:
-            if link_set_db["LinkName"] == "taxonomy_nuccore":
-                id_table = link_set_db["Link"]
-
-                return [keypair["Id"] for keypair in id_table]
-
-    @staticmethod
-    def __fetch_serialized_records(accessions: list) -> list[dict] | None:
-        """
-        Requests XML GenBank records for a list of accessions
-        and returns an equal-length list of serialized records.
-
-        Raises an error if fewer records are fetched than accessions.
-
-        :TODO: Merge up into caller. This will make exception handler a bit cleaner.
-        :TODO: Change to single underscore for private methods.
-
-        :param accessions: A list of n accessions
-        :return: A list of n deserialized records
-        """
-        with Entrez.efetch(
-            db="nuccore", id=accessions, rettype="gb", retmode="xml"
-        ) as f:
-            records = Entrez.read(f)
-
-        # Handle cases where not all accessions can be fetched
-        if len(records) == len(accessions):
-            return records
-
-        raise IncompleteRecordsError("Bad accession in list", data=records)
-
-    @staticmethod
     async def fetch_taxonomy_by_taxid(taxon_id: int) -> dict:
         """Requests a taxonomy record from NCBI Taxonomy"""
-        return await NCBIClient.__fetch_taxon_long(taxon_id)
+        with Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxon_id, rettype="null") as f:
+            record = Entrez.read(f)[0]
+
+        if record["Rank"] == "no rank":
+            with Entrez.efetch(
+                db=NCBIDB.TAXONOMY,
+                id=taxon_id,
+                rettype="docsum",
+                retmode="xml",
+            ) as f:
+                rank = Entrez.read(f)
+
+            record["Rank"] = rank
+
+        return record
 
     @staticmethod
     async def fetch_taxonomy_id_by_name(name: str) -> int | None:
@@ -281,54 +253,25 @@ class NCBIClient:
 
         return taxid
 
-    @staticmethod
-    async def __fetch_taxon_docsum(taxon_id: int):
-        record = Entrez.read(
-            Entrez.efetch(
-                db="taxonomy",
-                id=taxon_id,
-                rettype="docsum",
-                retmode="xml",
-            )
-        )
-
-        return record[0]
-
-    @staticmethod
-    async def __fetch_taxon_long(taxon_id: int) -> dict:
-        with Entrez.efetch(db="taxonomy", id=taxon_id, rettype="null") as f:
-            record = Entrez.read(f)
-
-        return record[0]
-
-    @staticmethod
-    async def fetch_taxon_rank(taxon_id: int) -> str:
-        """
-        :TODO: Merge into one taxonomy method.
-        """
-        taxonomy = await NCBIClient.__fetch_taxon_docsum(taxon_id)
-
-        return taxonomy["Rank"]
-
-    @staticmethod
-    async def fetch_species_taxid(taxid: int) -> int | None:
-        """Gets the species taxid for the given lower-rank taxid.
-
-        :TODO: Merge into one taxonomy method.
-
-        :param taxid: NCBI Taxonomy UID
-        :return: The NCBI Taxonomy ID of the OTU's species
-        """
-        taxonomy = await NCBIClient.__fetch_taxon_long(taxid)
-
-        if taxonomy["Rank"] == "species":
-            return int(taxonomy["TaxId"])
-
-        for line in taxonomy["LineageEx"]:
-            if line["Rank"] == "species":
-                return int(line["TaxId"])
-
-        return None
+    # @staticmethod
+    # async def fetch_species_taxid(taxid: int) -> int | None:
+    #     """Gets the species taxid for the given lower-rank taxid.
+    #
+    #     :TODO: Merge into one taxonomy method.
+    #
+    #     :param taxid: NCBI Taxonomy UID
+    #     :return: The NCBI Taxonomy ID of the OTU's species
+    #     """
+    #     taxonomy = await NCBIClient.__fetch_taxon_long(taxid)
+    #
+    #     if taxonomy["Rank"] == "species":
+    #         return int(taxonomy["TaxId"])
+    #
+    #     for line in taxonomy["LineageEx"]:
+    #         if line["Rank"] == "species":
+    #             return int(line["TaxId"])
+    #
+    #     return None
 
     @staticmethod
     async def check_spelling(name: str, db: str = "taxonomy") -> str:
@@ -373,19 +316,7 @@ class NCBIClient:
 
     @staticmethod
     def __parse_taxid(source_feature) -> int | None:
-        return int(NCBIClient.__split_db_xref(source_feature["db_xref"])[1])
-
-    @staticmethod
-    def __split_db_xref(entry: str) -> list[str]:
-        xref = entry.split(":")
-        if len(xref) != 2:
-            raise NCBIParseError
-
-        return xref
-
-    # @staticmethod
-    # def __get_feature_table_keys(raw: dict):
-    #     return [feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]]
+        return int(source_feature["db_xref"].split(":")[1])
 
 
 class GBSeq(StrEnum):

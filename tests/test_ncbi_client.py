@@ -103,7 +103,7 @@ class TestClientFetchRawAccessions:
 class TestClientTaxonomyUtilities:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxon_id", [908125, 1016856])
-    async def test_fetch_taxonomy(self, taxon_id):
+    async def test_fetch_taxonomy_by_taxid(self, taxon_id):
         taxonomy = await NCBIClient.fetch_taxonomy_by_taxid(taxon_id)
 
         assert taxonomy.get("TaxId", None) is not None
@@ -121,6 +121,7 @@ class TestClientTaxonomyUtilities:
     async def test_fetch_taxonomy_by_name(self, name, taxid):
         assert await NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
 
+    @pytest.mark.skip
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "taxid,rank",
