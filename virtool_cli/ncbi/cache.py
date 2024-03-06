@@ -90,7 +90,7 @@ class NCBICache:
     ):
         """Add a NCBI Taxonomy record to the cache"""
         cached_taxonomy_path = self._get_taxonomy_path(taxon_id)
-        if overwrite_enabled and cached_taxonomy_path.exists():
+        if not overwrite_enabled and cached_taxonomy_path.exists():
             raise FileExistsError
 
         with open(cached_taxonomy_path, "w") as f:

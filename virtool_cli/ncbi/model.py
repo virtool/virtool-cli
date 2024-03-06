@@ -29,14 +29,20 @@ class NCBINuccore(BaseModel):
     definition: str
     sequence: str
     source: NCBISource
-    comment: str = ""
+    comment: str
+
+
+class NCBILineage(BaseModel):
+    id: int
+    name: str
+    rank: str
 
 
 class NCBITaxonomy(BaseModel):
     id: int
-    accessions: list[str]
-    lineage: list[str]
     rank: NCBIRank
+    lineage: list[NCBILineage]
+    species: NCBILineage | None
 
 
 class NCBIDB(StrEnum):
