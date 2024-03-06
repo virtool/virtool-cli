@@ -142,7 +142,10 @@ class TestClientTaxonomyUtilities:
                 "Hynchosia yellow mosaic India virus",
                 "Rhynchosia yellow mosaic India virus",
             ),
-            ("Angelica bush stunt virus", "Angelica bushy stunt virus"),
+            (
+                "Angelica bush stunt virus",
+                "Angelica bushy stunt virus",
+            ),
         ],
     )
     async def test_check_spelling(self, misspelled, expected):
