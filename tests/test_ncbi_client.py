@@ -1,5 +1,4 @@
 import pytest
-import json
 from pathlib import Path
 
 from virtool_cli.repo.cls import Repo
