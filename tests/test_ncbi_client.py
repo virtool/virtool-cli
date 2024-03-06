@@ -7,8 +7,8 @@ from virtool_cli.ncbi.model import NCBINuccore, NCBISource
 
 
 ACCESSION_LISTS = [
-    ["KT390494", "KT390496", "KT390501"],
-    ["KY702580", "MZ148028.1", "KF915809"],
+    ["AB017504", "MH200607", "MK431779", "NC_003355"],
+    ["NC_036587", "MT240513", "MT240490"],
 ]
 
 
@@ -28,20 +28,16 @@ def test_taxonomy_path(test_files_path: Path):
 
 
 @pytest.fixture()
-def accession_list():
-    return ["KT390494", "KT390496", "KT390501"]
-
-
-@pytest.fixture()
 def scratch_repo(scratch_path):
     return Repo(scratch_path)
 
 
-@pytest.mark.skip
-@pytest.mark.parametrize("accession_list", ACCESSION_LISTS)
-class TestClientProcureAccessions:
-    async def test_procure_accessions(self, accession_list, test_client):
-        clean_records = await test_client.procure_accessions(requested=accession_list)
+class TestClientFetchAccessions:
+    @pytest.mark.parametrize("accessions", ACCESSION_LISTS)
+    async def test_fetch_accessions_from_ncbi(self, accessions, test_client):
+        clean_records = await test_client.fetch_accessions(
+            accessions=accessions, use_cached=False
+        )
 
         assert clean_records
 
@@ -54,60 +50,54 @@ class TestClientProcureAccessions:
 
             assert type(record.source.taxid) is int
 
+    @pytest.mark.parametrize("accessions", ACCESSION_LISTS)
+    async def test_fetch_accessions_from_cache(self, accessions, test_client):
+        clean_records = await test_client.fetch_accessions(
+            accessions=accessions, use_cached=True
+        )
 
-@pytest.mark.skip
-@pytest.mark.parametrize("accession_list", ACCESSION_LISTS)
-class TestClientFetchAccessionSets:
+        assert clean_records
+
+        for record in clean_records:
+            assert type(record) is NCBINuccore
+
+            assert type(record.accession) is str
+
+            assert type(record.source) is NCBISource
+
+            assert type(record.source.taxid) is int
+
     @pytest.mark.asyncio
-    async def test_fetch_accessions(self, accession_list):
-        records = await NCBIClient.fetch_by_accessions_to_raw(accession_list)
+    async def test_fetch_accessions_fail(self, test_client):
+        false_accessions = ["friday", "paella", "111"]
+
+        records = await test_client.fetch_accessions(false_accessions)
+
+        assert not records
+
+
+@pytest.mark.parametrize("accessions", ACCESSION_LISTS)
+class TestClientFetchRawAccessions:
+    @pytest.mark.asyncio
+    async def test_fetch_raw_via_accessions(self, accessions):
+        records = await NCBIClient.fetch_raw_via_accessions(accessions)
 
         for record in records:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
 
     @pytest.mark.asyncio
-    async def test_fetch_accessions_partial(self, accession_list):
-        partial_accession_list = accession_list
+    async def test_fetch_raw_via_accessions_partial(self, accessions):
+        partial_accession_list = accessions
         partial_accession_list[0] = partial_accession_list[0][:3]
 
-        records = await NCBIClient.fetch_by_accessions_to_raw(accession_list)
+        records = await NCBIClient.fetch_raw_via_accessions(accessions)
 
-        assert len(records) == len(accession_list) - 1
+        assert len(records) == len(accessions) - 1
 
         for record in records:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
-
-
-@pytest.mark.parametrize(
-    "requested, blocked",
-    [
-        (ACCESSION_LISTS[0], None),
-        (ACCESSION_LISTS[0], []),
-        (ACCESSION_LISTS[0], ACCESSION_LISTS[0][:1]),
-        (ACCESSION_LISTS[1], None),
-        (ACCESSION_LISTS[1], []),
-        (ACCESSION_LISTS[1], ACCESSION_LISTS[0][:2]),
-    ],
-)
-def test_filter_accessions(requested, blocked):
-    filtered = NCBIClient.filter_accessions(requested, blocked)
-
-    assert filtered
-
-    if blocked is None:
-        return
-
-    for blocked_accession in blocked:
-        assert blocked_accession not in filtered
-
-
-@pytest.mark.asyncio
-async def test_fetch_accessions_fail():
-    accession_list = ["friday", "paella", "111"]
-
-    assert not await NCBIClient.fetch_by_accessions_to_raw(accession_list)
 
 
 class TestClientTaxonomyUtilities:

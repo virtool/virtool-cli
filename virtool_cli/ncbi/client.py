@@ -35,8 +35,9 @@ class NCBIClient:
         """
         return NCBIClient(repo_path / ".cache/ncbi")
 
-    @staticmethod
-    async def procure_accessions(requested: list[str]) -> list[NCBINuccore]:
+    async def fetch_accessions(
+        self, accessions: list[str], use_cached: bool = True
+    ) -> list[NCBINuccore]:
         """
         Filter an accession list, then fetch and validate NCBI Genbank records
 
@@ -45,26 +46,26 @@ class NCBIClient:
         :TODO: Merge other accession fetching, caching, updating methods into this one and call this method
                `fetch_accessions`.
 
-        :param requested:
-        :param blocked:
+        :param accessions:
+        :return:
         """
-        if blocked is None:
-            blocked = []
-        logger = base_logger.bind(requested=requested, blocked=blocked)
+        logger = base_logger.bind(accessions=accessions)
 
-        accessions = NCBIClient.filter_accessions(requested, blocked)
-        if not accessions:
-            logger.warning("No new accessions")
-            return []
+        records = []
+        if use_cached:
+            records = self.cache.load_nuccore_records(accessions)
+            if records:
+                logger.info("Cached records found")
 
-        records = await NCBIClient.fetch_by_accessions_to_raw(accessions)
+        if not records:
+            records = await NCBIClient.fetch_raw_via_accessions(accessions)
 
         if records:
             return NCBIClient.validate_records(records)
         else:
             return []
 
-    async def cache_accessions(self, requested: list[str]):
+    async def cache_accessions(self, accessions: list[str]):
         """
         Filter an accession list, then fetch and validate NCBI Genbank records
 
@@ -73,12 +74,11 @@ class NCBIClient:
         :TODO: Merge other accession fetching, caching, updating methods into this one and call this method
                `fetch_accessions`.
 
-        :param requested:
-        :param blocked:
+        :param accessions:
         """
-        logger = base_logger.bind(requested=requested)
+        logger = base_logger.bind(accessions=accessions)
 
-        records = await NCBIClient.fetch_by_accessions_to_raw(requested)
+        records = await NCBIClient.fetch_raw_via_accessions(accessions)
         if records:
             self.cache.cache_nuccore_records(records)
 
@@ -94,10 +94,10 @@ class NCBIClient:
 
         base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
 
-        return await NCBIClient.fetch_by_accessions_to_raw(accessions)
+        return await NCBIClient.fetch_raw_via_accessions(accessions)
 
     @staticmethod
-    async def fetch_by_accessions_to_raw(accessions: list[str]) -> list[dict]:
+    async def fetch_raw_via_accessions(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, download the corresponding records
         from GenBank as XML and return Genbank XML-parsed records
@@ -138,7 +138,7 @@ class NCBIClient:
         :param accession: A single accession
         :return: A single NCBI Genbank-parsed record
         """
-        record = await NCBIClient.fetch_by_accessions_to_raw([accession])
+        record = await NCBIClient.fetch_raw_via_accessions([accession])
 
         if record:
             return record[0]
@@ -157,7 +157,7 @@ class NCBIClient:
 
         for record in records:
             try:
-                clean_records.append(NCBIClient.validate_nuccore(record))
+                clean_records.append(NCBIClient.validate_record(record))
 
             except (ValidationError, NCBIParseError) as exc:
                 accession = record.get(GBSeq.ACCESSION, "?")
@@ -166,26 +166,7 @@ class NCBIClient:
         return clean_records
 
     @staticmethod
-    def filter_accessions(new: list | set, blocked: list | set | None = None) -> list:
-        """
-        Takes a list of accessions and filters blocked accessions from it,
-        leaving only new accessions
-
-        :param new: A list of accessions
-        :param blocked: A list of blocked accessions
-        :return: All accessions in the "new" list that are
-            not also in the "blocked" list
-        """
-        new_set = set(new)
-        if blocked is None:
-            blocked_set = set()
-        else:
-            blocked_set = set(blocked)
-
-        return list(new_set.difference(blocked_set))
-
-    @staticmethod
-    def validate_nuccore(raw: dict) -> NCBINuccore:
+    def validate_record(raw: dict) -> NCBINuccore:
         """
         Parses an NCBI Genbank record from a Genbank dict to a
         validated NCBINuccore
@@ -272,24 +253,6 @@ class NCBIClient:
             return records
 
         raise IncompleteRecordsError("Bad accession in list", data=records)
-
-    @staticmethod
-    def __fetch_raw_records(accessions: list) -> str:
-        """
-        Requests XML GenBank records for a list of accessions
-        and returns results as unparsed XML
-
-        :TODO: Remove? It doesn't appear to be used anywhere.
-
-        :param accessions: A list of accessions
-        :return: XML data as an unparsed string
-        """
-        with Entrez.efetch(
-            db="nuccore", id=accessions, rettype="gb", retmode="xml"
-        ) as f:
-            raw_records = f.read()
-
-        return raw_records
 
     @staticmethod
     async def fetch_taxonomy_by_taxid(taxon_id: int) -> dict:
@@ -393,7 +356,7 @@ class NCBIClient:
                 return feature
 
         raise NCBIParseError(
-            keys=NCBIClient.__get_feature_table_keys(raw),
+            keys=[feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]],
             message="Feature table does not contain source data",
         )
 
@@ -420,9 +383,9 @@ class NCBIClient:
 
         return xref
 
-    @staticmethod
-    def __get_feature_table_keys(raw: dict):
-        return [feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]]
+    # @staticmethod
+    # def __get_feature_table_keys(raw: dict):
+    #     return [feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]]
 
 
 class GBSeq(StrEnum):
@@ -432,3 +395,8 @@ class GBSeq(StrEnum):
     LENGTH = "GBSeq_length"
     COMMENT = "GBSeq_comment"
     FEATURE_TABLE = "GBSeq_feature-table"
+
+
+class NCBIDB(StrEnum):
+    NUCCORE = "nuccore"
+    TAXONOMY = "taxonomy"
