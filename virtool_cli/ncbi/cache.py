@@ -2,6 +2,11 @@ import json
 import shutil
 from pathlib import Path
 
+from structlog import get_logger
+
+
+base_logger = get_logger()
+
 
 class NCBICache:
     """Manages caching functionality for NCBI data"""
@@ -27,28 +32,36 @@ class NCBICache:
         self.nuccore.mkdir()
         self.taxonomy.mkdir()
 
-    def cache_nuccore_records(
-        self, accessions: list[dict], overwrite_enabled: bool = True
-    ):
-        """Add a list of NCBI Nucleotide records to the cache."""
+    def cache_nuccore_records(self, accessions: list[dict], no_overwrite: bool = False):
+        """Add a list of Genbank records from NCBI Nucleotide to the cache.
+
+        :param accessions: A list of NCBI Nucleotide accessions
+        :param no_overwrite: If True, raise a FileExistsError
+        """
+        logger = base_logger.bind(no_overwrite=no_overwrite)
         for record in accessions:
-            self.cache_nuccore_record(
-                record, record["GBSeq_primary-accession"], overwrite_enabled
-            )
+            accession = record["GBSeq_primary-accession"]
+            try:
+                self.cache_nuccore_record(record, accession, no_overwrite)
+            except FileExistsError:
+                logger.error("Overwrite disabled", accession=accession)
 
     def cache_nuccore_record(
-        self, record: dict, accession: str, overwrite_enabled: bool = True
+        self, data: dict, accession: str, no_overwrite: bool = False
     ):
         """
-        :param record:
-        :param accession:
+        Add a Genbank record from NCBI Nucleotide to the cache.
+
+        :param data: A data from a Genbank record corresponding
+        :param accession: The NCBI accession of the record
+        :param no_overwrite: If True, raise a FileExistsError
         """
         cached_record_path = self._get_nuccore_path(f"{accession}")
-        if not overwrite_enabled and cached_record_path.exists():
+        if no_overwrite and cached_record_path.exists():
             raise FileExistsError
 
         with open(cached_record_path, "w") as f:
-            json.dump(record, f)
+            json.dump(data, f)
 
             if not cached_record_path.exists():
                 raise FileNotFoundError
@@ -58,8 +71,8 @@ class NCBICache:
         Retrieve a list of NCBI Nucleotide records from the cache.
         Returns None if the records are not found in the cache.
 
-        :param accessions:
-        :return:
+        :param accessions: A list of NCBI Nucleotide accessions
+        :return: A list of deserialized records
         """
         records = []
         for accession in accessions:
@@ -74,8 +87,8 @@ class NCBICache:
         Retrieve a list of NCBI Nucleotide records from the cache.
         Returns None if the records are not found in the cache.
 
-        :param accession:
-        :return:
+        :param accession: The NCBI accession of the record
+        :return: Deserialized Genbank data if file is found in cache, else None
         """
 
         try:
@@ -85,32 +98,49 @@ class NCBICache:
         except FileNotFoundError:
             return None
 
-    def cache_taxonomy(
-        self, taxonomy: dict, taxon_id: int, overwrite_enabled: bool = True
-    ):
-        """Add a NCBI Taxonomy record to the cache"""
-        cached_taxonomy_path = self._get_taxonomy_path(taxon_id)
-        if not overwrite_enabled and cached_taxonomy_path.exists():
+    def cache_taxonomy(self, data: dict, taxid: int, no_overwrite: bool = False):
+        """
+        Add a NCBI Taxonomy record to the cache
+
+        :param data: NCBI Taxonomy record data
+        :param taxid: The UID of a NCBI Taxonomy record
+        :param no_overwrite: If True, raise a FileExistsError
+        """
+        cached_taxonomy_path = self._get_taxonomy_path(taxid)
+
+        if no_overwrite and cached_taxonomy_path.exists():
             raise FileExistsError
 
         with open(cached_taxonomy_path, "w") as f:
-            json.dump(taxonomy, f)
+            json.dump(data, f)
 
         if not cached_taxonomy_path.exists():
             raise FileNotFoundError
 
-    def load_taxonomy(self, taxon_id: int) -> dict | None:
-        """Load data from a cached record fetch"""
+    def load_taxonomy(self, taxid: int) -> dict | None:
+        """Load data from a cached record fetch
+
+        :param taxid: The UID of a NCBI Taxonomy record
+        :return: Deserialized Taxonomy data if file is found in cache, else None
+        """
         try:
-            with open(self._get_taxonomy_path(taxon_id), "r") as f:
+            with open(self._get_taxonomy_path(taxid), "r") as f:
                 return json.load(f)
         except FileNotFoundError:
             return None
 
     def _get_nuccore_path(self, accession: str) -> Path:
-        """Returns a standardized path for a set of cached NCBI Nucleotide records"""
+        """Returns a standardized path for a set of cached NCBI Nucleotide records
+
+        :param accession: The NCBI accession of a Genbank record
+        :return: A properly-formatted path to a cached record
+        """
         return self.nuccore / f"{accession}.json"
 
     def _get_taxonomy_path(self, taxid: int) -> Path:
-        """Returns a standardized path for a cached NCBI Taxonomy record"""
+        """Returns a standardized path for a cached NCBI Taxonomy record
+
+        :param taxid: The UID of a NCBI Taxonomy record
+        :return: A properly-formatted path to a cached record
+        """
         return self.taxonomy / f"{taxid}.json"

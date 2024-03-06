@@ -25,6 +25,15 @@ Entrez.api_key = os.environ.get("NCBI_API_KEY")
 base_logger = get_logger()
 
 
+class GBSeq(StrEnum):
+    ACCESSION = "GBSeq_accession-version"
+    DEFINITION = "GBSeq_definition"
+    SEQUENCE = "GBSeq_sequence"
+    LENGTH = "GBSeq_length"
+    COMMENT = "GBSeq_comment"
+    FEATURE_TABLE = "GBSeq_feature-table"
+
+
 class NCBIClient:
     def __init__(self, cache_path: Path):
         """
@@ -38,7 +47,7 @@ class NCBIClient:
         under a given repository
 
         :param repo_path: A path to a reference repository
-        :return:
+        :return: The standard cache path for the given repo_path
         """
         return NCBIClient(repo_path / ".cache/ncbi")
 
@@ -49,12 +58,15 @@ class NCBIClient:
         use_cached: bool = True,
     ) -> list[NCBINuccore]:
         """
-        Fetch records corresponding to a list of accessions and and validate fetched NCBI Genbank records
+        Fetch or load NCBI Genbank records records corresponding to a list of accessions
+        and return validated records.
+
+        :TODO: Rewrite cache process to handle a partial cache fetch situation?
 
         :param accessions: A list of accessions to be fetched
         :param cache_results: If True, caches fetched data as JSON
         :param use_cached: If True, loads data from cache in lieu of fetching if possible
-        :return: List of validated records as NCBICNuccore
+        :return: A list of validated NCBINuccore records
         """
         if not accessions:
             return []
@@ -64,7 +76,7 @@ class NCBIClient:
         if use_cached:
             records = self.cache.load_nuccore_records(accessions)
             if records:
-                logger.info("Cached records found")
+                logger.info("Cached records found", n_records=len(records))
                 return NCBIClient.validate_genbank_records(records)
 
         records = await NCBIClient.fetch_unvalidated_accessions(accessions)
@@ -108,22 +120,35 @@ class NCBIClient:
 
         return []
 
+    # @staticmethod
+    # async def fetch_unvalidated_by_taxid(taxid: int) -> list[dict]:
+    #     """Fetch all records linked to a taxonomy record.
+    #
+    #     Usable without preexisting OTU data.
+    #
+    #     :param taxid: The UID of a NCBI Taxonomy record
+    #     :return: A list of Entrez-parsed Genbank records
+    #     """
+    #     accessions = await NCBIClient.link_accessions(taxid)
+    #
+    #     base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
+    #
+    #     return await NCBIClient.fetch_unvalidated_accessions(accessions)
+
     @staticmethod
-    async def link_accessions(taxon_id: int) -> list:
+    async def link_accessions(taxid: int) -> list:
         """
         Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
 
-        :TODO: Merge into caller
-
-        :param taxon_id: A NCBI Taxonomy ID
-        :return: A list of accessions linked to the Taxon Id
+        :param taxid: The UID of a NCBI Taxonomy record
+        :return: A list of Genbank accessions linked to the Taxonomy UID
         """
         elink_results = Entrez.read(
             Entrez.elink(
                 dbfrom="taxonomy",
                 db="nuccore",
-                id=str(taxon_id),
+                id=str(taxid),
                 idtype="acc",
             )
         )
@@ -138,26 +163,13 @@ class NCBIClient:
                 return [keypair["Id"] for keypair in id_table]
 
     @staticmethod
-    async def fetch_by_taxid(taxid: int) -> list[dict]:
-        """Fetch all records linked to a taxonomy record. Usable without preexisting OTU data.
-
-        :param taxid: A Taxonomy UID
-        :return: A list of Entrez-parsed records
-        """
-        accessions = await NCBIClient.link_accessions(taxid)
-
-        base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
-
-        return await NCBIClient.fetch_unvalidated_accessions(accessions)
-
-    @staticmethod
     def validate_genbank_records(records: list[dict]) -> list[NCBINuccore]:
         """
         Process a list of raw Genbank dicts into validated NCBINuccore records.
         Logs an error if there is an issue with validation or parsing,
         but does not fail out.
 
-        :param records: A list of NCBI Genbank dict records
+        :param records: A list of unvalidated NCBI Genbank records
         :return: A list of validated records as NCBINuccore
         """
         clean_records = []
@@ -184,7 +196,7 @@ class NCBIClient:
         :param raw: A NCBI Genbank dict record, parsed by Bio.Entrez.Parser
         :return: A validated subset of Genbank record data
         """
-        source_dict = NCBIClient._get_source_dict(raw)
+        source_dict = _get_source_dict(raw)
 
         return NCBINuccore(
             accession=raw[GBSeq.ACCESSION],
@@ -204,11 +216,13 @@ class NCBIClient:
         Fetches and validates a taxonomy record from NCBI Taxonomy.
 
         If the record rank has an invalid rank (e.g. "no data"),
-        does an additional docsum fetch and attempts to extract the rank data from there.
+        makes an additional docsum fetch and attempts to extract the rank data,
+        then recreates
 
-        :param taxid:
-        :param cache_results:
-        :param use_cached:
+        :param taxid: The UID of a NCBI Taxonomy record
+        :param cache_results: If True, caches fetched data as JSON
+        :param use_cached: If True, loads data from cache in lieu of fetching if possible
+        :return: A validated NCBI Taxonomy record NCBITaxonomy
         """
         logger = base_logger.bind(taxid=taxid)
 
@@ -255,9 +269,16 @@ class NCBIClient:
         record: dict, rank: NCBIRank | None = None
     ) -> NCBITaxonomy:
         """
-        :param record: Taxonomy record in dict form
-        :param rank: Optional variable. Overrides inline rank data.
-        :return: A validated NCBI
+        Attempts to validate a raw record from NCBI Taxonomy.
+
+        Throws a ValidationError if valid rank data is not found in the record.
+
+        Accepts a NCBIRank enum as an optional parameter.
+
+        :param record: Unvalidated taxonomy record data
+        :param rank: Overrides inline rank data if set.
+            Use to insert a valid rank from a docsum fetch on a second validation attempt.
+        :return: A validated NCBI record
         """
         species = None
         logger = base_logger.bind(taxid=record["TaxId"])
@@ -307,8 +328,8 @@ class NCBIClient:
 
         Returns ``None`` if no matching taxonomy is found.
 
-        :param name: the name of an otu
-        :return: The taxonomy id for the given otu name
+        :param name: The name of an otu
+        :return: The NCBI Taxonomy UID for the given otu name
         """
         with Entrez.esearch(db="taxonomy", term=name) as f:
             record = Entrez.read(f)
@@ -322,7 +343,7 @@ class NCBIClient:
 
     @staticmethod
     async def fetch_taxonomy_by_taxid(taxid: int) -> dict:
-        """Requests a taxonomy record from NCBI Taxonomy
+        """Requests a taxonomy record from NCBI Taxonomy.
 
         :param taxid:
         :return:
@@ -345,22 +366,6 @@ class NCBIClient:
         return record
 
     @staticmethod
-    async def get_species_taxid(taxonomy: dict) -> int | None:
-        """Gets the species taxid for the given lower-rank taxid.
-
-        :param taxonomy: NCBI Taxonomy UID
-        :return: The NCBI Taxonomy ID of the OTU's species
-        """
-        if taxonomy["Rank"] == "species":
-            return int(taxonomy["TaxId"])
-
-        for line in taxonomy["LineageEx"]:
-            if line["Rank"] == "species":
-                return int(line["TaxId"])
-
-        return None
-
-    @staticmethod
     async def check_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str:
         """Takes the name of an OTU, requests an alternative spelling
         from the Entrez ESpell utility and returns the suggestion
@@ -377,38 +382,32 @@ class NCBIClient:
 
         return name
 
-    @staticmethod
-    def _get_source_dict(raw: dict) -> dict:
-        """
-        :param raw:
-        :return:
-        """
-        source_table = None
-        for feature in raw[GBSeq.FEATURE_TABLE]:
-            if feature["GBFeature_key"] == "source":
-                source_table = feature
-                break
 
-        if source_table is not None:
-            source_dict = {}
+def _get_source_dict(record: dict) -> dict:
+    """
+    Takes an unvalidated Genbank record, retrieves the contents of the source table
+    and returns it in key-value dictionary form
 
-            for qualifier in source_table["GBFeature_quals"]:
-                qual_name = qualifier["GBQualifier_name"]
-                qual_value = qualifier["GBQualifier_value"]
-                source_dict[qual_name] = qual_value
+    :param record: Unvalidated Genbank record data
+    :return: The record's source feature table in dictionary form
+    """
+    source_table = None
+    for feature in record[GBSeq.FEATURE_TABLE]:
+        if feature["GBFeature_key"] == "source":
+            source_table = feature
+            break
 
-            return source_dict
+    if source_table is not None:
+        source_dict = {}
 
-        raise NCBIParseError(
-            keys=[feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]],
-            message="Feature table does not contain source data",
-        )
+        for qualifier in source_table["GBFeature_quals"]:
+            qual_name = qualifier["GBQualifier_name"]
+            qual_value = qualifier["GBQualifier_value"]
+            source_dict[qual_name] = qual_value
 
+        return source_dict
 
-class GBSeq(StrEnum):
-    ACCESSION = "GBSeq_accession-version"
-    DEFINITION = "GBSeq_definition"
-    SEQUENCE = "GBSeq_sequence"
-    LENGTH = "GBSeq_length"
-    COMMENT = "GBSeq_comment"
-    FEATURE_TABLE = "GBSeq_feature-table"
+    raise NCBIParseError(
+        keys=[feature["GBFeature_key"] for feature in record[GBSeq.FEATURE_TABLE]],
+        message="Feature table does not contain source data",
+    )

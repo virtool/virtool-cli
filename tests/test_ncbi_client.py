@@ -124,20 +124,6 @@ async def test_fetch_taxonomy_by_name(name, taxid):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "taxid,expected_species_taxid",
-    [(438782, 438782), (1016856, 3047392)],
-)
-async def test_get_taxonomy_species(taxid, expected_species_taxid, test_taxonomy_path):
-    with open(test_taxonomy_path / f"{taxid}.json", "r") as f:
-        taxonomy = json.load(f)
-
-    species_taxid = await NCBIClient.get_species_taxid(taxonomy)
-
-    assert species_taxid == expected_species_taxid
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
     "misspelled,expected",
     [
         (
