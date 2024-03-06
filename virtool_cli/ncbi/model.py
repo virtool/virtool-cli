@@ -37,3 +37,8 @@ class NCBITaxonomy(BaseModel):
     accessions: list[str]
     lineage: list[str]
     rank: NCBIRank
+
+
+class NCBIDB(StrEnum):
+    NUCCORE = "nuccore"
+    TAXONOMY = "taxonomy"

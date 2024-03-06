@@ -9,7 +9,7 @@ from urllib.error import HTTPError
 from pydantic import ValidationError
 
 from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource
+from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBIDB
 from virtool_cli.ncbi.cache import NCBICache
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
@@ -83,20 +83,6 @@ class NCBIClient:
             self.cache.cache_nuccore_records(records)
 
     @staticmethod
-    async def fetch_by_taxid(taxid: int) -> list[dict]:
-        """Fetch all records linked to a taxonomy record.
-        Usable when an OTU does not exist
-
-        :param taxid: A Taxonomy UID
-        :return: A list of Entrez-parsed records
-        """
-        accessions = await NCBIClient.link_accessions(taxid)
-
-        base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
-
-        return await NCBIClient.fetch_raw_via_accessions(accessions)
-
-    @staticmethod
     async def fetch_raw_via_accessions(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, download the corresponding records
@@ -159,6 +145,20 @@ class NCBIClient:
                 id_table = link_set_db["Link"]
 
                 return [keypair["Id"] for keypair in id_table]
+
+    @staticmethod
+    async def fetch_by_taxid(taxid: int) -> list[dict]:
+        """Fetch all records linked to a taxonomy record.
+        Usable when an OTU does not exist
+
+        :param taxid: A Taxonomy UID
+        :return: A list of Entrez-parsed records
+        """
+        accessions = await NCBIClient.link_accessions(taxid)
+
+        base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
+
+        return await NCBIClient.fetch_raw_via_accessions(accessions)
 
     @staticmethod
     def validate_records(records: list[dict]) -> list[NCBINuccore]:
@@ -274,11 +274,9 @@ class NCBIClient:
     #     return None
 
     @staticmethod
-    async def check_spelling(name: str, db: str = "taxonomy") -> str:
+    async def check_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str:
         """Takes the name of an OTU, requests an alternative spelling
         from the Entrez ESpell utility and returns the suggestion
-
-        :TODO: Use `Enum` for `db`.
 
         :param name: The OTU name that requires correcting
         :param db: Database to check against. Defaults to 'taxonomy'.
@@ -326,8 +324,3 @@ class GBSeq(StrEnum):
     LENGTH = "GBSeq_length"
     COMMENT = "GBSeq_comment"
     FEATURE_TABLE = "GBSeq_feature-table"
-
-
-class NCBIDB(StrEnum):
-    NUCCORE = "nuccore"
-    TAXONOMY = "taxonomy"
