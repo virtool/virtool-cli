@@ -8,7 +8,7 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 from pydantic import ValidationError
 
-from virtool_cli.ncbi.error import IncompleteRecordsError, NCBIParseError
+from virtool_cli.ncbi.error import NCBIParseError
 from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBIDB
 from virtool_cli.ncbi.cache import NCBICache
 
@@ -41,12 +41,11 @@ class NCBIClient:
         """
         Filter an accession list, then fetch and validate NCBI Genbank records
 
-        :TODO: Get rid of filtering. Just fetch records by a list of accessions.
-        :TODO: Cache on accession per file for easier lookup in `NCBICache`.
         :TODO: Merge other accession fetching, caching, updating methods into this one and call this method
                `fetch_accessions`.
 
         :param accessions:
+        :param use_cached:
         :return:
         """
         logger = base_logger.bind(accessions=accessions)
@@ -69,8 +68,6 @@ class NCBIClient:
         """
         Filter an accession list, then fetch and validate NCBI Genbank records
 
-        :TODO: Get rid of filtering. Just fetch records by a list of accessions.
-        :TODO: Cache on accession per file for easier lookup in `NCBICache`.
         :TODO: Merge other accession fetching, caching, updating methods into this one and call this method
                `fetch_accessions`.
 
@@ -85,11 +82,11 @@ class NCBIClient:
     @staticmethod
     async def fetch_raw_via_accessions(accessions: list[str]) -> list[dict]:
         """
-        Take a list of accession numbers, download the corresponding records
-        from GenBank as XML and return Genbank XML-parsed records
+        Take a list of accession numbers, parse the corresponding XML records
+        from GenBank using Entrez.Parser and return
 
         :param accessions: List of accession numbers to fetch from GenBank
-        :return: A list of deserialized records from NCBI Nucleotide
+        :return: A list of deserialized XML records from NCBI Nucleotide
         """
         if not accessions:
             return []
