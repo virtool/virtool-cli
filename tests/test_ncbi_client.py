@@ -80,7 +80,7 @@ class TestClientFetchAccessions:
 class TestClientFetchRawAccessions:
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions(self, accessions):
-        records = await NCBIClient.fetch_raw_via_accessions(accessions)
+        records = await NCBIClient._fetch_raw_via_accessions(accessions)
 
         for record in records:
             assert record.get("GBSeq_locus", None)
@@ -91,7 +91,7 @@ class TestClientFetchRawAccessions:
         partial_accession_list = accessions
         partial_accession_list[0] = partial_accession_list[0][:3]
 
-        records = await NCBIClient.fetch_raw_via_accessions(accessions)
+        records = await NCBIClient._fetch_raw_via_accessions(accessions)
 
         assert len(records) == len(accessions) - 1
 

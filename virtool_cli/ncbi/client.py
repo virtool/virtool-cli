@@ -44,25 +44,26 @@ class NCBIClient:
         :TODO: Merge other accession fetching, caching, updating methods into this one and call this method
                `fetch_accessions`.
 
-        :param accessions:
-        :param use_cached:
-        :return:
+        :param accessions: A list of accessions to be fetched
+        :param use_cached: If true, loads data from cache in lieu of fetching if possible
+        :return: List of validated records as NCBICNuccore
         """
+        if not accessions:
+            return []
+
         logger = base_logger.bind(accessions=accessions)
 
-        records = []
         if use_cached:
             records = self.cache.load_nuccore_records(accessions)
             if records:
                 logger.info("Cached records found")
+                return NCBIClient.validate_records(records)
 
-        if not records:
-            records = await NCBIClient.fetch_raw_via_accessions(accessions)
-
+        records = await NCBIClient._fetch_raw_via_accessions(accessions)
         if records:
             return NCBIClient.validate_records(records)
-        else:
-            return []
+
+        return []
 
     async def cache_accessions(self, accessions: list[str]):
         """
@@ -75,12 +76,13 @@ class NCBIClient:
         """
         logger = base_logger.bind(accessions=accessions)
 
-        records = await NCBIClient.fetch_raw_via_accessions(accessions)
+        records = await NCBIClient._fetch_raw_via_accessions(accessions)
         if records:
             self.cache.cache_nuccore_records(records)
+            logger.debug("Records cached")
 
     @staticmethod
-    async def fetch_raw_via_accessions(accessions: list[str]) -> list[dict]:
+    async def _fetch_raw_via_accessions(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, parse the corresponding XML records
         from GenBank using Entrez.Parser and return
@@ -88,9 +90,6 @@ class NCBIClient:
         :param accessions: List of accession numbers to fetch from GenBank
         :return: A list of deserialized XML records from NCBI Nucleotide
         """
-        if not accessions:
-            return []
-
         logger = base_logger.bind(accessions=accessions)
 
         try:
@@ -114,7 +113,7 @@ class NCBIClient:
         return []
 
     @staticmethod
-    async def link_accessions(taxon_id: int) -> list:
+    async def _link_accessions(taxon_id: int) -> list:
         """
         Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
@@ -151,11 +150,11 @@ class NCBIClient:
         :param taxid: A Taxonomy UID
         :return: A list of Entrez-parsed records
         """
-        accessions = await NCBIClient.link_accessions(taxid)
+        accessions = await NCBIClient._link_accessions(taxid)
 
         base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
 
-        return await NCBIClient.fetch_raw_via_accessions(accessions)
+        return await NCBIClient._fetch_raw_via_accessions(accessions)
 
     @staticmethod
     def validate_records(records: list[dict]) -> list[NCBINuccore]:
@@ -191,11 +190,9 @@ class NCBIClient:
         :param raw: A NCBI Genbank dict record, parsed by Bio.Entrez.Parser
         :return: A validated subset of Genbank record data
         """
-        source_dict = NCBIClient.__feature_table_to_dict(
-            NCBIClient.__get_source_table(raw)
-        )
+        source_dict = NCBIClient._get_source_dict(raw)
 
-        source = NCBISource(taxid=NCBIClient.__parse_taxid(source_dict), **source_dict)
+        source = NCBISource(taxid=NCBIClient._parse_taxid(source_dict), **source_dict)
 
         record = NCBINuccore(
             accession=raw[GBSeq.ACCESSION],
@@ -288,10 +285,26 @@ class NCBIClient:
         return name
 
     @staticmethod
-    def __get_source_table(raw) -> dict | None:
+    def _get_source_dict(raw: dict) -> dict:
+        """
+        :param raw:
+        :return:
+        """
+        source_table = None
         for feature in raw[GBSeq.FEATURE_TABLE]:
             if feature["GBFeature_key"] == "source":
-                return feature
+                source_table = feature
+                break
+
+        if source_table is not None:
+            source_dict = {}
+
+            for qualifier in source_table["GBFeature_quals"]:
+                qual_name = qualifier["GBQualifier_name"]
+                qual_value = qualifier["GBQualifier_value"]
+                source_dict[qual_name] = qual_value
+
+            return source_dict
 
         raise NCBIParseError(
             keys=[feature["GBFeature_key"] for feature in raw[GBSeq.FEATURE_TABLE]],
@@ -299,18 +312,7 @@ class NCBIClient:
         )
 
     @staticmethod
-    def __feature_table_to_dict(feature: dict) -> dict:
-        """Converts the feature table format to a dict"""
-        qualifier_dict = {}
-        for qualifier in feature["GBFeature_quals"]:
-            qual_name = qualifier["GBQualifier_name"]
-            qual_value = qualifier["GBQualifier_value"]
-            qualifier_dict[qual_name] = qual_value
-
-        return qualifier_dict
-
-    @staticmethod
-    def __parse_taxid(source_feature) -> int | None:
+    def _parse_taxid(source_feature) -> int | None:
         return int(source_feature["db_xref"].split(":")[1])
 
 
