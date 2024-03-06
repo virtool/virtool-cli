@@ -27,28 +27,61 @@ class NCBICache:
         self.nuccore.mkdir()
         self.taxonomy.mkdir()
 
-    def cache_nuccore(
-        self, records: list[dict], filestem: str | int, overwrite_enabled: bool = True
+    def cache_nuccore_records(
+        self, accessions: list[dict], overwrite_enabled: bool = True
     ):
         """Add a list of NCBI Nucleotide records to the cache."""
-        cached_record_path = self._get_nuccore_path(f"{filestem}")
-        if overwrite_enabled and cached_record_path.exists():
+        for record in accessions:
+            self.cache_nuccore_record(
+                record, record["GBSeq_primary-accession"], overwrite_enabled
+            )
+
+    def cache_nuccore_record(
+        self, record: dict, accession: str, overwrite_enabled: bool = True
+    ):
+        """
+        :param record:
+        :param accession:
+        """
+        cached_record_path = self._get_nuccore_path(f"{accession}")
+        if not overwrite_enabled and cached_record_path.exists():
             raise FileExistsError
 
         with open(cached_record_path, "w") as f:
-            json.dump(records, f)
+            json.dump(record, f)
 
             if not cached_record_path.exists():
                 raise FileNotFoundError
 
-    def load_nuccore(self, filestem: str) -> list[dict] | None:
+    def load_nuccore_records(self, accessions: list[str]) -> list[dict] | None:
         """
         Retrieve a list of NCBI Nucleotide records from the cache.
         Returns None if the records are not found in the cache.
+
+        :param accessions:
+        :return:
         """
+        records = []
+        for accession in accessions:
+            record = self.load_nuccore_record(accession)
+            if record is not None:
+                records.append(record)
+
+        return records
+
+    def load_nuccore_record(self, accession: str) -> dict | None:
+        """
+        Retrieve a list of NCBI Nucleotide records from the cache.
+        Returns None if the records are not found in the cache.
+
+        :param accession:
+        :return:
+        """
+
         try:
-            with open(self._get_nuccore_path(filestem), "r") as f:
+            with open(self._get_nuccore_path(accession), "r") as f:
                 return json.load(f)
+
         except FileNotFoundError:
             return None
 
@@ -74,9 +107,9 @@ class NCBICache:
         except FileNotFoundError:
             return None
 
-    def _get_nuccore_path(self, otu_id: str) -> Path:
+    def _get_nuccore_path(self, accession: str) -> Path:
         """Returns a standardized path for a set of cached NCBI Nucleotide records"""
-        return self.nuccore / f"{otu_id}.json"
+        return self.nuccore / f"{accession}.json"
 
     def _get_taxonomy_path(self, taxid: int) -> Path:
         """Returns a standardized path for a cached NCBI Taxonomy record"""
