@@ -136,7 +136,7 @@ class NCBIClient:
     #     return await NCBIClient.fetch_unvalidated_accessions(accessions)
 
     @staticmethod
-    async def link_accessions(taxid: int) -> list:
+    async def link_accessions_from_taxid(taxid: int) -> list:
         """
         Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
