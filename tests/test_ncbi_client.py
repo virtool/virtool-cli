@@ -3,18 +3,18 @@ from pathlib import Path
 
 from virtool_cli.repo.cls import Repo
 from virtool_cli.ncbi.client import NCBIClient
+from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
-
-
-ACCESSION_LISTS = [
-    ["AB017504", "MH200607", "MK431779", "NC_003355"],
-    ["NC_036587", "MT240513", "MT240490"],
-]
 
 
 @pytest.fixture()
 def test_client(cache_scratch_path):
     return NCBIClient(cache_scratch_path / "cache_test")
+
+
+@pytest.fixture()
+def empty_client(tmp_path):
+    return NCBIClient(NCBICache(tmp_path / "clean_repo").path)
 
 
 @pytest.fixture
@@ -33,39 +33,69 @@ def scratch_repo(scratch_path):
 
 
 class TestClientFetchAccessions:
-    @staticmethod
-    def check_record(record, cache):
-        assert type(record) is NCBINuccore
-
-        assert type(record.accession) is str
-
-        assert type(record.source) is NCBISource
-
-        assert type(record.source.taxid) is int
-
-        assert cache.load_nuccore_record(record.accession.split(".")[0])
-
-    @pytest.mark.parametrize("accessions", ACCESSION_LISTS)
-    async def test_fetch_accessions_from_ncbi(self, accessions, test_client):
-        clean_records = await test_client.fetch_genbank_records(
+    @pytest.mark.parametrize(
+        "accessions",
+        [
+            ["AB017504", "MH200607", "MK431779", "NC_003355"],
+            ["NC_036587", "MT240513", "MT240490"],
+        ],
+    )
+    async def test_fetch_accessions_from_ncbi(self, accessions, cache_scratch_path):
+        clean_client = NCBIClient(cache_scratch_path)
+        clean_records = await clean_client.fetch_genbank_records(
             accessions=accessions, cache_results=True, use_cached=False
         )
 
         assert clean_records
 
         for record in clean_records:
-            self.check_record(record, test_client.cache)
+            assert type(record) is NCBINuccore
 
-    @pytest.mark.parametrize("accessions", ACCESSION_LISTS)
-    async def test_fetch_accessions_from_cache(self, accessions, test_client):
-        clean_records = await test_client.fetch_genbank_records(
-            accessions=accessions, cache_results=True, use_cached=True
+            assert type(record.source) is NCBISource
+
+            assert clean_client.cache.load_nuccore_record(record.accession) is not None
+
+    @pytest.mark.parametrize(
+        "accessions",
+        [
+            ["AB017504", "MH200607", "MK431779", "NC_003355"],
+            ["NC_036587", "MT240513", "MT240490"],
+        ],
+    )
+    async def test_fetch_accessions_from_cache(self, accessions, cache_scratch_path):
+        client = NCBIClient(cache_scratch_path)
+
+        clean_records = await client.fetch_genbank_records(
+            accessions=accessions, cache_results=False, use_cached=True
         )
 
         assert clean_records
 
         for record in clean_records:
-            self.check_record(record, test_client.cache)
+            assert type(record) is NCBINuccore
+
+            assert type(record.source) is NCBISource
+
+    @pytest.mark.parametrize(
+        "accessions", [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]]
+    )
+    async def test_fetch_partial_accessions_from_cache(
+        self, accessions, cache_scratch_path
+    ):
+        client = NCBIClient(cache_scratch_path)
+
+        assert client.cache.nuccore.glob("*.json")
+
+        clean_records = await client.fetch_genbank_records(
+            accessions=accessions, cache_results=False, use_cached=True
+        )
+
+        assert clean_records
+
+        for record in clean_records:
+            assert type(record) is NCBINuccore
+
+            assert type(record.source) is NCBISource
 
     @pytest.mark.asyncio
     async def test_fetch_accessions_fail(self, test_client):
@@ -76,7 +106,13 @@ class TestClientFetchAccessions:
         assert not records
 
 
-@pytest.mark.parametrize("accessions", ACCESSION_LISTS)
+@pytest.mark.parametrize(
+    "accessions",
+    [
+        ["AB017504", "MH200607", "MK431779", "NC_003355"],
+        ["NC_036587", "MT240513", "MT240490"],
+    ],
+)
 class TestClientFetchRawAccessions:
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions(self, accessions):

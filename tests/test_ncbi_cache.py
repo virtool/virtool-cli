@@ -21,6 +21,8 @@ def get_test_taxonomy(taxon_id: int, cache_example_path):
 
 
 def test_cache_init(empty_cache_path):
+    assert not empty_cache_path.exists()
+
     cache = NCBICache(path=empty_cache_path)
 
     assert cache.nuccore.is_dir()
@@ -34,6 +36,10 @@ def test_cache_init(empty_cache_path):
 
 def test_cache_clear(cache_scratch_path):
     cache = NCBICache(path=cache_scratch_path)
+
+    assert list(cache.nuccore.glob("*.json"))
+
+    assert list(cache.taxonomy.glob("*.json"))
 
     cache.clear()
 
@@ -61,14 +67,16 @@ class TestCacheNuccoreOperations:
     def test_cache_nuccore_cache_records(
         self, accessions, cache_example_path, empty_cache_path
     ):
-        fresh_cache = NCBICache(empty_cache_path)
+        assert not empty_cache_path.exists()
+
+        cache = NCBICache(empty_cache_path)
 
         for accession in accessions:
             record = get_test_record(accession, cache_example_path)
 
-            fresh_cache.cache_nuccore_record(data=record, accession=accession)
+            cache.cache_nuccore_record(data=record, accession=accession)
 
-            assert (fresh_cache.nuccore / f"{accession}.json").exists()
+            assert (cache.nuccore / f"{accession}.json").exists()
 
 
 @pytest.mark.parametrize("fake_accession", ["afjshd", "23222", "wheelhouse"])

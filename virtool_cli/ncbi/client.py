@@ -26,7 +26,7 @@ base_logger = get_logger()
 
 
 class GBSeq(StrEnum):
-    ACCESSION = "GBSeq_accession-version"
+    ACCESSION = "GBSeq_primary-accession"
     DEFINITION = "GBSeq_definition"
     SEQUENCE = "GBSeq_sequence"
     LENGTH = "GBSeq_length"
@@ -61,8 +61,6 @@ class NCBIClient:
         Fetch or load NCBI Genbank records records corresponding to a list of accessions
         and return validated records.
 
-        :TODO: Rewrite cache process to handle a partial cache fetch situation?
-
         :param accessions: A list of accessions to be fetched
         :param cache_results: If True, caches fetched data as JSON
         :param use_cached: If True, loads data from cache in lieu of fetching if possible
@@ -74,7 +72,28 @@ class NCBIClient:
         logger = base_logger.bind(accessions=accessions)
 
         if use_cached:
-            records = self.cache.load_nuccore_records(accessions)
+            records = []
+            missing_accessions = []
+            logger.debug("Cache inventory", cache_path=str(self.cache.nuccore))
+
+            for accession in accessions:
+                record = self.cache.load_nuccore_record(accession)
+                if record is not None:
+                    records.append(record)
+                else:
+                    logger.debug("Missing accession", accession=accession)
+                    missing_accessions.append(accession)
+
+            if missing_accessions:
+                logger.debug(
+                    "Accessions not found in cache, fetching now...",
+                    missing_accessions=missing_accessions,
+                )
+                missing_records = await NCBIClient.fetch_unvalidated_genbank_records(
+                    missing_accessions
+                )
+                records.extend(missing_records)
+
             if records:
                 logger.info("Cached records found", n_records=len(records))
                 return NCBIClient.validate_genbank_records(records)
@@ -82,7 +101,12 @@ class NCBIClient:
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
         if records:
             if cache_results:
-                self.cache.cache_nuccore_records(records)
+                for record in records:
+                    try:
+                        self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                    except FileExistsError:
+                        logger.error("Cannot overwrite cache data")
+
                 logger.debug("Records cached", n_records=len(records))
 
             return NCBIClient.validate_genbank_records(records)

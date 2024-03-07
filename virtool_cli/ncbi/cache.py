@@ -54,16 +54,19 @@ class NCBICache:
 
     def load_nuccore_record(self, accession: str) -> dict | None:
         """
-        Retrieve a list of NCBI Nucleotide records from the cache.
-        Returns None if the records are not found in the cache.
+        Retrieve a NCBI Nucleotide genbank record from the cache.
+        Returns None if the record is not found in the cache.
 
         :param accession: The NCBI accession of the record
         :return: Deserialized Genbank data if file is found in cache, else None
         """
+        nuccore_path = self._get_nuccore_path(accession)
 
         try:
-            with open(self._get_nuccore_path(accession), "r") as f:
-                return json.load(f)
+            with open(nuccore_path, "r") as f:
+                data = json.load(f)
+
+                return data
 
         except FileNotFoundError:
             return None

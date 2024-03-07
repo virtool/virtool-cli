@@ -29,7 +29,7 @@ class NCBINuccore(BaseModel):
     definition: str
     sequence: str
     source: NCBISource
-    comment: str
+    comment: str | None
 
 
 class NCBILineage(BaseModel):
