@@ -32,20 +32,6 @@ class NCBICache:
         self.nuccore.mkdir()
         self.taxonomy.mkdir()
 
-    def cache_nuccore_records(self, accessions: list[dict], no_overwrite: bool = False):
-        """Add a list of Genbank records from NCBI Nucleotide to the cache.
-
-        :param accessions: A list of NCBI Nucleotide accessions
-        :param no_overwrite: If True, raise a FileExistsError
-        """
-        logger = base_logger.bind(no_overwrite=no_overwrite)
-        for record in accessions:
-            accession = record["GBSeq_primary-accession"]
-            try:
-                self.cache_nuccore_record(record, accession, no_overwrite)
-            except FileExistsError:
-                logger.error("Overwrite disabled", accession=accession)
-
     def cache_nuccore_record(
         self, data: dict, accession: str, no_overwrite: bool = False
     ):
@@ -65,22 +51,6 @@ class NCBICache:
 
             if not cached_record_path.exists():
                 raise FileNotFoundError
-
-    def load_nuccore_records(self, accessions: list[str]) -> list[dict] | None:
-        """
-        Retrieve a list of NCBI Nucleotide records from the cache.
-        Returns None if the records are not found in the cache.
-
-        :param accessions: A list of NCBI Nucleotide accessions
-        :return: A list of deserialized records
-        """
-        records = []
-        for accession in accessions:
-            record = self.load_nuccore_record(accession)
-            if record is not None:
-                records.append(record)
-
-        return records
 
     def load_nuccore_record(self, accession: str) -> dict | None:
         """

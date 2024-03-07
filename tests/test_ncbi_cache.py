@@ -50,16 +50,12 @@ def test_cache_clear(cache_scratch_path):
     ),
 )
 class TestCacheNuccoreOperations:
-    def test_cache_nuccore_load_records(self, accessions, cache_scratch_path):
+    def test_cache_nuccore_load_record_batch(self, accessions, cache_scratch_path):
         scratch_cache = NCBICache(cache_scratch_path)
 
-        records = scratch_cache.load_nuccore_records(accessions)
+        for accession in accessions:
+            record = scratch_cache.load_nuccore_record(accession)
 
-        print(records)
-
-        assert type(records) is list
-
-        for record in records:
             assert type(record) is dict
 
     def test_cache_nuccore_cache_records(
@@ -67,14 +63,11 @@ class TestCacheNuccoreOperations:
     ):
         fresh_cache = NCBICache(empty_cache_path)
 
-        records = []
         for accession in accessions:
             record = get_test_record(accession, cache_example_path)
-            records.append(record)
 
-        fresh_cache.cache_nuccore_records(records)
+            fresh_cache.cache_nuccore_record(data=record, accession=accession)
 
-        for accession in accessions:
             assert (fresh_cache.nuccore / f"{accession}.json").exists()
 
 
