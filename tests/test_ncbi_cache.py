@@ -71,6 +71,13 @@ class TestCacheNuccoreOperations:
             assert (fresh_cache.nuccore / f"{accession}.json").exists()
 
 
+@pytest.mark.parametrize("fake_accession", ["afjshd", "23222", "wheelhouse"])
+def test_cache_nuccore_load_fail(fake_accession, cache_scratch_path):
+    scratch_cache = NCBICache(cache_scratch_path)
+
+    assert scratch_cache.load_nuccore_record(fake_accession) is None
+
+
 @pytest.mark.parametrize("taxid", (270478, 438782, 1198450))
 class TestCacheTaxonomyOperations:
     def test_cache_taxonomy_load(self, taxid, cache_scratch_path):
