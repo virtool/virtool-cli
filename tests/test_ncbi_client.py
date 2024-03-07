@@ -47,7 +47,7 @@ class TestClientFetchAccessions:
 
     @pytest.mark.parametrize("accessions", ACCESSION_LISTS)
     async def test_fetch_accessions_from_ncbi(self, accessions, test_client):
-        clean_records = await test_client.fetch_accessions(
+        clean_records = await test_client.fetch_genbank_records(
             accessions=accessions, cache_results=True, use_cached=False
         )
 
@@ -58,7 +58,7 @@ class TestClientFetchAccessions:
 
     @pytest.mark.parametrize("accessions", ACCESSION_LISTS)
     async def test_fetch_accessions_from_cache(self, accessions, test_client):
-        clean_records = await test_client.fetch_accessions(
+        clean_records = await test_client.fetch_genbank_records(
             accessions=accessions, cache_results=True, use_cached=True
         )
 
@@ -71,7 +71,7 @@ class TestClientFetchAccessions:
     async def test_fetch_accessions_fail(self, test_client):
         false_accessions = ["friday", "paella", "111"]
 
-        records = await test_client.fetch_accessions(false_accessions)
+        records = await test_client.fetch_genbank_records(false_accessions)
 
         assert not records
 
@@ -80,7 +80,7 @@ class TestClientFetchAccessions:
 class TestClientFetchRawAccessions:
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions(self, accessions):
-        records = await NCBIClient.fetch_unvalidated_accessions(accessions)
+        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         for record in records:
             assert record.get("GBSeq_locus", None)
@@ -91,7 +91,7 @@ class TestClientFetchRawAccessions:
         partial_accession_list = accessions
         partial_accession_list[0] = partial_accession_list[0][:3]
 
-        records = await NCBIClient.fetch_unvalidated_accessions(accessions)
+        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         assert len(records) == len(accessions) - 1
 

@@ -51,7 +51,7 @@ class NCBIClient:
         """
         return NCBIClient(repo_path / ".cache/ncbi")
 
-    async def fetch_accessions(
+    async def fetch_genbank_records(
         self,
         accessions: list[str],
         cache_results: bool = True,
@@ -79,7 +79,7 @@ class NCBIClient:
                 logger.info("Cached records found", n_records=len(records))
                 return NCBIClient.validate_genbank_records(records)
 
-        records = await NCBIClient.fetch_unvalidated_accessions(accessions)
+        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
         if records:
             if cache_results:
                 self.cache.cache_nuccore_records(records)
@@ -90,7 +90,7 @@ class NCBIClient:
         return []
 
     @staticmethod
-    async def fetch_unvalidated_accessions(accessions: list[str]) -> list[dict]:
+    async def fetch_unvalidated_genbank_records(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, parse the corresponding XML records
         from GenBank using Entrez.Parser and return
