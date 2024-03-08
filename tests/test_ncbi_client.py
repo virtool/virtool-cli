@@ -30,6 +30,7 @@ def empty_client(tmp_path):
 
 
 class TestClientFetchGenbank:
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -60,7 +61,7 @@ class TestClientFetchGenbank:
             ["NC_036587", "MT240513", "MT240490"],
         ],
     )
-    async def test_fetch_genbank_record_from_cache(
+    async def test_fetch_genbank_records_from_cache(
         self, accessions, cache_scratch_path, blocked_socket
     ):
         client = NCBIClient(cache_scratch_path)
