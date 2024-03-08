@@ -1,15 +1,24 @@
 import pytest
-from pathlib import Path
+import asyncio
+import socket
 
-from virtool_cli.repo.cls import Repo
+from urllib.error import HTTPError
+
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
 
 
 @pytest.fixture()
-def test_client(cache_scratch_path):
-    return NCBIClient(cache_scratch_path / "cache_test")
+def blocked_socket():
+    blocked_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    blocked_socket.setblocking(True)
+    return blocked_socket
+
+
+@pytest.fixture()
+def scratch_client(cache_scratch_path):
+    return NCBIClient(cache_scratch_path)
 
 
 @pytest.fixture()
@@ -17,22 +26,7 @@ def empty_client(tmp_path):
     return NCBIClient(NCBICache(tmp_path / "clean_repo").path)
 
 
-@pytest.fixture
-def test_records_path(test_files_path: Path):
-    return test_files_path / "cache_test" / "nuccore"
-
-
-@pytest.fixture
-def test_taxonomy_path(test_files_path: Path):
-    return test_files_path / "cache_test" / "taxonomy"
-
-
-@pytest.fixture()
-def scratch_repo(scratch_path):
-    return Repo(scratch_path)
-
-
-class TestClientFetchAccessions:
+class TestClientFetchGenbank:
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -40,9 +34,8 @@ class TestClientFetchAccessions:
             ["NC_036587", "MT240513", "MT240490"],
         ],
     )
-    async def test_fetch_accessions_from_ncbi(self, accessions, cache_scratch_path):
-        clean_client = NCBIClient(cache_scratch_path)
-        clean_records = await clean_client.fetch_genbank_records(
+    async def test_fetch_genbank_records_from_ncbi(self, accessions, scratch_client):
+        clean_records = await scratch_client.fetch_genbank_records(
             accessions=accessions, cache_results=True, use_cached=False
         )
 
@@ -53,7 +46,9 @@ class TestClientFetchAccessions:
 
             assert type(record.source) is NCBISource
 
-            assert clean_client.cache.load_nuccore_record(record.accession) is not None
+            assert (
+                scratch_client.cache.load_nuccore_record(record.accession) is not None
+            )
 
     @pytest.mark.parametrize(
         "accessions",
@@ -62,12 +57,15 @@ class TestClientFetchAccessions:
             ["NC_036587", "MT240513", "MT240490"],
         ],
     )
-    async def test_fetch_accessions_from_cache(self, accessions, cache_scratch_path):
+    async def test_fetch_genbank_record_from_cache(
+        self, accessions, cache_scratch_path, blocked_socket
+    ):
         client = NCBIClient(cache_scratch_path)
 
-        clean_records = await client.fetch_genbank_records(
-            accessions=accessions, cache_results=False, use_cached=True
-        )
+        with blocked_socket:
+            clean_records = await client.fetch_genbank_records(
+                accessions=accessions, cache_results=False, use_cached=True
+            )
 
         assert clean_records
 
@@ -79,7 +77,7 @@ class TestClientFetchAccessions:
     @pytest.mark.parametrize(
         "accessions", [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]]
     )
-    async def test_fetch_partial_accessions_from_cache(
+    async def test_fetch_partially_cached_genbank_records(
         self, accessions, cache_scratch_path
     ):
         client = NCBIClient(cache_scratch_path)
@@ -98,10 +96,10 @@ class TestClientFetchAccessions:
             assert type(record.source) is NCBISource
 
     @pytest.mark.asyncio
-    async def test_fetch_accessions_fail(self, test_client):
+    async def test_fetch_accessions_fail(self, scratch_client):
         false_accessions = ["friday", "paella", "111"]
 
-        records = await test_client.fetch_genbank_records(false_accessions)
+        records = await scratch_client.fetch_genbank_records(false_accessions)
 
         assert not records
 
@@ -113,7 +111,7 @@ class TestClientFetchAccessions:
         ["NC_036587", "MT240513", "MT240490"],
     ],
 )
-class TestClientFetchRawAccessions:
+class TestClientFetchRawGenbank:
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions(self, accessions):
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
@@ -152,11 +150,35 @@ async def test_fetch_records_by_taxid(taxid, empty_client):
         assert empty_client.cache.load_nuccore_record(record.accession) is not None
 
 
-@pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
 class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
-    async def test_fetch_taxonomy_from_cache(self, taxid, test_client):
-        taxonomy = await test_client.fetch_taxonomy(taxid, use_cached=True)
+    @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
+    async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
+        for attempt in range(3):
+            try:
+                taxonomy = await empty_client.fetch_taxonomy(
+                    taxid, use_cached=False, cache_results=True
+                )
+
+                assert type(taxonomy) is NCBITaxonomy
+
+                assert empty_client.cache.load_taxonomy(taxid) is not None
+
+                return
+            except HTTPError:
+                await asyncio.sleep(3)
+
+        assert False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("taxid", [438782, 1198450])
+    async def test_fetch_taxonomy_from_cache(
+        self, taxid, scratch_client, blocked_socket
+    ):
+        assert scratch_client.cache.load_taxonomy(taxid)
+
+        with blocked_socket:
+            taxonomy = await scratch_client.fetch_taxonomy(taxid, use_cached=True)
 
         assert type(taxonomy) is NCBITaxonomy
 
