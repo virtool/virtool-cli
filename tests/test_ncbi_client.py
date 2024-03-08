@@ -2,11 +2,14 @@ import pytest
 import asyncio
 import socket
 
+from structlog import get_logger
 from urllib.error import HTTPError
 
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
+
+test_logger = get_logger()
 
 
 @pytest.fixture()
@@ -154,21 +157,22 @@ class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
-        for attempt in range(3):
-            try:
-                taxonomy = await empty_client.fetch_taxonomy(
-                    taxid, use_cached=False, cache_results=True
-                )
+        try:
+            taxonomy = await empty_client.fetch_taxonomy(
+                taxid, use_cached=False, cache_results=True
+            )
+        except HTTPError:
+            test_logger.warning("Likely timeout. Trying again in 3 seconds...")
+            await asyncio.sleep(3)
 
-                assert type(taxonomy) is NCBITaxonomy
+            # Try one more time
+            taxonomy = await empty_client.fetch_taxonomy(
+                taxid, use_cached=False, cache_results=True
+            )
 
-                assert empty_client.cache.load_taxonomy(taxid) is not None
+        assert type(taxonomy) is NCBITaxonomy
 
-                return
-            except HTTPError:
-                await asyncio.sleep(3)
-
-        assert False
+        assert empty_client.cache.load_taxonomy(taxid) is not None
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450])
