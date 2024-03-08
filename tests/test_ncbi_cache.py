@@ -37,15 +37,17 @@ def test_cache_init(empty_cache_path):
 def test_cache_clear(cache_scratch_path):
     cache = NCBICache(path=cache_scratch_path)
 
-    assert list(cache.nuccore.glob("*.json"))
+    assert next(cache.nuccore.glob("*.json"))
 
-    assert list(cache.taxonomy.glob("*.json"))
+    assert next(cache.taxonomy.glob("*.json"))
 
     cache.clear()
 
-    assert not list(cache.nuccore.glob("*.json"))
+    with pytest.raises(StopIteration):
+        assert not next(cache.nuccore.glob("*.json"))
 
-    assert not list(cache.taxonomy.glob("*.json"))
+    with pytest.raises(StopIteration):
+        assert not next(cache.taxonomy.glob("*.json"))
 
 
 @pytest.mark.parametrize(
