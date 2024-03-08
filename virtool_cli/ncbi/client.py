@@ -72,16 +72,14 @@ class NCBIClient:
         logger = base_logger.bind(accessions=accessions)
 
         if use_cached:
-            records = []
-            missing_accessions = []
-            logger.debug("Cache inventory", cache_path=str(self.cache.nuccore))
-
+            records, missing_accessions = [], []
             for accession in accessions:
                 record = self.cache.load_nuccore_record(accession)
                 if record is not None:
                     records.append(record)
+
                 else:
-                    logger.debug("Missing accession", accession=accession)
+                    logger.debug("Missing accession", missing_accession=accession)
                     missing_accessions.append(accession)
 
             if missing_accessions:
@@ -96,20 +94,25 @@ class NCBIClient:
 
             if records:
                 logger.info("Cached records found", n_records=len(records))
+
                 return NCBIClient.validate_genbank_records(records)
 
-        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
-        if records:
-            if cache_results:
-                for record in records:
-                    try:
-                        self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
-                    except FileExistsError:
-                        logger.error("Cannot overwrite cache data")
+        else:
 
-                logger.debug("Records cached", n_records=len(records))
+            records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+            if records:
+                if cache_results:
+                    for record in records:
+                        try:
+                            self.cache.cache_nuccore_record(
+                                record, record[GBSeq.ACCESSION]
+                            )
+                        except FileExistsError:
+                            logger.error("Cannot overwrite cache data")
 
-            return NCBIClient.validate_genbank_records(records)
+                    logger.debug("Records cached", n_records=len(records))
+
+                return NCBIClient.validate_genbank_records(records)
 
         return []
 
@@ -144,20 +147,37 @@ class NCBIClient:
 
         return []
 
-    # @staticmethod
-    # async def fetch_unvalidated_by_taxid(taxid: int) -> list[dict]:
-    #     """Fetch all records linked to a taxonomy record.
-    #
-    #     Usable without preexisting OTU data.
-    #
-    #     :param taxid: The UID of a NCBI Taxonomy record
-    #     :return: A list of Entrez-parsed Genbank records
-    #     """
-    #     accessions = await NCBIClient.link_accessions(taxid)
-    #
-    #     base_logger.debug("Fetching accessions...", taxid=taxid, accessions=accessions)
-    #
-    #     return await NCBIClient.fetch_unvalidated_accessions(accessions)
+    async def link_from_taxid_and_fetch(
+        self, taxid: int, cache_results: bool = True
+    ) -> list[NCBINuccore]:
+        """Fetch all Genbank records linked to a taxonomy record.
+
+        Usable without preexisting OTU data.
+
+        :param taxid: The UID of a NCBI Taxonomy record
+        :param cache_results: If True, caches fetched data as JSON
+        :return: A list of Entrez-parsed Genbank records
+        """
+        accessions = await NCBIClient.link_accessions_from_taxid(taxid)
+
+        logger = base_logger.bind(taxid=taxid, linked_accessions=accessions)
+
+        logger.debug("Fetching accessions...")
+        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+
+        if cache_results:
+            for record in records:
+                try:
+                    self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                except FileExistsError:
+                    logger.error("Cannot overwrite cache data")
+
+            logger.debug("Records cached", n_records=len(records))
+
+        if records:
+            return NCBIClient.validate_genbank_records(records)
+
+        return []
 
     @staticmethod
     async def link_accessions_from_taxid(taxid: int) -> list:

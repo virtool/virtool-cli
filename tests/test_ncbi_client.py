@@ -84,7 +84,7 @@ class TestClientFetchAccessions:
     ):
         client = NCBIClient(cache_scratch_path)
 
-        assert client.cache.nuccore.glob("*.json")
+        assert next(client.cache.nuccore.glob("*.json"))
 
         clean_records = await client.fetch_genbank_records(
             accessions=accessions, cache_results=False, use_cached=True
@@ -134,6 +134,22 @@ class TestClientFetchRawAccessions:
         for record in records:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
+async def test_fetch_records_by_taxid(taxid, empty_client):
+    with pytest.raises(StopIteration):
+        next(empty_client.cache.nuccore.glob("*.json"))
+
+    records = await empty_client.link_from_taxid_and_fetch(taxid, cache_results=True)
+
+    assert records
+
+    for record in records:
+        assert type(record) is NCBINuccore
+
+        assert empty_client.cache.load_nuccore_record(record.accession) is not None
 
 
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
