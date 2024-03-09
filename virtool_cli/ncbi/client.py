@@ -42,7 +42,7 @@ class NCBIClient:
         self.cache = NCBICache(cache_path)
 
     @classmethod
-    def from_repo(cls, repo_path: Path):
+    def from_repo(cls, repo_path: Path) -> "NCBIClient":
         """Initializes the NCBI cache in the default subpath
         under a given repository
 
