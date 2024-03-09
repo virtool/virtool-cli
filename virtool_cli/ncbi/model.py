@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, AliasChoices, field_validator
+from pydantic import BaseModel, Field, AliasChoices, field_validator, model_validator
 
 
 class NCBIRank(StrEnum):
@@ -27,6 +27,14 @@ class NCBISource(BaseModel):
     @classmethod
     def db_xref_to_taxid(cls, raw: str) -> int:
         return int(raw.split(":")[1])
+
+    # @model_validator(mode="after")
+    # def check_source_type(self):
+    #     for source_type in ("isolate", "strain", "clone"):
+    #         if getattr(self, source_type) != "":
+    #             return self
+    #
+    #     raise ValueError("No source type included in data")
 
 
 class NCBINuccore(BaseModel):
