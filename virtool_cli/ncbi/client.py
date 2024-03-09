@@ -247,10 +247,7 @@ class NCBIClient:
             definition=raw[GBSeq.DEFINITION],
             sequence=raw[GBSeq.SEQUENCE].upper(),
             comment=raw.get(GBSeq.COMMENT, None),
-            source=NCBISource(
-                taxid=int(source_dict["db_xref"].split(":")[1]),
-                **source_dict,
-            ),
+            source=NCBISource(**source_dict),
         )
 
     async def fetch_taxonomy(
@@ -330,11 +327,7 @@ class NCBIClient:
         # Get lineage list
         lineage = []
         for level_data in record["LineageEx"]:
-            level = NCBILineage(
-                id=int(level_data["TaxId"]),
-                name=level_data["ScientificName"],
-                rank=level_data["Rank"],
-            )
+            level = NCBILineage(**level_data)
 
             if level.rank == NCBIRank.SPECIES:
                 species = level
@@ -347,17 +340,13 @@ class NCBIClient:
             try:
                 rank = NCBIRank(record["Rank"])
                 if rank is rank.SPECIES:
-                    species = NCBILineage(
-                        id=int(record["TaxId"]),
-                        name=record["ScientificName"],
-                        rank=record["Rank"],
-                    )
+                    species = NCBILineage(**record)
                 logger.debug("Rank data found in record", rank=rank)
             except ValueError:
                 logger.warning("Rank data not found in record")
 
         return NCBITaxonomy(
-            id=int(record["TaxId"]),
+            id=record["TaxId"],
             species=species,
             lineage=lineage,
             rank=rank,

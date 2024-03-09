@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 
 class NCBIRank(StrEnum):
@@ -16,12 +16,17 @@ class NCBISourceType(StrEnum):
 
 
 class NCBISource(BaseModel):
-    taxid: int
-    host: str | None = None
-    segment: str | None = None
-    isolate: str | None = None
-    strain: str | None = None
-    clone: str | None = None
+    taxid: int = Field(validation_alias="db_xref")
+    host: str = ""
+    segment: str = ""
+    isolate: str = ""
+    strain: str = ""
+    clone: str = ""
+
+    @field_validator("taxid", mode="before")
+    @classmethod
+    def db_xref_to_taxid(cls, raw: str) -> int:
+        return int(raw.split(":")[1])
 
 
 class NCBINuccore(BaseModel):
@@ -29,13 +34,18 @@ class NCBINuccore(BaseModel):
     definition: str
     sequence: str
     source: NCBISource
-    comment: str | None
+    comment: str = ""
+
+    @field_validator("sequence", mode="after")
+    @classmethod
+    def sequence_to_upper(cls, raw: str) -> str:
+        return raw.upper()
 
 
 class NCBILineage(BaseModel):
-    id: int
-    name: str
-    rank: str
+    id: int = Field(validation_alias="TaxId")
+    name: str = Field(validation_alias="ScientificName")
+    rank: str = Field(validation_alias="Rank")
 
 
 class NCBITaxonomy(BaseModel):
