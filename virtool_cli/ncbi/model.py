@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, AliasChoices, field_validator
 
 
 class NCBIRank(StrEnum):
@@ -43,9 +43,9 @@ class NCBINuccore(BaseModel):
 
 
 class NCBILineage(BaseModel):
-    id: int = Field(validation_alias="TaxId")
-    name: str = Field(validation_alias="ScientificName")
-    rank: str = Field(validation_alias="Rank")
+    id: int = Field(validation_alias=AliasChoices("TaxId", "id"))
+    name: str = Field(validation_alias=AliasChoices("ScientificName", "name"))
+    rank: str = Field(validation_alias=AliasChoices("Rank", "rank"))
 
 
 class NCBITaxonomy(BaseModel):
