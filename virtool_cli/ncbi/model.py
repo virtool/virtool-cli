@@ -1,6 +1,7 @@
 from enum import StrEnum
 
 from pydantic import BaseModel, Field, AliasChoices, field_validator, model_validator
+from pydantic import ValidationError
 
 
 class NCBIRank(StrEnum):
@@ -28,26 +29,36 @@ class NCBISource(BaseModel):
     def db_xref_to_taxid(cls, raw: str) -> int:
         return int(raw.split(":")[1])
 
-    # @model_validator(mode="after")
-    # def check_source_type(self):
-    #     for source_type in ("isolate", "strain", "clone"):
-    #         if getattr(self, source_type) != "":
-    #             return self
-    #
-    #     raise ValueError("No source type included in data")
-
 
 class NCBINuccore(BaseModel):
-    accession: str
-    definition: str
-    sequence: str
-    source: NCBISource
-    comment: str = ""
+    accession: str = Field(validation_alias="GBSeq_primary-accession")
+    definition: str = Field(validation_alias="GBSeq_definition")
+    sequence: str = Field(validation_alias="GBSeq_sequence")
+    comment: str = Field("", validation_alias="GBSeq_comment")
+    source: NCBISource = Field(validation_alias="GBSeq_feature-table")
 
     @field_validator("sequence", mode="after")
     @classmethod
-    def sequence_to_upper(cls, raw: str) -> str:
+    def to_uppercase(cl, raw: str) -> str:
         return raw.upper()
+
+    @field_validator("source", mode="before")
+    @classmethod
+    def create_source(cls, raw: list) -> NCBISource:
+        source_table = None
+        for feature in raw:
+            if feature["GBFeature_key"] == "source":
+                source_table = feature
+                break
+        if source_table is not None:
+            source_dict = {}
+
+            for qualifier in source_table["GBFeature_quals"]:
+                qual_name = qualifier["GBQualifier_name"]
+                qual_value = qualifier["GBQualifier_value"]
+                source_dict[qual_name] = qual_value
+
+            return NCBISource(**source_dict)
 
 
 class NCBILineage(BaseModel):
