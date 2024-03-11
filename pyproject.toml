@@ -41,6 +41,7 @@ virtool = "virtool_cli.cli:entry"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+markers = ['ncbi: marks tests as slow (deselect with `-m "not ncbi"`)']
 
 [tool.ruff.lint]
 select = ["ALL"]

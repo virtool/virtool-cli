@@ -30,6 +30,7 @@ def empty_client(tmp_path):
 
 
 class TestClientFetchGenbank:
+    @pytest.mark.ncbi
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "accessions",
@@ -84,6 +85,7 @@ class TestClientFetchGenbank:
 
             assert type(record.source) is NCBISource
 
+    @pytest.mark.ncbi
     @pytest.mark.parametrize(
         "accessions", [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]]
     )
@@ -122,6 +124,7 @@ class TestClientFetchGenbank:
     ],
 )
 class TestClientFetchRawGenbank:
+    @pytest.mark.ncbi
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions(self, accessions):
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
@@ -130,6 +133,7 @@ class TestClientFetchRawGenbank:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
 
+    @pytest.mark.ncbi
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions_partial(self, accessions):
         partial_accession_list = accessions
@@ -144,6 +148,7 @@ class TestClientFetchRawGenbank:
             assert record.get("GBSeq_sequence", None)
 
 
+@pytest.mark.ncbi
 @pytest.mark.asyncio
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
 async def test_fetch_records_by_taxid(taxid, empty_client):
@@ -171,6 +176,7 @@ async def test_fetch_records_by_taxid(taxid, empty_client):
 
 
 class TestClientFetchTaxonomy:
+    @pytest.mark.ncbi
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
@@ -204,6 +210,7 @@ class TestClientFetchTaxonomy:
         assert type(taxonomy) is NCBITaxonomy
 
 
+@pytest.mark.ncbi
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "name,taxid",
@@ -216,6 +223,7 @@ async def test_fetch_taxonomy_by_name(name, taxid):
     assert await NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
 
 
+@pytest.mark.ncbi
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "misspelled,expected",
