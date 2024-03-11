@@ -39,9 +39,15 @@ class TestClientFetchGenbank:
         ],
     )
     async def test_fetch_genbank_records_from_ncbi(self, accessions, scratch_client):
-        clean_records = await scratch_client.fetch_genbank_records(
-            accessions=accessions, cache_results=True, use_cached=False
-        )
+        try:
+            clean_records = await scratch_client.fetch_genbank_records(
+                accessions=accessions, cache_results=True, use_cached=False
+            )
+        except HTTPError:
+            await asyncio.sleep(2)
+            clean_records = await scratch_client.fetch_genbank_records(
+                accessions=accessions, cache_results=True, use_cached=False
+            )
 
         assert clean_records
 
@@ -144,7 +150,17 @@ async def test_fetch_records_by_taxid(taxid, empty_client):
     with pytest.raises(StopIteration):
         next(empty_client.cache.nuccore.glob("*.json"))
 
-    records = await empty_client.link_from_taxid_and_fetch(taxid, cache_results=True)
+    try:
+        records = await empty_client.link_from_taxid_and_fetch(
+            taxid, cache_results=True
+        )
+    except HTTPError:
+        test_logger.warning("Likely timeout. Trying again in 2 seconds...")
+
+        await asyncio.sleep(2)
+        records = await empty_client.link_from_taxid_and_fetch(
+            taxid, cache_results=True
+        )
 
     assert records
 
@@ -163,8 +179,8 @@ class TestClientFetchTaxonomy:
                 taxid, use_cached=False, cache_results=True
             )
         except HTTPError:
-            test_logger.warning("Likely timeout. Trying again in 3 seconds...")
-            await asyncio.sleep(3)
+            test_logger.warning("Likely timeout. Trying again in 2 seconds...")
+            await asyncio.sleep(2)
 
             # Try one more time
             taxonomy = await empty_client.fetch_taxonomy(
