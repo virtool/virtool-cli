@@ -37,9 +37,11 @@ def test_cache_init(empty_cache_path):
 def test_cache_clear(cache_scratch_path):
     cache = NCBICache(path=cache_scratch_path)
 
-    assert next(cache.nuccore.glob("*.json"))
-
-    assert next(cache.taxonomy.glob("*.json"))
+    try:
+        assert next(cache.nuccore.glob("*.json"))
+        assert next(cache.taxonomy.glob("*.json"))
+    except StopIteration as exc:
+        pytest.fail(f"Cache scratch path was not set up correctly: {exc}")
 
     cache.clear()
 

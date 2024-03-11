@@ -98,7 +98,10 @@ class TestClientFetchGenbank:
     ):
         client = NCBIClient(cache_scratch_path)
 
-        assert next(client.cache.nuccore.glob("*.json"))
+        try:
+            assert next(client.cache.nuccore.glob("*.json"))
+        except StopIteration:
+            pytest.fail("Could not retrieve any records from cache")
 
         clean_records = await client.fetch_genbank_records(
             accessions=accessions, cache_results=False, use_cached=True
