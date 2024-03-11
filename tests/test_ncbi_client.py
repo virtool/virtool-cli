@@ -11,6 +11,9 @@ from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
 
+DEFAULT_PAUSE = 1
+SAFETY_PAUSE = 3
+
 
 @pytest.fixture()
 def blocked_socket():
@@ -41,11 +44,12 @@ class TestClientFetchGenbank:
     )
     async def test_fetch_genbank_records_from_ncbi(self, accessions, scratch_client):
         try:
+            await asyncio.sleep(DEFAULT_PAUSE)
             clean_records = await scratch_client.fetch_genbank_records(
                 accessions=accessions, cache_results=True, use_cached=False
             )
         except HTTPError:
-            await asyncio.sleep(2)
+            await asyncio.sleep(SAFETY_PAUSE)
             clean_records = await scratch_client.fetch_genbank_records(
                 accessions=accessions, cache_results=True, use_cached=False
             )
@@ -127,7 +131,12 @@ class TestClientFetchRawGenbank:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions(self, accessions):
-        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+        await asyncio.sleep(DEFAULT_PAUSE)
+        try:
+            records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+        except HTTPError:
+            await asyncio.sleep(SAFETY_PAUSE)
+            records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         for record in records:
             assert record.get("GBSeq_locus", None)
@@ -155,14 +164,13 @@ async def test_fetch_records_by_taxid(taxid, empty_client):
     with pytest.raises(StopIteration):
         next(empty_client.cache.nuccore.glob("*.json"))
 
+    await asyncio.sleep(DEFAULT_PAUSE)
     try:
         records = await empty_client.link_from_taxid_and_fetch(
             taxid, cache_results=True
         )
     except HTTPError:
-        test_logger.warning("Likely timeout. Trying again in 2 seconds...")
-
-        await asyncio.sleep(2)
+        await asyncio.sleep(SAFETY_PAUSE)
         records = await empty_client.link_from_taxid_and_fetch(
             taxid, cache_results=True
         )
@@ -180,13 +188,13 @@ class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
+        await asyncio.sleep(DEFAULT_PAUSE)
         try:
             taxonomy = await empty_client.fetch_taxonomy(
                 taxid, use_cached=False, cache_results=True
             )
         except HTTPError:
-            test_logger.warning("Likely timeout. Trying again in 2 seconds...")
-            await asyncio.sleep(2)
+            await asyncio.sleep(SAFETY_PAUSE)
 
             # Try one more time
             taxonomy = await empty_client.fetch_taxonomy(
@@ -239,6 +247,11 @@ async def test_fetch_taxonomy_by_name(name, taxid):
     ],
 )
 async def test_check_spelling(misspelled, expected):
-    taxon_name = await NCBIClient.check_spelling(name=misspelled)
+    await asyncio.sleep(DEFAULT_PAUSE)
+    try:
+        taxon_name = await NCBIClient.check_spelling(name=misspelled)
+    except HTTPError:
+        await asyncio.sleep(SAFETY_PAUSE)
+        taxon_name = await NCBIClient.check_spelling(name=misspelled)
 
     assert taxon_name.lower() == expected.lower()
