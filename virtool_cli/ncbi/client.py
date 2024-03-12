@@ -219,11 +219,12 @@ class NCBIClient:
         clean_records = []
 
         for record in records:
+            accession = record.get(GBSeq.ACCESSION, "?")
+
             try:
                 clean_records.append(NCBIClient.validate_genbank_record(record))
 
-            except (ValidationError, NCBIParseError) as exc:
-                accession = record.get(GBSeq.ACCESSION, "?")
+            except (ValidationError, ValueError) as exc:
                 base_logger.error(f"{exc}", accession=accession)
 
         return clean_records
