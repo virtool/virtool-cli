@@ -191,7 +191,7 @@ class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
-        await asyncio.sleep(DEFAULT_PAUSE)
+        await asyncio.sleep(SAFETY_PAUSE)
         try:
             taxonomy = await empty_client.fetch_taxonomy(
                 taxid, use_cached=False, cache_results=True
