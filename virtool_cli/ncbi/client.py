@@ -219,11 +219,12 @@ class NCBIClient:
         clean_records = []
 
         for record in records:
+            accession = record.get(GBSeq.ACCESSION, "?")
+
             try:
                 clean_records.append(NCBIClient.validate_genbank_record(record))
 
-            except (ValidationError, NCBIParseError) as exc:
-                accession = record.get(GBSeq.ACCESSION, "?")
+            except (ValidationError, ValueError) as exc:
                 base_logger.error(f"{exc}", accession=accession)
 
         return clean_records
@@ -234,24 +235,10 @@ class NCBIClient:
         Parses an NCBI Genbank record from a Genbank dict to
         a validated NCBINuccore
 
-        :TODO: End function with `return NCBISource(**{...})`. Pydantic can take expanded dict and validate and get rid
-               of unwanted fields.
-
         :param raw: A NCBI Genbank dict record, parsed by Bio.Entrez.Parser
         :return: A validated subset of Genbank record data
         """
-        source_dict = _get_source_dict(raw)
-
-        return NCBINuccore(
-            accession=raw[GBSeq.ACCESSION],
-            definition=raw[GBSeq.DEFINITION],
-            sequence=raw[GBSeq.SEQUENCE].upper(),
-            comment=raw.get(GBSeq.COMMENT, None),
-            source=NCBISource(
-                taxid=int(source_dict["db_xref"].split(":")[1]),
-                **source_dict,
-            ),
-        )
+        return NCBINuccore(**raw)
 
     async def fetch_taxonomy(
         self, taxid: int, cache_results: bool = True, use_cached: bool = True
@@ -330,11 +317,7 @@ class NCBIClient:
         # Get lineage list
         lineage = []
         for level_data in record["LineageEx"]:
-            level = NCBILineage(
-                id=int(level_data["TaxId"]),
-                name=level_data["ScientificName"],
-                rank=level_data["Rank"],
-            )
+            level = NCBILineage(**level_data)
 
             if level.rank == NCBIRank.SPECIES:
                 species = level
@@ -347,17 +330,13 @@ class NCBIClient:
             try:
                 rank = NCBIRank(record["Rank"])
                 if rank is rank.SPECIES:
-                    species = NCBILineage(
-                        id=int(record["TaxId"]),
-                        name=record["ScientificName"],
-                        rank=record["Rank"],
-                    )
+                    species = NCBILineage(**record)
                 logger.debug("Rank data found in record", rank=rank)
             except ValueError:
                 logger.warning("Rank data not found in record")
 
         return NCBITaxonomy(
-            id=int(record["TaxId"]),
+            id=record["TaxId"],
             species=species,
             lineage=lineage,
             rank=rank,
@@ -425,33 +404,3 @@ class NCBIClient:
             return record["CorrectedQuery"]
 
         return name
-
-
-def _get_source_dict(record: dict) -> dict:
-    """
-    Takes an unvalidated Genbank record, retrieves the contents of the source table
-    and returns it in key-value dictionary form
-
-    :param record: Unvalidated Genbank record data
-    :return: The record's source feature table in dictionary form
-    """
-    source_table = None
-    for feature in record[GBSeq.FEATURE_TABLE]:
-        if feature["GBFeature_key"] == "source":
-            source_table = feature
-            break
-
-    if source_table is not None:
-        source_dict = {}
-
-        for qualifier in source_table["GBFeature_quals"]:
-            qual_name = qualifier["GBQualifier_name"]
-            qual_value = qualifier["GBQualifier_value"]
-            source_dict[qual_name] = qual_value
-
-        return source_dict
-
-    raise NCBIParseError(
-        keys=[feature["GBFeature_key"] for feature in record[GBSeq.FEATURE_TABLE]],
-        message="Feature table does not contain source data",
-    )
