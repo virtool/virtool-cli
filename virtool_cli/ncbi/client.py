@@ -62,7 +62,8 @@ class NCBIClient:
 
         :param accessions: A list of accessions to be fetched
         :param cache_results: If True, caches fetched data as JSON
-        :param use_cached: If True, loads data from cache in lieu of fetching if possible
+        :param use_cached: If True, loads data from cache
+            in lieu of fetching if possible
         :return: A list of validated NCBINuccore records
         """
         if not accessions:
@@ -250,8 +251,10 @@ class NCBIClient:
 
         :param taxid: The UID of a NCBI Taxonomy record
         :param cache_results: If True, caches fetched data as JSON
-        :param use_cached: If True, loads data from cache in lieu of fetching if possible
-        :return: A validated NCBI Taxonomy record NCBITaxonomy if possible, else None
+        :param use_cached: If True, loads data from cache
+            in lieu of fetching if possible
+        :return: A validated NCBI Taxonomy record NCBITaxonomy if possible,
+            else None
         """
         logger = base_logger.bind(taxid=taxid)
 
@@ -312,7 +315,8 @@ class NCBIClient:
 
         :param record: Unvalidated taxonomy record data
         :param rank: Overrides inline rank data if set.
-            Use to insert a valid rank from a docsum fetch on a second validation attempt.
+            Use to insert a valid rank from a docsum fetch
+            on a second validation attempt.
         :return: A validated NCBI record
         """
         species = None
