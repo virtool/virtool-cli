@@ -278,8 +278,9 @@ class NCBIClient:
             logger.debug("Proper rank not found in record", error=exc.errors())
 
         logger.debug("Running additional docsum fetch...")
+        await asyncio.sleep(3)
+
         try:
-            await asyncio.sleep(1)
             with Entrez.efetch(
                 db=NCBIDB.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
             ) as f:
