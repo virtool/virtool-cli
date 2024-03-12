@@ -1,4 +1,5 @@
 import os
+import asyncio
 from pathlib import Path
 from enum import StrEnum
 from Bio import Entrez
@@ -8,10 +9,8 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 from pydantic import ValidationError
 
-from virtool_cli.ncbi.error import NCBIParseError
 from virtool_cli.ncbi.model import (
     NCBINuccore,
-    NCBISource,
     NCBITaxonomy,
     NCBIDB,
     NCBILineage,
@@ -247,13 +246,12 @@ class NCBIClient:
         Fetches and validates a taxonomy record from NCBI Taxonomy.
 
         If the record rank has an invalid rank (e.g. "no data"),
-        makes an additional docsum fetch and attempts to extract the rank data,
-        then recreates
+        makes an additional docsum fetch and attempts to extract the rank data.
 
         :param taxid: The UID of a NCBI Taxonomy record
         :param cache_results: If True, caches fetched data as JSON
         :param use_cached: If True, loads data from cache in lieu of fetching if possible
-        :return: A validated NCBI Taxonomy record NCBITaxonomy
+        :return: A validated NCBI Taxonomy record NCBITaxonomy if possible, else None
         """
         logger = base_logger.bind(taxid=taxid)
 
@@ -277,18 +275,24 @@ class NCBIClient:
             logger.debug("Proper rank not found in record", error=exc.errors())
 
         logger.debug("Running additional docsum fetch...")
-        with Entrez.efetch(
-            db=NCBIDB.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
-        ) as f:
-            rank_str = Entrez.read(f)[0]["Rank"]
-            try:
-                rank = NCBIRank(rank_str)
-                logger.debug("Valid rank found", rank=rank)
-            except ValueError as exc:
-                logger.error(
-                    "Failed to find a valid rank. Returning empty...", error=exc
-                )
-                return None
+        try:
+            await asyncio.sleep(1)
+            with Entrez.efetch(
+                db=NCBIDB.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
+            ) as f:
+                docsum_record = Entrez.read(f)
+            rank_str = docsum_record[0]["Rank"]
+        except HTTPError:
+            logger.error("Failed to find a valid rank. Returning empty...")
+            return None
+
+        try:
+            rank = NCBIRank(rank_str)
+            logger.debug("Valid rank found", rank=rank)
+        except ValueError as exc:
+            logger.error("Failed to find a valid rank. Returning empty...", error=exc)
+            return None
+
         try:
             return NCBIClient.validate_taxonomy_record(record, rank)
         except ValidationError as exc:
