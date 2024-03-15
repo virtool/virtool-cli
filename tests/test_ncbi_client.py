@@ -7,7 +7,7 @@ from urllib.error import HTTPError
 
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.cache import NCBICache
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
+from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy, NCBIRank
 
 test_logger = get_logger()
 
@@ -191,22 +191,21 @@ class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
-        await asyncio.sleep(SAFETY_PAUSE)
-        try:
-            taxonomy = await empty_client.fetch_taxonomy(
-                taxid, use_cached=False, cache_results=True
-            )
-        except HTTPError:
-            await asyncio.sleep(SAFETY_PAUSE)
-
-            # Try one more time
-            taxonomy = await empty_client.fetch_taxonomy(
-                taxid, use_cached=False, cache_results=True
-            )
+        taxonomy = await empty_client.fetch_taxonomy(
+            taxid, use_cached=False, cache_results=True
+        )
 
         assert type(taxonomy) is NCBITaxonomy
 
         assert empty_client.cache.load_taxonomy(taxid) is not None
+
+    @pytest.mark.ncbi
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("taxid", [1000000000000])
+    async def test_fetch_taxonomy_from_ncbi_fail(self, taxid, empty_client):
+        taxonomy = await empty_client.fetch_taxonomy(taxid, use_cached=False)
+
+        assert taxonomy is None
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450])

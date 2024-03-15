@@ -1,7 +1,9 @@
 import os
 import asyncio
 from pathlib import Path
+from contextlib import contextmanager
 from enum import StrEnum
+
 from Bio import Entrez
 
 from structlog import get_logger
@@ -241,7 +243,7 @@ class NCBIClient:
         return NCBINuccore(**raw)
 
     async def fetch_taxonomy(
-        self, taxid: int, cache_results: bool = True, use_cached: bool = True
+        self, taxid: int, cache_results: bool = False, use_cached: bool = True
     ) -> NCBITaxonomy | None:
         """
         Fetches and validates a taxonomy record from NCBI Taxonomy.
@@ -265,8 +267,19 @@ class NCBIClient:
                 logger.info("Cached record found")
 
         if record is None:
-            with Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null") as f:
-                record = Entrez.read(f)[0]
+            try:
+                with Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null") as f:
+                    records = Entrez.read(f)
+
+                if records:
+                    record = records[0]
+                else:
+                    logger.error(f"Not found in NCBI Taxonomy database")
+                    return None
+
+            except HTTPError as exc:
+                logger.error(exc.read())
+                raise exc
 
         if cache_results:
             self.cache.cache_taxonomy(record, taxid)
@@ -275,31 +288,47 @@ class NCBIClient:
             return NCBIClient.validate_taxonomy_record(record)
 
         except ValidationError as exc:
-            logger.debug("Proper rank not found in record", error=exc.errors())
+            logger.debug("Proper rank not found in record", errors=exc.errors())
 
+        await asyncio.sleep(1)
         logger.debug("Running additional docsum fetch...")
-        await asyncio.sleep(3)
+
+        rank = await self._fetch_taxonomy_rank(taxid)
+
+        try:
+            return NCBIClient.validate_taxonomy_record(record, rank)
+        except ValidationError as exc:
+            logger.error("Failed to find a valid rank. Returning empty...", error=exc)
+            return None
+
+    @staticmethod
+    async def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
+        """
+        Takes an NCBI Taxonomy UID and fetches the eSummary XML
+        to extract the rank data and returns a valid NCBIRank if possible.
+
+        :param taxid: The UID of a NCBI Taxonomy record
+        :return: NCBIRank if possible, else None
+        """
+        logger = base_logger.bind(taxid=taxid)
 
         try:
             with Entrez.efetch(
                 db=NCBIDB.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
             ) as f:
                 docsum_record = Entrez.read(f)
-            rank_str = docsum_record[0]["Rank"]
-        except HTTPError:
+        except (HTTPError, RuntimeError):
             logger.error("Failed to find a valid rank. Returning empty...")
             return None
+
+        rank_str = docsum_record[0]["Rank"]
 
         try:
             rank = NCBIRank(rank_str)
             logger.debug("Valid rank found", rank=rank)
-        except ValueError as exc:
-            logger.error("Failed to find a valid rank. Returning empty...", error=exc)
-            return None
 
-        try:
-            return NCBIClient.validate_taxonomy_record(record, rank)
-        except ValidationError as exc:
+            return rank
+        except ValueError as exc:
             logger.error("Failed to find a valid rank. Returning empty...", error=exc)
             return None
 
@@ -332,7 +361,6 @@ class NCBIClient:
                 species = level
 
             lineage.append(level)
-        logger.debug("Validated lineage", lineage=lineage)
 
         # Fetch rank if not overwritten
         if rank is None:
@@ -413,3 +441,14 @@ class NCBIClient:
             return record["CorrectedQuery"]
 
         return name
+
+
+@contextmanager
+def log_http_error():
+    try:
+        yield
+    except HTTPError as e:
+        base_logger.error(
+            "http error was raised", code=e.code, reason=e.reason, body=e.read()
+        )
+        raise e
