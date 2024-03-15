@@ -16,13 +16,6 @@ SAFETY_PAUSE = 3
 
 
 @pytest.fixture()
-def blocked_socket():
-    blocked_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    blocked_socket.setblocking(True)
-    return blocked_socket
-
-
-@pytest.fixture()
 def scratch_client(cache_scratch_path):
     return NCBIClient(cache_scratch_path)
 
@@ -73,14 +66,13 @@ class TestClientFetchGenbank:
         ],
     )
     async def test_fetch_genbank_records_from_cache(
-        self, accessions, cache_scratch_path, blocked_socket
+        self, accessions, cache_scratch_path
     ):
         client = NCBIClient(cache_scratch_path)
 
-        with blocked_socket:
-            clean_records = await client.fetch_genbank_records(
-                accessions=accessions, cache_results=False, use_cached=True
-            )
+        clean_records = await client.fetch_genbank_records(
+            accessions=accessions, cache_results=False, use_cached=True
+        )
 
         assert clean_records
 
@@ -114,6 +106,7 @@ class TestClientFetchGenbank:
 
             assert type(record.source) is NCBISource
 
+    @pytest.mark.ncbi
     @pytest.mark.asyncio
     async def test_fetch_accessions_fail(self, scratch_client):
         false_accessions = ["friday", "paella", "111"]
@@ -134,12 +127,7 @@ class TestClientFetchRawGenbank:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions(self, accessions):
-        await asyncio.sleep(DEFAULT_PAUSE)
-        try:
-            records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
-        except HTTPError:
-            await asyncio.sleep(SAFETY_PAUSE)
-            records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         for record in records:
             assert record.get("GBSeq_locus", None)
@@ -209,13 +197,10 @@ class TestClientFetchTaxonomy:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450])
-    async def test_fetch_taxonomy_from_cache(
-        self, taxid, scratch_client, blocked_socket
-    ):
+    async def test_fetch_taxonomy_from_cache(self, taxid, scratch_client):
         assert scratch_client.cache.load_taxonomy(taxid)
 
-        with blocked_socket:
-            taxonomy = await scratch_client.fetch_taxonomy(taxid, use_cached=True)
+        taxonomy = await scratch_client.fetch_taxonomy(taxid, use_cached=True)
 
         assert type(taxonomy) is NCBITaxonomy
 

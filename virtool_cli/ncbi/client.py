@@ -260,33 +260,27 @@ class NCBIClient:
         """
         logger = base_logger.bind(taxid=taxid)
 
-        record = None
         if use_cached:
             record = self.cache.load_taxonomy(taxid)
             if record:
                 logger.info("Cached record found")
+            else:
+                logger.debug("Cached record not found. Fetching from taxonomy...")
+                record = await NCBIClient._fetch_taxonomy_record(taxid)
+
+        else:
+            logger.debug("Fetching record from Taxonomy...")
+            record = await NCBIClient._fetch_taxonomy_record(taxid)
 
         if record is None:
-            try:
-                with Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null") as f:
-                    records = Entrez.read(f)
-
-                if records:
-                    record = records[0]
-                else:
-                    logger.error(f"Not found in NCBI Taxonomy database")
-                    return None
-
-            except HTTPError as exc:
-                logger.error(exc.read())
-                raise exc
+            return None
 
         if cache_results:
+            logger.debug("Caching data...")
             self.cache.cache_taxonomy(record, taxid)
 
         try:
             return NCBIClient.validate_taxonomy_record(record)
-
         except ValidationError as exc:
             logger.debug("Proper rank not found in record", errors=exc.errors())
 
@@ -300,6 +294,24 @@ class NCBIClient:
         except ValidationError as exc:
             logger.error("Failed to find a valid rank. Returning empty...", error=exc)
             return None
+
+    @staticmethod
+    async def _fetch_taxonomy_record(taxid: int) -> dict | None:
+        """"""
+        logger = base_logger.bind(taxid=taxid)
+        try:
+            with Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null") as f:
+                records = Entrez.read(f)
+
+            if records:
+                return records[0]
+            else:
+                logger.error(f"Not found in NCBI Taxonomy database")
+                return None
+
+        except HTTPError as exc:
+            logger.error(exc.read())
+            raise exc
 
     @staticmethod
     async def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
@@ -317,7 +329,7 @@ class NCBIClient:
                 db=NCBIDB.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
             ) as f:
                 docsum_record = Entrez.read(f)
-        except (HTTPError, RuntimeError):
+        except RuntimeError:
             logger.error("Failed to find a valid rank. Returning empty...")
             return None
 
