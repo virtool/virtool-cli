@@ -34,7 +34,9 @@ class TestClientFetchGenbank:
             ["NC_036587", "MT240513", "MT240490"],
         ],
     )
-    async def test_fetch_genbank_records_from_ncbi(self, accessions, scratch_client):
+    async def test_fetch_genbank_records_from_ncbi(
+        self, accessions: list[str], scratch_client
+    ):
         try:
             await asyncio.sleep(DEFAULT_PAUSE)
             clean_records = await scratch_client.fetch_genbank_records(
@@ -65,7 +67,7 @@ class TestClientFetchGenbank:
         ],
     )
     async def test_fetch_genbank_records_from_cache(
-        self, accessions, cache_scratch_path
+        self, accessions: list[str], cache_scratch_path
     ):
         client = NCBIClient(cache_scratch_path)
 
@@ -85,12 +87,12 @@ class TestClientFetchGenbank:
         "accessions", [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]]
     )
     async def test_fetch_partially_cached_genbank_records(
-        self, accessions, cache_scratch_path
+        self, accessions: list[str], cache_scratch_path
     ):
         client = NCBIClient(cache_scratch_path)
 
         try:
-            assert next(client.cache.nuccore.glob("*.json"))
+            assert next(client.cache._nuccore_path.glob("*.json"))
         except StopIteration:
             pytest.fail("Could not retrieve any records from cache")
 
@@ -125,7 +127,7 @@ class TestClientFetchGenbank:
 class TestClientFetchRawGenbank:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
-    async def test_fetch_raw_via_accessions(self, accessions):
+    async def test_fetch_raw_via_accessions(self, accessions: list[str]):
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         for record in records:
@@ -134,7 +136,7 @@ class TestClientFetchRawGenbank:
 
     @pytest.mark.ncbi
     @pytest.mark.asyncio
-    async def test_fetch_raw_via_accessions_partial(self, accessions):
+    async def test_fetch_raw_via_accessions_partial(self, accessions: list[str]):
         partial_accession_list = accessions
         partial_accession_list[0] = partial_accession_list[0][:3]
 
@@ -150,9 +152,9 @@ class TestClientFetchRawGenbank:
 @pytest.mark.ncbi
 @pytest.mark.asyncio
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
-async def test_fetch_records_by_taxid(taxid, empty_client):
+async def test_fetch_records_by_taxid(taxid: int, empty_client):
     with pytest.raises(StopIteration):
-        next(empty_client.cache.nuccore.glob("*.json"))
+        next(empty_client.cache._nuccore_path.glob("*.json"))
 
     await asyncio.sleep(DEFAULT_PAUSE)
     try:
@@ -177,7 +179,7 @@ class TestClientFetchTaxonomy:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
-    async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
+    async def test_fetch_taxonomy_from_ncbi(self, taxid: int, empty_client):
         taxonomy = await empty_client.fetch_taxonomy_record(
             taxid, use_cached=False, cache_results=True
         )
@@ -189,7 +191,7 @@ class TestClientFetchTaxonomy:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [1000000000000])
-    async def test_fetch_taxonomy_from_ncbi_fail(self, taxid, empty_client):
+    async def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
         taxonomy = await empty_client.fetch_taxonomy_record(taxid, use_cached=False)
 
         assert taxonomy is None
@@ -213,7 +215,7 @@ class TestClientFetchTaxonomy:
         ("Rhynchosia golden mosaic virus", 117198),
     ],
 )
-async def test_fetch_taxonomy_by_name(name, taxid):
+async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     assert await NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
 
 
@@ -232,7 +234,7 @@ async def test_fetch_taxonomy_by_name(name, taxid):
         ),
     ],
 )
-async def test_check_spelling(misspelled, expected):
+async def test_check_spelling(misspelled: str, expected: str):
     await asyncio.sleep(DEFAULT_PAUSE)
     try:
         taxon_name = await NCBIClient.check_spelling(name=misspelled)

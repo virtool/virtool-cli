@@ -17,20 +17,20 @@ class NCBICache:
         """
         self.path = path
 
-        self.nuccore = self.path / "nuccore"
-        self.taxonomy = self.path / "taxonomy"
+        self._nuccore_path = self.path / "nuccore"
+        self._taxonomy_path = self.path / "taxonomy"
 
         self.path.mkdir(exist_ok=True)
-        self.nuccore.mkdir(exist_ok=True)
-        self.taxonomy.mkdir(exist_ok=True)
+        self._nuccore_path.mkdir(exist_ok=True)
+        self._taxonomy_path.mkdir(exist_ok=True)
 
     def clear(self):
         """Clear and reset the cache."""
         shutil.rmtree(self.path)
         self.path.mkdir()
 
-        self.nuccore.mkdir()
-        self.taxonomy.mkdir()
+        self._nuccore_path.mkdir()
+        self._taxonomy_path.mkdir()
 
     def cache_nuccore_record(
         self, data: dict, accession: str, no_overwrite: bool = False
@@ -108,7 +108,7 @@ class NCBICache:
         :param accession: The NCBI accession of a Genbank record
         :return: A properly-formatted path to a cached record
         """
-        return self.nuccore / f"{accession}.json"
+        return self._nuccore_path / f"{accession}.json"
 
     def _get_taxonomy_path(self, taxid: int) -> Path:
         """Returns a standardized path for a cached NCBI Taxonomy record
@@ -116,4 +116,4 @@ class NCBICache:
         :param taxid: A NCBI Taxonomy id
         :return: A properly-formatted path to a cached record
         """
-        return self.taxonomy / f"{taxid}.json"
+        return self._taxonomy_path / f"{taxid}.json"

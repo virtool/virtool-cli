@@ -25,31 +25,31 @@ def test_cache_init(empty_cache_path):
 
     cache = NCBICache(path=empty_cache_path)
 
-    assert cache.nuccore.is_dir()
+    assert cache._nuccore_path.is_dir()
 
-    assert cache.taxonomy.is_dir()
+    assert cache._taxonomy_path.is_dir()
 
-    assert cache.nuccore.exists()
+    assert cache._nuccore_path.exists()
 
-    assert cache.taxonomy.exists()
+    assert cache._taxonomy_path.exists()
 
 
 def test_cache_clear(cache_scratch_path):
     cache = NCBICache(path=cache_scratch_path)
 
     try:
-        assert next(cache.nuccore.glob("*.json"))
-        assert next(cache.taxonomy.glob("*.json"))
+        assert next(cache._nuccore_path.glob("*.json"))
+        assert next(cache._taxonomy_path.glob("*.json"))
     except StopIteration as exc:
         pytest.fail(f"Cache scratch path was not set up correctly: {exc}")
 
     cache.clear()
 
     with pytest.raises(StopIteration):
-        assert not next(cache.nuccore.glob("*.json"))
+        assert not next(cache._nuccore_path.glob("*.json"))
 
     with pytest.raises(StopIteration):
-        assert not next(cache.taxonomy.glob("*.json"))
+        assert not next(cache._taxonomy_path.glob("*.json"))
 
 
 @pytest.mark.parametrize(
@@ -80,7 +80,7 @@ class TestCacheNuccoreOperations:
 
             cache.cache_nuccore_record(data=record, accession=accession)
 
-            assert (cache.nuccore / f"{accession}.json").exists()
+            assert (cache._nuccore_path / f"{accession}.json").exists()
 
 
 @pytest.mark.parametrize("fake_accession", ["afjshd", "23222", "wheelhouse"])
@@ -106,4 +106,4 @@ class TestCacheTaxonomyOperations:
 
         fresh_cache.cache_taxonomy(taxonomy, taxid)
 
-        assert (fresh_cache.taxonomy / f"{taxid}.json").exists()
+        assert (fresh_cache._taxonomy_path / f"{taxid}.json").exists()
