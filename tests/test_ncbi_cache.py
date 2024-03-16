@@ -10,12 +10,12 @@ def empty_cache_path(tmp_path):
     return tmp_path / "test_cache"
 
 
-def get_test_record(accession: str, cache_example_path):
+def get_test_record(accession: str, cache_example_path) -> dict:
     with open(cache_example_path / "nuccore" / f"{accession}.json", "r") as f:
         return json.load(f)
 
 
-def get_test_taxonomy(taxon_id: int, cache_example_path):
+def get_test_taxonomy(taxon_id: int, cache_example_path) -> dict:
     with open(cache_example_path / "taxonomy" / f"{taxon_id}.json", "r") as f:
         return json.load(f)
 

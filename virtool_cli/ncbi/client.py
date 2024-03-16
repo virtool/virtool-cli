@@ -156,7 +156,7 @@ class NCBIClient:
 
         Usable without preexisting OTU data.
 
-        :param taxid: The UID of a NCBI Taxonomy record
+        :param taxid: A NCBI Taxonomy id
         :param cache_results: If True, caches fetched data as JSON
         :return: A list of Entrez-parsed Genbank records
         """
@@ -187,7 +187,7 @@ class NCBIClient:
         Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
 
-        :param taxid: The UID of a NCBI Taxonomy record
+        :param taxid: A NCBI Taxonomy id
         :return: A list of Genbank accessions linked to the Taxonomy UID
         """
         elink_results = Entrez.read(
@@ -242,7 +242,7 @@ class NCBIClient:
         """
         return NCBINuccore(**raw)
 
-    async def fetch_taxonomy(
+    async def fetch_taxonomy_record(
         self, taxid: int, cache_results: bool = False, use_cached: bool = True
     ) -> NCBITaxonomy | None:
         """
@@ -251,7 +251,7 @@ class NCBIClient:
         If the record rank has an invalid rank (e.g. "no data"),
         makes an additional docsum fetch and attempts to extract the rank data.
 
-        :param taxid: The UID of a NCBI Taxonomy record
+        :param taxid: A NCBI Taxonomy id
         :param cache_results: If True, caches fetched data as JSON
         :param use_cached: If True, loads data from cache
             in lieu of fetching if possible
@@ -319,7 +319,7 @@ class NCBIClient:
         Takes an NCBI Taxonomy UID and fetches the eSummary XML
         to extract the rank data and returns a valid NCBIRank if possible.
 
-        :param taxid: The UID of a NCBI Taxonomy record
+        :param taxid: A NCBI Taxonomy id
         :return: NCBIRank if possible, else None
         """
         logger = base_logger.bind(taxid=taxid)
@@ -412,30 +412,6 @@ class NCBIClient:
             return None
 
         return taxid
-
-    @staticmethod
-    async def fetch_taxonomy_by_taxid(taxid: int) -> dict:
-        """Requests a taxonomy record from NCBI Taxonomy.
-
-        :param taxid:
-        :return:
-        """
-        with Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null") as f:
-            record = Entrez.read(f)[0]
-
-        # Handle insufficient rank data
-        if record["Rank"] == "no rank":
-            with Entrez.efetch(
-                db=NCBIDB.TAXONOMY,
-                id=taxid,
-                rettype="docsum",
-                retmode="xml",
-            ) as f:
-                rank = Entrez.read(f)
-
-            record["Rank"] = rank
-
-        return record
 
     @staticmethod
     async def check_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str:

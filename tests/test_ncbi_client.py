@@ -1,13 +1,12 @@
 import pytest
 import asyncio
-import socket
 
 from structlog import get_logger
 from urllib.error import HTTPError
 
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.cache import NCBICache
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy, NCBIRank
+from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
 
@@ -179,7 +178,7 @@ class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(self, taxid, empty_client):
-        taxonomy = await empty_client.fetch_taxonomy(
+        taxonomy = await empty_client.fetch_taxonomy_record(
             taxid, use_cached=False, cache_results=True
         )
 
@@ -191,7 +190,7 @@ class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [1000000000000])
     async def test_fetch_taxonomy_from_ncbi_fail(self, taxid, empty_client):
-        taxonomy = await empty_client.fetch_taxonomy(taxid, use_cached=False)
+        taxonomy = await empty_client.fetch_taxonomy_record(taxid, use_cached=False)
 
         assert taxonomy is None
 
@@ -200,7 +199,7 @@ class TestClientFetchTaxonomy:
     async def test_fetch_taxonomy_from_cache(self, taxid, scratch_client):
         assert scratch_client.cache.load_taxonomy(taxid)
 
-        taxonomy = await scratch_client.fetch_taxonomy(taxid, use_cached=True)
+        taxonomy = await scratch_client.fetch_taxonomy_record(taxid, use_cached=True)
 
         assert type(taxonomy) is NCBITaxonomy
 

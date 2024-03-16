@@ -76,7 +76,7 @@ class NCBICache:
         Add a NCBI Taxonomy record to the cache
 
         :param data: NCBI Taxonomy record data
-        :param taxid: The UID of a NCBI Taxonomy record
+        :param taxid: A NCBI Taxonomy id
         :param no_overwrite: If True, raise a FileExistsError
         """
         cached_taxonomy_path = self._get_taxonomy_path(taxid)
@@ -93,7 +93,7 @@ class NCBICache:
     def load_taxonomy(self, taxid: int) -> dict | None:
         """Load data from a cached record fetch
 
-        :param taxid: The UID of a NCBI Taxonomy record
+        :param taxid: A NCBI Taxonomy id
         :return: Deserialized Taxonomy data if file is found in cache, else None
         """
         try:
@@ -113,7 +113,7 @@ class NCBICache:
     def _get_taxonomy_path(self, taxid: int) -> Path:
         """Returns a standardized path for a cached NCBI Taxonomy record
 
-        :param taxid: The UID of a NCBI Taxonomy record
+        :param taxid: A NCBI Taxonomy id
         :return: A properly-formatted path to a cached record
         """
         return self.taxonomy / f"{taxid}.json"
