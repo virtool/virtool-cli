@@ -1,8 +1,5 @@
 import pytest
-import asyncio
-
 from structlog import get_logger
-from urllib.error import HTTPError
 
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.cache import NCBICache
@@ -10,7 +7,6 @@ from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
 
-DEFAULT_PAUSE = 1
 SAFETY_PAUSE = 3
 
 
@@ -37,16 +33,9 @@ class TestClientFetchGenbank:
     async def test_fetch_genbank_records_from_ncbi(
         self, accessions: list[str], scratch_client
     ):
-        try:
-            await asyncio.sleep(DEFAULT_PAUSE)
-            clean_records = await scratch_client.fetch_genbank_records(
-                accessions=accessions, cache_results=True, use_cached=False
-            )
-        except HTTPError:
-            await asyncio.sleep(SAFETY_PAUSE)
-            clean_records = await scratch_client.fetch_genbank_records(
-                accessions=accessions, cache_results=True, use_cached=False
-            )
+        clean_records = await scratch_client.fetch_genbank_records(
+            accessions=accessions, cache_results=True, use_cached=False
+        )
 
         assert clean_records
 
@@ -117,16 +106,16 @@ class TestClientFetchGenbank:
         assert not records
 
 
-@pytest.mark.parametrize(
-    "accessions",
-    [
-        ["AB017504", "MH200607", "MK431779", "NC_003355"],
-        ["NC_036587", "MT240513", "MT240490"],
-    ],
-)
 class TestClientFetchRawGenbank:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "accessions",
+        [
+            ["AB017504", "MH200607", "MK431779", "NC_003355"],
+            ["NC_036587", "MT240513", "MT240490"],
+        ],
+    )
     async def test_fetch_raw_via_accessions(self, accessions: list[str]):
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
@@ -136,10 +125,14 @@ class TestClientFetchRawGenbank:
 
     @pytest.mark.ncbi
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "accessions",
+        [
+            ["paella", "MH200607", "MK431779", "NC_003355"],
+            ["friday", "MT240513", "MT240490"],
+        ],
+    )
     async def test_fetch_raw_via_accessions_partial(self, accessions: list[str]):
-        partial_accession_list = accessions
-        partial_accession_list[0] = partial_accession_list[0][:3]
-
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         assert len(records) == len(accessions) - 1
@@ -147,6 +140,14 @@ class TestClientFetchRawGenbank:
         for record in records:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
+
+    @pytest.mark.ncbi
+    @pytest.mark.asyncio
+    async def test_fetch_raw_via_accessions_fail(self):
+        false_accessions = ["friday", "paella", "111"]
+        records = await NCBIClient.fetch_unvalidated_genbank_records(false_accessions)
+
+        assert not records
 
 
 @pytest.mark.ncbi
@@ -156,16 +157,7 @@ async def test_fetch_records_by_taxid(taxid: int, empty_client):
     with pytest.raises(StopIteration):
         next(empty_client.cache._nuccore_path.glob("*.json"))
 
-    await asyncio.sleep(DEFAULT_PAUSE)
-    try:
-        records = await empty_client.link_from_taxid_and_fetch(
-            taxid, cache_results=True
-        )
-    except HTTPError:
-        await asyncio.sleep(SAFETY_PAUSE)
-        records = await empty_client.link_from_taxid_and_fetch(
-            taxid, cache_results=True
-        )
+    records = await empty_client.link_from_taxid_and_fetch(taxid, cache_results=True)
 
     assert records
 
@@ -190,7 +182,7 @@ class TestClientFetchTaxonomy:
 
     @pytest.mark.ncbi
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("taxid", [1000000000000])
+    @pytest.mark.parametrize("taxid", [1000000000000, 99999999])
     async def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
         taxonomy = await empty_client.fetch_taxonomy_record(taxid, use_cached=False)
 
@@ -235,11 +227,6 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     ],
 )
 async def test_check_spelling(misspelled: str, expected: str):
-    await asyncio.sleep(DEFAULT_PAUSE)
-    try:
-        taxon_name = await NCBIClient.check_spelling(name=misspelled)
-    except HTTPError:
-        await asyncio.sleep(SAFETY_PAUSE)
-        taxon_name = await NCBIClient.check_spelling(name=misspelled)
+    taxon_name = await NCBIClient.check_spelling(name=misspelled)
 
     assert taxon_name.lower() == expected.lower()

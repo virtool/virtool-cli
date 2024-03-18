@@ -130,22 +130,26 @@ class NCBIClient:
         logger = base_logger.bind(accessions=accessions)
 
         try:
-            with Entrez.efetch(
-                db="nuccore", id=accessions, rettype="gb", retmode="xml"
-            ) as f:
-                records = Entrez.read(f)
-
-            # Handle cases where not all accessions can be fetched
-            if len(records) != len(accessions):
-                logger.debug("Partial results fetched, returning results...")
-
-            return records
+            with log_http_error():
+                with Entrez.efetch(
+                    db="nuccore", id=accessions, rettype="gb", retmode="xml"
+                ) as f:
+                    records = Entrez.read(f)
 
         except HTTPError as e:
             if e.code == 400:
-                logger.error(f"{e}. Bad accessions?")
+                logger.error(f"Accessions not found ({e})")
             else:
                 logger.error(e)
+
+            return []
+
+        if records:
+            # Handle cases where not all accessions can be fetched
+            if len(records) != len(accessions):
+                logger.debug("Partial results fetched. Returning results...")
+
+            return records
 
         return []
 
@@ -297,21 +301,27 @@ class NCBIClient:
 
     @staticmethod
     async def _fetch_taxonomy_record(taxid: int) -> dict | None:
-        """"""
+        """
+        :param taxid:
+        :return:
+        """
         logger = base_logger.bind(taxid=taxid)
+
         try:
-            with Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null") as f:
-                records = Entrez.read(f)
+            with log_http_error():
+                records = Entrez.read(
+                    Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null")
+                )
+        except HTTPError as e:
+            logger.exception(e)
+            return None
 
-            if records:
-                return records[0]
-            else:
-                logger.error(f"Not found in NCBI Taxonomy database")
-                return None
+        if records:
+            return records[0]
 
-        except HTTPError as exc:
-            logger.error(exc.read())
-            raise exc
+        else:
+            logger.error(f"ID not found in NCBI Taxonomy database.")
+            return None
 
     @staticmethod
     async def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
@@ -414,29 +424,35 @@ class NCBIClient:
         return taxid
 
     @staticmethod
-    async def check_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str:
+    async def check_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str | None:
         """Takes the name of an OTU, requests an alternative spelling
         from the Entrez ESpell utility and returns the suggestion
 
         :param name: The OTU name that requires correcting
         :param db: Database to check against. Defaults to ``taxonomy``.
-        :return: String containing NCBI-suggested spelling changes
+        :return: String containing NCBI-suggested spelling changes, None if HTTPError
         """
-        with Entrez.espell(db=db, term=quote_plus(name)) as f:
-            record = Entrez.read(f)
+        logger = base_logger.bind(query=name)
+        try:
+            with log_http_error():
+                record = Entrez.read(Entrez.espell(db=db, term=quote_plus(name)))
+        except HTTPError:
+            return None
 
-        if record:
+        if "CorrectedQuery" in record:
             return record["CorrectedQuery"]
 
-        return name
+        logger.warning("Suggested spelling not found.")
+        return None
 
 
 @contextmanager
 def log_http_error():
     try:
         yield
+
     except HTTPError as e:
         base_logger.error(
-            "http error was raised", code=e.code, reason=e.reason, body=e.read()
+            "HTTPError raised", code=e.code, reason=e.reason, body=e.read()
         )
         raise e
