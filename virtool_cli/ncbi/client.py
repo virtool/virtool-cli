@@ -343,9 +343,7 @@ class NCBIClient:
         try:
             rank = NCBIRank(docsum_record[0]["Rank"])
         except ValueError:
-            logger.exception(
-                "Found rank for this taxid, but it did not pass validation"
-            )
+            logger.debug("Found rank for this taxid, but it did not pass validation")
             return None
 
         logger.debug("Valid rank found", rank=rank)

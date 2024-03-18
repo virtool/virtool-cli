@@ -21,7 +21,6 @@ def empty_client(tmp_path):
 
 class TestClientFetchGenbank:
     @pytest.mark.ncbi
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -92,7 +91,6 @@ class TestClientFetchGenbank:
             assert record == snapshot(name=f"{record.accession}_validated.json")
 
     @pytest.mark.ncbi
-    @pytest.mark.asyncio
     async def test_fetch_accessions_fail(self, scratch_client):
         records = await scratch_client.fetch_genbank_records(
             ["friday", "paella", "111"]
@@ -103,7 +101,6 @@ class TestClientFetchGenbank:
 
 class TestClientFetchRawGenbank:
     @pytest.mark.ncbi
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -119,7 +116,6 @@ class TestClientFetchRawGenbank:
             assert record.get("GBSeq_sequence")
 
     @pytest.mark.ncbi
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -137,7 +133,6 @@ class TestClientFetchRawGenbank:
             assert record.get("GBSeq_sequence", None)
 
     @pytest.mark.ncbi
-    @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions_fail(self):
         records = await NCBIClient.fetch_unvalidated_genbank_records(
             ["friday", "paella", "111"]
@@ -147,7 +142,6 @@ class TestClientFetchRawGenbank:
 
 
 @pytest.mark.ncbi
-@pytest.mark.asyncio
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
 async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
     assert not list(empty_client.cache._nuccore_path.glob("*.json"))
@@ -166,7 +160,6 @@ async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
 
 class TestClientFetchTaxonomy:
     @pytest.mark.ncbi
-    @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(
         self, taxid, empty_client, snapshot: SnapshotAssertion
@@ -180,14 +173,12 @@ class TestClientFetchTaxonomy:
         } == snapshot
 
     @pytest.mark.ncbi
-    @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [1000000000000, 99999999])
     async def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
         taxonomy = await empty_client.fetch_taxonomy_record(taxid)
 
         assert taxonomy is None
 
-    @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [438782, 1198450])
     async def test_fetch_taxonomy_from_cache(
         self, taxid: int, scratch_client, snapshot: SnapshotAssertion
@@ -202,7 +193,6 @@ class TestClientFetchTaxonomy:
 
 
 @pytest.mark.ncbi
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "name,taxid",
     [
@@ -215,7 +205,6 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
 
 
 @pytest.mark.ncbi
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "misspelled,expected",
     [
@@ -229,7 +218,7 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
         ),
     ],
 )
-async def test_check_spelling(misspelled: str, expected: str):
+async def test_fetch_spelling(misspelled: str, expected: str):
     taxon_name = await NCBIClient.fetch_spelling(name=misspelled)
 
     assert taxon_name == expected
