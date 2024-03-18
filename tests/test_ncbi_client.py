@@ -8,8 +8,6 @@ from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
 
-SAFETY_PAUSE = 3
-
 
 @pytest.fixture()
 def scratch_client(cache_scratch_path):
@@ -68,10 +66,6 @@ class TestClientFetchGenbank:
         assert clean_records
 
         for record in clean_records:
-            assert type(record) is NCBINuccore
-
-            assert type(record.source) is NCBISource
-
             assert record == snapshot(name=f"{record.accession}_validated.json")
 
     @pytest.mark.ncbi
@@ -79,7 +73,7 @@ class TestClientFetchGenbank:
         "accessions", [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]]
     )
     async def test_fetch_partially_cached_genbank_records(
-        self, accessions: list[str], cache_scratch_path
+        self, accessions: list[str], cache_scratch_path, snapshot: SnapshotAssertion
     ):
         client = NCBIClient(cache_scratch_path)
 
@@ -95,9 +89,7 @@ class TestClientFetchGenbank:
         assert clean_records
 
         for record in clean_records:
-            assert type(record) is NCBINuccore
-
-            assert type(record.source) is NCBISource
+            assert record == snapshot(name=f"{record.accession}_validated.json")
 
     @pytest.mark.ncbi
     @pytest.mark.asyncio
@@ -240,6 +232,6 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     ],
 )
 async def test_check_spelling(misspelled: str, expected: str):
-    taxon_name = await NCBIClient.check_spelling(name=misspelled)
+    taxon_name = await NCBIClient.fetch_spelling(name=misspelled)
 
     assert taxon_name.lower() == expected.lower()

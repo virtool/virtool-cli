@@ -424,7 +424,7 @@ class NCBIClient:
         return taxid
 
     @staticmethod
-    async def check_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str | None:
+    async def fetch_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str | None:
         """Takes the name of an OTU, requests an alternative spelling
         from the Entrez ESpell utility and returns the suggestion
 
