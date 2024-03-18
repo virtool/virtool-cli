@@ -294,7 +294,8 @@ class NCBIClient:
             return NCBIClient.validate_taxonomy_record(record, rank)
         except ValidationError as exc:
             logger.error("Failed to find a valid rank. Returning empty...", error=exc)
-            return None
+
+        return None
 
     @staticmethod
     async def _fetch_taxonomy_record(taxid: int) -> dict | None:
@@ -336,7 +337,7 @@ class NCBIClient:
             ) as f:
                 docsum_record = Entrez.read(f)
         except RuntimeError:
-            logger.error("Failed to find a valid rank. Returning empty...")
+            logger.info("No valid rank found for this taxid. Returning empty...")
             return None
 
         rank_str = docsum_record[0]["Rank"]
@@ -346,8 +347,10 @@ class NCBIClient:
             logger.debug("Valid rank found", rank=rank)
 
             return rank
-        except ValueError as exc:
-            logger.error("Failed to find a valid rank. Returning empty...", error=exc)
+        except ValueError:
+            logger.exception(
+                "Found rank for taxid, but failed to validate", taxid=taxid
+            )
             return None
 
     @staticmethod
