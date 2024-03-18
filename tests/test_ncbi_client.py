@@ -115,8 +115,8 @@ class TestClientFetchRawGenbank:
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         for record in records:
-            assert record.get("GBSeq_locus", None)
-            assert record.get("GBSeq_sequence", None)
+            assert record.get("GBSeq_locus")
+            assert record.get("GBSeq_sequence")
 
     @pytest.mark.ncbi
     @pytest.mark.asyncio
@@ -150,8 +150,7 @@ class TestClientFetchRawGenbank:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
 async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
-    with pytest.raises(StopIteration):
-        next(empty_client.cache._nuccore_path.glob("*.json"))
+    assert not list(empty_client.cache._nuccore_path.glob("*.json"))
 
     records = await empty_client.link_from_taxid_and_fetch(taxid, cache_results=True)
 
@@ -222,15 +221,15 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     [
         (
             "Hynchosia yellow mosaic India virus",
-            "Rhynchosia yellow mosaic India virus",
+            "rhynchosia yellow mosaic india virus",
         ),
         (
             "Angelica bush stunt virus",
-            "Angelica bushy stunt virus",
+            "angelica bushy stunt virus",
         ),
     ],
 )
 async def test_check_spelling(misspelled: str, expected: str):
     taxon_name = await NCBIClient.fetch_spelling(name=misspelled)
 
-    assert taxon_name.lower() == expected.lower()
+    assert taxon_name == expected

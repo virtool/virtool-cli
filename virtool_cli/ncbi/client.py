@@ -337,14 +337,14 @@ class NCBIClient:
             ) as f:
                 docsum_record = Entrez.read(f)
         except RuntimeError:
-            logger.info("No valid rank found for this taxid. Returning empty...")
+            logger.info("No valid rank found for this taxid")
             return None
 
         try:
             rank = NCBIRank(docsum_record[0]["Rank"])
         except ValueError:
             logger.exception(
-                "Found rank for this taxid, but it did not pass validation. Returning empty..."
+                "Found rank for this taxid, but it did not pass validation"
             )
             return None
 
