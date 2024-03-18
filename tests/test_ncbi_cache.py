@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.cache import NCBICache
 
@@ -60,13 +61,18 @@ def test_cache_clear(cache_scratch_path):
     ),
 )
 class TestCacheNuccoreOperations:
-    def test_cache_nuccore_load_record_batch(self, accessions, cache_scratch_path):
+    def test_cache_nuccore_load_record_batch(
+        self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
+    ):
         scratch_cache = NCBICache(cache_scratch_path)
 
         for accession in accessions:
-            record = scratch_cache.load_nuccore_record(accession)
+            with open(scratch_cache.nuccore / f"{accession}.json") as f:
+                cache_data = json.load(f)
+                assert cache_data == snapshot(name=f"{accession}.json")
 
-            assert type(record) is dict
+            record = scratch_cache.load_nuccore_record(accession)
+            assert record == cache_data
 
     def test_cache_nuccore_cache_records(
         self, accessions, cache_example_path, empty_cache_path
@@ -92,12 +98,16 @@ def test_cache_nuccore_load_fail(fake_accession, cache_scratch_path):
 
 @pytest.mark.parametrize("taxid", (270478, 438782, 1198450))
 class TestCacheTaxonomyOperations:
-    def test_cache_taxonomy_load(self, taxid, cache_scratch_path):
+    def test_cache_taxonomy_load(self, taxid, cache_scratch_path, snapshot):
         scratch_cache = NCBICache(cache_scratch_path)
+
+        with open(scratch_cache.taxonomy / f"{taxid}.json") as f:
+            cache_data = json.load(f)
+            assert cache_data == snapshot(name=f"{taxid}.json")
 
         taxonomy = scratch_cache.load_taxonomy(taxid)
 
-        assert type(taxonomy) is dict
+        assert taxonomy == cache_data
 
     def test_cache_taxonomy_cache(self, taxid, cache_example_path, empty_cache_path):
         taxonomy = get_test_taxonomy(taxid, cache_example_path)
