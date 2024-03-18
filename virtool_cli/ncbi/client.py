@@ -36,11 +36,12 @@ class GBSeq(StrEnum):
 
 
 class NCBIClient:
-    def __init__(self, cache_path: Path):
+    def __init__(self, cache_path: Path, ignore_cache: bool):
         """
         :param cache_path: A path to a directory to be used as a cache
         """
         self.cache = NCBICache(cache_path)
+        self.ignore_cache = ignore_cache
 
     @classmethod
     def from_repo(cls, repo_path: Path) -> "NCBIClient":
@@ -56,7 +57,6 @@ class NCBIClient:
         self,
         accessions: list[str],
         cache_results: bool = True,
-        use_cached: bool = True,
     ) -> list[NCBINuccore]:
         """
         Fetch or load NCBI Genbank records records corresponding to a list of accessions
@@ -64,8 +64,6 @@ class NCBIClient:
 
         :param accessions: A list of accessions to be fetched
         :param cache_results: If True, caches fetched data as JSON
-        :param use_cached: If True, loads data from cache
-            in lieu of fetching if possible
         :return: A list of validated NCBINuccore records
         """
         if not accessions:
@@ -73,7 +71,7 @@ class NCBIClient:
 
         logger = base_logger.bind(accessions=accessions)
 
-        if use_cached:
+        if not self.ignore_cache:
             records, missing_accessions = [], []
             for accession in accessions:
                 record = self.cache.load_nuccore_record(accession)
@@ -248,7 +246,7 @@ class NCBIClient:
         return NCBINuccore(**raw)
 
     async def fetch_taxonomy_record(
-        self, taxid: int, cache_results: bool = False, use_cached: bool = True
+        self, taxid: int, cache_results: bool = False
     ) -> NCBITaxonomy | None:
         """
         Fetches and validates a taxonomy record from NCBI Taxonomy.
@@ -258,14 +256,12 @@ class NCBIClient:
 
         :param taxid: A NCBI Taxonomy id
         :param cache_results: If True, caches fetched data as JSON
-        :param use_cached: If True, loads data from cache
-            in lieu of fetching if possible
         :return: A validated NCBI Taxonomy record NCBITaxonomy if possible,
             else None
         """
         logger = base_logger.bind(taxid=taxid)
 
-        if use_cached:
+        if not self.ignore_cache:
             record = self.cache.load_taxonomy(taxid)
             if record:
                 logger.info("Cached record found")
@@ -417,16 +413,14 @@ class NCBIClient:
             record = Entrez.read(f)
 
         try:
-            taxid = int(record["IdList"][0])
+            return int(record["IdList"][0])
         except IndexError:
             return None
 
-        return taxid
-
     @staticmethod
     async def fetch_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str | None:
-        """Takes the name of an OTU, requests an alternative spelling
-        from the Entrez ESpell utility and returns the suggestion
+        """Takes the name of an OTU and returns an alternative spelling
+        from the Entrez ESpell utility.
 
         :param name: The OTU name that requires correcting
         :param db: Database to check against. Defaults to ``taxonomy``.
@@ -448,6 +442,7 @@ class NCBIClient:
 
 @contextmanager
 def log_http_error():
+    """Logs detailed HTTPError info for debugging before throwing the HTTPError."""
     try:
         yield
 
