@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from virtool_cli.ncbi.model import (
     NCBINuccore,
     NCBITaxonomy,
-    NCBIDB,
+    NCBIDatabase,
     NCBILineage,
     NCBIRank,
 )
@@ -308,11 +308,11 @@ class NCBIClient:
         try:
             with log_http_error():
                 records = Entrez.read(
-                    Entrez.efetch(db=NCBIDB.TAXONOMY, id=taxid, rettype="null")
+                    Entrez.efetch(db=NCBIDatabase.TAXONOMY, id=taxid, rettype="null")
                 )
         except HTTPError as e:
             logger.exception(e)
-            return None
+            raise e
 
         if records:
             return records[0]
@@ -333,25 +333,23 @@ class NCBIClient:
 
         try:
             with Entrez.efetch(
-                db=NCBIDB.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
+                db=NCBIDatabase.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
             ) as f:
                 docsum_record = Entrez.read(f)
         except RuntimeError:
             logger.info("No valid rank found for this taxid. Returning empty...")
             return None
 
-        rank_str = docsum_record[0]["Rank"]
-
         try:
-            rank = NCBIRank(rank_str)
-            logger.debug("Valid rank found", rank=rank)
-
-            return rank
+            rank = NCBIRank(docsum_record[0]["Rank"])
         except ValueError:
             logger.exception(
-                "Found rank for taxid, but failed to validate", taxid=taxid
+                "Found rank for this taxid, but it did not pass validation. Returning empty..."
             )
             return None
+
+        logger.debug("Valid rank found", rank=rank)
+        return rank
 
     @staticmethod
     def validate_taxonomy_record(
@@ -373,15 +371,13 @@ class NCBIClient:
         species = None
         logger = base_logger.bind(taxid=record["TaxId"])
 
-        # Get lineage list
         lineage = []
         for level_data in record["LineageEx"]:
             level = NCBILineage(**level_data)
+            lineage.append(level)
 
             if level.rank == NCBIRank.SPECIES:
                 species = level
-
-            lineage.append(level)
 
         # Fetch rank if not overwritten
         if rank is None:
@@ -421,7 +417,9 @@ class NCBIClient:
             return None
 
     @staticmethod
-    async def fetch_spelling(name: str, db: NCBIDB = NCBIDB.TAXONOMY) -> str | None:
+    async def fetch_spelling(
+        name: str, db: NCBIDatabase = NCBIDatabase.TAXONOMY
+    ) -> str | None:
         """Takes the name of an OTU and returns an alternative spelling
         from the Entrez ESpell utility.
 

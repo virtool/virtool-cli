@@ -11,12 +11,12 @@ test_logger = get_logger()
 
 @pytest.fixture()
 def scratch_client(cache_scratch_path):
-    return NCBIClient(cache_scratch_path)
+    return NCBIClient(cache_scratch_path, ignore_cache=False)
 
 
 @pytest.fixture()
 def empty_client(tmp_path):
-    return NCBIClient(NCBICache(tmp_path / "clean_repo").path)
+    return NCBIClient(NCBICache(tmp_path / "clean_repo").path, ignore_cache=True)
 
 
 class TestClientFetchGenbank:
@@ -33,7 +33,7 @@ class TestClientFetchGenbank:
         self, accessions, empty_client, snapshot: SnapshotAssertion
     ):
         clean_records = await empty_client.fetch_genbank_records(
-            accessions=accessions, cache_results=True, use_cached=False
+            accessions=accessions, cache_results=True
         )
 
         assert clean_records
@@ -57,10 +57,10 @@ class TestClientFetchGenbank:
     async def test_fetch_genbank_records_from_cache(
         self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
     ):
-        client = NCBIClient(cache_scratch_path)
+        client = NCBIClient(cache_scratch_path, ignore_cache=False)
 
         clean_records = await client.fetch_genbank_records(
-            accessions=accessions, cache_results=False, use_cached=True
+            accessions=accessions, cache_results=False
         )
 
         assert clean_records
@@ -75,7 +75,7 @@ class TestClientFetchGenbank:
     async def test_fetch_partially_cached_genbank_records(
         self, accessions: list[str], cache_scratch_path, snapshot: SnapshotAssertion
     ):
-        client = NCBIClient(cache_scratch_path)
+        client = NCBIClient(cache_scratch_path, ignore_cache=False)
 
         try:
             assert next(client.cache._nuccore_path.glob("*.json"))
@@ -83,7 +83,7 @@ class TestClientFetchGenbank:
             pytest.fail("Could not retrieve any records from cache")
 
         clean_records = await client.fetch_genbank_records(
-            accessions=accessions, cache_results=False, use_cached=True
+            accessions=accessions, cache_results=False
         )
 
         assert clean_records
@@ -94,9 +94,9 @@ class TestClientFetchGenbank:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
     async def test_fetch_accessions_fail(self, scratch_client):
-        false_accessions = ["friday", "paella", "111"]
-
-        records = await scratch_client.fetch_genbank_records(false_accessions)
+        records = await scratch_client.fetch_genbank_records(
+            ["friday", "paella", "111"]
+        )
 
         assert not records
 
@@ -139,8 +139,9 @@ class TestClientFetchRawGenbank:
     @pytest.mark.ncbi
     @pytest.mark.asyncio
     async def test_fetch_raw_via_accessions_fail(self):
-        false_accessions = ["friday", "paella", "111"]
-        records = await NCBIClient.fetch_unvalidated_genbank_records(false_accessions)
+        records = await NCBIClient.fetch_unvalidated_genbank_records(
+            ["friday", "paella", "111"]
+        )
 
         assert not records
 
@@ -171,9 +172,7 @@ class TestClientFetchTaxonomy:
     async def test_fetch_taxonomy_from_ncbi(
         self, taxid, empty_client, snapshot: SnapshotAssertion
     ):
-        taxonomy = await empty_client.fetch_taxonomy_record(
-            taxid, use_cached=False, cache_results=True
-        )
+        taxonomy = await empty_client.fetch_taxonomy_record(taxid, cache_results=True)
 
         assert type(taxonomy) is NCBITaxonomy
 
@@ -185,7 +184,7 @@ class TestClientFetchTaxonomy:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("taxid", [1000000000000, 99999999])
     async def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
-        taxonomy = await empty_client.fetch_taxonomy_record(taxid, use_cached=False)
+        taxonomy = await empty_client.fetch_taxonomy_record(taxid)
 
         assert taxonomy is None
 
@@ -196,7 +195,7 @@ class TestClientFetchTaxonomy:
     ):
         assert scratch_client.cache.load_taxonomy(taxid)
 
-        taxonomy = await scratch_client.fetch_taxonomy_record(taxid, use_cached=True)
+        taxonomy = await scratch_client.fetch_taxonomy_record(taxid)
 
         assert type(taxonomy) is NCBITaxonomy
 

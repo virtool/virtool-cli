@@ -3,6 +3,11 @@ from enum import StrEnum
 from pydantic import BaseModel, Field, AliasChoices, field_validator
 
 
+class NCBIDatabase(StrEnum):
+    NUCCORE = "nuccore"
+    TAXONOMY = "taxonomy"
+
+
 class NCBIRank(StrEnum):
     SPECIES = "species"
     ISOLATE = "isolate"
@@ -66,8 +71,3 @@ class NCBITaxonomy(BaseModel):
     rank: NCBIRank
     lineage: list[NCBILineage]
     species: NCBILineage
-
-
-class NCBIDB(StrEnum):
-    NUCCORE = "nuccore"
-    TAXONOMY = "taxonomy"
