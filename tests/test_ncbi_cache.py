@@ -1,4 +1,5 @@
 import json
+from syrupy import SnapshotAssertion
 
 import pytest
 
@@ -60,13 +61,15 @@ def test_cache_clear(cache_scratch_path):
     ),
 )
 class TestCacheNuccoreOperations:
-    def test_cache_nuccore_load_record_batch(self, accessions, cache_scratch_path):
+    def test_cache_nuccore_load_record_batch(
+        self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
+    ):
         scratch_cache = NCBICache(cache_scratch_path)
 
         for accession in accessions:
             record = scratch_cache.load_nuccore_record(accession)
 
-            assert type(record) is dict
+            assert record == snapshot(name=f"{accession}.json")
 
     def test_cache_nuccore_cache_records(
         self, accessions, cache_example_path, empty_cache_path
@@ -92,12 +95,14 @@ def test_cache_nuccore_load_fail(fake_accession, cache_scratch_path):
 
 @pytest.mark.parametrize("taxid", (270478, 438782, 1198450))
 class TestCacheTaxonomyOperations:
-    def test_cache_taxonomy_load(self, taxid, cache_scratch_path):
+    def test_cache_taxonomy_load(
+        self, taxid, cache_scratch_path, snapshot: SnapshotAssertion
+    ):
         scratch_cache = NCBICache(cache_scratch_path)
 
         taxonomy = scratch_cache.load_taxonomy(taxid)
 
-        assert type(taxonomy) is dict
+        assert taxonomy == snapshot(name=f"{taxid}.json")
 
     def test_cache_taxonomy_cache(self, taxid, cache_example_path, empty_cache_path):
         taxonomy = get_test_taxonomy(taxid, cache_example_path)
