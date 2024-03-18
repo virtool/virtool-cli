@@ -131,10 +131,11 @@ class NCBIClient:
 
         try:
             with log_http_error():
-                with Entrez.efetch(
-                    db="nuccore", id=accessions, rettype="gb", retmode="xml"
-                ) as f:
-                    records = Entrez.read(f)
+                records = Entrez.read(
+                    Entrez.efetch(
+                        db="nuccore", id=accessions, rettype="gb", retmode="xml"
+                    )
+                )
 
         except HTTPError as e:
             if e.code == 400:
@@ -319,9 +320,8 @@ class NCBIClient:
         if records:
             return records[0]
 
-        else:
-            logger.error(f"ID not found in NCBI Taxonomy database.")
-            return None
+        logger.error("ID not found in NCBI Taxonomy database.")
+        return None
 
     @staticmethod
     async def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
