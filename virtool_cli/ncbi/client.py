@@ -39,6 +39,7 @@ class NCBIClient:
     def __init__(self, cache_path: Path, ignore_cache: bool):
         """
         :param cache_path: A path to a directory to be used as a cache
+        :param ignore_cache: If True, forces all fetches to download data from the server
         """
         self.cache = NCBICache(cache_path)
         self.ignore_cache = ignore_cache

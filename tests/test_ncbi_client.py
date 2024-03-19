@@ -1,9 +1,10 @@
-import pytest
-from syrupy import SnapshotAssertion
+from shutil import rmtree
 from structlog import get_logger
 
+import pytest
+from syrupy import SnapshotAssertion
+
 from virtool_cli.ncbi.client import NCBIClient
-from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
@@ -16,7 +17,12 @@ def scratch_client(cache_scratch_path):
 
 @pytest.fixture()
 def empty_client(tmp_path):
-    return NCBIClient(NCBICache(tmp_path / "clean_repo").path, ignore_cache=True)
+    dummy_cache_path = tmp_path / "dummy_cache"
+    dummy_cache_path.mkdir()
+
+    yield NCBIClient(dummy_cache_path, ignore_cache=True)
+
+    rmtree(dummy_cache_path)
 
 
 class TestClientFetchGenbank:

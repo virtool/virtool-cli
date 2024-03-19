@@ -38,7 +38,6 @@ class NCBICache:
 
         :param data: A data from a Genbank record corresponding
         :param accession: The NCBI accession of the record
-        :param no_overwrite: If True, raise a FileExistsError
         """
         cached_record_path = self._get_nuccore_path(f"{accession}")
 
@@ -71,7 +70,6 @@ class NCBICache:
 
         :param data: NCBI Taxonomy record data
         :param taxid: A NCBI Taxonomy id
-        :param no_overwrite: If True, raise a FileExistsError
         """
         cached_taxonomy_path = self._get_taxonomy_path(taxid)
 
