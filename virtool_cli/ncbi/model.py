@@ -51,11 +51,12 @@ class NCBINuccore(BaseModel):
     def create_source(cls, raw: list) -> NCBISource:
         for feature in raw:
             if feature["GBFeature_key"] == "source":
-                source_qual = {
-                    qual["GBQualifier_name"]: qual["GBQualifier_value"]
-                    for qual in feature["GBFeature_quals"]
-                }
-                return NCBISource(**source_qual)
+                return NCBISource(
+                    **{
+                        qual["GBQualifier_name"]: qual["GBQualifier_value"]
+                        for qual in feature["GBFeature_quals"]
+                    }
+                )
 
         raise ValueError("Feature table contains no ``source`` table.")
 
