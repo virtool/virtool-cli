@@ -13,13 +13,6 @@ class NCBIRank(StrEnum):
     ISOLATE = "isolate"
 
 
-class NCBISourceType(StrEnum):
-    ISOLATE = "isolate"
-    STRAIN = "strain"
-    CLONE = "clone"
-    GENOTYPE = "genotype"
-
-
 class NCBISource(BaseModel):
     taxid: int = Field(validation_alias="db_xref")
     host: str = ""

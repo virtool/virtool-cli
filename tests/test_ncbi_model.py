@@ -12,31 +12,34 @@ def scratch_cache(cache_scratch_path):
 
 @pytest.mark.parametrize("accession", ["AB017504", "MH200607", "NC_036587", "MT240513"])
 class TestAccessionParse:
-    def test_parse_source(self, accession, scratch_cache, snapshot):
+    def test_parse_source(self, accession, scratch_cache, snapshot: SnapshotAssertion):
         record = scratch_cache.load_nuccore_record(accession)
 
         source = NCBINuccore.create_source(record["GBSeq_feature-table"])
 
         assert source == snapshot
 
-    def test_parse_nuccore(self, accession, scratch_cache, snapshot):
+    def test_parse_nuccore(self, accession, scratch_cache, snapshot: SnapshotAssertion):
         record = scratch_cache.load_nuccore_record(accession)
 
         validated_record = NCBINuccore(**record)
 
         assert validated_record == snapshot
 
-    def test_parse_source_taxid(self, accession, scratch_cache, snapshot):
+    def test_parse_source_taxid(
+        self, accession, scratch_cache, snapshot: SnapshotAssertion
+    ):
         record = scratch_cache.load_nuccore_record(accession)
 
+        db_xref = None
         for feature in record["GBSeq_feature-table"]:
             if feature["GBFeature_key"] == "source":
-                source_table = {
-                    qual["GBQualifier_name"]: qual["GBQualifier_value"]
-                    for qual in feature["GBFeature_quals"]
-                }
+                for qual in feature["GBFeature_quals"]:
+                    if qual["GBQualifier_name"] == "db_xref":
+                        db_xref = qual["GBQualifier_value"]
+                        break
 
-                assert NCBISource.db_xref_to_taxid(source_table["db_xref"]) == snapshot
+        assert NCBISource.db_xref_to_taxid(db_xref) == snapshot
 
 
 @pytest.mark.parametrize(
