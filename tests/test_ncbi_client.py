@@ -163,6 +163,7 @@ async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
 
 class TestClientFetchTaxonomy:
     @pytest.mark.ncbi
+    @pytest.mark.flaky(reruns=3, reruns_delay=3)
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(
         self, taxid, empty_client, snapshot: SnapshotAssertion
