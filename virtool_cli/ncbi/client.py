@@ -267,12 +267,19 @@ class NCBIClient:
             if record:
                 logger.info("Cached record found")
             else:
-                logger.debug("Cached record not found. Fetching from taxonomy...")
+                logger.info("Cached record not found. Fetching from taxonomy...")
                 record = await NCBIClient._fetch_taxonomy_record(taxid)
 
         else:
             logger.debug("Fetching record from Taxonomy...")
-            record = await NCBIClient._fetch_taxonomy_record(taxid)
+
+            with log_http_error():
+                try:
+                    record = await NCBIClient._fetch_taxonomy_record(taxid)
+                except HTTPError as e:
+                    logger.error(f"{e.code}: {e.reason}")
+                    logger.error(f"Your request was likely refused by NCBI.")
+                    return None
 
         if record is None:
             return None
@@ -283,18 +290,25 @@ class NCBIClient:
 
         try:
             return NCBIClient.validate_taxonomy_record(record)
+
         except ValidationError as exc:
             logger.debug("Proper rank not found in record", errors=exc.errors())
 
+        logger.info("Running additional docsum fetch...")
+
         await asyncio.sleep(1)
-        logger.debug("Running additional docsum fetch...")
-
-        rank = await self._fetch_taxonomy_rank(taxid)
-
         try:
-            return NCBIClient.validate_taxonomy_record(record, rank)
-        except ValidationError as exc:
-            logger.error("Failed to find a valid rank. Returning empty...", error=exc)
+            rank = await self._fetch_taxonomy_rank(taxid)
+        except HTTPError as e:
+            logger.error(f"{e.code}: {e.reason}")
+            logger.error(f"Your request was likely refused by NCBI.")
+            return None
+
+        if rank:
+            try:
+                return NCBIClient.validate_taxonomy_record(record, rank)
+            except ValidationError as exc:
+                logger.error("Failed to find a valid rank.", error=exc)
 
         return None
 
@@ -450,4 +464,5 @@ def log_http_error():
         base_logger.error(
             "HTTPError raised", code=e.code, reason=e.reason, body=e.read()
         )
+        base_logger.exception(e)
         raise e
