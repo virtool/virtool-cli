@@ -45,14 +45,14 @@ class NCBIClient:
         self.ignore_cache = ignore_cache
 
     @classmethod
-    def from_repo(cls, repo_path: Path) -> "NCBIClient":
-        """Initializes the NCBI cache in the default subpath
-        under a given repository
+    def from_repo(cls, repo_path: Path, ignore_cache: bool) -> "NCBIClient":
+        """Initializes the NCBI cache in the default subpath under a given repository
 
         :param repo_path: A path to a reference repository
+        :param ignore_cache: If True, forces all fetches to download data from the server
         :return: The standard cache path for the given repo_path
         """
-        return NCBIClient(repo_path / ".cache/ncbi")
+        return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
 
     async def fetch_genbank_records(
         self,
