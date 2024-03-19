@@ -32,9 +32,7 @@ class NCBICache:
         self._nuccore_path.mkdir()
         self._taxonomy_path.mkdir()
 
-    def cache_nuccore_record(
-        self, data: dict, accession: str, no_overwrite: bool = False
-    ):
+    def cache_nuccore_record(self, data: dict, accession: str):
         """
         Add a Genbank record from NCBI Nucleotide to the cache.
 
@@ -43,8 +41,6 @@ class NCBICache:
         :param no_overwrite: If True, raise a FileExistsError
         """
         cached_record_path = self._get_nuccore_path(f"{accession}")
-        if no_overwrite and cached_record_path.exists():
-            raise FileExistsError
 
         with open(cached_record_path, "w") as f:
             json.dump(data, f)
@@ -69,7 +65,7 @@ class NCBICache:
         except FileNotFoundError:
             return None
 
-    def cache_taxonomy(self, data: dict, taxid: int, no_overwrite: bool = False):
+    def cache_taxonomy_record(self, data: dict, taxid):
         """
         Add a NCBI Taxonomy record to the cache
 
@@ -78,9 +74,6 @@ class NCBICache:
         :param no_overwrite: If True, raise a FileExistsError
         """
         cached_taxonomy_path = self._get_taxonomy_path(taxid)
-
-        if no_overwrite and cached_taxonomy_path.exists():
-            raise FileExistsError
 
         with open(cached_taxonomy_path, "w") as f:
             json.dump(data, f)

@@ -103,6 +103,6 @@ class TestCacheTaxonomyOperations:
 
         fresh_cache = NCBICache(empty_cache_path)
 
-        fresh_cache.cache_taxonomy(taxonomy, taxid)
+        fresh_cache.cache_taxonomy_record(taxonomy, taxid)
 
         assert (fresh_cache._taxonomy_path / f"{taxid}.json").exists()

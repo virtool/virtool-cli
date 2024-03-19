@@ -278,7 +278,7 @@ class NCBIClient:
 
         if cache_results:
             logger.debug("Caching data...")
-            self.cache.cache_taxonomy(record, taxid)
+            self.cache.cache_taxonomy_record(record, taxid)
 
         try:
             return NCBIClient.validate_taxonomy_record(record)
