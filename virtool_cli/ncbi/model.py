@@ -15,9 +15,11 @@ class NCBIRank(StrEnum):
 
 class NCBISource(BaseModel):
     taxid: int = Field(validation_alias="db_xref")
+    organism: str
+    mol_type: str
+    isolate: str = ""
     host: str = ""
     segment: str = ""
-    isolate: str = ""
     strain: str = ""
     clone: str = ""
 
@@ -55,9 +57,9 @@ class NCBINuccore(BaseModel):
 
 
 class NCBILineage(BaseModel):
-    id: int = Field(validation_alias=AliasChoices("TaxId", "id"))
-    name: str = Field(validation_alias=AliasChoices("ScientificName", "name"))
-    rank: str = Field(validation_alias=AliasChoices("Rank", "rank"))
+    id: int = Field(validation_alias=AliasChoices("id", "TaxId"))
+    name: str = Field(validation_alias=AliasChoices("name", "ScientificName"))
+    rank: str = Field(validation_alias=AliasChoices("rank", "Rank"))
 
 
 class NCBITaxonomy(BaseModel):
