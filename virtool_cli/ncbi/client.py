@@ -11,13 +11,7 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 from pydantic import ValidationError
 
-from virtool_cli.ncbi.model import (
-    NCBINuccore,
-    NCBITaxonomy,
-    NCBIDatabase,
-    NCBILineage,
-    NCBIRank,
-)
+from virtool_cli.ncbi.model import NCBINuccore, NCBITaxonomy, NCBIDatabase, NCBIRank
 from virtool_cli.ncbi.cache import NCBICache
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
@@ -274,7 +268,7 @@ class NCBIClient:
                     record = await NCBIClient._fetch_taxonomy_record(taxid)
                 except HTTPError as e:
                     logger.error(f"{e.code}: {e.reason}")
-                    logger.error(f"Your request was likely refused by NCBI.")
+                    logger.error("Your request was likely refused by NCBI.")
                     return None
 
                 if type(record) == dict:
@@ -309,7 +303,7 @@ class NCBIClient:
             rank = await self._fetch_taxonomy_rank(taxid)
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
-            logger.error(f"Your request was likely refused by NCBI.")
+            logger.error("Your request was likely refused by NCBI.")
             return None
 
         if rank:
