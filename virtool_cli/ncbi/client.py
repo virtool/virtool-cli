@@ -1,39 +1,207 @@
 import os
+import asyncio
+from pathlib import Path
+from contextlib import contextmanager
+from enum import StrEnum
+
 from Bio import Entrez
 
 from structlog import get_logger
 from urllib.parse import quote_plus
 from urllib.error import HTTPError
+from pydantic import ValidationError
 
-from virtool_cli.ncbi.error import IncompleteRecordsError
+from virtool_cli.ncbi.model import (
+    NCBINuccore,
+    NCBITaxonomy,
+    NCBIDatabase,
+    NCBILineage,
+    NCBIRank,
+)
+from virtool_cli.ncbi.cache import NCBICache
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
 Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
-DEFAULT_INTERVAL = 0.001
-
 base_logger = get_logger()
 
 
+class GBSeq(StrEnum):
+    ACCESSION = "GBSeq_primary-accession"
+    DEFINITION = "GBSeq_definition"
+    SEQUENCE = "GBSeq_sequence"
+    LENGTH = "GBSeq_length"
+    COMMENT = "GBSeq_comment"
+    FEATURE_TABLE = "GBSeq_feature-table"
+
+
 class NCBIClient:
+    def __init__(self, cache_path: Path, ignore_cache: bool):
+        """
+        :param cache_path: A path to a directory to be used as a cache
+        :param ignore_cache: If True, forces all fetches to download data from the server
+        """
+        self.cache = NCBICache(cache_path)
+        self.ignore_cache = ignore_cache
+
+    @classmethod
+    def from_repo(cls, repo_path: Path, ignore_cache: bool) -> "NCBIClient":
+        """Initializes the NCBI cache in the default subpath under a given repository
+
+        :param repo_path: A path to a reference repository
+        :param ignore_cache: If True, forces all fetches to download data from the server
+        :return: The standard cache path for the given repo_path
+        """
+        return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
+
+    async def fetch_genbank_records(
+        self,
+        accessions: list[str],
+        cache_results: bool = True,
+    ) -> list[NCBINuccore]:
+        """
+        Fetch or load NCBI Genbank records records corresponding to a list of accessions
+        and return validated records.
+
+        :param accessions: A list of accessions to be fetched
+        :param cache_results: If True, caches fetched data as JSON
+        :return: A list of validated NCBINuccore records
+        """
+        if not accessions:
+            return []
+
+        logger = base_logger.bind(accessions=accessions)
+
+        if not self.ignore_cache:
+            records, missing_accessions = [], []
+            for accession in accessions:
+                record = self.cache.load_nuccore_record(accession)
+                if record is not None:
+                    records.append(record)
+
+                else:
+                    logger.debug("Missing accession", missing_accession=accession)
+                    missing_accessions.append(accession)
+
+            if missing_accessions:
+                logger.debug(
+                    "Accessions not found in cache, fetching now...",
+                    missing_accessions=missing_accessions,
+                )
+                missing_records = await NCBIClient.fetch_unvalidated_genbank_records(
+                    missing_accessions
+                )
+                records.extend(missing_records)
+
+            if records:
+                logger.info("Cached records found", n_records=len(records))
+
+                return NCBIClient.validate_genbank_records(records)
+
+        else:
+
+            records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+            if records:
+                if cache_results:
+                    for record in records:
+                        try:
+                            self.cache.cache_nuccore_record(
+                                record, record[GBSeq.ACCESSION]
+                            )
+                        except FileExistsError:
+                            logger.error("Cannot overwrite cache data")
+
+                    logger.debug("Records cached", n_records=len(records))
+
+                return NCBIClient.validate_genbank_records(records)
+
+        return []
+
     @staticmethod
-    async def link_accessions(taxon_id: int) -> list:
+    async def fetch_unvalidated_genbank_records(accessions: list[str]) -> list[dict]:
+        """
+        Take a list of accession numbers, parse the corresponding XML records
+        from GenBank using Entrez.Parser and return
+
+        :param accessions: List of accession numbers to fetch from GenBank
+        :return: A list of deserialized XML records from NCBI Nucleotide
+        """
+        logger = base_logger.bind(accessions=accessions)
+
+        try:
+            with log_http_error():
+                records = Entrez.read(
+                    Entrez.efetch(
+                        db="nuccore", id=accessions, rettype="gb", retmode="xml"
+                    )
+                )
+
+        except HTTPError as e:
+            if e.code == 400:
+                logger.error(f"Accessions not found ({e})")
+            else:
+                logger.error(e)
+
+            return []
+
+        if records:
+            # Handle cases where not all accessions can be fetched
+            if len(records) != len(accessions):
+                logger.debug("Partial results fetched. Returning results...")
+
+            return records
+
+        return []
+
+    async def link_from_taxid_and_fetch(
+        self, taxid: int, cache_results: bool = True
+    ) -> list[NCBINuccore]:
+        """Fetch all Genbank records linked to a taxonomy record.
+
+        Usable without preexisting OTU data.
+
+        :param taxid: A NCBI Taxonomy id
+        :param cache_results: If True, caches fetched data as JSON
+        :return: A list of Entrez-parsed Genbank records
+        """
+        accessions = await NCBIClient.link_accessions_from_taxid(taxid)
+
+        logger = base_logger.bind(taxid=taxid, linked_accessions=accessions)
+
+        logger.debug("Fetching accessions...")
+        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+
+        if cache_results:
+            for record in records:
+                try:
+                    self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                except FileExistsError:
+                    logger.error("Cannot overwrite cache data")
+
+            logger.debug("Records cached", n_records=len(records))
+
+        if records:
+            return NCBIClient.validate_genbank_records(records)
+
+        return []
+
+    @staticmethod
+    async def link_accessions_from_taxid(taxid: int) -> list:
         """
         Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
 
-        :param taxon_id: A NCBI Taxonomy ID
-        :return: A list of accessions linked to the Taxon Id
+        :param taxid: A NCBI Taxonomy id
+        :return: A list of Genbank accessions linked to the Taxonomy UID
         """
         elink_results = Entrez.read(
             Entrez.elink(
                 dbfrom="taxonomy",
                 db="nuccore",
-                id=str(taxon_id),
+                id=str(taxid),
                 idtype="acc",
             )
         )
-
         if not elink_results:
             return []
 
@@ -44,88 +212,202 @@ class NCBIClient:
 
                 return [keypair["Id"] for keypair in id_table]
 
-    async def fetch_accessions(self, accessions: list[str]) -> list[dict]:
+    @staticmethod
+    def validate_genbank_records(records: list[dict]) -> list[NCBINuccore]:
         """
-        Take a list of accession numbers, download the corresponding records
-        from GenBank as XML and return the parsed records
+        Process a list of raw Genbank dicts into validated NCBINuccore records.
+        Logs an error if there is an issue with validation or parsing,
+        but does not fail out.
 
-        :param accessions: List of accession numbers to fetch from GenBank
-        :return: A list of deserialized sequence records from NCBI Nucleotide
+        :param records: A list of unvalidated NCBI Genbank records
+        :return: A list of validated records as NCBINuccore
         """
-        if not accessions:
-            return []
+        clean_records = []
 
-        logger = base_logger.bind(accessions=accessions)
+        for record in records:
+            accession = record.get(GBSeq.ACCESSION, "?")
+
+            try:
+                clean_records.append(NCBIClient.validate_genbank_record(record))
+
+            except (ValidationError, ValueError) as exc:
+                base_logger.error(f"{exc}", accession=accession)
+
+        return clean_records
+
+    @staticmethod
+    def validate_genbank_record(raw: dict) -> NCBINuccore:
+        """
+        Parses an NCBI Genbank record from a Genbank dict to
+        a validated NCBINuccore
+
+        :param raw: A NCBI Genbank dict record, parsed by Bio.Entrez.Parser
+        :return: A validated subset of Genbank record data
+        """
+        return NCBINuccore(**raw)
+
+    async def fetch_taxonomy_record(
+        self, taxid: int, cache_results: bool = False
+    ) -> NCBITaxonomy | None:
+        """
+        Fetches and validates a taxonomy record from NCBI Taxonomy.
+
+        If the record rank has an invalid rank (e.g. "no data"),
+        makes an additional docsum fetch and attempts to extract the rank data.
+
+        :param taxid: A NCBI Taxonomy id
+        :param cache_results: If True, caches fetched data as JSON
+        :return: A validated NCBI Taxonomy record NCBITaxonomy if possible,
+            else None
+        """
+        logger = base_logger.bind(taxid=taxid)
+
+        if not self.ignore_cache:
+            record = self.cache.load_taxonomy(taxid)
+            if record:
+                logger.info("Cached record found")
+            else:
+                logger.info("Cached record not found. Fetching from taxonomy...")
+                record = await NCBIClient._fetch_taxonomy_record(taxid)
+
+        else:
+            logger.debug("Fetching record from Taxonomy...")
+
+            with log_http_error():
+                try:
+                    record = await NCBIClient._fetch_taxonomy_record(taxid)
+                except HTTPError as e:
+                    logger.error(f"{e.code}: {e.reason}")
+                    logger.error(f"Your request was likely refused by NCBI.")
+                    return None
+
+        if record is None:
+            return None
+
+        if cache_results:
+            logger.debug("Caching data...")
+            self.cache.cache_taxonomy_record(record, taxid)
 
         try:
-            records = self._fetch_serialized_records(accessions)
-            return records
+            return NCBIClient.validate_taxonomy_record(record)
 
-        except IncompleteRecordsError as e:
-            logger.error(e.message)
+        except ValidationError as exc:
+            logger.debug("Proper rank not found in record", errors=exc.errors())
 
-            if e.data:
-                logger.debug("Partial results fetched, returning results...")
-                return e.data
+        logger.info("Running additional docsum fetch...")
 
+        await asyncio.sleep(1)
+        try:
+            rank = await self._fetch_taxonomy_rank(taxid)
         except HTTPError as e:
-            if e.code == 400:
-                logger.error(f"{e}. Bad accessions?")
-            else:
-                logger.error(e)
+            logger.error(f"{e.code}: {e.reason}")
+            logger.error(f"Your request was likely refused by NCBI.")
+            return None
 
-        return []
+        if rank:
+            try:
+                return NCBIClient.validate_taxonomy_record(record, rank)
+            except ValidationError as exc:
+                logger.error("Failed to find a valid rank.", error=exc)
 
-    async def fetch_accession(self, accession: str) -> dict:
-        """
-        A wrapper for the fetching of a single accession
-        """
-        record = await self.fetch_accessions([accession])
-
-        if record:
-            return record[0]
+        return None
 
     @staticmethod
-    def _fetch_serialized_records(accessions: list) -> list[dict] | None:
+    async def _fetch_taxonomy_record(taxid: int) -> dict | None:
         """
-        Requests XML GenBank records for a list of accessions
-        and returns an equal-length list of serialized records.
-
-        Raises an error if fewer records are fetched than accessions.
-
-        :param accessions: A list of n accessions
-        :return: A list of n deserialized records
+        :param taxid:
+        :return:
         """
-        with Entrez.efetch(
-            db="nuccore", id=accessions, rettype="gb", retmode="xml"
-        ) as f:
-            records = Entrez.read(f)
+        logger = base_logger.bind(taxid=taxid)
 
-        # Handle cases where not all accessions can be fetched
-        if len(records) == len(accessions):
-            return records
+        try:
+            with log_http_error():
+                records = Entrez.read(
+                    Entrez.efetch(db=NCBIDatabase.TAXONOMY, id=taxid, rettype="null")
+                )
+        except HTTPError as e:
+            logger.exception(e)
+            raise e
 
-        raise IncompleteRecordsError("Bad accession in list", data=records)
+        if records:
+            return records[0]
 
-    async def fetch_taxonomy(self, taxon_id: int) -> dict:
-        """Requests a taxonomy record from NCBI Taxonomy"""
-        return await self._fetch_taxon_long(taxon_id)
+        logger.error("ID not found in NCBI Taxonomy database.")
+        return None
 
     @staticmethod
-    def _fetch_raw_records(accessions: list) -> str:
+    async def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
         """
-        Requests XML GenBank records for a list of accessions
-        and returns results as unparsed XML
+        Takes an NCBI Taxonomy UID and fetches the eSummary XML
+        to extract the rank data and returns a valid NCBIRank if possible.
 
-        :param accessions: A list of accessions
-        :return: XML data as an unparsed string
+        :param taxid: A NCBI Taxonomy id
+        :return: NCBIRank if possible, else None
         """
-        with Entrez.efetch(
-            db="nuccore", id=accessions, rettype="gb", retmode="xml"
-        ) as f:
-            raw_records = f.read()
+        logger = base_logger.bind(taxid=taxid)
 
-        return raw_records
+        try:
+            with Entrez.efetch(
+                db=NCBIDatabase.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
+            ) as f:
+                docsum_record = Entrez.read(f)
+        except RuntimeError:
+            logger.info("No valid rank found for this taxid")
+            return None
+
+        try:
+            rank = NCBIRank(docsum_record[0]["Rank"])
+        except ValueError:
+            logger.debug("Found rank for this taxid, but it did not pass validation")
+            return None
+
+        logger.debug("Valid rank found", rank=rank)
+        return rank
+
+    @staticmethod
+    def validate_taxonomy_record(
+        record: dict, rank: NCBIRank | None = None
+    ) -> NCBITaxonomy:
+        """
+        Attempts to validate a raw record from NCBI Taxonomy.
+
+        Throws a ValidationError if valid rank data is not found in the record.
+
+        Accepts a NCBIRank enum as an optional parameter.
+
+        :param record: Unvalidated taxonomy record data
+        :param rank: Overrides inline rank data if set.
+            Use to insert a valid rank from a docsum fetch
+            on a second validation attempt.
+        :return: A validated NCBI record
+        """
+        species = None
+        logger = base_logger.bind(taxid=record["TaxId"])
+
+        lineage = []
+        for level_data in record["LineageEx"]:
+            level = NCBILineage(**level_data)
+            lineage.append(level)
+
+            if level.rank == NCBIRank.SPECIES:
+                species = level
+
+        # Fetch rank if not overwritten
+        if rank is None:
+            try:
+                rank = NCBIRank(record["Rank"])
+                if rank is rank.SPECIES:
+                    species = NCBILineage(**record)
+                logger.debug("Rank data found in record", rank=rank)
+            except ValueError:
+                logger.warning("Rank data not found in record")
+
+        return NCBITaxonomy(
+            id=record["TaxId"],
+            species=species,
+            lineage=lineage,
+            rank=rank,
+        )
 
     @staticmethod
     async def fetch_taxonomy_id_by_name(name: str) -> int | None:
@@ -136,74 +418,51 @@ class NCBIClient:
 
         Returns ``None`` if no matching taxonomy is found.
 
-        :param name: the name of an otu
-        :return: The taxonomy id for the given otu name
+        :param name: The name of an otu
+        :return: The NCBI Taxonomy UID for the given otu name
         """
         with Entrez.esearch(db="taxonomy", term=name) as f:
             record = Entrez.read(f)
 
         try:
-            taxid = int(record["IdList"][0])
+            return int(record["IdList"][0])
         except IndexError:
             return None
 
-        return taxid
-
     @staticmethod
-    async def _fetch_taxon_docsum(taxon_id: int):
-        record = Entrez.read(
-            Entrez.efetch(
-                db="taxonomy",
-                id=taxon_id,
-                rettype="docsum",
-                retmode="xml",
-            )
-        )
-
-        return record[0]
-
-    @staticmethod
-    async def _fetch_taxon_long(taxon_id: int) -> dict:
-        with Entrez.efetch(db="taxonomy", id=taxon_id, rettype="null") as f:
-            record = Entrez.read(f)
-
-        return record[0]
-
-    async def fetch_taxon_rank(self, taxon_id: int) -> str:
-        taxonomy = await self._fetch_taxon_docsum(taxon_id)
-
-        return taxonomy["Rank"]
-
-    async def fetch_species_taxid(self, taxid: int) -> int | None:
-        """Gets the species taxid for the given lower-rank taxid.
-
-        :param taxid: NCBI Taxonomy UID
-        :return: The NCBI Taxonomy ID of the OTU's species
-        """
-        taxonomy = await self._fetch_taxon_long(taxid)
-
-        if taxonomy["Rank"] == "species":
-            return int(taxonomy["TaxId"])
-
-        for line in taxonomy["LineageEx"]:
-            if line["Rank"] == "species":
-                return int(line["TaxId"])
-
-        return None
-
-    @staticmethod
-    async def check_spelling(name: str, db: str = "taxonomy") -> str:
-        """Takes the name of an OTU, requests an alternative spelling
-        from the Entrez ESpell utility and returns the suggestion
+    async def fetch_spelling(
+        name: str, db: NCBIDatabase = NCBIDatabase.TAXONOMY
+    ) -> str | None:
+        """Takes the name of an OTU and returns an alternative spelling
+        from the Entrez ESpell utility.
 
         :param name: The OTU name that requires correcting
-        :param db: Database to check against. Defaults to 'taxonomy'.
-        :return: String containing NCBI-suggested spelling changes
+        :param db: Database to check against. Defaults to ``taxonomy``.
+        :return: String containing NCBI-suggested spelling changes, None if HTTPError
         """
-        with Entrez.espell(db=db, term=quote_plus(name)) as f:
-            record = Entrez.read(f)
+        logger = base_logger.bind(query=name)
+        try:
+            with log_http_error():
+                record = Entrez.read(Entrez.espell(db=db, term=quote_plus(name)))
+        except HTTPError:
+            return None
 
-        if record:
+        if "CorrectedQuery" in record:
             return record["CorrectedQuery"]
 
-        return name
+        logger.warning("Suggested spelling not found.")
+        return None
+
+
+@contextmanager
+def log_http_error():
+    """Logs detailed HTTPError info for debugging before throwing the HTTPError."""
+    try:
+        yield
+
+    except HTTPError as e:
+        base_logger.error(
+            "HTTPError raised", code=e.code, reason=e.reason, body=e.read()
+        )
+        base_logger.exception(e)
+        raise e

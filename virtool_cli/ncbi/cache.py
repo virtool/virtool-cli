@@ -2,6 +2,11 @@ import json
 import shutil
 from pathlib import Path
 
+from structlog import get_logger
+
+
+base_logger = get_logger()
+
 
 class NCBICache:
     """Manages caching functionality for NCBI data"""
@@ -12,54 +17,92 @@ class NCBICache:
         """
         self.path = path
 
-        self.nuccore = self.path / "nuccore"
-        self.taxonomy = self.path / "taxonomy"
+        self._nuccore_path = self.path / "nuccore"
+        self._taxonomy_path = self.path / "taxonomy"
 
         self.path.mkdir(exist_ok=True)
-        self.nuccore.mkdir(exist_ok=True)
-        self.taxonomy.mkdir(exist_ok=True)
+        self._nuccore_path.mkdir(exist_ok=True)
+        self._taxonomy_path.mkdir(exist_ok=True)
 
     def clear(self):
         """Clear and reset the cache."""
         shutil.rmtree(self.path)
         self.path.mkdir()
 
-        self.nuccore.mkdir()
-        self.taxonomy.mkdir()
+        self._nuccore_path.mkdir()
+        self._taxonomy_path.mkdir()
 
-    def cache_records(self, records: list[dict], filestem: str):
-        """Add a list of NCBI Nucleotide records to the cache."""
-        with open(self._get_nuccore_path(filestem), "w") as f:
-            json.dump(records, f)
-
-    def load_records(self, filestem: str) -> list[dict] | None:
+    def cache_nuccore_record(self, data: dict, accession: str):
         """
-        Retrieve a list of NCBI Nucleotide records from the cache.
-        Returns None if the records are not found in the cache.
+        Add a Genbank record from NCBI Nucleotide to the cache.
+
+        :param data: A data from a Genbank record corresponding
+        :param accession: The NCBI accession of the record
+        """
+        cached_record_path = self._get_nuccore_path(f"{accession}")
+
+        with open(cached_record_path, "w") as f:
+            json.dump(data, f)
+
+            if not cached_record_path.exists():
+                raise FileNotFoundError
+
+    def load_nuccore_record(self, accession: str) -> dict | None:
+        """
+        Retrieve a NCBI Nucleotide genbank record from the cache.
+        Returns None if the record is not found in the cache.
+
+        :param accession: The NCBI accession of the record
+        :return: Deserialized Genbank data if file is found in cache, else None
+        """
+        nuccore_path = self._get_nuccore_path(accession)
+
+        try:
+            with open(nuccore_path, "r") as f:
+                return json.load(f)
+
+        except FileNotFoundError:
+            return None
+
+    def cache_taxonomy_record(self, data: dict, taxid):
+        """
+        Add a NCBI Taxonomy record to the cache
+
+        :param data: NCBI Taxonomy record data
+        :param taxid: A NCBI Taxonomy id
+        """
+        cached_taxonomy_path = self._get_taxonomy_path(taxid)
+
+        with open(cached_taxonomy_path, "w") as f:
+            json.dump(data, f)
+
+        if not cached_taxonomy_path.exists():
+            raise FileNotFoundError
+
+    def load_taxonomy(self, taxid: int) -> dict | None:
+        """Load data from a cached record fetch
+
+        :param taxid: A NCBI Taxonomy id
+        :return: Deserialized Taxonomy data if file is found in cache, else None
         """
         try:
-            with open(self._get_nuccore_path(filestem), "r") as f:
+            with open(self._get_taxonomy_path(taxid), "r") as f:
                 return json.load(f)
         except FileNotFoundError:
             return None
 
-    def cache_taxonomy(self, taxonomy: dict, taxon_id: int):
-        """Add a NCBI Taxonomy record to the cache"""
-        with open(self._get_taxonomy_path(taxon_id), "w") as f:
-            json.dump(taxonomy, f)
+    def _get_nuccore_path(self, accession: str) -> Path:
+        """Returns a standardized path for a set of cached NCBI Nucleotide records
 
-    def load_taxonomy(self, taxon_id: int) -> dict | None:
-        """Load data from a cached record fetch"""
-        try:
-            with open(self._get_taxonomy_path(taxon_id), "r") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return None
-
-    def _get_nuccore_path(self, otu_id: str) -> Path:
-        """Returns a standardized path for a set of cached NCBI Nucleotide records"""
-        return self.nuccore / f"{otu_id}.json"
+        :param accession: The NCBI accession of a Genbank record
+        :return: A properly-formatted path to a cached record
+        """
+        return self._nuccore_path / f"{accession}.json"
 
     def _get_taxonomy_path(self, taxid: int) -> Path:
-        """Returns a standardized path for a cached NCBI Taxonomy record"""
-        return self.taxonomy / f"{taxid}.json"
+        """Returns a standardized path for a cached NCBI Taxonomy record
+
+        :param taxid: A NCBI Taxonomy id
+        :return: A properly-formatted path to a cached record
+        """
+        return self._taxonomy_path / f"{taxid}.json"
