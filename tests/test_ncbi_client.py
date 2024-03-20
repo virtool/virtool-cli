@@ -9,6 +9,8 @@ from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
 
+SERVER_ERRORS = ["HTTPError", "IncompleteRead"]
+
 
 @pytest.fixture()
 def scratch_client(cache_scratch_path):
@@ -163,7 +165,7 @@ async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
 
 class TestClientFetchTaxonomy:
     @pytest.mark.ncbi
-    @pytest.mark.flaky(reruns=3, reruns_delay=3)
+    @pytest.mark.flaky(reruns=3, reruns_delay=3, only_rerun=SERVER_ERRORS)
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     async def test_fetch_taxonomy_from_ncbi(
         self, taxid, empty_client, snapshot: SnapshotAssertion
@@ -177,6 +179,7 @@ class TestClientFetchTaxonomy:
         } == snapshot
 
     @pytest.mark.ncbi
+    @pytest.mark.flaky(reruns=3, reruns_delay=3, only_rerun=SERVER_ERRORS)
     @pytest.mark.parametrize("taxid", [1000000000000, 99999999])
     async def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
         taxonomy = await empty_client.fetch_taxonomy_record(taxid)
