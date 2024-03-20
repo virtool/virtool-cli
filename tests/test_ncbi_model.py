@@ -10,7 +10,9 @@ def scratch_cache(cache_scratch_path):
     return NCBICache(cache_scratch_path)
 
 
-@pytest.mark.parametrize("accession", ["AB017504", "MH200607", "NC_036587", "MT240513"])
+@pytest.mark.parametrize(
+    "accession", ["AB017504", "MH200607", "NC_036587", "MT240513", "NC_015504"]
+)
 class TestAccessionParse:
     def test_parse_source(self, accession, scratch_cache, snapshot: SnapshotAssertion):
         record = scratch_cache.load_nuccore_record(accession)
