@@ -1,4 +1,4 @@
-name: Test NCBI
+name: Run tests
 on:
   workflow_dispatch:
     inputs:
@@ -8,7 +8,7 @@ on:
         default: false
 
 jobs:
-  test_ncbi:
+  run-tests:
     runs-on: ubuntu-22.04
     name: Runs tests
 
