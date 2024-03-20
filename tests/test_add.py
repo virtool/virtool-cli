@@ -244,6 +244,7 @@ class TestAddOTU:
         assert not set((scratch_path / "src").glob("*--*")) - pre_otu_paths
 
 
+@pytest.mark.ncbi
 @pytest.mark.parametrize(
     "taxon_id,accession",
     [(908125, "NC_031754"), (1016856, "NC_015504")],
