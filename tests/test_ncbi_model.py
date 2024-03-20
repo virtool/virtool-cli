@@ -1,8 +1,10 @@
 import pytest
+
+from pydantic import ValidationError
 from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.cache import NCBICache
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBILineage
+from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy, NCBILineage
 
 
 @pytest.fixture()
@@ -42,6 +44,31 @@ class TestAccessionParse:
                         break
 
         assert NCBISource.db_xref_to_taxid(db_xref) == snapshot
+
+
+class TestTaxonomyParse:
+    @pytest.mark.parametrize("taxid", [270478, 438782, 1198450])
+    def test_parse_taxonomy_record_single(
+        self, taxid: int, scratch_cache, snapshot: SnapshotAssertion
+    ):
+        record = scratch_cache.load_taxonomy(taxid)
+
+        assert NCBITaxonomy(**record)
+
+        assert record == snapshot
+
+    @pytest.mark.parametrize("taxid, rank", [(1016856, "isolate")])
+    def test_parse_taxonomy_record_rank_addendum(
+        self, taxid: int, rank: str, scratch_cache, snapshot: SnapshotAssertion
+    ):
+        record = scratch_cache.load_taxonomy(taxid)
+
+        with pytest.raises(ValidationError):
+            assert NCBITaxonomy(**record)
+
+        assert NCBITaxonomy(rank=rank, **record)
+
+        assert record == snapshot
 
 
 @pytest.mark.parametrize(
