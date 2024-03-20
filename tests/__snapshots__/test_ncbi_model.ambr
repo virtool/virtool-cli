@@ -44,6 +44,292 @@
 # name: TestAccessionParse.test_parse_source_taxid[NC_036587]
   2060511
 # ---
+# name: TestTaxonomyParse.test_parse_taxonomy_record_rank_addendum[1016856-isolate]
+  dict({
+    'CreateDate': '2011/04/25 17:06:04',
+    'Division': 'Viruses',
+    'GeneticCode': dict({
+      'GCId': '1',
+      'GCName': 'Standard',
+    }),
+    'Lineage': 'Viruses; Riboviria; Pararnavirae; Artverviricota; Revtraviricetes; Ortervirales; Caulimoviridae; Badnavirus; Badnavirus etavirgamusae',
+    'LineageEx': list([
+      dict({
+        'Rank': 'superkingdom',
+        'ScientificName': 'Viruses',
+        'TaxId': '10239',
+      }),
+      dict({
+        'Rank': 'clade',
+        'ScientificName': 'Riboviria',
+        'TaxId': '2559587',
+      }),
+      dict({
+        'Rank': 'kingdom',
+        'ScientificName': 'Pararnavirae',
+        'TaxId': '2732397',
+      }),
+      dict({
+        'Rank': 'phylum',
+        'ScientificName': 'Artverviricota',
+        'TaxId': '2732409',
+      }),
+      dict({
+        'Rank': 'class',
+        'ScientificName': 'Revtraviricetes',
+        'TaxId': '2732514',
+      }),
+      dict({
+        'Rank': 'order',
+        'ScientificName': 'Ortervirales',
+        'TaxId': '2169561',
+      }),
+      dict({
+        'Rank': 'family',
+        'ScientificName': 'Caulimoviridae',
+        'TaxId': '186534',
+      }),
+      dict({
+        'Rank': 'genus',
+        'ScientificName': 'Badnavirus',
+        'TaxId': '10652',
+      }),
+      dict({
+        'Rank': 'species',
+        'ScientificName': 'Badnavirus etavirgamusae',
+        'TaxId': '3047392',
+      }),
+    ]),
+    'MitoGeneticCode': dict({
+      'MGCId': '0',
+      'MGCName': 'Unspecified',
+    }),
+    'OtherNames': dict({
+      'Acronym': list([
+      ]),
+      'Anamorph': list([
+      ]),
+      'CommonName': list([
+      ]),
+      'EquivalentName': list([
+        'Banana streak Uganda L virus',
+      ]),
+      'GenbankAnamorph': list([
+      ]),
+      'GenbankSynonym': list([
+      ]),
+      'Includes': list([
+      ]),
+      'Inpart': list([
+      ]),
+      'Misnomer': list([
+      ]),
+      'Misspelling': list([
+      ]),
+      'Name': list([
+      ]),
+      'Synonym': list([
+      ]),
+      'Teleomorph': list([
+      ]),
+    }),
+    'ParentTaxId': '3047392',
+    'PubDate': '2005/06/02 18:03:18',
+    'Rank': 'no rank',
+    'ScientificName': 'Banana streak UL virus',
+    'TaxId': '1016856',
+    'UpdateDate': '2020/04/07 15:24:16',
+  })
+# ---
+# name: TestTaxonomyParse.test_parse_taxonomy_record_single[1198450]
+  dict({
+    'CreateDate': '2012/06/13 13:18:46',
+    'Division': 'Viruses',
+    'GeneticCode': dict({
+      'GCId': '1',
+      'GCName': 'Standard',
+    }),
+    'Lineage': 'Viruses; Monodnaviria; Shotokuvirae; Cressdnaviricota; Repensiviricetes; Geplafuvirales; Geminiviridae; Begomovirus',
+    'LineageEx': list([
+      dict({
+        'Rank': 'superkingdom',
+        'ScientificName': 'Viruses',
+        'TaxId': '10239',
+      }),
+      dict({
+        'Rank': 'clade',
+        'ScientificName': 'Monodnaviria',
+        'TaxId': '2731342',
+      }),
+      dict({
+        'Rank': 'kingdom',
+        'ScientificName': 'Shotokuvirae',
+        'TaxId': '2732092',
+      }),
+      dict({
+        'Rank': 'phylum',
+        'ScientificName': 'Cressdnaviricota',
+        'TaxId': '2732416',
+      }),
+      dict({
+        'Rank': 'class',
+        'ScientificName': 'Repensiviricetes',
+        'TaxId': '2732424',
+      }),
+      dict({
+        'Rank': 'order',
+        'ScientificName': 'Geplafuvirales',
+        'TaxId': '2732539',
+      }),
+      dict({
+        'Rank': 'family',
+        'ScientificName': 'Geminiviridae',
+        'TaxId': '10811',
+      }),
+      dict({
+        'Rank': 'genus',
+        'ScientificName': 'Begomovirus',
+        'TaxId': '10814',
+      }),
+    ]),
+    'MitoGeneticCode': dict({
+      'MGCId': '0',
+      'MGCName': 'Unspecified',
+    }),
+    'ParentTaxId': '10814',
+    'PubDate': '2012/06/19 18:00:57',
+    'Rank': 'species',
+    'ScientificName': 'Jacquemontia mosaic Yucatan virus',
+    'TaxId': '1198450',
+    'UpdateDate': '2012/06/19 18:37:18',
+  })
+# ---
+# name: TestTaxonomyParse.test_parse_taxonomy_record_single[270478]
+  dict({
+    'CreateDate': '2004/04/07 12:00:51',
+    'Division': 'Viruses',
+    'GeneticCode': dict({
+      'GCId': '1',
+      'GCName': 'Standard',
+    }),
+    'Lineage': 'Viruses; Riboviria; Orthornavirae; Pisuviricota; Stelpaviricetes; Patatavirales; Potyviridae; Potyvirus',
+    'LineageEx': list([
+      dict({
+        'Rank': 'superkingdom',
+        'ScientificName': 'Viruses',
+        'TaxId': '10239',
+      }),
+      dict({
+        'Rank': 'clade',
+        'ScientificName': 'Riboviria',
+        'TaxId': '2559587',
+      }),
+      dict({
+        'Rank': 'kingdom',
+        'ScientificName': 'Orthornavirae',
+        'TaxId': '2732396',
+      }),
+      dict({
+        'Rank': 'phylum',
+        'ScientificName': 'Pisuviricota',
+        'TaxId': '2732408',
+      }),
+      dict({
+        'Rank': 'class',
+        'ScientificName': 'Stelpaviricetes',
+        'TaxId': '2732507',
+      }),
+      dict({
+        'Rank': 'order',
+        'ScientificName': 'Patatavirales',
+        'TaxId': '2732550',
+      }),
+      dict({
+        'Rank': 'family',
+        'ScientificName': 'Potyviridae',
+        'TaxId': '39729',
+      }),
+      dict({
+        'Rank': 'genus',
+        'ScientificName': 'Potyvirus',
+        'TaxId': '12195',
+      }),
+    ]),
+    'MitoGeneticCode': dict({
+      'MGCId': '0',
+      'MGCName': 'Unspecified',
+    }),
+    'ParentTaxId': '12195',
+    'PubDate': '2005/02/02 18:03:03',
+    'Rank': 'species',
+    'ScientificName': 'Zantedeschia mild mosaic virus',
+    'TaxId': '270478',
+    'UpdateDate': '2008/11/10 17:01:34',
+  })
+# ---
+# name: TestTaxonomyParse.test_parse_taxonomy_record_single[438782]
+  dict({
+    'CreateDate': '2007/04/20 13:40:48',
+    'Division': 'Viruses',
+    'GeneticCode': dict({
+      'GCId': '1',
+      'GCName': 'Standard',
+    }),
+    'Lineage': 'Viruses; Monodnaviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus',
+    'LineageEx': list([
+      dict({
+        'Rank': 'superkingdom',
+        'ScientificName': 'Viruses',
+        'TaxId': '10239',
+      }),
+      dict({
+        'Rank': 'clade',
+        'ScientificName': 'Monodnaviria',
+        'TaxId': '2731342',
+      }),
+      dict({
+        'Rank': 'kingdom',
+        'ScientificName': 'Shotokuvirae',
+        'TaxId': '2732092',
+      }),
+      dict({
+        'Rank': 'phylum',
+        'ScientificName': 'Cressdnaviricota',
+        'TaxId': '2732416',
+      }),
+      dict({
+        'Rank': 'class',
+        'ScientificName': 'Arfiviricetes',
+        'TaxId': '2732423',
+      }),
+      dict({
+        'Rank': 'order',
+        'ScientificName': 'Mulpavirales',
+        'TaxId': '2732538',
+      }),
+      dict({
+        'Rank': 'family',
+        'ScientificName': 'Nanoviridae',
+        'TaxId': '251095',
+      }),
+      dict({
+        'Rank': 'genus',
+        'ScientificName': 'Babuvirus',
+        'TaxId': '251096',
+      }),
+    ]),
+    'MitoGeneticCode': dict({
+      'MGCId': '0',
+      'MGCName': 'Unspecified',
+    }),
+    'ParentTaxId': '251096',
+    'PubDate': '2008/02/05 18:00:33',
+    'Rank': 'species',
+    'ScientificName': 'Abaca bunchy top virus',
+    'TaxId': '438782',
+    'UpdateDate': '2008/02/06 01:03:52',
+  })
+# ---
 # name: test_create_lineage_item_alias[lineage_data0]
   NCBILineage(id=2732397, name='Pararnavirae', rank='kingdom')
 # ---

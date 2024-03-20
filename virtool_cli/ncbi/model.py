@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, AliasChoices, field_validator
+from pydantic import BaseModel, Field, AliasChoices, field_validator, computed_field
 
 
 class NCBIDatabase(StrEnum):
@@ -63,7 +63,36 @@ class NCBILineage(BaseModel):
 
 
 class NCBITaxonomy(BaseModel):
-    id: int
-    rank: NCBIRank
-    lineage: list[NCBILineage]
-    species: NCBILineage
+    id: int = Field(validation_alias=AliasChoices("id", "TaxId"))
+    name: str = Field(
+        validation_alias=AliasChoices("name", "ScientificName"),
+    )
+    lineage: list[NCBILineage] = Field(
+        validation_alias=AliasChoices("lineage", "LineageEx"),
+    )
+    rank: NCBIRank = Field(validation_alias=AliasChoices("rank", "Rank"))
+
+    @computed_field
+    def species(self) -> NCBILineage:
+        if self.rank is NCBIRank.SPECIES:
+            return NCBILineage(id=self.id, name=self.name, rank=self.rank)
+
+        else:
+            for item in self.lineage:
+                if item.rank == "species":
+                    return item
+
+    @field_validator("lineage", mode="before")
+    @classmethod
+    def create_lineage_list(cls, raw: list[dict]):
+        lineage = []
+        for level_data in raw:
+            level = NCBILineage(**level_data)
+            lineage.append(level)
+
+        return lineage
+
+    @field_validator("rank", mode="before")
+    @classmethod
+    def validate_rank(cls, raw: str):
+        return NCBIRank(raw)
