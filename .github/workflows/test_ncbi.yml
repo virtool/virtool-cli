@@ -1,11 +1,6 @@
-name: Run tests
+name: Run NCBI tests
 on:
   workflow_dispatch:
-    inputs:
-      ncbi:
-        description: 'Test NCBI server fetches'
-        type: boolean
-        default: false
 
 jobs:
   run-tests:
@@ -28,12 +23,7 @@ jobs:
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
-      - name: Install packages
-        run: poetry install
-      - name: Test non-NCBI
-        run: poetry run pytest -m "not ncbi" --disable-socket --allow-unix-socket
       - name: Test NCBI
-        if: inputs.ncbi == true
         run: poetry run pytest -m "ncbi"
         env:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
