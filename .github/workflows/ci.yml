@@ -17,6 +17,7 @@ jobs:
         uses: wagoid/commitlint-github-action@v5
   test:
     runs-on: ubuntu-22.04
+    environment: dev
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,9 +31,6 @@ jobs:
         run: poetry install
       - name: Test
         run: poetry run pytest
-        env:
-          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
-          NCBI_EMAIL: ${{ secrets.NCBI_EMAIL }}
   release:
     if: github.event_name == 'push'
     needs:
