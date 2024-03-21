@@ -23,6 +23,8 @@ jobs:
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
+      - name: Install packages
+        run: poetry install
       - name: Test NCBI
         run: poetry run pytest -m "ncbi"
         env:
