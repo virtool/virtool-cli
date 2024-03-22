@@ -30,12 +30,18 @@ jobs:
         run: poetry install
       - name: Run unit tests
         run: poetry run pytest -m "not ncbi" --disable-socket --allow-unix-socket
+      - name: Check if NCBI auth is present
+        env:
+          super_secret: ${{ secrets.NCBI_API_KEY }}
+        if: ${{ env.super_secret == '' }}
+        run: |
+          echo "NCBI authentication not provided. Failing out."
+          exit 1
       - name: Run NCBI-dependent tests
-        if: github.event.pull_request.user == github.repository_owner
         run: poetry run pytest -m "ncbi"
-      - name: Mark unauthorized PR as unrunnable
-        if: github.event.pull_request.user != github.repository_owner
-        run: exit 1
+        env:
+          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
+          NCBI_EMAIL: ${{ secrets.NCBI_EMAIL }}
   release:
     if: github.event_name == 'push'
     needs:
