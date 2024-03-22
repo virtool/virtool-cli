@@ -30,7 +30,7 @@ jobs:
         run: poetry install
       - name: Run unit tests
         run: poetry run pytest -m "not ncbi" --disable-socket --allow-unix-socket
-      - name: Check if NCBI auth is present
+      - name: Check if NCBI auth is present, fail out if missing
         env:
           super_secret: ${{ secrets.NCBI_API_KEY }}
         if: ${{ env.super_secret == '' }}
