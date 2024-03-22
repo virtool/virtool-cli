@@ -30,6 +30,12 @@ jobs:
         run: poetry install
       - name: Run unit tests
         run: poetry run pytest -m "not ncbi" --disable-socket --allow-unix-socket
+      - name: Run NCBI-dependent tests
+        if: github.event.pull_request.user == github.repository_owner
+        run: poetry run pytest -m "ncbi"
+      - name: Mark unauthorized PR as unrunnable
+        if: github.event.pull_request.user != github.repository_owner
+        run: exit 1
   release:
     if: github.event_name == 'push'
     needs:
