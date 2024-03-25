@@ -94,8 +94,8 @@ class NCBIClient:
                 for record in records:
                     try:
                         self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
-                    except FileExistsError:
-                        logger.error("Cannot overwrite cache data")
+                    except FileNotFoundError:
+                        logger.error("Failed to cache record")
 
                 logger.debug("Records cached", n_records=len(records))
 
@@ -139,15 +139,12 @@ class NCBIClient:
 
         return []
 
-    async def link_from_taxid_and_fetch(
-        self, taxid: int, cache_results: bool = True
-    ) -> list[NCBINuccore]:
+    async def link_from_taxid_and_fetch(self, taxid: int) -> list[NCBINuccore]:
         """Fetch all Genbank records linked to a taxonomy record.
 
         Usable without preexisting OTU data.
 
         :param taxid: A NCBI Taxonomy id
-        :param cache_results: If True, caches fetched data as JSON
         :return: A list of Entrez-parsed Genbank records
         """
         accessions = await NCBIClient.link_accessions_from_taxid(taxid)
@@ -157,14 +154,15 @@ class NCBIClient:
         logger.debug("Fetching accessions...")
         records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
-        if cache_results:
-            for record in records:
-                try:
-                    self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
-                except FileExistsError:
-                    logger.error("Cannot overwrite cache data")
+        if not records:
+            logger.info("No accessions found for this Taxon ID")
+            return []
 
-            logger.debug("Records cached", n_records=len(records))
+        for record in records:
+            try:
+                self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+            except FileNotFoundError:
+                logger.error("Failed to cache record")
 
         if records:
             return NCBIClient.validate_genbank_records(records)
@@ -251,29 +249,28 @@ class NCBIClient:
             if record:
                 logger.info("Cached record found")
             else:
-                logger.info("Cached record not found. Fetching from taxonomy...")
-                with log_http_error():
-                    try:
-                        record = await NCBIClient._fetch_taxonomy_record(taxid)
-                    except HTTPError as e:
-                        logger.error(f"{e.code}: {e.reason}")
-                        logger.error("Your request was likely refused by NCBI.")
-                        return None
+                logger.info("Cached record not found")
 
         if record is None:
-            logger.debug("Fetching record from Taxonomy...")
-
             with log_http_error():
                 try:
-                    record = await NCBIClient._fetch_taxonomy_record(taxid)
+                    records = Entrez.read(
+                        Entrez.efetch(
+                            db=NCBIDatabase.TAXONOMY, id=taxid, rettype="null"
+                        )
+                    )
                 except HTTPError as e:
                     logger.error(f"{e.code}: {e.reason}")
                     logger.error("Your request was likely refused by NCBI.")
                     return None
 
-                if type(record) is dict:
-                    logger.debug("Caching data...")
-                    self.cache.cache_taxonomy_record(record, taxid)
+            if records:
+                record = records[0]
+                logger.debug("Caching data...")
+                self.cache.cache_taxonomy_record(record, taxid)
+            else:
+                logger.error("ID not found in NCBI Taxonomy database.")
+                return None
 
         if record is None:
             return None
@@ -311,29 +308,6 @@ class NCBIClient:
             except ValidationError as exc:
                 logger.error("Failed to find a valid rank.", error=exc)
 
-        return None
-
-    @staticmethod
-    async def _fetch_taxonomy_record(taxid: int) -> dict | None:
-        """
-        :param taxid:
-        :return:
-        """
-        logger = base_logger.bind(taxid=taxid)
-
-        try:
-            with log_http_error():
-                records = Entrez.read(
-                    Entrez.efetch(db=NCBIDatabase.TAXONOMY, id=taxid, rettype="null")
-                )
-        except HTTPError as e:
-            logger.exception(e)
-            raise e
-
-        if records:
-            return records[0]
-
-        logger.error("ID not found in NCBI Taxonomy database.")
         return None
 
     @staticmethod
