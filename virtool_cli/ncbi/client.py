@@ -373,8 +373,15 @@ class NCBIClient:
         :param name: The name of an otu
         :return: The NCBI Taxonomy UID for the given otu name
         """
-        with Entrez.esearch(db="taxonomy", term=name) as f:
-            record = Entrez.read(f)
+        logger = base_logger.bind(name=name)
+        try:
+            with log_http_error():
+                with Entrez.esearch(db="taxonomy", term=name) as f:
+                    record = Entrez.read(f)
+        except HTTPError as e:
+            logger.error(f"{e.code}: {e.reason}")
+            logger.error(f"Your request was likely refused by NCBI.")
+            return None
 
         try:
             return int(record["IdList"][0])
@@ -396,7 +403,9 @@ class NCBIClient:
         try:
             with log_http_error():
                 record = Entrez.read(Entrez.espell(db=db, term=quote_plus(name)))
-        except HTTPError:
+        except HTTPError as e:
+            logger.error(f"{e.code}: {e.reason}")
+            logger.error(f"Your request was likely refused by NCBI.")
             return None
 
         if "CorrectedQuery" in record:
