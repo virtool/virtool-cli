@@ -81,6 +81,8 @@ class NCBITaxonomy(BaseModel):
             if item.rank == "species":
                 return item
 
+        raise ValueError("No species level taxon found in lineage")
+
     @field_validator("lineage", mode="before")
     @classmethod
     def create_lineage_list(cls, raw: list[dict]):
