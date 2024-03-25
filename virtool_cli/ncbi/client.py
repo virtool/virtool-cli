@@ -280,21 +280,20 @@ class NCBIClient:
 
         try:
             return NCBIClient.validate_taxonomy_record(record)
-
-            except ValidationError as exc:
-                for error in exc.errors():
-                    if error["loc"][0] == "Rank":
-                        logger.warning(
-                            "Rank data not found in record",
-                            input=error["input"],
-                            loc=error["loc"][0],
-                            msg=error["msg"],
-                        )
-                    else:
-                        logger.error(
-                            "Taxonomy record failed validation", errors=exc.errors()
-                        )
-                        return None
+        except ValidationError as exc:
+            for error in exc.errors():
+                if error["loc"][0] == "Rank":
+                    logger.warning(
+                        "Rank data not found in record",
+                        input=error["input"],
+                        loc=error["loc"][0],
+                        msg=error["msg"],
+                    )
+                else:
+                    logger.error(
+                        "Taxonomy record failed validation", errors=exc.errors()
+                    )
+                    return None
 
         logger.info("Running additional docsum fetch...")
 
