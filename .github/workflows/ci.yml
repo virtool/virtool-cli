@@ -28,8 +28,17 @@ jobs:
         uses: snok/install-poetry@v1
       - name: Install packages
         run: poetry install
-      - name: Test
-        run: poetry run pytest
+      - name: Run unit tests
+        run: poetry run pytest -m "not ncbi" --disable-socket --allow-unix-socket
+      - name: Check if NCBI auth is present, fail out if missing
+        env:
+          super_secret: ${{ secrets.NCBI_API_KEY }}
+        if: ${{ env.super_secret == '' }}
+        run: |
+          echo "NCBI authentication not provided. Failing out."
+          exit 1
+      - name: Run NCBI-dependent tests
+        run: poetry run pytest -m "ncbi"
         env:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
           NCBI_EMAIL: ${{ secrets.NCBI_EMAIL }}
