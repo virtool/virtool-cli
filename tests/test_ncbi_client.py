@@ -39,9 +39,7 @@ class TestClientFetchGenbank:
     async def test_fetch_genbank_records_from_ncbi(
         self, accessions, empty_client, snapshot: SnapshotAssertion
     ):
-        clean_records = await empty_client.fetch_genbank_records(
-            accessions=accessions, cache_results=True
-        )
+        clean_records = await empty_client.fetch_genbank_records(accessions=accessions)
 
         assert clean_records
 
@@ -66,9 +64,7 @@ class TestClientFetchGenbank:
     ):
         client = NCBIClient(cache_scratch_path, ignore_cache=False)
 
-        clean_records = await client.fetch_genbank_records(
-            accessions=accessions, cache_results=False
-        )
+        clean_records = await client.fetch_genbank_records(accessions=accessions)
 
         assert clean_records
 
@@ -86,9 +82,7 @@ class TestClientFetchGenbank:
 
         assert list(client.cache._nuccore_path.glob("*.json")) != []
 
-        clean_records = await client.fetch_genbank_records(
-            accessions=accessions, cache_results=False
-        )
+        clean_records = await client.fetch_genbank_records(accessions=accessions)
 
         assert clean_records
 
@@ -151,7 +145,7 @@ class TestClientFetchRawGenbank:
 async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
     assert not list(empty_client.cache._nuccore_path.glob("*.json"))
 
-    records = await empty_client.link_from_taxid_and_fetch(taxid, cache_results=True)
+    records = await empty_client.link_from_taxid_and_fetch(taxid)
 
     assert records
 
@@ -170,7 +164,7 @@ class TestClientFetchTaxonomy:
     async def test_fetch_taxonomy_from_ncbi(
         self, taxid, empty_client, snapshot: SnapshotAssertion
     ):
-        taxonomy = await empty_client.fetch_taxonomy_record(taxid, cache_results=True)
+        taxonomy = await empty_client.fetch_taxonomy_record(taxid)
 
         assert type(taxonomy) is NCBITaxonomy
 
