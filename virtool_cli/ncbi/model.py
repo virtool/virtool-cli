@@ -77,10 +77,9 @@ class NCBITaxonomy(BaseModel):
         if self.rank is NCBIRank.SPECIES:
             return NCBILineage(id=self.id, name=self.name, rank=self.rank)
 
-        else:
-            for item in self.lineage:
-                if item.rank == "species":
-                    return item
+        for item in self.lineage:
+            if item.rank == "species":
+                return item
 
     @field_validator("lineage", mode="before")
     @classmethod
