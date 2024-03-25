@@ -385,8 +385,7 @@ class NCBIClient:
         if rank is None:
             return NCBITaxonomy(**record)
 
-        else:
-            return NCBITaxonomy(rank=rank, **record)
+        return NCBITaxonomy(rank=rank, **record)
 
     @staticmethod
     async def fetch_taxonomy_id_by_name(name: str) -> int | None:
