@@ -54,17 +54,13 @@ class NCBIClient:
         """
         return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
 
-    async def fetch_genbank_records(
-        self,
-        accessions: list[str],
-        cache_results: bool = True,
-    ) -> list[NCBINuccore]:
+    async def fetch_genbank_records(self, accessions: list[str]) -> list[NCBINuccore]:
         """
-        Fetch or load NCBI Genbank records records corresponding to a list of accessions
-        and return validated records.
+        Fetch or load NCBI Genbank records records corresponding to a list of accessions.
+        Cache fetched records if found.
+        Returns validated records.
 
         :param accessions: A list of accessions to be fetched
-        :param cache_results: If True, caches fetched data as JSON
         :return: A list of validated NCBINuccore records
         """
         if not accessions:
@@ -99,19 +95,15 @@ class NCBIClient:
                 return NCBIClient.validate_genbank_records(records)
 
         else:
-
             records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
             if records:
-                if cache_results:
-                    for record in records:
-                        try:
-                            self.cache.cache_nuccore_record(
-                                record, record[GBSeq.ACCESSION]
-                            )
-                        except FileExistsError:
-                            logger.error("Cannot overwrite cache data")
+                for record in records:
+                    try:
+                        self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                    except FileExistsError:
+                        logger.error("Cannot overwrite cache data")
 
-                    logger.debug("Records cached", n_records=len(records))
+                logger.debug("Records cached", n_records=len(records))
 
                 return NCBIClient.validate_genbank_records(records)
 
@@ -246,9 +238,7 @@ class NCBIClient:
         """
         return NCBINuccore(**raw)
 
-    async def fetch_taxonomy_record(
-        self, taxid: int, cache_results: bool = False
-    ) -> NCBITaxonomy | None:
+    async def fetch_taxonomy_record(self, taxid: int) -> NCBITaxonomy | None:
         """
         Fetches and validates a taxonomy record from NCBI Taxonomy.
 
@@ -256,7 +246,6 @@ class NCBIClient:
         makes an additional docsum fetch and attempts to extract the rank data.
 
         :param taxid: A NCBI Taxonomy id
-        :param cache_results: If True, caches fetched data as JSON
         :return: A validated NCBI Taxonomy record NCBITaxonomy if possible,
             else None
         """
@@ -268,7 +257,13 @@ class NCBIClient:
                 logger.info("Cached record found")
             else:
                 logger.info("Cached record not found. Fetching from taxonomy...")
-                record = await NCBIClient._fetch_taxonomy_record(taxid)
+                with log_http_error():
+                    try:
+                        record = await NCBIClient._fetch_taxonomy_record(taxid)
+                    except HTTPError as e:
+                        logger.error(f"{e.code}: {e.reason}")
+                        logger.error(f"Your request was likely refused by NCBI.")
+                        return None
 
         else:
             logger.debug("Fetching record from Taxonomy...")
@@ -281,12 +276,12 @@ class NCBIClient:
                     logger.error(f"Your request was likely refused by NCBI.")
                     return None
 
+                if type(record) == dict:
+                    logger.debug("Caching data...")
+                    self.cache.cache_taxonomy_record(record, taxid)
+
         if record is None:
             return None
-
-        if cache_results:
-            logger.debug("Caching data...")
-            self.cache.cache_taxonomy_record(record, taxid)
 
         try:
             return NCBIClient.validate_taxonomy_record(record)
