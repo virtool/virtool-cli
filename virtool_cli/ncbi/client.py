@@ -257,7 +257,7 @@ class NCBIClient:
                         record = await NCBIClient._fetch_taxonomy_record(taxid)
                     except HTTPError as e:
                         logger.error(f"{e.code}: {e.reason}")
-                        logger.error(f"Your request was likely refused by NCBI.")
+                        logger.error("Your request was likely refused by NCBI.")
                         return None
 
         if record is None:
@@ -271,7 +271,7 @@ class NCBIClient:
                     logger.error("Your request was likely refused by NCBI.")
                     return None
 
-                if type(record) == dict:
+                if type(record) is dict:
                     logger.debug("Caching data...")
                     self.cache.cache_taxonomy_record(record, taxid)
 
