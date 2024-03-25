@@ -33,7 +33,7 @@ class NCBIClient:
     def __init__(self, cache_path: Path, ignore_cache: bool):
         """
         :param cache_path: A path to a directory to be used as a cache
-        :param ignore_cache: If True, forces all fetches to download data from the server
+        :param ignore_cache: If True, does not allow the return of cached data
         """
         self.cache = NCBICache(cache_path)
         self.ignore_cache = ignore_cache
@@ -43,7 +43,7 @@ class NCBIClient:
         """Initializes the NCBI cache in the default subpath under a given repository
 
         :param repo_path: A path to a reference repository
-        :param ignore_cache: If True, forces all fetches to download data from the server
+        :param ignore_cache: If True, does not allow the return of cached data
         :return: The standard cache path for the given repo_path
         """
         return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
