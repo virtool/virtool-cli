@@ -17,11 +17,11 @@ class NCBICache:
         """
         self.path = path
 
-        self._nuccore_path = self.path / "nuccore"
+        self._genbank_path = self.path / "nuccore"
         self._taxonomy_path = self.path / "taxonomy"
 
         self.path.mkdir(exist_ok=True)
-        self._nuccore_path.mkdir(exist_ok=True)
+        self._genbank_path.mkdir(exist_ok=True)
         self._taxonomy_path.mkdir(exist_ok=True)
 
     def clear(self):
@@ -29,7 +29,7 @@ class NCBICache:
         shutil.rmtree(self.path)
         self.path.mkdir()
 
-        self._nuccore_path.mkdir()
+        self._genbank_path.mkdir()
         self._taxonomy_path.mkdir()
 
     def cache_genbank_record(self, data: dict, accession: str):
@@ -39,7 +39,7 @@ class NCBICache:
         :param data: A data from a Genbank record corresponding
         :param accession: The NCBI accession of the record
         """
-        cached_record_path = self._get_nuccore_path(f"{accession}")
+        cached_record_path = self._get_genbank_path(f"{accession}")
 
         with open(cached_record_path, "w") as f:
             json.dump(data, f)
@@ -55,7 +55,7 @@ class NCBICache:
         :param accession: The NCBI accession of the record
         :return: Deserialized Genbank data if file is found in cache, else None
         """
-        nuccore_path = self._get_nuccore_path(accession)
+        nuccore_path = self._get_genbank_path(accession)
 
         try:
             with open(nuccore_path, "r") as f:
@@ -91,13 +91,13 @@ class NCBICache:
         except FileNotFoundError:
             return None
 
-    def _get_nuccore_path(self, accession: str) -> Path:
+    def _get_genbank_path(self, accession: str) -> Path:
         """Returns a standardized path for a set of cached NCBI Nucleotide records
 
         :param accession: The NCBI accession of a Genbank record
         :return: A properly-formatted path to a cached record
         """
-        return self._nuccore_path / f"{accession}.json"
+        return self._genbank_path / f"{accession}.json"
 
     def _get_taxonomy_path(self, taxid: int) -> Path:
         """Returns a standardized path for a cached NCBI Taxonomy record

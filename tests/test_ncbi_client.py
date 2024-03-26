@@ -49,7 +49,7 @@ class TestClientFetchGenbank:
             assert type(record.source) is NCBISource
 
         assert {
-            path.name for path in empty_client.cache._nuccore_path.glob("*.json")
+            path.name for path in empty_client.cache._genbank_path.glob("*.json")
         } == snapshot
 
     @pytest.mark.parametrize(
@@ -80,7 +80,7 @@ class TestClientFetchGenbank:
     ):
         client = NCBIClient(cache_scratch_path, ignore_cache=False)
 
-        assert list(client.cache._nuccore_path.glob("*.json")) != []
+        assert list(client.cache._genbank_path.glob("*.json")) != []
 
         clean_records = await client.fetch_genbank_records(accessions=accessions)
 
@@ -143,7 +143,7 @@ class TestClientFetchRawGenbank:
 @pytest.mark.ncbi
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
 async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
-    assert not list(empty_client.cache._nuccore_path.glob("*.json"))
+    assert not list(empty_client.cache._genbank_path.glob("*.json"))
 
     records = await empty_client.link_from_taxid_and_fetch(taxid)
 
@@ -153,7 +153,7 @@ async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
         assert type(record) is NCBINuccore
 
     assert {
-        path.name for path in empty_client.cache._nuccore_path.glob("*.json")
+        path.name for path in empty_client.cache._genbank_path.glob("*.json")
     } == snapshot
 
 

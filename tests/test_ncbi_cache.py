@@ -26,11 +26,11 @@ def test_cache_init(empty_cache_path):
 
     cache = NCBICache(path=empty_cache_path)
 
-    assert cache._nuccore_path.is_dir()
+    assert cache._genbank_path.is_dir()
 
     assert cache._taxonomy_path.is_dir()
 
-    assert cache._nuccore_path.exists()
+    assert cache._genbank_path.exists()
 
     assert cache._taxonomy_path.exists()
 
@@ -38,12 +38,12 @@ def test_cache_init(empty_cache_path):
 def test_cache_clear(cache_scratch_path):
     cache = NCBICache(path=cache_scratch_path)
 
-    assert list(cache._nuccore_path.glob("*.json")) != []
+    assert list(cache._genbank_path.glob("*.json")) != []
     assert list(cache._taxonomy_path.glob("*.json")) != []
 
     cache.clear()
 
-    assert list(cache._nuccore_path.glob("*.json")) == []
+    assert list(cache._genbank_path.glob("*.json")) == []
     assert list(cache._taxonomy_path.glob("*.json")) == []
 
 
@@ -77,7 +77,7 @@ class TestCacheNuccoreOperations:
 
             cache.cache_genbank_record(data=record, accession=accession)
 
-            assert (cache._nuccore_path / f"{accession}.json").exists()
+            assert (cache._genbank_path / f"{accession}.json").exists()
 
 
 @pytest.mark.parametrize("fake_accession", ["afjshd", "23222", "wheelhouse"])
