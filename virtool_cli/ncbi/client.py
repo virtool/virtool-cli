@@ -169,23 +169,31 @@ class NCBIClient:
         :param taxid: A NCBI Taxonomy id
         :return: A list of Genbank accessions linked to the Taxonomy UID
         """
-        elink_results = Entrez.read(
-            Entrez.elink(
-                dbfrom="taxonomy",
-                db="nuccore",
-                id=str(taxid),
-                idtype="acc",
-            )
-        )
-        if not elink_results:
+        logger = base_logger.bind(taxid=taxid)
+        try:
+            with log_http_error():
+                elink_results = Entrez.read(
+                    Entrez.elink(
+                        dbfrom="taxonomy",
+                        db="nuccore",
+                        id=str(taxid),
+                        idtype="acc",
+                    )
+                )
+        except HTTPError as e:
+            logger.error(f"{e.code}: {e.reason}")
+            logger.error("Your request was likely refused by NCBI.")
             return []
 
-        # Discards unneeded tables and formats needed table as a list
-        for link_set_db in elink_results[0]["LinkSetDb"]:
-            if link_set_db["LinkName"] == "taxonomy_nuccore":
-                id_table = link_set_db["Link"]
+        if elink_results:
+            # Discards unneeded tables and formats needed table as a list
+            for link_set_db in elink_results[0]["LinkSetDb"]:
+                if link_set_db["LinkName"] == "taxonomy_nuccore":
+                    id_table = link_set_db["Link"]
 
-                return [keypair["Id"] for keypair in id_table]
+                    return [keypair["Id"] for keypair in id_table]
+
+        return []
 
     @staticmethod
     def validate_genbank_records(records: list[dict]) -> list[NCBINuccore]:
@@ -313,12 +321,18 @@ class NCBIClient:
         logger = base_logger.bind(taxid=taxid)
 
         try:
-            with Entrez.efetch(
-                db=NCBIDatabase.TAXONOMY, id=taxid, rettype="docsum", retmode="xml"
-            ) as f:
-                docsum_record = Entrez.read(f)
-        except RuntimeError:
-            logger.info("No valid rank found for this taxid")
+            with log_http_error():
+                docsum_record = Entrez.read(
+                    Entrez.efetch(
+                        db=NCBIDatabase.TAXONOMY,
+                        id=taxid,
+                        rettype="docsum",
+                        retmode="xml",
+                    )
+                )
+        except HTTPError as e:
+            logger.error(f"{e.code}: {e.reason}")
+            logger.error(f"Your request was likely refused by NCBI.")
             return None
 
         try:
