@@ -55,10 +55,10 @@ class NCBICache:
         :param accession: The NCBI accession of the record
         :return: Deserialized Genbank data if file is found in cache, else None
         """
-        nuccore_path = self._get_genbank_path(accession)
+        record_path = self._get_genbank_path(accession)
 
         try:
-            with open(nuccore_path, "r") as f:
+            with open(record_path, "r") as f:
                 return json.load(f)
 
         except FileNotFoundError:

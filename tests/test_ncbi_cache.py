@@ -54,7 +54,7 @@ def test_cache_clear(cache_scratch_path):
         ["NC_036587", "MT240513", "MT240490"],
     ),
 )
-class TestCacheNuccoreOperations:
+class TestCacheGenbankOperations:
     def test_cache_genbank_load_record_batch(
         self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
     ):
