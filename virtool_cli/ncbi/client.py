@@ -50,7 +50,7 @@ class NCBIClient:
 
     async def fetch_genbank_records(self, accessions: list[str]) -> list[NCBINuccore]:
         """
-        Fetch or load NCBI Genbank records records corresponding to a list of accessions.
+        Fetch or load NCBI Genbank records corresponding to a list of accessions.
         Cache fetched records if found.
         Returns validated records.
 
