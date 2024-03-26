@@ -58,14 +58,17 @@
 # ---
 # name: TestClientFetchTaxonomy.test_fetch_taxonomy_from_ncbi[1016856]
   set({
+    '1016856.json',
   })
 # ---
 # name: TestClientFetchTaxonomy.test_fetch_taxonomy_from_ncbi[1198450]
   set({
+    '1198450.json',
   })
 # ---
 # name: TestClientFetchTaxonomy.test_fetch_taxonomy_from_ncbi[438782]
   set({
+    '438782.json',
   })
 # ---
 # name: test_fetch_records_by_taxid[1016856]

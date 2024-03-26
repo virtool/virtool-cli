@@ -60,46 +60,37 @@ class NCBIClient:
         if not accessions:
             return []
 
+        records = []
+
         logger = base_logger.bind(accessions=accessions)
 
         if not self.ignore_cache:
-            records, missing_accessions = [], []
             for accession in accessions:
                 record = self.cache.load_nuccore_record(accession)
                 if record is not None:
                     records.append(record)
-
                 else:
                     logger.debug("Missing accession", missing_accession=accession)
-                    missing_accessions.append(accession)
 
-            if missing_accessions:
-                logger.debug(
-                    "Accessions not found in cache, fetching now...",
-                    missing_accessions=missing_accessions,
-                )
-                missing_records = await NCBIClient.fetch_unvalidated_genbank_records(
-                    missing_accessions
-                )
-                records.extend(missing_records)
+        fetch_list = list(
+            set(accessions)
+            - {record.get("GBSeq_primary-accession") for record in records}
+        )
+        if fetch_list:
+            logger.debug("Fetching accessions...", fetch_list=fetch_list)
+            new_records = await NCBIClient.fetch_unvalidated_genbank_records(fetch_list)
 
-            if records:
-                logger.info("Cached records found", n_records=len(records))
+            for record in new_records:
+                try:
+                    self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                except FileNotFoundError:
+                    logger.error("Failed to cache record")
 
-                return NCBIClient.validate_genbank_records(records)
+            if new_records:
+                records.extend(new_records)
 
-        else:
-            records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
-            if records:
-                for record in records:
-                    try:
-                        self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
-                    except FileNotFoundError:
-                        logger.error("Failed to cache record")
-
-                logger.debug("Records cached", n_records=len(records))
-
-                return NCBIClient.validate_genbank_records(records)
+        if records:
+            return NCBIClient.validate_genbank_records(records)
 
         return []
 
