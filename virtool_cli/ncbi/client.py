@@ -332,7 +332,7 @@ class NCBIClient:
                 )
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
-            logger.error(f"Your request was likely refused by NCBI.")
+            logger.error("Your request was likely refused by NCBI.")
             return None
 
         try:
@@ -385,7 +385,7 @@ class NCBIClient:
                     record = Entrez.read(f)
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
-            logger.error(f"Your request was likely refused by NCBI.")
+            logger.error("Your request was likely refused by NCBI.")
             return None
 
         try:
@@ -410,7 +410,7 @@ class NCBIClient:
                 record = Entrez.read(Entrez.espell(db=db, term=quote_plus(name)))
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
-            logger.error(f"Your request was likely refused by NCBI.")
+            logger.error("Your request was likely refused by NCBI.")
             return None
 
         if "CorrectedQuery" in record:
