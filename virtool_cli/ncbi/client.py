@@ -109,7 +109,10 @@ class NCBIClient:
             with log_http_error():
                 records = Entrez.read(
                     Entrez.efetch(
-                        db="nuccore", id=accessions, rettype="gb", retmode="xml"
+                        db=NCBIDatabase.NUCCORE,
+                        id=accessions,
+                        rettype="gb",
+                        retmode="xml",
                     )
                 )
 
@@ -175,7 +178,7 @@ class NCBIClient:
                 elink_results = Entrez.read(
                     Entrez.elink(
                         dbfrom="taxonomy",
-                        db="nuccore",
+                        db=NCBIDatabase.NUCCORE,
                         id=str(taxid),
                         idtype="acc",
                     )
