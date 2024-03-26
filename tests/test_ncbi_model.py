@@ -15,22 +15,22 @@ def scratch_cache(cache_scratch_path):
 @pytest.mark.parametrize(
     "accession", ["AB017504", "MH200607", "NC_036587", "MT240513", "NC_015504"]
 )
-class TestAccessionParse:
-    def test_parse_source(self, accession, scratch_cache, snapshot: SnapshotAssertion):
+class TestParseGenbank:
+    def test_parse_genbank_source(self, accession, scratch_cache, snapshot: SnapshotAssertion):
         record = scratch_cache.load_genbank_record(accession)
 
         source = NCBIGenbank.create_source(record["GBSeq_feature-table"])
 
         assert source == snapshot
 
-    def test_parse_nuccore(self, accession, scratch_cache, snapshot: SnapshotAssertion):
+    def test_parse_genbank_record(self, accession, scratch_cache, snapshot: SnapshotAssertion):
         record = scratch_cache.load_genbank_record(accession)
 
         validated_record = NCBIGenbank(**record)
 
         assert validated_record == snapshot
 
-    def test_parse_source_taxid(
+    def test_parse_genbank_source_taxid(
         self, accession, scratch_cache, snapshot: SnapshotAssertion
     ):
         record = scratch_cache.load_genbank_record(accession)
