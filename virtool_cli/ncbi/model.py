@@ -86,12 +86,7 @@ class NCBITaxonomy(BaseModel):
     @field_validator("lineage", mode="before")
     @classmethod
     def create_lineage_list(cls, raw: list[dict]):
-        lineage = []
-        for level_data in raw:
-            level = NCBILineage(**level_data)
-            lineage.append(level)
-
-        return lineage
+        return [NCBILineage(**level_data) for level_data in raw]
 
     @field_validator("rank", mode="before")
     @classmethod
