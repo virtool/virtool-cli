@@ -66,7 +66,7 @@ class NCBIClient:
 
         if not self.ignore_cache:
             for accession in accessions:
-                record = self.cache.load_nuccore_record(accession)
+                record = self.cache.load_genbank_record(accession)
                 if record is not None:
                     records.append(record)
                 else:
@@ -82,7 +82,7 @@ class NCBIClient:
 
             for record in new_records:
                 try:
-                    self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                    self.cache.cache_genbank_record(record, record[GBSeq.ACCESSION])
                 except FileNotFoundError:
                     logger.error("Failed to cache record")
 
@@ -154,7 +154,7 @@ class NCBIClient:
 
         for record in records:
             try:
-                self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                self.cache.cache_genbank_record(record, record[GBSeq.ACCESSION])
             except FileNotFoundError:
                 logger.error("Failed to cache record")
 

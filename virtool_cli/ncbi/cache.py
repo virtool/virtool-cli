@@ -32,7 +32,7 @@ class NCBICache:
         self._nuccore_path.mkdir()
         self._taxonomy_path.mkdir()
 
-    def cache_nuccore_record(self, data: dict, accession: str):
+    def cache_genbank_record(self, data: dict, accession: str):
         """
         Add a Genbank record from NCBI Nucleotide to the cache.
 
@@ -47,9 +47,9 @@ class NCBICache:
             if not cached_record_path.exists():
                 raise FileNotFoundError
 
-    def load_nuccore_record(self, accession: str) -> dict | None:
+    def load_genbank_record(self, accession: str) -> dict | None:
         """
-        Retrieve a NCBI Nucleotide genbank record from the cache.
+        Retrieve a NCBI Nucleotide Genbank record from the cache.
         Returns None if the record is not found in the cache.
 
         :param accession: The NCBI accession of the record

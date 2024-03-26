@@ -17,14 +17,14 @@ def scratch_cache(cache_scratch_path):
 )
 class TestAccessionParse:
     def test_parse_source(self, accession, scratch_cache, snapshot: SnapshotAssertion):
-        record = scratch_cache.load_nuccore_record(accession)
+        record = scratch_cache.load_genbank_record(accession)
 
         source = NCBINuccore.create_source(record["GBSeq_feature-table"])
 
         assert source == snapshot
 
     def test_parse_nuccore(self, accession, scratch_cache, snapshot: SnapshotAssertion):
-        record = scratch_cache.load_nuccore_record(accession)
+        record = scratch_cache.load_genbank_record(accession)
 
         validated_record = NCBINuccore(**record)
 
@@ -33,7 +33,7 @@ class TestAccessionParse:
     def test_parse_source_taxid(
         self, accession, scratch_cache, snapshot: SnapshotAssertion
     ):
-        record = scratch_cache.load_nuccore_record(accession)
+        record = scratch_cache.load_genbank_record(accession)
 
         db_xref = None
         for feature in record["GBSeq_feature-table"]:
