@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.cache import NCBICache
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy, NCBILineage
+from virtool_cli.ncbi.model import NCBIGenbank, NCBISource, NCBILineage
 
 
 @pytest.fixture()
@@ -19,14 +19,14 @@ class TestAccessionParse:
     def test_parse_source(self, accession, scratch_cache, snapshot: SnapshotAssertion):
         record = scratch_cache.load_genbank_record(accession)
 
-        source = NCBINuccore.create_source(record["GBSeq_feature-table"])
+        source = NCBIGenbank.create_source(record["GBSeq_feature-table"])
 
         assert source == snapshot
 
     def test_parse_nuccore(self, accession, scratch_cache, snapshot: SnapshotAssertion):
         record = scratch_cache.load_genbank_record(accession)
 
-        validated_record = NCBINuccore(**record)
+        validated_record = NCBIGenbank(**record)
 
         assert validated_record == snapshot
 

@@ -5,7 +5,7 @@ import pytest
 from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.client import NCBIClient
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
+from virtool_cli.ncbi.model import NCBIGenbank, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
 
@@ -44,7 +44,7 @@ class TestClientFetchGenbank:
         assert clean_records
 
         for record in clean_records:
-            assert type(record) is NCBINuccore
+            assert type(record) is NCBIGenbank
 
             assert type(record.source) is NCBISource
 
@@ -150,7 +150,7 @@ async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
     assert records
 
     for record in records:
-        assert type(record) is NCBINuccore
+        assert type(record) is NCBIGenbank
 
     assert {
         path.name for path in empty_client.cache._genbank_path.glob("*.json")

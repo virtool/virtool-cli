@@ -29,7 +29,7 @@ class NCBISource(BaseModel):
         return int(raw.split(":")[1])
 
 
-class NCBINuccore(BaseModel):
+class NCBIGenbank(BaseModel):
     accession: str = Field(validation_alias="GBSeq_primary-accession")
     definition: str = Field(validation_alias="GBSeq_definition")
     sequence: str = Field(validation_alias="GBSeq_sequence")
