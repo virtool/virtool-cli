@@ -11,13 +11,7 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 from pydantic import ValidationError
 
-from virtool_cli.ncbi.model import (
-    NCBINuccore,
-    NCBITaxonomy,
-    NCBIDatabase,
-    NCBILineage,
-    NCBIRank,
-)
+from virtool_cli.ncbi.model import NCBINuccore, NCBITaxonomy, NCBIDatabase, NCBIRank
 from virtool_cli.ncbi.cache import NCBICache
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
@@ -39,7 +33,7 @@ class NCBIClient:
     def __init__(self, cache_path: Path, ignore_cache: bool):
         """
         :param cache_path: A path to a directory to be used as a cache
-        :param ignore_cache: If True, forces all fetches to download data from the server
+        :param ignore_cache: If True, does not allow the return of cached data
         """
         self.cache = NCBICache(cache_path)
         self.ignore_cache = ignore_cache
@@ -49,14 +43,14 @@ class NCBIClient:
         """Initializes the NCBI cache in the default subpath under a given repository
 
         :param repo_path: A path to a reference repository
-        :param ignore_cache: If True, forces all fetches to download data from the server
+        :param ignore_cache: If True, does not allow the return of cached data
         :return: The standard cache path for the given repo_path
         """
         return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
 
     async def fetch_genbank_records(self, accessions: list[str]) -> list[NCBINuccore]:
         """
-        Fetch or load NCBI Genbank records records corresponding to a list of accessions.
+        Fetch or load NCBI Genbank records corresponding to a list of accessions.
         Cache fetched records if found.
         Returns validated records.
 
@@ -251,6 +245,7 @@ class NCBIClient:
         """
         logger = base_logger.bind(taxid=taxid)
 
+        record = None
         if not self.ignore_cache:
             record = self.cache.load_taxonomy(taxid)
             if record:
@@ -262,10 +257,10 @@ class NCBIClient:
                         record = await NCBIClient._fetch_taxonomy_record(taxid)
                     except HTTPError as e:
                         logger.error(f"{e.code}: {e.reason}")
-                        logger.error(f"Your request was likely refused by NCBI.")
+                        logger.error("Your request was likely refused by NCBI.")
                         return None
 
-        else:
+        if record is None:
             logger.debug("Fetching record from Taxonomy...")
 
             with log_http_error():
@@ -273,10 +268,10 @@ class NCBIClient:
                     record = await NCBIClient._fetch_taxonomy_record(taxid)
                 except HTTPError as e:
                     logger.error(f"{e.code}: {e.reason}")
-                    logger.error(f"Your request was likely refused by NCBI.")
+                    logger.error("Your request was likely refused by NCBI.")
                     return None
 
-                if type(record) == dict:
+                if type(record) is dict:
                     logger.debug("Caching data...")
                     self.cache.cache_taxonomy_record(record, taxid)
 
@@ -285,9 +280,20 @@ class NCBIClient:
 
         try:
             return NCBIClient.validate_taxonomy_record(record)
-
         except ValidationError as exc:
-            logger.debug("Proper rank not found in record", errors=exc.errors())
+            for error in exc.errors():
+                if error["loc"][0] == "Rank":
+                    logger.warning(
+                        "Rank data not found in record",
+                        input=error["input"],
+                        loc=error["loc"][0],
+                        msg=error["msg"],
+                    )
+                else:
+                    logger.error(
+                        "Taxonomy record failed validation", errors=exc.errors()
+                    )
+                    return None
 
         logger.info("Running additional docsum fetch...")
 
@@ -296,7 +302,7 @@ class NCBIClient:
             rank = await self._fetch_taxonomy_rank(taxid)
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
-            logger.error(f"Your request was likely refused by NCBI.")
+            logger.error("Your request was likely refused by NCBI.")
             return None
 
         if rank:
@@ -376,33 +382,10 @@ class NCBIClient:
             on a second validation attempt.
         :return: A validated NCBI record
         """
-        species = None
-        logger = base_logger.bind(taxid=record["TaxId"])
-
-        lineage = []
-        for level_data in record["LineageEx"]:
-            level = NCBILineage(**level_data)
-            lineage.append(level)
-
-            if level.rank == NCBIRank.SPECIES:
-                species = level
-
-        # Fetch rank if not overwritten
         if rank is None:
-            try:
-                rank = NCBIRank(record["Rank"])
-                if rank is rank.SPECIES:
-                    species = NCBILineage(**record)
-                logger.debug("Rank data found in record", rank=rank)
-            except ValueError:
-                logger.warning("Rank data not found in record")
+            return NCBITaxonomy(**record)
 
-        return NCBITaxonomy(
-            id=record["TaxId"],
-            species=species,
-            lineage=lineage,
-            rank=rank,
-        )
+        return NCBITaxonomy(rank=rank, **record)
 
     @staticmethod
     async def fetch_taxonomy_id_by_name(name: str) -> int | None:
