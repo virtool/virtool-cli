@@ -11,7 +11,13 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 from pydantic import ValidationError
 
-from virtool_cli.ncbi.model import NCBINuccore, NCBITaxonomy, NCBIDatabase, NCBIRank
+from virtool_cli.ncbi.model import (
+    NCBIGenbank,
+    NCBITaxonomy,
+    NCBIDatabase,
+    NCBILineage,
+    NCBIRank,
+)
 from virtool_cli.ncbi.cache import NCBICache
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
@@ -48,14 +54,14 @@ class NCBIClient:
         """
         return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
 
-    async def fetch_genbank_records(self, accessions: list[str]) -> list[NCBINuccore]:
+    async def fetch_genbank_records(self, accessions: list[str]) -> list[NCBIGenbank]:
         """
-        Fetch or load NCBI Genbank records corresponding to a list of accessions.
+        Fetch or load NCBI Nucleotide records corresponding to a list of accessions.
         Cache fetched records if found.
         Returns validated records.
 
         :param accessions: A list of accessions to be fetched
-        :return: A list of validated NCBINuccore records
+        :return: A list of validated NCBIGenbank records
         """
         if not accessions:
             return []
@@ -66,7 +72,7 @@ class NCBIClient:
 
         if not self.ignore_cache:
             for accession in accessions:
-                record = self.cache.load_nuccore_record(accession)
+                record = self.cache.load_genbank_record(accession)
                 if record is not None:
                     records.append(record)
                 else:
@@ -82,7 +88,7 @@ class NCBIClient:
 
             for record in new_records:
                 try:
-                    self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                    self.cache.cache_genbank_record(record, record[GBSeq.ACCESSION])
                 except FileNotFoundError:
                     logger.error("Failed to cache record")
 
@@ -109,7 +115,10 @@ class NCBIClient:
             with log_http_error():
                 records = Entrez.read(
                     Entrez.efetch(
-                        db="nuccore", id=accessions, rettype="gb", retmode="xml"
+                        db=NCBIDatabase.NUCCORE,
+                        id=accessions,
+                        rettype="gb",
+                        retmode="xml",
                     )
                 )
 
@@ -130,7 +139,7 @@ class NCBIClient:
 
         return []
 
-    async def link_from_taxid_and_fetch(self, taxid: int) -> list[NCBINuccore]:
+    async def link_from_taxid_and_fetch(self, taxid: int) -> list[NCBIGenbank]:
         """Fetch all Genbank records linked to a taxonomy record.
 
         Usable without preexisting OTU data.
@@ -151,7 +160,7 @@ class NCBIClient:
 
         for record in records:
             try:
-                self.cache.cache_nuccore_record(record, record[GBSeq.ACCESSION])
+                self.cache.cache_genbank_record(record, record[GBSeq.ACCESSION])
             except FileNotFoundError:
                 logger.error("Failed to cache record")
 
@@ -175,7 +184,7 @@ class NCBIClient:
                 elink_results = Entrez.read(
                     Entrez.elink(
                         dbfrom="taxonomy",
-                        db="nuccore",
+                        db=NCBIDatabase.NUCCORE,
                         id=str(taxid),
                         idtype="acc",
                     )
@@ -196,14 +205,14 @@ class NCBIClient:
         return []
 
     @staticmethod
-    def validate_genbank_records(records: list[dict]) -> list[NCBINuccore]:
+    def validate_genbank_records(records: list[dict]) -> list[NCBIGenbank]:
         """
-        Process a list of raw Genbank dicts into validated NCBINuccore records.
+        Process a list of raw Genbank dicts into validated NCBIGenbank records.
         Logs an error if there is an issue with validation or parsing,
         but does not fail out.
 
         :param records: A list of unvalidated NCBI Genbank records
-        :return: A list of validated records as NCBINuccore
+        :return: A list of validated records as NCBIGenbank
         """
         clean_records = []
 
@@ -219,15 +228,15 @@ class NCBIClient:
         return clean_records
 
     @staticmethod
-    def validate_genbank_record(raw: dict) -> NCBINuccore:
+    def validate_genbank_record(raw: dict) -> NCBIGenbank:
         """
         Parses an NCBI Genbank record from a Genbank dict to
-        a validated NCBINuccore
+        a validated NCBIGenbank
 
-        :param raw: A NCBI Genbank dict record, parsed by Bio.Entrez.Parser
+        :param raw: A NCBI Nucleotide dict record, parsed by Bio.Entrez.Parser
         :return: A validated subset of Genbank record data
         """
-        return NCBINuccore(**raw)
+        return NCBIGenbank(**raw)
 
     async def fetch_taxonomy_record(self, taxid: int) -> NCBITaxonomy | None:
         """
@@ -312,10 +321,10 @@ class NCBIClient:
     @staticmethod
     async def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
         """
-        Takes an NCBI Taxonomy UID and fetches the eSummary XML
+        Takes an NCBI TaxonId and fetches the eSummary XML
         to extract the rank data and returns a valid NCBIRank if possible.
 
-        :param taxid: A NCBI Taxonomy id
+        :param taxid: A NCBI Taxonomy Id
         :return: NCBIRank if possible, else None
         """
         logger = base_logger.bind(taxid=taxid)
@@ -359,7 +368,7 @@ class NCBIClient:
         :param rank: Overrides inline rank data if set.
             Use to insert a valid rank from a docsum fetch
             on a second validation attempt.
-        :return: A validated NCBI record
+        :return: A validated NCBITaxonomy record
         """
         if rank is None:
             return NCBITaxonomy(**record)

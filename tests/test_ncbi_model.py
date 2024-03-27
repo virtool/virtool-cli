@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.cache import NCBICache
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy, NCBILineage
+from virtool_cli.ncbi.model import NCBIGenbank, NCBISource, NCBILineage, NCBITaxonomy
 
 
 @pytest.fixture()
@@ -15,25 +15,29 @@ def scratch_cache(cache_scratch_path):
 @pytest.mark.parametrize(
     "accession", ["AB017504", "MH200607", "NC_036587", "MT240513", "NC_015504"]
 )
-class TestAccessionParse:
-    def test_parse_source(self, accession, scratch_cache, snapshot: SnapshotAssertion):
-        record = scratch_cache.load_nuccore_record(accession)
+class TestParseGenbank:
+    def test_parse_genbank_source(
+        self, accession, scratch_cache, snapshot: SnapshotAssertion
+    ):
+        record = scratch_cache.load_genbank_record(accession)
 
-        source = NCBINuccore.create_source(record["GBSeq_feature-table"])
+        source = NCBIGenbank.create_source(record["GBSeq_feature-table"])
 
         assert source == snapshot
 
-    def test_parse_nuccore(self, accession, scratch_cache, snapshot: SnapshotAssertion):
-        record = scratch_cache.load_nuccore_record(accession)
+    def test_parse_genbank_record(
+        self, accession, scratch_cache, snapshot: SnapshotAssertion
+    ):
+        record = scratch_cache.load_genbank_record(accession)
 
-        validated_record = NCBINuccore(**record)
+        validated_record = NCBIGenbank(**record)
 
         assert validated_record == snapshot
 
-    def test_parse_source_taxid(
+    def test_parse_genbank_source_taxid(
         self, accession, scratch_cache, snapshot: SnapshotAssertion
     ):
-        record = scratch_cache.load_nuccore_record(accession)
+        record = scratch_cache.load_genbank_record(accession)
 
         db_xref = None
         for feature in record["GBSeq_feature-table"]:

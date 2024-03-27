@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestCacheNuccoreOperations.test_cache_nuccore_load_record_batch[accessions0][AB017504.json]
+# name: TestCacheGenbankOperations.test_cache_genbank_load_record_batch[accessions0][AB017504.json]
   dict({
     'GBSeq_accession-version': 'AB017504.1',
     'GBSeq_create-date': '05-JAN-2002',
@@ -235,7 +235,7 @@
     'GBSeq_update-date': '07-APR-2012',
   })
 # ---
-# name: TestCacheNuccoreOperations.test_cache_nuccore_load_record_batch[accessions0][MH200607.json]
+# name: TestCacheGenbankOperations.test_cache_genbank_load_record_batch[accessions0][MH200607.json]
   dict({
     'GBSeq_accession-version': 'MH200607.1',
     'GBSeq_create-date': '01-OCT-2018',
@@ -475,7 +475,7 @@
     'GBSeq_update-date': '01-OCT-2018',
   })
 # ---
-# name: TestCacheNuccoreOperations.test_cache_nuccore_load_record_batch[accessions0][MK431779.json]
+# name: TestCacheGenbankOperations.test_cache_genbank_load_record_batch[accessions0][MK431779.json]
   dict({
     'GBSeq_accession-version': 'MK431779.1',
     'GBSeq_comment': '##Assembly-Data-START## ; Assembly Method :: CLC Genomic workbench v. 11.1 ; Sequencing Technology :: Illumina ; ##Assembly-Data-END##',
@@ -693,7 +693,7 @@
     'GBSeq_update-date': '20-AUG-2019',
   })
 # ---
-# name: TestCacheNuccoreOperations.test_cache_nuccore_load_record_batch[accessions0][NC_003355.json]
+# name: TestCacheGenbankOperations.test_cache_genbank_load_record_batch[accessions0][NC_003355.json]
   dict({
     'GBSeq_accession-version': 'NC_003355.1',
     'GBSeq_comment': 'PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to AB017503.; COMPLETENESS: full length.',
@@ -1050,7 +1050,7 @@
     ]),
   })
 # ---
-# name: TestCacheNuccoreOperations.test_cache_nuccore_load_record_batch[accessions1][MT240490.json]
+# name: TestCacheGenbankOperations.test_cache_genbank_load_record_batch[accessions1][MT240490.json]
   dict({
     'GBSeq_accession-version': 'MT240490.1',
     'GBSeq_comment': '##Assembly-Data-START## ; Sequencing Technology :: Sanger dideoxy sequencing ; ##Assembly-Data-END##',
@@ -1191,7 +1191,7 @@
     'GBSeq_update-date': '01-FEB-2021',
   })
 # ---
-# name: TestCacheNuccoreOperations.test_cache_nuccore_load_record_batch[accessions1][MT240513.json]
+# name: TestCacheGenbankOperations.test_cache_genbank_load_record_batch[accessions1][MT240513.json]
   dict({
     'GBSeq_accession-version': 'MT240513.1',
     'GBSeq_comment': '##Assembly-Data-START## ; Sequencing Technology :: Sanger dideoxy sequencing ; ##Assembly-Data-END##',
@@ -1332,7 +1332,7 @@
     'GBSeq_update-date': '01-FEB-2021',
   })
 # ---
-# name: TestCacheNuccoreOperations.test_cache_nuccore_load_record_batch[accessions1][NC_036587.json]
+# name: TestCacheGenbankOperations.test_cache_genbank_load_record_batch[accessions1][NC_036587.json]
   dict({
     'GBSeq_accession-version': 'NC_036587.1',
     'GBSeq_comment': 'PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to MF978248.; COMPLETENESS: full length.',
