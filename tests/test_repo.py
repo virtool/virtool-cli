@@ -1,80 +1,227 @@
 from pathlib import Path
+from uuid import UUID
 
+import orjson
 import pytest
-from syrupy import SnapshotAssertion
-from syrupy.filters import props
 
-from virtool_cli.repo.cls import Repo
-
-
-def test_init(scratch_path: Path, snapshot: SnapshotAssertion):
-    """Test that the repo is initialized correctly."""
-    repo = Repo(scratch_path)
-
-    assert repo.data_type == "genome"
-    assert repo.organism == "virus"
-    assert repo.path == scratch_path
-
-    assert {
-        key: path.name for key, path in repo.maps.otu_id_to_path.items()
-    } == snapshot(name="otu_id_to_path")
-
-    assert repo.maps.sequence_id_to_otu_id == snapshot(name="sequence_id_to_otu_id")
-
-    assert {
-        key: path.name for key, path in repo.maps.sequence_id_to_path.items()
-    } == snapshot(name="sequence_id_to_path")
-
-    assert repo.maps.taxid_to_otu_id == snapshot(name="taxid_to_otu_id")
+from virtool_cli.ref.repo import EventSourcedRepo
+from virtool_cli.ref.resources import (
+    EventSourcedRepoIsolate,
+    EventSourcedRepoOTU,
+    EventSourcedRepoSequence,
+)
+from virtool_cli.ref.utils import DataType
 
 
-class TestGetOTUByID:
-    def test_ok(self, scratch_path: Path, snapshot: SnapshotAssertion):
-        """Test that an OTU is retrieved correctly."""
-        otu = Repo(scratch_path).get_otu_by_id("3962f6ec")
-
-        assert otu.to_dict() == snapshot(name="otu", exclude=props("path", "repo"))
-
-        assert otu.path.name == "jacquemontia_mosaic_yucatan_virus--3962f6ec"
-        assert otu.path.parent == scratch_path / "src"
-
-    def test_not_found(self, scratch_path: Path):
-        """Test that a ValueError is raised when the OTU is not found."""
-        with pytest.raises(ValueError) as e:
-            Repo(scratch_path).get_otu_by_id("foobar")
-
-        assert str(e.value) == "No OTU with ID foobar"
+@pytest.fixture()
+def _repo(tmp_path: Path):
+    return EventSourcedRepo.new(
+        DataType.GENOME, "Generic Viruses", tmp_path / "test_repo", "virus",
+    )
 
 
-class TestGetOTUByTaxid:
-    def test_ok(self, scratch_path: Path, snapshot: SnapshotAssertion):
-        """Test that an OTU is retrieved correctly."""
-        otu = Repo(scratch_path).get_otu_by_taxid(1278205)
+def test_new(_repo: EventSourcedRepo, tmp_path: Path):
+    """Test that creating a new ``Repo`` object returns the expected object and creates
+    the expected directory structure.
+    """
+    assert _repo.path == tmp_path / "test_repo"
+    assert _repo.last_id == 1
 
-        assert otu.to_dict() == snapshot(name="otu", exclude=props("isolate", "path"))
-
-        assert otu.path.name == "dahlia_latent_viroid--ab6bd88a"
-        assert otu.path.parent == scratch_path / "src"
-
-    def test_not_found(self, scratch_path: Path):
-        """Test that a ValueError is raised when the OTU is not found."""
-        with pytest.raises(ValueError) as e:
-            Repo(scratch_path).get_otu_by_taxid(512)
-
-        assert str(e.value) == "No OTU with taxid 512"
+    assert _repo.meta.data_type == DataType.GENOME
+    assert _repo.meta.name == "Generic Viruses"
+    assert _repo.meta.organism == "virus"
 
 
-def test_create_otu(scratch_path: Path, snapshot: SnapshotAssertion):
-    """Test that an OTU is created in the correct location."""
-    repo = Repo(scratch_path)
+def test_create_otu(_repo: EventSourcedRepo):
+    """Test that creating an OTU returns the expected ``RepoOTU`` object and creates
+    the expected event file.
+    """
+    otu = _repo.create_otu("TMV", "Tobacco mosaic virus", [], 12242)
 
-    otu = repo.create_otu("Tobacco mosaic virus", 512, "TMV")
+    assert otu == EventSourcedRepoOTU(
+        id=otu.id,
+        abbreviation="TMV",
+        excluded_accessions=[],
+        isolates=[],
+        name="Tobacco mosaic virus",
+        schema=[],
+        taxid=12242,
+    )
 
-    assert otu.to_dict() == snapshot(name="otu", exclude=props("id", "path", "repo"))
+    with open(_repo.path.joinpath("src", "00000002.json")) as f:
+        event = orjson.loads(f.read())
 
-    assert otu.path.name == f"tobacco_mosaic_virus--{otu.id}"
-    assert otu.path.parent.name == "src"
-    assert otu.path.parent.parent == repo.path == scratch_path
+    del event["timestamp"]
 
-    assert repo.maps.otu_id_to_path[otu.id] == otu.path
-    assert repo.maps.taxid_to_otu_id[512] == otu.id
+    assert event == {
+        "data": {
+            "id": str(otu.id),
+            "abbreviation": "TMV",
+            "excluded_accessions": [],
+            "name": "Tobacco mosaic virus",
+            "rep_isolate": None,
+            "schema": [],
+            "taxid": 12242,
+        },
+        "id": 2,
+        "query": {
+            "otu_id": str(otu.id),
+        },
+        "type": "CreateOTU",
+    }
+
+    assert _repo.last_id == 2
+
+
+def test_create_isolate(_repo: EventSourcedRepo):
+    """Test that creating an isolate returns the expected ``RepoIsolate`` object and
+    creates the expected event file.
+    """
+    otu = _repo.create_otu("TMV", "Tobacco mosaic virus", [], 12242)
+
+    isolate = _repo.create_isolate(otu.id, "A", "isolate")
+
+    assert isinstance(isolate.id, UUID)
+    assert isolate.sequences == []
+    assert isolate.source_name == "A"
+    assert isolate.source_type == "isolate"
+
+    with open(_repo.path.joinpath("src", "00000003.json")) as f:
+        event = orjson.loads(f.read())
+
+    del event["timestamp"]
+
+    assert event == {
+        "data": {
+            "id": str(isolate.id),
+            "source_name": "A",
+            "source_type": "isolate",
+        },
+        "id": 3,
+        "query": {
+            "otu_id": str(otu.id),
+            "isolate_id": str(isolate.id),
+        },
+        "type": "CreateIsolate",
+    }
+
+    assert _repo.last_id == 3
+
+
+def test_create_sequence(_repo: EventSourcedRepo):
+    """Test that creating a sequence returns the expected ``RepoSequence`` object and
+    creates the expected event file.
+    """
+    otu = _repo.create_otu("TMV", "Tobacco mosaic virus", [], 12242)
+    isolate = _repo.create_isolate(otu.id, "A", "isolate")
+
+    sequence = _repo.create_sequence(
+        otu.id,
+        isolate.id,
+        "TMVABC.1",
+        "TMV",
+        "RNA",
+        "ACGT",
+    )
+
+    assert sequence == EventSourcedRepoSequence(
+        id=sequence.id,
+        accession="TMVABC.1",
+        definition="TMV",
+        segment="RNA",
+        sequence="ACGT",
+    )
+
+    with open(_repo.path.joinpath("src", "00000004.json")) as f:
+        event = orjson.loads(f.read())
+
+    del event["timestamp"]
+
+    assert event == {
+        "data": {
+            "id": str(sequence.id),
+            "accession": "TMVABC.1",
+            "definition": "TMV",
+            "segment": "RNA",
+            "sequence": "ACGT",
+        },
+        "id": 4,
+        "query": {
+            "otu_id": str(otu.id),
+            "isolate_id": str(isolate.id),
+            "sequence_id": str(sequence.id),
+        },
+        "type": "CreateSequence",
+    }
+
+    assert _repo.last_id == 4
+
+
+def test_get_otu(_repo: EventSourcedRepo):
+    """Test that getting an OTU returns the expected ``RepoOTU`` object including two
+    isolates with one sequence each.
+    """
+    otu = _repo.create_otu("TMV", "Tobacco mosaic virus", [], 12242)
+
+    isolate_a = _repo.create_isolate(otu.id, "A", "isolate")
+    _repo.create_sequence(
+        otu.id,
+        isolate_a.id,
+        "TMVABC.1",
+        "TMV",
+        "RNA",
+        "ACGT",
+    )
+
+    isolate_b = _repo.create_isolate(otu.id, "B", "isolate")
+    _repo.create_sequence(
+        otu.id,
+        isolate_b.id,
+        "TMVABCB.1",
+        "TMV",
+        "RNA",
+        "ACGTGGAGAGACC",
+    )
+
+    otu = _repo.get_otu(otu.id)
+
+    assert otu == EventSourcedRepoOTU(
+        id=otu.id,
+        abbreviation="TMV",
+        excluded_accessions=[],
+        isolates=[
+            EventSourcedRepoIsolate(
+                id=isolate_a.id,
+                source_name="A",
+                source_type="isolate",
+                sequences=[
+                    EventSourcedRepoSequence(
+                        id=otu.isolates[0].sequences[0].id,
+                        accession="TMVABC.1",
+                        definition="TMV",
+                        segment="RNA",
+                        sequence="ACGT",
+                    ),
+                ],
+            ),
+            EventSourcedRepoIsolate(
+                id=isolate_b.id,
+                source_name="B",
+                source_type="isolate",
+                sequences=[
+                    EventSourcedRepoSequence(
+                        id=otu.isolates[1].sequences[0].id,
+                        accession="TMVABCB.1",
+                        definition="TMV",
+                        segment="RNA",
+                        sequence="ACGTGGAGAGACC",
+                    ),
+                ],
+            ),
+        ],
+        name="Tobacco mosaic virus",
+        schema=[],
+        taxid=12242,
+    )
+
+    assert _repo.last_id == 6

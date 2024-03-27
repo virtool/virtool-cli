@@ -4,7 +4,7 @@ from pathlib import Path
 
 from syrupy import SnapshotAssertion
 
-from virtool_cli.repo.cls import Repo
+from virtool_cli.ref.legacy import Repo
 
 
 def test_migrate(test_files_path: Path, snapshot: SnapshotAssertion, tmp_path: Path):
