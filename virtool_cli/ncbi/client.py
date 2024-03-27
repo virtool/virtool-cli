@@ -14,8 +14,10 @@ from pydantic import ValidationError
 from virtool_cli.ncbi.model import NCBINuccore, NCBITaxonomy, NCBIDatabase, NCBIRank
 from virtool_cli.ncbi.cache import NCBICache
 
-Entrez.email = os.environ.get("NCBI_EMAIL")
-Entrez.api_key = os.environ.get("NCBI_API_KEY")
+if email := os.environ.get("NCBI_EMAIL"):
+    Entrez.email = email
+if api_key := os.environ.get("NCBI_API_KEY"):
+    Entrez.api_key = os.environ.get("NCBI_API_KEY")
 
 base_logger = get_logger()
 
