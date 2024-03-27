@@ -381,8 +381,7 @@ class NCBIClient:
         logger = base_logger.bind(name=name)
         try:
             with log_http_error():
-                with Entrez.esearch(db="taxonomy", term=name) as f:
-                    record = Entrez.read(f)
+                record = Entrez.read(Entrez.esearch(db="taxonomy", term=name))
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
             logger.error("Your request was likely refused by NCBI.")
