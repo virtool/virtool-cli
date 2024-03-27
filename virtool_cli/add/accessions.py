@@ -11,7 +11,7 @@ from virtool_cli.add.helpers import (
     write_sequences_to_src,
 )
 from virtool_cli.check.otu import verify_accession
-from virtool_cli.repo.cls import Repo, RepoSequence
+from virtool_cli.ref.legacy import Repo, RepoSequence
 from virtool_cli.utils.format import get_qualifiers
 from virtool_cli.utils.ncbi import request_from_nucleotide
 

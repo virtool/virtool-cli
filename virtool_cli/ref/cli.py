@@ -6,11 +6,11 @@ from virtool_cli.add.cli import add
 from virtool_cli.check.cli import check
 from virtool_cli.options import path_option
 from virtool_cli.ref.build import build_json
-from virtool_cli.ref.divide import run as run_divide
-from virtool_cli.ref.init import init_reference
 from virtool_cli.ref.migrate import run as run_migrate
+from virtool_cli.ref.repo import EventSourcedRepo
+from virtool_cli.ref.utils import DataType
 from virtool_cli.update.cli import update
-from virtool_cli.utils.logging import configure_logger, error_message_style
+from virtool_cli.utils.logging import error_message_style
 
 
 @click.group("ref")
@@ -25,16 +25,32 @@ ref.add_command(check)
 
 @ref.command()
 @click.option(
+    "--data-type",
+    help="the type of data the reference contains (eg. genome)",
+    required=True,
+    type=click.Choice(DataType),
+)
+@click.option(
+    "--name",
+    help="the type of data the reference contains (eg. genome)",
+    required=True,
+    type=str,
+)
+@click.option(
+    "--organism",
+    default="",
+    help="the organism the reference is for (eg. virus)",
+    type=str,
+)
+@click.option(
     "--path",
     default=".",
     help="the path to initialize the repository at",
     type=click.Path(path_type=Path),
 )
-@click.option("--debug", default=False, is_flag=True)
-def init(debug: bool, path: Path):
-    """Instantiate directory structure for an empty reference source"""
-    configure_logger(debug)
-    init_reference(path)
+def init(data_type: DataType, name: str, organism: str, path: Path):
+    """Create a new event-sourced repo."""
+    EventSourcedRepo.new(data_type, name, path, organism)
 
 
 @ref.command()
@@ -62,36 +78,6 @@ def init(debug: bool, path: Path):
 def build(output_path: Path, path: Path, indent: bool, version: str):
     """Build a Virtool reference.json file from a reference repository."""
     build_json(indent, output_path, path, version)
-
-
-@ref.command()
-@click.option(
-    "-f",
-    "--file_path",
-    required=True,
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help="the path to a input reference.json file",
-)
-@click.option(
-    "-o",
-    "--output_path",
-    default="src",
-    type=click.Path(file_okay=False, path_type=Path),
-    help="the output path for a divided reference directory tree",
-)
-@click.option("--debug/--no-debug", default=False)
-def divide(file_path, output_path, debug):
-    """Divide a reference.json file from Virtool into a reference directory tree."""
-    if file_path.suffix != ".json":
-        click.echo(f"{error_message_style}{file_path} is not a JSON file")
-
-    try:
-        run_divide(file_path, output_path, debug)
-    except (TypeError, FileNotFoundError):
-        click.echo(
-            f"{error_message_style}{file_path} is not a proper JSON file",
-            err=True,
-        )
 
 
 @ref.command()

@@ -1,14 +1,4 @@
-"""An access layer for a Virtool reference repository.
-
-This is a work in progress.
-
-TODO: Check if excluded accessions exist in the repo.
-TODO: Check that OTUs have only one default isolate.
-TODO: Check for accessions filed in wrong isolates.
-TODO: Check for non-versioned accessions.
-TODO: Check for accession conflicts.
-
-"""
+"""Code for the old reference format, not based on event sourcing."""
 
 import json
 from dataclasses import asdict, dataclass
@@ -17,7 +7,6 @@ from typing import Any
 
 import click
 
-from virtool_cli.repo.maps import RepoMaps
 from virtool_cli.utils.id_generator import (
     generate_random_alphanumeric,
 )
@@ -235,9 +224,9 @@ class RepoOTU:
 
             self.isolates.append(isolate)
 
-            self._isolate_name_id_map[
-                (isolate.source_type, isolate.source_name)
-            ] = isolate.id
+            self._isolate_name_id_map[(isolate.source_type, isolate.source_name)] = (
+                isolate.id
+            )
 
             with open(self.path / "otu.json") as f:
                 data = json.load(f)
@@ -361,6 +350,56 @@ class RepoOTU:
 
         with open(self.path / "exclusions.json", "w") as f:
             json.dump(exclusions, f)
+
+
+class RepoMaps:
+    def __init__(self, path: Path):
+        self.isolate_id_to_otu_id: dict[str, str] = {}
+        """Maps isolate ids to parent otu ids."""
+
+        self.otu_id_to_path: dict[str, Path] = {}
+        """Maps otu ids to their respective paths."""
+
+        self.sequence_id_to_accession: dict[str, str] = {}
+        """Maps sequence ids to their respective accessions."""
+
+        self.sequence_id_to_otu_id: dict[str, str] = {}
+        """Maps sequence ids to parent otu ids."""
+
+        self.sequence_id_to_path: dict[str, Path] = {}
+        """Maps sequence ids to their respective paths."""
+
+        self.taxid_to_otu_id: dict[int, str] = {}
+        """Maps taxids to otu ids."""
+
+        for otu_path in (p for p in (path / "src").iterdir() if p.is_dir()):
+            if not otu_path.is_dir():
+                continue
+
+            name, otu_id = otu_path.name.split("--")
+
+            self.otu_id_to_path[otu_id] = otu_path
+
+            with open(otu_path / "otu.json") as f:
+                taxid = int(json.load(f)["taxid"])
+
+            self.taxid_to_otu_id[taxid] = otu_id
+
+            for isolate_path in (p for p in otu_path.iterdir() if p.is_dir()):
+                self.isolate_id_to_otu_id[isolate_path.stem] = otu_id
+
+                for sequence_path in [
+                    p for p in isolate_path.iterdir() if p.name != "isolate.json"
+                ]:
+                    sequence_id = sequence_path.stem
+
+                    with open(sequence_path) as f:
+                        self.sequence_id_to_accession[sequence_id] = json.load(f)[
+                            "accession"
+                        ]
+
+                    self.sequence_id_to_otu_id[sequence_id] = otu_id
+                    self.sequence_id_to_path[sequence_id] = sequence_path
 
 
 class Repo:

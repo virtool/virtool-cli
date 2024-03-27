@@ -3,7 +3,7 @@ from pathlib import Path
 
 import arrow
 
-from virtool_cli.repo.cls import Repo
+from virtool_cli.ref.legacy import Repo
 
 
 def build_json(indent: bool, output_path: Path, path: Path, version: str):
