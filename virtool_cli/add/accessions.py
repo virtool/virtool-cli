@@ -100,7 +100,7 @@ async def add_accessions(accessions: list, otu_path: Path):
     logger = get_logger("add_accessions", accessions=accessions)
 
     record_list = await request_from_nucleotide(accessions)
-    extant_list, exclusion_list = await get_no_fetch_lists(otu_path)
+    _, exclusion_list = await get_no_fetch_lists(otu_path)
 
     new_sequences = []
 

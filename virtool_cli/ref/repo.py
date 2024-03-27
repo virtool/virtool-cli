@@ -84,7 +84,7 @@ class EventSourcedRepo:
 
         repo_id = uuid.uuid4()
 
-        event = _write_event(
+        _write_event(
             src_path,
             1,
             CreateRepo,
@@ -102,8 +102,6 @@ class EventSourcedRepo:
     @property
     def meta(self):
         """The metadata for the repository."""
-        repo = {}
-
         for event in self._iter_events():
             if isinstance(event, CreateRepo):
                 repo = event.data.model_dump()
@@ -167,7 +165,7 @@ class EventSourcedRepo:
         """Create an OTU."""
         otu_id = uuid.uuid4()
 
-        event = self._write_event(
+        self._write_event(
             CreateOTU,
             CreateOTUData(
                 id=otu_id,
@@ -194,7 +192,7 @@ class EventSourcedRepo:
     def create_isolate(self, otu_id: uuid.UUID, source_name: str, source_type: str):
         isolate_id = uuid.uuid4()
 
-        event = self._write_event(
+        self._write_event(
             CreateIsolate,
             CreateIsolateData(
                 id=isolate_id,
@@ -267,7 +265,8 @@ class EventSourcedRepo:
 
         if not isinstance(event, CreateOTU):
             raise ValueError(
-                f"The first event ({first_event_id}) for an OTU is not a CreateOTU event",
+                f"The first event ({first_event_id}) for an OTU is not a CreateOTU "
+                "event",
             )
 
         otu = EventSourcedRepoOTU(

@@ -123,10 +123,10 @@ class RepoIsolate:
             click.echo(f"accession {accession} is in exclusions list", err=True)
             return None
 
-        existing_accessions = set(
+        existing_accessions = {
             a.split(".")[0]
             for a in self.otu.repo.maps.sequence_id_to_accession.values()
-        )
+        }
 
         if accession.split(".")[0] in existing_accessions:
             click.echo(f"accession {accession} already exists in repo", err=True)

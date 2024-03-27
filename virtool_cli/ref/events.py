@@ -3,7 +3,10 @@ import datetime
 from pydantic import UUID4, BaseModel, Field, computed_field
 
 
-class EventQuery(BaseModel): ...
+class EventQuery(BaseModel):
+    """A base class for representing the query targeting an event at a specific
+    resource.
+    """
 
 
 class RepoQuery(EventQuery):
@@ -30,7 +33,11 @@ class SequenceQuery(IsolateQuery):
     sequence_id: UUID4
 
 
-class EventData(BaseModel): ...
+class EventData(BaseModel):
+    """Represents the data for an event.
+
+    Different event data classes are used
+    """
 
 
 class Event(BaseModel):
