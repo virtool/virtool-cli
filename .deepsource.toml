@@ -1,12 +1,14 @@
 version = 1
 
 test_patterns = [
-  "tests/test_**.py",
-  "tests/vfam/test_**.py"
+  "tests/**"
 ]
 
 [[analyzers]]
-name = "python"
-enabled = true
+name = "secrets"
 
-max_line_length = 88
+[[analyzers]]
+name = "python"
+
+  [analyzers.meta]
+  runtime_version = "3.x.x"
