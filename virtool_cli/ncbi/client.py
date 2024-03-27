@@ -11,13 +11,7 @@ from urllib.parse import quote_plus
 from urllib.error import HTTPError
 from pydantic import ValidationError
 
-from virtool_cli.ncbi.model import (
-    NCBIGenbank,
-    NCBITaxonomy,
-    NCBIDatabase,
-    NCBILineage,
-    NCBIRank,
-)
+from virtool_cli.ncbi.model import NCBIGenbank, NCBITaxonomy, NCBIDatabase, NCBIRank
 from virtool_cli.ncbi.cache import NCBICache
 
 Entrez.email = os.environ.get("NCBI_EMAIL")
