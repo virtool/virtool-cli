@@ -36,10 +36,10 @@ class TestClientFetchGenbank:
             ["NC_036587", "MT240513", "MT240490"],
         ],
     )
-    async def test_fetch_genbank_records_from_ncbi(
+    def test_fetch_genbank_records_from_ncbi(
         self, accessions, empty_client, snapshot: SnapshotAssertion
     ):
-        clean_records = await empty_client.fetch_genbank_records(accessions=accessions)
+        clean_records = empty_client.fetch_genbank_records(accessions=accessions)
 
         assert clean_records
 
@@ -59,12 +59,12 @@ class TestClientFetchGenbank:
             ["NC_036587", "MT240513", "MT240490"],
         ],
     )
-    async def test_fetch_genbank_records_from_cache(
+    def test_fetch_genbank_records_from_cache(
         self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
     ):
         client = NCBIClient(cache_scratch_path, ignore_cache=False)
 
-        clean_records = await client.fetch_genbank_records(accessions=accessions)
+        clean_records = client.fetch_genbank_records(accessions=accessions)
 
         assert clean_records
 
@@ -75,14 +75,14 @@ class TestClientFetchGenbank:
     @pytest.mark.parametrize(
         "accessions", [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]]
     )
-    async def test_fetch_partially_cached_genbank_records(
+    def test_fetch_partially_cached_genbank_records(
         self, accessions: list[str], cache_scratch_path, snapshot: SnapshotAssertion
     ):
         client = NCBIClient(cache_scratch_path, ignore_cache=False)
 
         assert list(client.cache._genbank_path.glob("*.json")) != []
 
-        clean_records = await client.fetch_genbank_records(accessions=accessions)
+        clean_records = client.fetch_genbank_records(accessions=accessions)
 
         assert clean_records
 
@@ -91,9 +91,7 @@ class TestClientFetchGenbank:
 
     @pytest.mark.ncbi
     async def test_fetch_accessions_fail(self, scratch_client):
-        records = await scratch_client.fetch_genbank_records(
-            ["friday", "paella", "111"]
-        )
+        records = scratch_client.fetch_genbank_records(["friday", "paella", "111"])
 
         assert not records
 
@@ -107,8 +105,8 @@ class TestClientFetchRawGenbank:
             ["NC_036587", "MT240513", "MT240490"],
         ],
     )
-    async def test_fetch_raw_via_accessions(self, accessions: list[str]):
-        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+    def test_fetch_raw_via_accessions(self, accessions: list[str]):
+        records = NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         for record in records:
             assert record.get("GBSeq_locus")
@@ -123,7 +121,7 @@ class TestClientFetchRawGenbank:
         ],
     )
     async def test_fetch_raw_via_accessions_partial(self, accessions: list[str]):
-        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+        records = NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         assert len(records) == len(accessions) - 1
 
@@ -132,8 +130,8 @@ class TestClientFetchRawGenbank:
             assert record.get("GBSeq_sequence", None)
 
     @pytest.mark.ncbi
-    async def test_fetch_raw_via_accessions_fail(self):
-        records = await NCBIClient.fetch_unvalidated_genbank_records(
+    def test_fetch_raw_via_accessions_fail(self):
+        records = NCBIClient.fetch_unvalidated_genbank_records(
             ["friday", "paella", "111"]
         )
 
@@ -142,10 +140,10 @@ class TestClientFetchRawGenbank:
 
 @pytest.mark.ncbi
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
-async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
+def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
     assert not list(empty_client.cache._genbank_path.glob("*.json"))
 
-    records = await empty_client.link_from_taxid_and_fetch(taxid)
+    records = empty_client.link_from_taxid_and_fetch(taxid)
 
     assert records
 
@@ -161,10 +159,10 @@ class TestClientFetchTaxonomy:
     @pytest.mark.ncbi
     @pytest.mark.flaky(reruns=3, reruns_delay=3, only_rerun=SERVER_ERRORS)
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
-    async def test_fetch_taxonomy_from_ncbi(
+    def test_fetch_taxonomy_from_ncbi(
         self, taxid, empty_client, snapshot: SnapshotAssertion
     ):
-        taxonomy = await empty_client.fetch_taxonomy_record(taxid)
+        taxonomy = empty_client.fetch_taxonomy_record(taxid)
 
         assert type(taxonomy) is NCBITaxonomy
 
@@ -175,18 +173,18 @@ class TestClientFetchTaxonomy:
     @pytest.mark.ncbi
     @pytest.mark.flaky(reruns=3, reruns_delay=3, only_rerun=SERVER_ERRORS)
     @pytest.mark.parametrize("taxid", [1000000000000, 99999999])
-    async def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
-        taxonomy = await empty_client.fetch_taxonomy_record(taxid)
+    def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
+        taxonomy = empty_client.fetch_taxonomy_record(taxid)
 
         assert taxonomy is None
 
     @pytest.mark.parametrize("taxid", [438782, 1198450])
-    async def test_fetch_taxonomy_from_cache(
+    def test_fetch_taxonomy_from_cache(
         self, taxid: int, scratch_client, snapshot: SnapshotAssertion
     ):
         assert scratch_client.cache.load_taxonomy(taxid)
 
-        taxonomy = await scratch_client.fetch_taxonomy_record(taxid)
+        taxonomy = scratch_client.fetch_taxonomy_record(taxid)
 
         assert type(taxonomy) is NCBITaxonomy
 
@@ -202,7 +200,7 @@ class TestClientFetchTaxonomy:
     ],
 )
 async def test_fetch_taxonomy_by_name(name: str, taxid: int):
-    assert await NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
+    assert NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
 
 
 @pytest.mark.ncbi
@@ -220,6 +218,6 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     ],
 )
 async def test_fetch_spelling(misspelled: str, expected: str):
-    taxon_name = await NCBIClient.fetch_spelling(name=misspelled)
+    taxon_name = NCBIClient.fetch_spelling(name=misspelled)
 
     assert taxon_name == expected
