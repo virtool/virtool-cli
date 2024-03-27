@@ -26,11 +26,11 @@ def test_cache_init(empty_cache_path):
 
     cache = NCBICache(path=empty_cache_path)
 
-    assert cache._nuccore_path.is_dir()
+    assert cache._genbank_path.is_dir()
 
     assert cache._taxonomy_path.is_dir()
 
-    assert cache._nuccore_path.exists()
+    assert cache._genbank_path.exists()
 
     assert cache._taxonomy_path.exists()
 
@@ -38,12 +38,12 @@ def test_cache_init(empty_cache_path):
 def test_cache_clear(cache_scratch_path):
     cache = NCBICache(path=cache_scratch_path)
 
-    assert list(cache._nuccore_path.glob("*.json")) != []
+    assert list(cache._genbank_path.glob("*.json")) != []
     assert list(cache._taxonomy_path.glob("*.json")) != []
 
     cache.clear()
 
-    assert list(cache._nuccore_path.glob("*.json")) == []
+    assert list(cache._genbank_path.glob("*.json")) == []
     assert list(cache._taxonomy_path.glob("*.json")) == []
 
 
@@ -54,18 +54,18 @@ def test_cache_clear(cache_scratch_path):
         ["NC_036587", "MT240513", "MT240490"],
     ),
 )
-class TestCacheNuccoreOperations:
-    def test_cache_nuccore_load_record_batch(
+class TestCacheGenbankOperations:
+    def test_cache_genbank_load_record_batch(
         self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
     ):
         scratch_cache = NCBICache(cache_scratch_path)
 
         for accession in accessions:
-            record = scratch_cache.load_nuccore_record(accession)
+            record = scratch_cache.load_genbank_record(accession)
 
             assert record == snapshot(name=f"{accession}.json")
 
-    def test_cache_nuccore_cache_records(
+    def test_cache_genbank_cache_records(
         self, accessions, cache_example_path, empty_cache_path
     ):
         assert not empty_cache_path.exists()
@@ -75,16 +75,16 @@ class TestCacheNuccoreOperations:
         for accession in accessions:
             record = get_test_record(accession, cache_example_path)
 
-            cache.cache_nuccore_record(data=record, accession=accession)
+            cache.cache_genbank_record(data=record, accession=accession)
 
-            assert (cache._nuccore_path / f"{accession}.json").exists()
+            assert (cache._genbank_path / f"{accession}.json").exists()
 
 
 @pytest.mark.parametrize("fake_accession", ["afjshd", "23222", "wheelhouse"])
-def test_cache_nuccore_load_fail(fake_accession, cache_scratch_path):
+def test_cache_genbank_load_fail(fake_accession, cache_scratch_path):
     scratch_cache = NCBICache(cache_scratch_path)
 
-    assert scratch_cache.load_nuccore_record(fake_accession) is None
+    assert scratch_cache.load_genbank_record(fake_accession) is None
 
 
 @pytest.mark.parametrize("taxid", (270478, 438782, 1198450))

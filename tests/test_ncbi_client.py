@@ -5,7 +5,7 @@ import pytest
 from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.client import NCBIClient
-from virtool_cli.ncbi.model import NCBINuccore, NCBISource, NCBITaxonomy
+from virtool_cli.ncbi.model import NCBIGenbank, NCBISource, NCBITaxonomy
 
 test_logger = get_logger()
 
@@ -44,12 +44,12 @@ class TestClientFetchGenbank:
         assert clean_records
 
         for record in clean_records:
-            assert type(record) is NCBINuccore
+            assert type(record) is NCBIGenbank
 
             assert type(record.source) is NCBISource
 
         assert {
-            path.name for path in empty_client.cache._nuccore_path.glob("*.json")
+            path.name for path in empty_client.cache._genbank_path.glob("*.json")
         } == snapshot
 
     @pytest.mark.parametrize(
@@ -80,7 +80,7 @@ class TestClientFetchGenbank:
     ):
         client = NCBIClient(cache_scratch_path, ignore_cache=False)
 
-        assert list(client.cache._nuccore_path.glob("*.json")) != []
+        assert list(client.cache._genbank_path.glob("*.json")) != []
 
         clean_records = await client.fetch_genbank_records(accessions=accessions)
 
@@ -143,17 +143,17 @@ class TestClientFetchRawGenbank:
 @pytest.mark.ncbi
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
 async def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
-    assert not list(empty_client.cache._nuccore_path.glob("*.json"))
+    assert not list(empty_client.cache._genbank_path.glob("*.json"))
 
     records = await empty_client.link_from_taxid_and_fetch(taxid)
 
     assert records
 
     for record in records:
-        assert type(record) is NCBINuccore
+        assert type(record) is NCBIGenbank
 
     assert {
-        path.name for path in empty_client.cache._nuccore_path.glob("*.json")
+        path.name for path in empty_client.cache._genbank_path.glob("*.json")
     } == snapshot
 
 
