@@ -50,7 +50,7 @@ class NCBIClient:
         """
         return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
 
-    async def fetch_genbank_records(self, accessions: list[str]) -> list[NCBIGenbank]:
+    def fetch_genbank_records(self, accessions: list[str]) -> list[NCBIGenbank]:
         """
         Fetch or load NCBI Nucleotide records corresponding to a list of accessions.
         Cache fetched records if found.
@@ -80,7 +80,7 @@ class NCBIClient:
         )
         if fetch_list:
             logger.debug("Fetching accessions...", fetch_list=fetch_list)
-            new_records = await NCBIClient.fetch_unvalidated_genbank_records(fetch_list)
+            new_records = NCBIClient.fetch_unvalidated_genbank_records(fetch_list)
 
             for record in new_records:
                 try:
@@ -97,7 +97,7 @@ class NCBIClient:
         return []
 
     @staticmethod
-    async def fetch_unvalidated_genbank_records(accessions: list[str]) -> list[dict]:
+    def fetch_unvalidated_genbank_records(accessions: list[str]) -> list[dict]:
         """
         Take a list of accession numbers, parse the corresponding XML records
         from GenBank using Entrez.Parser and return
@@ -135,7 +135,7 @@ class NCBIClient:
 
         return []
 
-    async def link_from_taxid_and_fetch(self, taxid: int) -> list[NCBIGenbank]:
+    def link_from_taxid_and_fetch(self, taxid: int) -> list[NCBIGenbank]:
         """Fetch all Genbank records linked to a taxonomy record.
 
         Usable without preexisting OTU data.
@@ -143,12 +143,12 @@ class NCBIClient:
         :param taxid: A NCBI Taxonomy id
         :return: A list of Entrez-parsed Genbank records
         """
-        accessions = await NCBIClient.link_accessions_from_taxid(taxid)
+        accessions = NCBIClient.link_accessions_from_taxid(taxid)
 
         logger = base_logger.bind(taxid=taxid, linked_accessions=accessions)
 
         logger.debug("Fetching accessions...")
-        records = await NCBIClient.fetch_unvalidated_genbank_records(accessions)
+        records = NCBIClient.fetch_unvalidated_genbank_records(accessions)
 
         if not records:
             logger.info("No accessions found for this Taxon ID")
@@ -166,7 +166,7 @@ class NCBIClient:
         return []
 
     @staticmethod
-    async def link_accessions_from_taxid(taxid: int) -> list:
+    def link_accessions_from_taxid(taxid: int) -> list:
         """
         Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
@@ -234,7 +234,7 @@ class NCBIClient:
         """
         return NCBIGenbank(**raw)
 
-    async def fetch_taxonomy_record(self, taxid: int) -> NCBITaxonomy | None:
+    def fetch_taxonomy_record(self, taxid: int) -> NCBITaxonomy | None:
         """
         Fetches and validates a taxonomy record from NCBI Taxonomy.
 
@@ -298,9 +298,8 @@ class NCBIClient:
 
         logger.info("Running additional docsum fetch...")
 
-        await asyncio.sleep(1)
         try:
-            rank = await self._fetch_taxonomy_rank(taxid)
+            rank = self._fetch_taxonomy_rank(taxid)
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
             logger.error("Your request was likely refused by NCBI.")
@@ -315,7 +314,7 @@ class NCBIClient:
         return None
 
     @staticmethod
-    async def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
+    def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
         """
         Takes an NCBI TaxonId and fetches the eSummary XML
         to extract the rank data and returns a valid NCBIRank if possible.
@@ -372,7 +371,7 @@ class NCBIClient:
         return NCBITaxonomy(rank=rank, **record)
 
     @staticmethod
-    async def fetch_taxonomy_id_by_name(name: str) -> int | None:
+    def fetch_taxonomy_id_by_name(name: str) -> int | None:
         """Returns a best-guess taxon ID for a given OTU name.
 
         Searches the NCBI taxonomy database for a given OTU name, then fetches and
@@ -398,7 +397,7 @@ class NCBIClient:
             return None
 
     @staticmethod
-    async def fetch_spelling(
+    def fetch_spelling(
         name: str, db: NCBIDatabase = NCBIDatabase.TAXONOMY
     ) -> str | None:
         """Takes the name of an OTU and returns an alternative spelling
