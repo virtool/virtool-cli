@@ -72,7 +72,7 @@ class CreateOTUData(EventData):
     """Represents the data for the creation of a new OTU."""
 
     id: UUID4
-    abbreviation: str
+    acronym: str
     excluded_accessions: list[str]
     rep_isolate: UUID4 | None
     name: str

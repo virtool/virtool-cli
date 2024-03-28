@@ -161,7 +161,7 @@ class EventSourcedRepo:
             otu = self.get_otu(otu_id)
             yield otu
 
-    def create_otu(self, abbreviation: str, name: str, schema: [], taxid: int):
+    def create_otu(self, acronym: str, name: str, schema: [], taxid: int):
         """Create an OTU."""
         otu_id = uuid.uuid4()
 
@@ -169,7 +169,7 @@ class EventSourcedRepo:
             CreateOTU,
             CreateOTUData(
                 id=otu_id,
-                abbreviation=abbreviation,
+                acronym=acronym,
                 excluded_accessions=[],
                 name=name,
                 schema=schema,
@@ -181,7 +181,7 @@ class EventSourcedRepo:
 
         return EventSourcedRepoOTU(
             id=otu_id,
-            abbreviation=abbreviation,
+            acronym=acronym,
             excluded_accessions=[],
             isolates=[],
             name=name,
@@ -271,7 +271,7 @@ class EventSourcedRepo:
 
         otu = EventSourcedRepoOTU(
             id=event.data.id,
-            abbreviation=event.data.abbreviation,
+            acronym=event.data.acronym,
             excluded_accessions=event.data.excluded_accessions,
             isolates=[],
             name=event.data.name,
