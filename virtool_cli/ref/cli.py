@@ -1,16 +1,21 @@
+import sys
 from pathlib import Path
 
 import click
+from structlog import get_logger
 
 from virtool_cli.add.cli import add
 from virtool_cli.check.cli import check
-from virtool_cli.options import path_option
+from virtool_cli.ncbi.client import NCBIClient
+from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
 from virtool_cli.ref.migrate import run as run_migrate
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.utils import DataType
 from virtool_cli.update.cli import update
-from virtool_cli.utils.logging import error_message_style
+from virtool_cli.utils.logging import configure_logger, error_message_style
+
+logger = get_logger()
 
 
 @click.group("ref")
@@ -51,6 +56,32 @@ ref.add_command(check)
 def init(data_type: DataType, name: str, organism: str, path: Path):
     """Create a new event-sourced repo."""
     EventSourcedRepo.new(data_type, name, path, organism)
+
+
+@ref.group()
+def otu():
+    """Manage OTUs"""
+
+
+@otu.command()
+@click.argument("TAXID", type=int)
+@debug_option
+@path_option
+def create(debug: bool, path: Path, taxid: int):
+    configure_logger(debug)
+
+    repo = EventSourcedRepo(path)
+    ncbi = NCBIClient.from_repo(repo.path, False)
+
+    taxonomy = ncbi.fetch_taxonomy_record(taxid)
+
+    if taxonomy is None:
+        logger.fatal(f"Taxonomy ID {taxid} not found")
+        sys.exit(1)
+
+    otu = repo.create_otu("", None, taxonomy.name, [], taxid)
+
+    logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
 
 @ref.command()

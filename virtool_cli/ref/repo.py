@@ -18,7 +18,9 @@ from typing import Generator, Type
 
 import arrow
 from orjson import orjson
+from structlog import get_logger
 
+from virtool_cli.ref.checking import Checker
 from virtool_cli.ref.events import (
     CreateIsolate,
     CreateIsolateData,
@@ -44,6 +46,8 @@ from virtool_cli.ref.resources import (
 )
 from virtool_cli.ref.utils import DataType, pad_zeroes
 
+logger = get_logger("repo")
+
 
 class EventSourcedRepo:
     def __init__(self, path: Path):
@@ -52,11 +56,17 @@ class EventSourcedRepo:
 
         self.last_id = 0
 
+        logger.info("Loading repository")
+
         for event in self._iter_events():
             if event.id - self.last_id != 1:
                 raise ValueError("Event IDs are not sequential.")
 
             self.last_id = event.id
+
+        self.checker = Checker(self)
+
+        logger.info("Finished loading repository", event_count=self.last_id)
 
     @classmethod
     def new(cls, data_type: DataType, name: str, path: Path, organism: str):
@@ -170,6 +180,9 @@ class EventSourcedRepo:
         taxid: int,
     ):
         """Create an OTU."""
+        self.checker.check_otu_name_exists(name)
+        self.checker.check_legacy_id_exists(legacy_id)
+
         otu_id = uuid.uuid4()
 
         self._write_event(
