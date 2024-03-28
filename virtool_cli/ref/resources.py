@@ -89,8 +89,8 @@ class EventSourcedRepoOTU:
     id: UUID
     """The OTU id."""
 
-    abbreviation: str
-    """The OTU abbreviation (eg. TMV)."""
+    acronym: str
+    """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
     excluded_accessions: list[str]
 
@@ -111,7 +111,7 @@ class EventSourcedRepoOTU:
     def dict(self):
         return {
             "id": self.id,
-            "abbreviation": self.abbreviation,
+            "acronym": self.acronym,
             "excluded_accessions": self.excluded_accessions,
             "isolates": [isolate.dict() for isolate in self.isolates],
             "name": self.name,

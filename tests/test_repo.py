@@ -16,7 +16,10 @@ from virtool_cli.ref.utils import DataType
 @pytest.fixture()
 def _repo(tmp_path: Path):
     return EventSourcedRepo.new(
-        DataType.GENOME, "Generic Viruses", tmp_path / "test_repo", "virus",
+        DataType.GENOME,
+        "Generic Viruses",
+        tmp_path / "test_repo",
+        "virus",
     )
 
 
@@ -40,7 +43,7 @@ def test_create_otu(_repo: EventSourcedRepo):
 
     assert otu == EventSourcedRepoOTU(
         id=otu.id,
-        abbreviation="TMV",
+        acronym="TMV",
         excluded_accessions=[],
         isolates=[],
         name="Tobacco mosaic virus",
@@ -56,7 +59,7 @@ def test_create_otu(_repo: EventSourcedRepo):
     assert event == {
         "data": {
             "id": str(otu.id),
-            "abbreviation": "TMV",
+            "acronym": "TMV",
             "excluded_accessions": [],
             "name": "Tobacco mosaic virus",
             "rep_isolate": None,
@@ -187,7 +190,7 @@ def test_get_otu(_repo: EventSourcedRepo):
 
     assert otu == EventSourcedRepoOTU(
         id=otu.id,
-        abbreviation="TMV",
+        acronym="TMV",
         excluded_accessions=[],
         isolates=[
             EventSourcedRepoIsolate(
