@@ -161,7 +161,14 @@ class EventSourcedRepo:
             otu = self.get_otu(otu_id)
             yield otu
 
-    def create_otu(self, acronym: str, name: str, schema: [], taxid: int):
+    def create_otu(
+        self,
+        acronym: str,
+        legacy_id: str | None,
+        name: str,
+        schema: [],
+        taxid: int,
+    ):
         """Create an OTU."""
         otu_id = uuid.uuid4()
 
@@ -171,6 +178,7 @@ class EventSourcedRepo:
                 id=otu_id,
                 acronym=acronym,
                 excluded_accessions=[],
+                legacy_id=legacy_id,
                 name=name,
                 schema=schema,
                 rep_isolate=None,
@@ -184,18 +192,26 @@ class EventSourcedRepo:
             acronym=acronym,
             excluded_accessions=[],
             isolates=[],
+            legacy_id=legacy_id,
             name=name,
             schema=schema,
             taxid=taxid,
         )
 
-    def create_isolate(self, otu_id: uuid.UUID, source_name: str, source_type: str):
+    def create_isolate(
+        self,
+        otu_id: uuid.UUID,
+        legacy_id: str | None,
+        source_name: str,
+        source_type: str,
+    ):
         isolate_id = uuid.uuid4()
 
         self._write_event(
             CreateIsolate,
             CreateIsolateData(
                 id=isolate_id,
+                legacy_id=legacy_id,
                 source_name=source_name,
                 source_type=source_type,
             ),
@@ -204,6 +220,7 @@ class EventSourcedRepo:
 
         return EventSourcedRepoIsolate(
             id=isolate_id,
+            legacy_id=legacy_id,
             sequences=[],
             source_name=source_name,
             source_type=source_type,
@@ -215,6 +232,7 @@ class EventSourcedRepo:
         isolate_id: uuid.UUID,
         accession: str,
         definition: str,
+        legacy_id: str | None,
         segment: str,
         sequence: str,
     ):
@@ -226,6 +244,7 @@ class EventSourcedRepo:
                 id=sequence_id,
                 accession=accession,
                 definition=definition,
+                legacy_id=legacy_id,
                 segment=segment,
                 sequence=sequence,
             ),
@@ -240,6 +259,7 @@ class EventSourcedRepo:
             id=sequence_id,
             accession=accession,
             definition=definition,
+            legacy_id=legacy_id,
             segment=segment,
             sequence=sequence,
         )
@@ -274,6 +294,7 @@ class EventSourcedRepo:
             acronym=event.data.acronym,
             excluded_accessions=event.data.excluded_accessions,
             isolates=[],
+            legacy_id=event.data.legacy_id,
             name=event.data.name,
             schema=event.data.otu_schema,
             taxid=event.data.taxid,
@@ -286,6 +307,7 @@ class EventSourcedRepo:
                 otu.add_isolate(
                     EventSourcedRepoIsolate(
                         id=event.data.id,
+                        legacy_id=event.data.legacy_id,
                         sequences=[],
                         source_name=event.data.source_name,
                         source_type=event.data.source_type,
@@ -300,6 +322,7 @@ class EventSourcedRepo:
                                 id=event.data.id,
                                 accession=event.data.accession,
                                 definition=event.data.definition,
+                                legacy_id=event.data.legacy_id,
                                 segment=event.data.segment,
                                 sequence=event.data.sequence,
                             ),

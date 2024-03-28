@@ -86,6 +86,7 @@ class CreateOTUData(EventData):
     id: UUID4
     acronym: str
     excluded_accessions: list[str]
+    legacy_id: str | None
     rep_isolate: UUID4 | None
     name: str
     otu_schema: list = Field(alias="schema")
@@ -103,6 +104,7 @@ class CreateIsolateData(EventData):
     """The data for the creation of a new isolate."""
 
     id: UUID4
+    legacy_id: str | None
     source_name: str
     source_type: str
 
@@ -120,6 +122,7 @@ class CreateSequenceData(EventData):
     id: UUID4
     accession: str
     definition: str
+    legacy_id: str | None
     segment: str
     sequence: str
 
