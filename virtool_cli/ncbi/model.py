@@ -1,6 +1,14 @@
+from typing import ClassVar
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, AliasChoices, field_validator, computed_field
+from pydantic import (
+    BaseModel,
+    Field,
+    PrivateAttr,
+    AliasChoices,
+    field_validator,
+    computed_field,
+)
 
 
 class NCBIDatabase(StrEnum):
@@ -67,6 +75,7 @@ class NCBITaxonomy(BaseModel):
     name: str = Field(
         validation_alias=AliasChoices("name", "ScientificName"),
     )
+
     lineage: list[NCBILineage] = Field(
         validation_alias=AliasChoices("lineage", "LineageEx"),
     )
@@ -82,6 +91,11 @@ class NCBITaxonomy(BaseModel):
                 return item
 
         raise ValueError("No species level taxon found in lineage")
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def cast_to_int(cls, raw: str):
+        return int(raw)
 
     @field_validator("lineage", mode="before")
     @classmethod

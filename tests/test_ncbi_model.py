@@ -23,7 +23,7 @@ class TestParseGenbank:
 
         source = NCBIGenbank.create_source(record["GBSeq_feature-table"])
 
-        assert source == snapshot
+        assert source.model_dump() == snapshot
 
     def test_parse_genbank_record(
         self, accession, scratch_cache, snapshot: SnapshotAssertion
@@ -32,7 +32,7 @@ class TestParseGenbank:
 
         validated_record = NCBIGenbank(**record)
 
-        assert validated_record == snapshot
+        assert validated_record.model_dump() == snapshot
 
     def test_parse_genbank_source_taxid(
         self, accession, scratch_cache, snapshot: SnapshotAssertion
@@ -57,9 +57,11 @@ class TestTaxonomyParse:
     ):
         record = scratch_cache.load_taxonomy(taxid)
 
-        assert NCBITaxonomy(**record)
+        validated_taxonomy = NCBITaxonomy(**record)
 
-        assert record == snapshot
+        assert type(validated_taxonomy) is NCBITaxonomy
+
+        assert validated_taxonomy.model_dump() == snapshot
 
     @pytest.mark.parametrize("taxid, rank", [(1016856, "isolate")])
     def test_parse_taxonomy_record_rank_addendum(
@@ -70,9 +72,9 @@ class TestTaxonomyParse:
         with pytest.raises(ValidationError):
             assert NCBITaxonomy(**record)
 
-        assert NCBITaxonomy(rank=rank, **record)
+        validated_taxonomy = NCBITaxonomy(rank=rank, **record)
 
-        assert record == snapshot
+        assert validated_taxonomy.model_dump() == snapshot
 
 
 @pytest.mark.parametrize(
@@ -83,12 +85,14 @@ class TestTaxonomyParse:
     ],
 )
 def test_create_lineage_item_alias(lineage_data, snapshot: SnapshotAssertion):
+    lineage_data_clean = {
+        "id": lineage_data["TaxId"],
+        "name": lineage_data["ScientificName"],
+        "rank": lineage_data["Rank"],
+    }
+
     lineage_item_native = NCBILineage(**lineage_data)
-    lineage_item_clean = NCBILineage(
-        id=lineage_data["TaxId"],
-        name=lineage_data["ScientificName"],
-        rank=lineage_data["Rank"],
-    )
+    lineage_item_clean = NCBILineage(**lineage_data_clean)
 
     assert lineage_item_native == lineage_item_clean
 
