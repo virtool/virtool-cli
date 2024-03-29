@@ -166,6 +166,7 @@
 # ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_rank_addendum[1016856-isolate]
   dict({
+    'acronym': '',
     'id': 1016856,
     'lineage': list([
       dict({
@@ -215,6 +216,13 @@
       }),
     ]),
     'name': 'Banana streak UL virus',
+    'names': dict({
+      'acronyms': list([
+      ]),
+      'equivalents': list([
+        'Banana streak Uganda L virus',
+      ]),
+    }),
     'rank': <NCBIRank.ISOLATE: 'isolate'>,
     'species': dict({
       'id': 3047392,
@@ -225,6 +233,7 @@
 # ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_single[1198450]
   dict({
+    'acronym': '',
     'id': 1198450,
     'lineage': list([
       dict({
@@ -269,6 +278,12 @@
       }),
     ]),
     'name': 'Jacquemontia mosaic Yucatan virus',
+    'names': dict({
+      'acronyms': list([
+      ]),
+      'equivalents': list([
+      ]),
+    }),
     'rank': <NCBIRank.SPECIES: 'species'>,
     'species': dict({
       'id': 1198450,
@@ -279,6 +294,7 @@
 # ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_single[270478]
   dict({
+    'acronym': '',
     'id': 270478,
     'lineage': list([
       dict({
@@ -323,6 +339,12 @@
       }),
     ]),
     'name': 'Zantedeschia mild mosaic virus',
+    'names': dict({
+      'acronyms': list([
+      ]),
+      'equivalents': list([
+      ]),
+    }),
     'rank': <NCBIRank.SPECIES: 'species'>,
     'species': dict({
       'id': 270478,
@@ -333,6 +355,7 @@
 # ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_single[438782]
   dict({
+    'acronym': '',
     'id': 438782,
     'lineage': list([
       dict({
@@ -377,6 +400,12 @@
       }),
     ]),
     'name': 'Abaca bunchy top virus',
+    'names': dict({
+      'acronyms': list([
+      ]),
+      'equivalents': list([
+      ]),
+    }),
     'rank': <NCBIRank.SPECIES: 'species'>,
     'species': dict({
       'id': 438782,

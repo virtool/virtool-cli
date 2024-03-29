@@ -1,14 +1,7 @@
-from typing import ClassVar
 from enum import StrEnum
 
-from pydantic import (
-    BaseModel,
-    Field,
-    PrivateAttr,
-    AliasChoices,
-    field_validator,
-    computed_field,
-)
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices
+from pydantic import field_validator, computed_field
 
 
 class NCBIDatabase(StrEnum):
@@ -64,21 +57,29 @@ class NCBIGenbank(BaseModel):
         raise ValueError("Feature table contains no ``source`` table.")
 
 
+class NCBITaxonomyNames(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    acronyms: list[str] = Field([], validation_alias="Acronym")
+    equivalents: list[str] = Field([], validation_alias="EquivalentName")
+
+
 class NCBILineage(BaseModel):
-    id: int = Field(validation_alias=AliasChoices("id", "TaxId"))
-    name: str = Field(validation_alias=AliasChoices("name", "ScientificName"))
-    rank: str = Field(validation_alias=AliasChoices("rank", "Rank"))
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int = Field(validation_alias="TaxId")
+    name: str = Field(validation_alias="ScientificName")
+    rank: str = Field(validation_alias="Rank")
 
 
 class NCBITaxonomy(BaseModel):
-    id: int = Field(validation_alias=AliasChoices("id", "TaxId"))
-    name: str = Field(
-        validation_alias=AliasChoices("name", "ScientificName"),
-    )
+    model_config = ConfigDict(populate_by_name=True)
 
-    lineage: list[NCBILineage] = Field(
-        validation_alias=AliasChoices("lineage", "LineageEx"),
-    )
+    id: int = Field(validation_alias="TaxId")
+    name: str = Field(validation_alias="ScientificName")
+    names: NCBITaxonomyNames = Field(NCBITaxonomyNames(), validation_alias="OtherNames")
+
+    lineage: list[NCBILineage] = Field(validation_alias="LineageEx")
     rank: NCBIRank = Field(validation_alias=AliasChoices("rank", "Rank"))
 
     @computed_field
@@ -91,6 +92,12 @@ class NCBITaxonomy(BaseModel):
                 return item
 
         raise ValueError("No species level taxon found in lineage")
+
+    @computed_field
+    def acronym(self) -> str:
+        if self.names.acronyms:
+            return self.names.acronyms[0]
+        return ""
 
     @field_validator("id", mode="before")
     @classmethod
