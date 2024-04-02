@@ -10,25 +10,27 @@ class EventQuery(BaseModel):
 
 
 class RepoQuery(EventQuery):
-    """Represents the query for targeting an event at a repository."""
+    """An event query that targets an event at a repository."""
 
     repository_id: UUID4
 
 
 class OTUQuery(EventQuery):
-    """Represents the query for targeting an event at an OTU."""
+    """An event query that targets an event at an OTU."""
 
     otu_id: UUID4
 
 
 class IsolateQuery(OTUQuery):
-    """Represents the query for targeting an event at an isolate."""
+    """An event query that targets an event at an isolate in a specific OTU."""
 
     isolate_id: UUID4
 
 
 class SequenceQuery(IsolateQuery):
-    """Represents the query for targeting an event at a sequence."""
+    """An event query that targets an event at a sequence in a specific isolate and
+    OTU.
+    """
 
     sequence_id: UUID4
 
@@ -41,10 +43,22 @@ class EventData(BaseModel):
 
 
 class Event(BaseModel):
+    """The base event."""
+
     id: int
+    """The unique identifier for the event.
+    
+    Event IDs are serially incremented integers.
+    """
+
     data: EventData
+    """The data associated with the event."""
+
     query: EventQuery
+    """The query targeting the event at a specific resource."""
+
     timestamp: datetime.datetime
+    """When the event occurred."""
 
     @computed_field
     @property
@@ -53,7 +67,7 @@ class Event(BaseModel):
 
 
 class CreateRepoData(EventData):
-    """Represents the data for the creation of a new repository."""
+    """The data for a repository creation event (`CreateRepo`)."""
 
     id: UUID4
     data_type: str
@@ -62,18 +76,19 @@ class CreateRepoData(EventData):
 
 
 class CreateRepo(Event):
-    """Represents the creation of a new repository."""
+    """A repo creation event."""
 
     data: CreateRepoData
     query: RepoQuery
 
 
 class CreateOTUData(EventData):
-    """Represents the data for the creation of a new OTU."""
+    """The data for the creation of a new OTU ('CreateOTU')."""
 
     id: UUID4
     acronym: str
     excluded_accessions: list[str]
+    legacy_id: str | None
     rep_isolate: UUID4 | None
     name: str
     otu_schema: list = Field(alias="schema")
@@ -81,39 +96,41 @@ class CreateOTUData(EventData):
 
 
 class CreateOTU(Event):
-    """Represents the creation of a new OTU."""
+    """An OTU creation event."""
 
     data: CreateOTUData
     query: OTUQuery
 
 
 class CreateIsolateData(EventData):
-    """Represents the data for the creation of a new isolate."""
+    """The data for the creation of a new isolate."""
 
     id: UUID4
+    legacy_id: str | None
     source_name: str
     source_type: str
 
 
 class CreateIsolate(Event):
-    """Represents the creation of a new isolate."""
+    """An isolate creation event."""
 
     data: CreateIsolateData
     query: IsolateQuery
 
 
 class CreateSequenceData(EventData):
-    """Represents the data for the creation of a new sequence."""
+    """The data for the creation of a new sequence."""
 
     id: UUID4
     accession: str
     definition: str
+    legacy_id: str | None
     segment: str
     sequence: str
 
 
 class CreateSequence(Event):
-    """Represents the creation of a new sequence."""
+    """A sequence creation event."""
 
     data: CreateSequenceData
     query: SequenceQuery
