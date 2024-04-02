@@ -28,7 +28,9 @@ class IsolateQuery(OTUQuery):
 
 
 class SequenceQuery(IsolateQuery):
-    """An event query that targets an event at a sequence in a specific isolate and OTU."""
+    """An event query that targets an event at a sequence in a specific isolate and
+    OTU.
+    """
 
     sequence_id: UUID4
 

@@ -167,7 +167,7 @@ class EventSourcedRepo:
             if type(event) in (CreateOTU, CreateIsolate, CreateSequence):
                 otu_event_index[event.query.otu_id].append(event.id)
 
-        for otu_id, event_ids in otu_event_index.items():
+        for otu_id, _ in otu_event_index.items():
             otu = self.get_otu(otu_id)
             yield otu
 
