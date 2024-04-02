@@ -57,13 +57,6 @@ class NCBIGenbank(BaseModel):
         raise ValueError("Feature table contains no ``source`` table.")
 
 
-class NCBITaxonomyNames(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    acronyms: list[str] = Field([], validation_alias="Acronym")
-    equivalents: list[str] = Field([], validation_alias="EquivalentName")
-
-
 class NCBILineage(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -72,12 +65,26 @@ class NCBILineage(BaseModel):
     rank: str = Field(validation_alias="Rank")
 
 
+class NCBITaxonomyOtherNames(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    acronyms: list[str] = Field([], validation_alias="Acronym")
+    genbank_acronyms: list[str] = Field([], validation_alias="GenbankAcronym")
+    equivalents: list[str] = Field([], validation_alias="EquivalentName")
+    synonyms: list[str] = Field([], validation_alias="Synonym")
+    includes: list[str] = Field([], validation_alias="Includes")
+
+    names_table: list[dict] = Field([], validation_alias="Name")
+
+
 class NCBITaxonomy(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: int = Field(validation_alias="TaxId")
     name: str = Field(validation_alias="ScientificName")
-    names: NCBITaxonomyNames = Field(NCBITaxonomyNames(), validation_alias="OtherNames")
+    other_names: NCBITaxonomyOtherNames = Field(
+        NCBITaxonomyOtherNames(), validation_alias="OtherNames"
+    )
 
     lineage: list[NCBILineage] = Field(validation_alias="LineageEx")
     rank: NCBIRank = Field(validation_alias=AliasChoices("rank", "Rank"))
@@ -93,11 +100,10 @@ class NCBITaxonomy(BaseModel):
 
         raise ValueError("No species level taxon found in lineage")
 
-    @computed_field
-    def acronym(self) -> str:
-        if self.names.acronyms:
-            return self.names.acronyms[0]
-        return ""
+    @field_validator("other_names", mode="before")
+    @classmethod
+    def get_other_names(cls, raw):
+        return NCBITaxonomyOtherNames(**raw)
 
     @field_validator("id", mode="before")
     @classmethod

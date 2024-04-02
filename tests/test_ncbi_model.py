@@ -51,7 +51,7 @@ class TestParseGenbank:
 
 
 class TestTaxonomyParse:
-    @pytest.mark.parametrize("taxid", [270478, 438782, 1198450])
+    @pytest.mark.parametrize("taxid", [270478, 438782, 1198450, 1077859])
     def test_parse_taxonomy_record_single(
         self, taxid: int, scratch_cache, snapshot: SnapshotAssertion
     ):

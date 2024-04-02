@@ -166,7 +166,6 @@
 # ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_rank_addendum[1016856-isolate]
   dict({
-    'acronym': '',
     'id': 1016856,
     'lineage': list([
       dict({
@@ -216,11 +215,19 @@
       }),
     ]),
     'name': 'Banana streak UL virus',
-    'names': dict({
+    'other_names': dict({
       'acronyms': list([
       ]),
       'equivalents': list([
         'Banana streak Uganda L virus',
+      ]),
+      'genbank_acronyms': list([
+      ]),
+      'includes': list([
+      ]),
+      'names_table': list([
+      ]),
+      'synonyms': list([
       ]),
     }),
     'rank': <NCBIRank.ISOLATE: 'isolate'>,
@@ -231,9 +238,80 @@
     }),
   })
 # ---
+# name: TestTaxonomyParse.test_parse_taxonomy_record_single[1077859]
+  dict({
+    'id': 1077859,
+    'lineage': list([
+      dict({
+        'id': 10239,
+        'name': 'Viruses',
+        'rank': 'superkingdom',
+      }),
+      dict({
+        'id': 2731342,
+        'name': 'Monodnaviria',
+        'rank': 'clade',
+      }),
+      dict({
+        'id': 2732092,
+        'name': 'Shotokuvirae',
+        'rank': 'kingdom',
+      }),
+      dict({
+        'id': 2732416,
+        'name': 'Cressdnaviricota',
+        'rank': 'phylum',
+      }),
+      dict({
+        'id': 2732424,
+        'name': 'Repensiviricetes',
+        'rank': 'class',
+      }),
+      dict({
+        'id': 2732539,
+        'name': 'Geplafuvirales',
+        'rank': 'order',
+      }),
+      dict({
+        'id': 10811,
+        'name': 'Geminiviridae',
+        'rank': 'family',
+      }),
+      dict({
+        'id': 10814,
+        'name': 'Begomovirus',
+        'rank': 'genus',
+      }),
+    ]),
+    'name': 'Tomato chlorotic leaf distortion virus',
+    'other_names': dict({
+      'acronyms': list([
+      ]),
+      'equivalents': list([
+      ]),
+      'genbank_acronyms': list([
+      ]),
+      'includes': list([
+      ]),
+      'names_table': list([
+        dict({
+          'ClassCDE': 'authority',
+          'DispName': 'Tomato chlorotic leaf distortion virus Zambrano et al. 2011',
+        }),
+      ]),
+      'synonyms': list([
+      ]),
+    }),
+    'rank': <NCBIRank.SPECIES: 'species'>,
+    'species': dict({
+      'id': 1077859,
+      'name': 'Tomato chlorotic leaf distortion virus',
+      'rank': 'species',
+    }),
+  })
+# ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_single[1198450]
   dict({
-    'acronym': '',
     'id': 1198450,
     'lineage': list([
       dict({
@@ -278,10 +356,18 @@
       }),
     ]),
     'name': 'Jacquemontia mosaic Yucatan virus',
-    'names': dict({
+    'other_names': dict({
       'acronyms': list([
       ]),
       'equivalents': list([
+      ]),
+      'genbank_acronyms': list([
+      ]),
+      'includes': list([
+      ]),
+      'names_table': list([
+      ]),
+      'synonyms': list([
       ]),
     }),
     'rank': <NCBIRank.SPECIES: 'species'>,
@@ -294,7 +380,6 @@
 # ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_single[270478]
   dict({
-    'acronym': '',
     'id': 270478,
     'lineage': list([
       dict({
@@ -339,10 +424,18 @@
       }),
     ]),
     'name': 'Zantedeschia mild mosaic virus',
-    'names': dict({
+    'other_names': dict({
       'acronyms': list([
       ]),
       'equivalents': list([
+      ]),
+      'genbank_acronyms': list([
+      ]),
+      'includes': list([
+      ]),
+      'names_table': list([
+      ]),
+      'synonyms': list([
       ]),
     }),
     'rank': <NCBIRank.SPECIES: 'species'>,
@@ -355,7 +448,6 @@
 # ---
 # name: TestTaxonomyParse.test_parse_taxonomy_record_single[438782]
   dict({
-    'acronym': '',
     'id': 438782,
     'lineage': list([
       dict({
@@ -400,10 +492,18 @@
       }),
     ]),
     'name': 'Abaca bunchy top virus',
-    'names': dict({
+    'other_names': dict({
       'acronyms': list([
       ]),
       'equivalents': list([
+      ]),
+      'genbank_acronyms': list([
+      ]),
+      'includes': list([
+      ]),
+      'names_table': list([
+      ]),
+      'synonyms': list([
       ]),
     }),
     'rank': <NCBIRank.SPECIES: 'species'>,
