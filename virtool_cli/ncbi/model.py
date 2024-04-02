@@ -59,7 +59,7 @@ class NCBIGenbank(BaseModel):
             if feature["GBFeature_key"] == "source":
                 return NCBISource(
                     **{
-                        qual["GBQualifier_name"]: qual["GBQualifier_value"]
+                        qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
                         for qual in feature["GBFeature_quals"]
                     }
                 )
