@@ -194,7 +194,7 @@ class NCBIClient:
                 if link_set_db["LinkName"] == "taxonomy_nuccore":
                     id_table = link_set_db["Link"]
 
-                    return [keypair["Id"] for keypair in id_table]
+                    return [keypair["Id"].split(".")[0] for keypair in id_table]
 
         return []
 
