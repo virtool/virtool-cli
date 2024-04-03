@@ -216,18 +216,16 @@
     ]),
     'name': 'Banana streak UL virus',
     'other_names': dict({
-      'acronyms': list([
+      'acronym': list([
       ]),
-      'equivalents': list([
+      'equivalent_name': list([
         'Banana streak Uganda L virus',
       ]),
-      'genbank_acronyms': list([
+      'genbank_acronym': list([
       ]),
       'includes': list([
       ]),
-      'names_table': list([
-      ]),
-      'synonyms': list([
+      'synonym': list([
       ]),
     }),
     'rank': <NCBIRank.ISOLATE: 'isolate'>,
@@ -285,21 +283,15 @@
     ]),
     'name': 'Tomato chlorotic leaf distortion virus',
     'other_names': dict({
-      'acronyms': list([
+      'acronym': list([
       ]),
-      'equivalents': list([
+      'equivalent_name': list([
       ]),
-      'genbank_acronyms': list([
+      'genbank_acronym': list([
       ]),
       'includes': list([
       ]),
-      'names_table': list([
-        dict({
-          'ClassCDE': 'authority',
-          'DispName': 'Tomato chlorotic leaf distortion virus Zambrano et al. 2011',
-        }),
-      ]),
-      'synonyms': list([
+      'synonym': list([
       ]),
     }),
     'rank': <NCBIRank.SPECIES: 'species'>,
@@ -357,17 +349,15 @@
     ]),
     'name': 'Jacquemontia mosaic Yucatan virus',
     'other_names': dict({
-      'acronyms': list([
+      'acronym': list([
       ]),
-      'equivalents': list([
+      'equivalent_name': list([
       ]),
-      'genbank_acronyms': list([
+      'genbank_acronym': list([
       ]),
       'includes': list([
       ]),
-      'names_table': list([
-      ]),
-      'synonyms': list([
+      'synonym': list([
       ]),
     }),
     'rank': <NCBIRank.SPECIES: 'species'>,
@@ -425,17 +415,15 @@
     ]),
     'name': 'Zantedeschia mild mosaic virus',
     'other_names': dict({
-      'acronyms': list([
+      'acronym': list([
       ]),
-      'equivalents': list([
+      'equivalent_name': list([
       ]),
-      'genbank_acronyms': list([
+      'genbank_acronym': list([
       ]),
       'includes': list([
       ]),
-      'names_table': list([
-      ]),
-      'synonyms': list([
+      'synonym': list([
       ]),
     }),
     'rank': <NCBIRank.SPECIES: 'species'>,
@@ -493,17 +481,15 @@
     ]),
     'name': 'Abaca bunchy top virus',
     'other_names': dict({
-      'acronyms': list([
+      'acronym': list([
       ]),
-      'equivalents': list([
+      'equivalent_name': list([
       ]),
-      'genbank_acronyms': list([
+      'genbank_acronym': list([
       ]),
       'includes': list([
       ]),
-      'names_table': list([
-      ]),
-      'synonyms': list([
+      'synonym': list([
       ]),
     }),
     'rank': <NCBIRank.SPECIES: 'species'>,

@@ -68,13 +68,11 @@ class NCBILineage(BaseModel):
 class NCBITaxonomyOtherNames(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    acronyms: list[str] = Field([], validation_alias="Acronym")
-    genbank_acronyms: list[str] = Field([], validation_alias="GenbankAcronym")
-    equivalents: list[str] = Field([], validation_alias="EquivalentName")
-    synonyms: list[str] = Field([], validation_alias="Synonym")
+    acronym: list[str] = Field([], validation_alias="Acronym")
+    genbank_acronym: list[str] = Field([], validation_alias="GenbankAcronym")
+    equivalent_name: list[str] = Field([], validation_alias="EquivalentName")
+    synonym: list[str] = Field([], validation_alias="Synonym")
     includes: list[str] = Field([], validation_alias="Includes")
-
-    names_table: list[dict] = Field([], validation_alias="Name")
 
 
 class NCBITaxonomy(BaseModel):
@@ -99,16 +97,6 @@ class NCBITaxonomy(BaseModel):
                 return item
 
         raise ValueError("No species level taxon found in lineage")
-
-    @field_validator("other_names", mode="before")
-    @classmethod
-    def get_other_names(cls, raw):
-        return NCBITaxonomyOtherNames(**raw)
-
-    @field_validator("id", mode="before")
-    @classmethod
-    def cast_to_int(cls, raw: str):
-        return int(raw)
 
     @field_validator("lineage", mode="before")
     @classmethod
