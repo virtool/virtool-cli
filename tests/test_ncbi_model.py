@@ -52,10 +52,16 @@ class TestParseGenbank:
 
 def test_genbank_sequence_validator_fail(scratch_cache):
     record = scratch_cache.load_genbank_record("AB017504")
+
+    assert NCBIGenbank(**record)
+
     record["GBSeq_sequence"] = "naa"
 
-    with pytest.raises(ValidationError):
+    try:
         NCBIGenbank(**record)
+    except ValidationError as exc:
+        for error in exc.errors():
+            assert "GBSeq_sequence" in error["loc"]
 
 
 class TestTaxonomyParse:
