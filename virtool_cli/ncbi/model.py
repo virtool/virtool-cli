@@ -35,10 +35,15 @@ class NCBISource(BaseModel):
 
 class NCBIGenbank(BaseModel):
     accession: str = Field(validation_alias="GBSeq_primary-accession")
+    accession_version: str = Field(validation_alias="GBSeq_accession-version")
     definition: str = Field(validation_alias="GBSeq_definition")
     sequence: str = Field(validation_alias="GBSeq_sequence")
     source: NCBISource = Field(validation_alias="GBSeq_feature-table")
     comment: str = Field("", validation_alias="GBSeq_comment")
+
+    @computed_field()
+    def refseq(self) -> bool:
+        return self.accession.startswith("NC_")
 
     @field_validator("sequence", mode="before")
     @classmethod
