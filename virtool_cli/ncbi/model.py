@@ -2,7 +2,7 @@ import re
 from enum import StrEnum
 
 from pydantic import BaseModel, Field, ConfigDict, AliasChoices
-from pydantic import field_validator, computed_field
+from pydantic import field_validator, model_validator, computed_field
 
 GATC = re.compile("[gatc]+")
 
@@ -37,6 +37,7 @@ class NCBIGenbank(BaseModel):
     accession: str = Field(validation_alias="GBSeq_primary-accession")
     accession_version: str = Field(validation_alias="GBSeq_accession-version")
     definition: str = Field(validation_alias="GBSeq_definition")
+    organism: str = Field(validation_alias="GBSeq_organism")
     sequence: str = Field(validation_alias="GBSeq_sequence")
     source: NCBISource = Field(validation_alias="GBSeq_feature-table")
     comment: str = Field("", validation_alias="GBSeq_comment")
@@ -63,14 +64,20 @@ class NCBIGenbank(BaseModel):
     def create_source(cls, raw: list) -> NCBISource:
         for feature in raw:
             if feature["GBFeature_key"] == "source":
-                return NCBISource(
-                    **{
-                        qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
-                        for qual in feature["GBFeature_quals"]
-                    }
-                )
+                source_dict = {
+                    qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
+                    for qual in feature["GBFeature_quals"]
+                }
+                return NCBISource(**source_dict)
 
         raise ValueError("Feature table contains no ``source`` table.")
+
+    @model_validator(mode="after")
+    def check_source(self):
+        if self.source.organism != self.organism:
+            raise ValueError("Non-matching organism fields on record and source")
+
+        return self
 
 
 class NCBILineage(BaseModel):
