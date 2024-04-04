@@ -66,8 +66,6 @@ class NCBILineage(BaseModel):
 
 
 class NCBITaxonomyOtherNames(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
     acronym: list[str] = Field([], validation_alias="Acronym")
     genbank_acronym: list[str] = Field([], validation_alias="GenbankAcronym")
     equivalent_name: list[str] = Field([], validation_alias="EquivalentName")
