@@ -19,13 +19,6 @@ class SourceType(StrEnum):
     REFSEQ = "refseq"
 
 
-@dataclass
-class RecordBin:
-    name: str
-    type: SourceType
-    records: dict
-
-
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
     """
     :param records:
@@ -44,22 +37,18 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
                     source_value = record.source.model_dump()[source_type]
 
                     if source_value not in isolates:
-                        isolates[source_value] = RecordBin(
-                            name=source_value, type=SourceType(source_type), records={}
-                        )
+                        isolates[(source_type, source_value)] = {}
 
-                    isolates[source_value].records[record.accession] = record
+                    isolates[(source_type, source_value)][record.accession] = record
 
         else:
             if record.refseq:
-                source_value = record.source.organism
+                source_value = record.accession
 
                 if source_value not in isolates:
-                    isolates[source_value] = RecordBin(
-                        name=source_value, type=SourceType.REFSEQ, records={}
-                    )
+                    isolates[(SourceType.REFSEQ, source_value)] = {}
 
-                isolates[source_value].records[record.accession] = record
+                isolates[(SourceType.REFSEQ, source_value)][record.accession] = record
                 logger.debug(
                     "RefSeq record does not contain sufficient source data. Edit before inclusion."
                 )
