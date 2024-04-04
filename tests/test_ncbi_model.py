@@ -50,6 +50,20 @@ class TestParseGenbank:
         assert NCBISource.db_xref_to_taxid(db_xref) == snapshot
 
 
+def test_genbank_sequence_validator_fail(scratch_cache):
+    record = scratch_cache.load_genbank_record("AB017504")
+
+    assert NCBIGenbank(**record)
+
+    record["GBSeq_sequence"] = "naa"
+
+    try:
+        NCBIGenbank(**record)
+    except ValidationError as exc:
+        for error in exc.errors():
+            assert "GBSeq_sequence" in error["loc"]
+
+
 class TestTaxonomyParse:
     @pytest.mark.parametrize("taxid", [270478, 438782, 1198450])
     def test_parse_taxonomy_record_single(

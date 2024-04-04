@@ -74,8 +74,7 @@ class NCBIClient:
                     logger.debug("Missing accession", missing_accession=accession)
 
         fetch_list = list(
-            set(accessions)
-            - {record.get("GBSeq_primary-accession") for record in records}
+            set(accessions) - {record.get(GBSeq.ACCESSION) for record in records}
         )
         if fetch_list:
             logger.debug("Fetching accessions...", fetch_list=fetch_list)
@@ -195,7 +194,7 @@ class NCBIClient:
                 if link_set_db["LinkName"] == "taxonomy_nuccore":
                     id_table = link_set_db["Link"]
 
-                    return [keypair["Id"] for keypair in id_table]
+                    return [keypair["Id"].split(".")[0] for keypair in id_table]
 
         return []
 
@@ -218,7 +217,7 @@ class NCBIClient:
                 clean_records.append(NCBIClient.validate_genbank_record(record))
 
             except (ValidationError, ValueError) as exc:
-                base_logger.error(f"{exc}", accession=accession)
+                base_logger.debug(f"{exc}", accession=accession)
 
         return clean_records
 

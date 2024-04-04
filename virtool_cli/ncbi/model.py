@@ -1,6 +1,9 @@
+import re
 from enum import StrEnum
 
 from pydantic import BaseModel, Field, AliasChoices, field_validator, computed_field
+
+GATC = re.compile("[gatc]+")
 
 
 class NCBIDatabase(StrEnum):
@@ -36,6 +39,14 @@ class NCBIGenbank(BaseModel):
     source: NCBISource = Field(validation_alias="GBSeq_feature-table")
     comment: str = Field("", validation_alias="GBSeq_comment")
 
+    @field_validator("sequence", mode="before")
+    @classmethod
+    def validate_sequence(cls, raw: str) -> str:
+        if GATC.match(raw):
+            return raw
+
+        raise ValueError("Invalid sequence code")
+
     @field_validator("sequence", mode="after")
     @classmethod
     def to_uppercase(cls, raw: str) -> str:
@@ -48,7 +59,7 @@ class NCBIGenbank(BaseModel):
             if feature["GBFeature_key"] == "source":
                 return NCBISource(
                     **{
-                        qual["GBQualifier_name"]: qual["GBQualifier_value"]
+                        qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
                         for qual in feature["GBFeature_quals"]
                     }
                 )
