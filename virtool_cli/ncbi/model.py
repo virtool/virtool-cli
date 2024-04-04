@@ -1,7 +1,8 @@
 import re
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, AliasChoices, field_validator, computed_field
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices
+from pydantic import field_validator, computed_field
 
 GATC = re.compile("[gatc]+")
 
@@ -68,19 +69,31 @@ class NCBIGenbank(BaseModel):
 
 
 class NCBILineage(BaseModel):
-    id: int = Field(validation_alias=AliasChoices("id", "TaxId"))
-    name: str = Field(validation_alias=AliasChoices("name", "ScientificName"))
-    rank: str = Field(validation_alias=AliasChoices("rank", "Rank"))
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int = Field(validation_alias="TaxId")
+    name: str = Field(validation_alias="ScientificName")
+    rank: str = Field(validation_alias="Rank")
+
+
+class NCBITaxonomyOtherNames(BaseModel):
+    acronym: list[str] = Field([], validation_alias="Acronym")
+    genbank_acronym: list[str] = Field([], validation_alias="GenbankAcronym")
+    equivalent_name: list[str] = Field([], validation_alias="EquivalentName")
+    synonym: list[str] = Field([], validation_alias="Synonym")
+    includes: list[str] = Field([], validation_alias="Includes")
 
 
 class NCBITaxonomy(BaseModel):
-    id: int = Field(validation_alias=AliasChoices("id", "TaxId"))
-    name: str = Field(
-        validation_alias=AliasChoices("name", "ScientificName"),
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int = Field(validation_alias="TaxId")
+    name: str = Field(validation_alias="ScientificName")
+    other_names: NCBITaxonomyOtherNames = Field(
+        NCBITaxonomyOtherNames(), validation_alias="OtherNames"
     )
-    lineage: list[NCBILineage] = Field(
-        validation_alias=AliasChoices("lineage", "LineageEx"),
-    )
+
+    lineage: list[NCBILineage] = Field(validation_alias="LineageEx")
     rank: NCBIRank = Field(validation_alias=AliasChoices("rank", "Rank"))
 
     @computed_field
