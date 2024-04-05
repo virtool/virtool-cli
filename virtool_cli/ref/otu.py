@@ -8,8 +8,6 @@ from virtool_cli.ncbi.model import NCBIGenbank
 
 base_logger = structlog.get_logger()
 
-UNKNOWN = "unknown"
-
 
 class SourceType(StrEnum):
     ISOLATE = "isolate"
