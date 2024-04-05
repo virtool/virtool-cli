@@ -1,5 +1,4 @@
-import re
-from dataclasses import dataclass
+from typing import NamedTuple
 from enum import StrEnum
 
 import structlog
@@ -19,6 +18,11 @@ class SourceType(StrEnum):
     REFSEQ = "refseq"
 
 
+class SourceKey(NamedTuple):
+    type: SourceType
+    name: str
+
+
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
     """
     :param records:
@@ -34,27 +38,35 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
         ):
             for source_type in SourceType:
                 if source_type in record.source.model_fields_set:
-                    source_value = record.source.model_dump()[source_type]
+                    source_key = SourceKey(
+                        type=SourceType(source_type),
+                        name=record.source.model_dump()[source_type],
+                    )
 
-                    if source_value not in isolates:
-                        isolates[(source_type, source_value)] = {}
+                    if source_key not in isolates:
+                        isolates[source_key] = {}
 
-                    isolates[(source_type, source_value)][record.accession] = record
+                    isolates[source_key][record.accession] = record
 
         else:
             if record.refseq:
-                source_value = record.accession
-
-                if source_value not in isolates:
-                    isolates[(SourceType.REFSEQ, source_value)] = {}
-
-                isolates[(SourceType.REFSEQ, source_value)][record.accession] = record
                 logger.debug(
-                    "RefSeq record does not contain sufficient source data. Edit before inclusion."
+                    "RefSeq record does not contain sufficient source data. Edit before inclusion.",
+                    record=record,
                 )
+
+                source_key = SourceKey(
+                    type=SourceType(SourceType.REFSEQ), name=record.accession
+                )
+
+                if source_key not in isolates:
+                    isolates[source_key] = {}
+
+                isolates[source_key][record.accession] = record
             else:
                 logger.debug(
                     "Unreviewed record does not contain sufficient source data for inclusion."
                 )
+                break
 
     return isolates
