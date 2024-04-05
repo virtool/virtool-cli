@@ -33,9 +33,18 @@ class NCBISource(BaseModel):
         return int(raw.split(":")[1])
 
 
+class NCBIMolecule(BaseModel):
+    strandedness: str
+    type: str
+    topology: str
+
+
 class NCBIGenbank(BaseModel):
     accession: str = Field(validation_alias="GBSeq_primary-accession")
     accession_version: str = Field(validation_alias="GBSeq_accession-version")
+    molecule_strandedness: str = Field(validation_alias="GBSeq_strandedness")
+    molecule_type: str = Field(validation_alias="GBSeq_moltype")
+    molecule_topology: str = Field(validation_alias="GBSeq_topology")
     definition: str = Field(validation_alias="GBSeq_definition")
     organism: str = Field(validation_alias="GBSeq_organism")
     sequence: str = Field(validation_alias="GBSeq_sequence")
