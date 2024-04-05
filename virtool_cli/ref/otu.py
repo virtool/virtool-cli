@@ -31,7 +31,11 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
     isolates = {}
 
     for record in records:
-        logger = base_logger.bind(accession=record.accession)
+        logger = base_logger.bind(
+            accession=record.accession,
+            definition=record.definition,
+            source_data=record.source,
+        )
 
         if record.source.model_fields_set.intersection(
             {SourceType.ISOLATE, SourceType.STRAIN, SourceType.CLONE}
@@ -45,8 +49,9 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
 
                     if source_key not in isolates:
                         isolates[source_key] = {}
-
                     isolates[source_key][record.accession] = record
+
+                    break
 
         else:
             if record.refseq:
@@ -56,17 +61,16 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
                 )
 
                 source_key = SourceKey(
-                    type=SourceType(SourceType.REFSEQ), name=record.accession
+                    type=SourceType(SourceType.REFSEQ),
+                    name=record.accession,
                 )
 
                 if source_key not in isolates:
                     isolates[source_key] = {}
-
                 isolates[source_key][record.accession] = record
-            else:
-                logger.debug(
-                    "Unreviewed record does not contain sufficient source data for inclusion."
-                )
-                break
+
+        logger.debug(
+            "Record does not contain sufficient source data for inclusion.",
+        )
 
     return isolates
