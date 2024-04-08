@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from virtool_cli.ref.init import init_reference
+from virtool_cli.ncbi.client import NCBIClient
 
 
 @pytest.fixture()
@@ -57,3 +58,8 @@ def cache_scratch_path(cache_example_path, tmp_path: Path) -> Path:
     yield path
 
     shutil.rmtree(path)
+
+
+@pytest.fixture()
+def scratch_client(cache_scratch_path):
+    return NCBIClient(cache_scratch_path, ignore_cache=False)
