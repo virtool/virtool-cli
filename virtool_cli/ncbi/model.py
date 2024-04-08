@@ -17,15 +17,33 @@ class NCBIRank(StrEnum):
     ISOLATE = "isolate"
 
 
+class NCBISourceMolType(StrEnum):
+    GENOMIC_DNA = "genomic DNA"
+    OTHER_DNA = "other DNA"
+    UNASSIGNED_DNA = "unassigned DNA"
+
+    GENOMIC_RNA = "genomic RNA"
+    MRNA = "mRNA"
+    TRNA = "tRNA"
+    TRANSCRIBED_RNA = "transcribed RNA"
+    VIRAL_CRNA = "viral cRNA"
+    OTHER_RNA = "other RNA"
+
+
 class NCBISource(BaseModel):
     taxid: int = Field(validation_alias="db_xref")
     organism: str
-    mol_type: str
+    mol_type: NCBISourceMolType
     isolate: str = ""
     host: str = ""
     segment: str = ""
     strain: str = ""
     clone: str = ""
+
+    @field_validator("mol_type", mode="before")
+    @classmethod
+    def validate_moltype(cls, raw: str) -> NCBISourceMolType:
+        return NCBISourceMolType(raw)
 
     @field_validator("taxid", mode="before")
     @classmethod
@@ -33,18 +51,36 @@ class NCBISource(BaseModel):
         return int(raw.split(":")[1])
 
 
+class NCBIMolType(StrEnum):
+    DNA = "DNA"
+    RNA = "RNA"
+    TRNA = "tRNA"
+    MRNA = "mRNA"
+    CRNA = "cRNA"
+
+
+class NCBIStrandedness(StrEnum):
+    SINGLE = "single"
+    DOUBLE = "double"
+
+
+class NCBITopology(StrEnum):
+    LINEAR = "linear"
+    CIRCULAR = "circular"
+
+
 class NCBIMolecule(BaseModel):
-    strandedness: str
-    type: str
-    topology: str
+    strandedness: NCBIStrandedness
+    type: NCBIMolType
+    topology: NCBITopology
 
 
 class NCBIGenbank(BaseModel):
     accession: str = Field(validation_alias="GBSeq_primary-accession")
     accession_version: str = Field(validation_alias="GBSeq_accession-version")
-    molecule_strandedness: str = Field(validation_alias="GBSeq_strandedness")
-    molecule_type: str = Field(validation_alias="GBSeq_moltype")
-    molecule_topology: str = Field(validation_alias="GBSeq_topology")
+    strandedness: NCBIStrandedness = Field(validation_alias="GBSeq_strandedness")
+    molecule_type: NCBIMolType = Field(validation_alias="GBSeq_moltype")
+    topology: NCBITopology = Field(validation_alias="GBSeq_topology")
     definition: str = Field(validation_alias="GBSeq_definition")
     organism: str = Field(validation_alias="GBSeq_organism")
     sequence: str = Field(validation_alias="GBSeq_sequence")
