@@ -52,7 +52,8 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
 
         elif record.refseq:
             logger.debug(
-                "RefSeq record does not contain sufficient source data. Edit before inclusion.",
+                "RefSeq record does not contain sufficient source data. "
+                + "Edit before inclusion.",
                 record=record,
             )
 
