@@ -10,7 +10,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoOTU,
     EventSourcedRepoSequence,
 )
-from virtool_cli.ref.utils import DataType
+from virtool_cli.ref.utils import DataType, Molecule, Strandedness, MolType, Topology
 
 
 @pytest.fixture()
@@ -20,6 +20,17 @@ def _repo(tmp_path: Path):
         "Generic Viruses",
         tmp_path / "test_repo",
         "virus",
+    )
+
+
+def init_otu(repo: EventSourcedRepo) -> EventSourcedRepoOTU:
+    return repo.create_otu(
+        "TMV",
+        "abcd1234",
+        "Tobacco mosaic virus",
+        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+        [],
+        12242,
     )
 
 
@@ -40,7 +51,14 @@ class TestCreateOTU:
         """Test that creating an OTU returns the expected ``RepoOTU`` object and creates
         the expected event file.
         """
-        otu = _repo.create_otu("TMV", "abcd1234", "Tobacco mosaic virus", [], 12242)
+        otu = _repo.create_otu(
+            "TMV",
+            "abcd1234",
+            "Tobacco mosaic virus",
+            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            [],
+            12242,
+        )
 
         assert otu == EventSourcedRepoOTU(
             id=otu.id,
@@ -49,6 +67,7 @@ class TestCreateOTU:
             isolates=[],
             legacy_id="abcd1234",
             name="Tobacco mosaic virus",
+            molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
             schema=[],
             taxid=12242,
         )
@@ -65,6 +84,11 @@ class TestCreateOTU:
                 "excluded_accessions": [],
                 "legacy_id": "abcd1234",
                 "name": "Tobacco mosaic virus",
+                "molecule": {
+                    "strandedness": "single",
+                    "type": "RNA",
+                    "topology": "linear",
+                },
                 "rep_isolate": None,
                 "schema": [],
                 "taxid": 12242,
@@ -82,32 +106,60 @@ class TestCreateOTU:
         """Test that creating an OTU with a name that already exists raises a
         ``ValueError``.
         """
-        _repo.create_otu("TMV", None, "Tobacco mosaic virus", [], 12242)
+        _repo.create_otu(
+            "TMV",
+            None,
+            "Tobacco mosaic virus",
+            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            [],
+            12242,
+        )
 
         with pytest.raises(
             ValueError,
             match="An OTU with the name 'Tobacco mosaic virus' already exists",
         ):
-            _repo.create_otu("TMV", None, "Tobacco mosaic virus", [], 12242)
+            _repo.create_otu(
+                "TMV",
+                None,
+                "Tobacco mosaic virus",
+                Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                [],
+                12242,
+            )
 
     def test_duplicate_legacy_id(self, _repo: EventSourcedRepo):
         """Test that creating an OTU with a legacy ID that already exists raises a
         ``ValueError``.
         """
-        _repo.create_otu("TMV", "abcd1234", "Tobacco mosaic virus", [], 12242)
+        _repo.create_otu(
+            "TMV",
+            "abcd1234",
+            "Tobacco mosaic virus",
+            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            [],
+            12242,
+        )
 
         with pytest.raises(
             ValueError,
             match="An OTU with the legacy ID 'abcd1234' already exists",
         ):
-            _repo.create_otu("", "abcd1234", "Abaca bunchy top virus", [], 438782)
+            _repo.create_otu(
+                "",
+                "abcd1234",
+                "Abaca bunchy top virus",
+                Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                [],
+                438782,
+            )
 
 
 def test_create_isolate(_repo: EventSourcedRepo):
     """Test that creating an isolate returns the expected ``RepoIsolate`` object and
     creates the expected event file.
     """
-    otu = _repo.create_otu("TMV", None, "Tobacco mosaic virus", [], 12242)
+    otu = init_otu(_repo)
 
     isolate = _repo.create_isolate(otu.id, None, "A", "isolate")
 
@@ -143,7 +195,8 @@ def test_create_sequence(_repo: EventSourcedRepo):
     """Test that creating a sequence returns the expected ``RepoSequence`` object and
     creates the expected event file.
     """
-    otu = _repo.create_otu("TMV", None, "Tobacco mosaic virus", [], 12242)
+    otu = init_otu(_repo)
+
     isolate = _repo.create_isolate(otu.id, None, "A", "isolate")
 
     sequence = _repo.create_sequence(
@@ -195,7 +248,14 @@ def test_get_otu(_repo: EventSourcedRepo):
     """Test that getting an OTU returns the expected ``RepoOTU`` object including two
     isolates with one sequence each.
     """
-    otu = _repo.create_otu("TMV", None, "Tobacco mosaic virus", [], 12242)
+    otu = _repo.create_otu(
+        "TMV",
+        None,
+        "Tobacco mosaic virus",
+        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+        [],
+        12242,
+    )
 
     isolate_a = _repo.create_isolate(otu.id, None, "A", "isolate")
     _repo.create_sequence(
@@ -261,6 +321,7 @@ def test_get_otu(_repo: EventSourcedRepo):
             ),
         ],
         name="Tobacco mosaic virus",
+        molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
         schema=[],
         taxid=12242,
     )
