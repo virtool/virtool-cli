@@ -2,7 +2,7 @@ import datetime
 from dataclasses import dataclass
 from uuid import UUID
 
-from virtool_cli.ref.utils import DataType
+from virtool_cli.ref.utils import DataType, Molecule
 
 
 @dataclass
@@ -20,6 +20,9 @@ class RepoMeta:
 
     name: str
     """The repository name."""
+
+    molecule: Molecule
+    """The molecule strandedness, type and topology."""
 
     organism: str
     """The repository organism."""
@@ -120,6 +123,9 @@ class EventSourcedRepoOTU:
     name: str
     """The OTU name (eg. Tobacco mosaic virus)."""
 
+    molecule: Molecule
+    """The molecule of this OTU"""
+
     schema: list
 
     taxid: int
@@ -136,6 +142,7 @@ class EventSourcedRepoOTU:
             "isolates": [isolate.dict() for isolate in self.isolates],
             "legacy_id": self.legacy_id,
             "name": self.name,
+            "molecule": self.molecule,
             "schema": self.schema,
             "taxid": self.taxid,
         }

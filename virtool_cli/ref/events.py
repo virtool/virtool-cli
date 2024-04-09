@@ -2,6 +2,8 @@ import datetime
 
 from pydantic import UUID4, BaseModel, Field, computed_field
 
+from virtool_cli.ref.utils import Molecule
+
 
 class EventQuery(BaseModel):
     """A base class for representing the query targeting an event at a specific
@@ -91,6 +93,7 @@ class CreateOTUData(EventData):
     legacy_id: str | None
     rep_isolate: UUID4 | None
     name: str
+    molecule: Molecule
     otu_schema: list = Field(alias="schema")
     taxid: int
 
