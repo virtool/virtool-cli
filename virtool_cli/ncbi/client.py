@@ -216,8 +216,13 @@ class NCBIClient:
             try:
                 clean_records.append(NCBIClient.validate_genbank_record(record))
 
-            except (ValidationError, ValueError) as exc:
-                base_logger.debug(f"{exc}", accession=accession)
+            except ValidationError as exc:
+                base_logger.debug(
+                    f"Encountered {exc.error_count()} validation errors",
+                    accession=accession,
+                    errors=exc.errors(),
+                )
+                continue
 
         return clean_records
 

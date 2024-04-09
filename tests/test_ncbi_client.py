@@ -13,11 +13,6 @@ SERVER_ERRORS = ["HTTPError", "IncompleteRead"]
 
 
 @pytest.fixture()
-def scratch_client(cache_scratch_path):
-    return NCBIClient(cache_scratch_path, ignore_cache=False)
-
-
-@pytest.fixture()
 def empty_client(tmp_path):
     dummy_cache_path = tmp_path / "dummy_cache"
     dummy_cache_path.mkdir()
