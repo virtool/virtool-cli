@@ -69,17 +69,11 @@ class NCBITopology(StrEnum):
     CIRCULAR = "circular"
 
 
-class NCBIMolecule(BaseModel):
-    strandedness: NCBIStrandedness
-    type: NCBIMolType
-    topology: NCBITopology
-
-
 class NCBIGenbank(BaseModel):
     accession: str = Field(validation_alias="GBSeq_primary-accession")
     accession_version: str = Field(validation_alias="GBSeq_accession-version")
     strandedness: NCBIStrandedness = Field(validation_alias="GBSeq_strandedness")
-    molecule_type: NCBIMolType = Field(validation_alias="GBSeq_moltype")
+    moltype: NCBIMolType = Field(validation_alias="GBSeq_moltype")
     topology: NCBITopology = Field(validation_alias="GBSeq_topology")
     definition: str = Field(validation_alias="GBSeq_definition")
     organism: str = Field(validation_alias="GBSeq_organism")
@@ -90,6 +84,16 @@ class NCBIGenbank(BaseModel):
     @computed_field()
     def refseq(self) -> bool:
         return self.accession.startswith("NC_")
+
+    @field_validator("moltype", mode="before")
+    @classmethod
+    def validate_moltype(cls, raw: str) -> NCBIMolType:
+        return NCBIMolType(raw)
+
+    @field_validator("topology", mode="before")
+    @classmethod
+    def validate_topology(cls, raw: str) -> NCBITopology:
+        return NCBITopology(raw)
 
     @field_validator("sequence", mode="before")
     @classmethod
