@@ -41,7 +41,7 @@ class EventSourcedRepoSequence:
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
-    It the sequence was not migrated from a legacy repository, this will be `None`.    
+    It the sequence was not migrated from a legacy repository, this will be `None`.
     """
 
     sequence: str
@@ -71,7 +71,7 @@ class EventSourcedRepoIsolate:
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
-    It the isolate was not migrated from a legacy repository, this will be `None`.    
+    It the isolate was not migrated from a legacy repository, this will be `None`.
     """
 
     source_name: str
@@ -114,7 +114,7 @@ class EventSourcedRepoOTU:
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
-    It the OTU was not migrated from a legacy repository, this will be `None`.    
+    It the OTU was not migrated from a legacy repository, this will be `None`.
     """
 
     name: str

@@ -176,7 +176,7 @@ class EventSourcedRepo:
         acronym: str,
         legacy_id: str | None,
         name: str,
-        molecule: Molecule,
+        molecule: Molecule | None,
         schema: [],
         taxid: int,
     ):

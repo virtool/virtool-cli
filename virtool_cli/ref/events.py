@@ -49,7 +49,7 @@ class Event(BaseModel):
 
     id: int
     """The unique identifier for the event.
-    
+
     Event IDs are serially incremented integers.
     """
 
@@ -93,7 +93,7 @@ class CreateOTUData(EventData):
     legacy_id: str | None
     rep_isolate: UUID4 | None
     name: str
-    molecule: Molecule
+    molecule: Molecule | None
     otu_schema: list = Field(alias="schema")
     taxid: int
 
