@@ -1,5 +1,6 @@
 from typing import NamedTuple
 from enum import StrEnum
+from collections import defaultdict
 
 import structlog
 
@@ -26,7 +27,7 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
     :param records:
     :return:
     """
-    isolates = {}
+    isolates = defaultdict(dict)
 
     for record in records:
         logger = base_logger.bind(
@@ -45,27 +46,22 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
                         name=record.source.model_dump()[source_type],
                     )
 
-                    if source_key not in isolates:
-                        isolates[source_key] = {}
                     isolates[source_key][record.accession] = record
 
                     break
 
-        else:
-            if record.refseq:
-                logger.debug(
-                    "RefSeq record does not contain sufficient source data. Edit before inclusion.",
-                    record=record,
-                )
+        elif record.refseq:
+            logger.debug(
+                "RefSeq record does not contain sufficient source data. Edit before inclusion.",
+                record=record,
+            )
 
-                source_key = SourceKey(
-                    type=SourceType(SourceType.REFSEQ),
-                    name=record.accession,
-                )
+            source_key = SourceKey(
+                type=SourceType(SourceType.REFSEQ),
+                name=record.accession,
+            )
 
-                if source_key not in isolates:
-                    isolates[source_key] = {}
-                isolates[source_key][record.accession] = record
+            isolates[source_key][record.accession] = record
 
         logger.debug(
             "Record does not contain sufficient source data for inclusion.",
