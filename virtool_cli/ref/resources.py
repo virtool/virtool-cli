@@ -21,9 +21,6 @@ class RepoMeta:
     name: str
     """The repository name."""
 
-    molecule: Molecule
-    """The molecule strandedness, type and topology."""
-
     organism: str
     """The repository organism."""
 
