@@ -5,7 +5,6 @@ import click
 from structlog import get_logger
 
 from virtool_cli.add.cli import add
-from virtool_cli.check.cli import check
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
@@ -25,7 +24,6 @@ def ref():
 
 ref.add_command(update)
 ref.add_command(add)
-ref.add_command(check)
 
 
 @ref.command()
