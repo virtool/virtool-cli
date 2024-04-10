@@ -77,7 +77,14 @@ def create(debug: bool, path: Path, taxid: int):
         logger.fatal(f"Taxonomy ID {taxid} not found")
         sys.exit(1)
 
-    otu = repo.create_otu("", None, taxonomy.name, [], taxid)
+    otu = repo.create_otu(
+        acronym="",
+        legacy_id=None,
+        name=taxonomy.name,
+        molecule=None,
+        schema=[],
+        taxid=taxid,
+    )
 
     logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 

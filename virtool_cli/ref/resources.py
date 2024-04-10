@@ -2,7 +2,7 @@ import datetime
 from dataclasses import dataclass
 from uuid import UUID
 
-from virtool_cli.ref.utils import DataType
+from virtool_cli.ref.utils import DataType, Molecule
 
 
 @dataclass
@@ -41,7 +41,7 @@ class EventSourcedRepoSequence:
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
-    It the sequence was not migrated from a legacy repository, this will be `None`.    
+    It the sequence was not migrated from a legacy repository, this will be `None`.
     """
 
     sequence: str
@@ -71,7 +71,7 @@ class EventSourcedRepoIsolate:
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
-    It the isolate was not migrated from a legacy repository, this will be `None`.    
+    It the isolate was not migrated from a legacy repository, this will be `None`.
     """
 
     source_name: str
@@ -114,11 +114,14 @@ class EventSourcedRepoOTU:
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
-    It the OTU was not migrated from a legacy repository, this will be `None`.    
+    It the OTU was not migrated from a legacy repository, this will be `None`.
     """
 
     name: str
     """The OTU name (eg. Tobacco mosaic virus)."""
+
+    molecule: Molecule
+    """The molecule of this OTU"""
 
     schema: list
 
@@ -136,6 +139,7 @@ class EventSourcedRepoOTU:
             "isolates": [isolate.dict() for isolate in self.isolates],
             "legacy_id": self.legacy_id,
             "name": self.name,
+            "molecule": self.molecule,
             "schema": self.schema,
             "taxid": self.taxid,
         }

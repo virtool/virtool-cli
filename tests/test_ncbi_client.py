@@ -81,8 +81,9 @@ class TestClientFetchGenbank:
 
         assert clean_records
 
-        for record in clean_records:
-            assert record == snapshot(name=f"{record.accession}_validated.json")
+        assert {
+            path.name for path in client.cache._genbank_path.glob("*.json")
+        } == snapshot
 
     @pytest.mark.ncbi
     async def test_fetch_accessions_fail(self, scratch_client):

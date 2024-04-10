@@ -8,24 +8,53 @@ GATC = re.compile("[gatc]+")
 
 
 class NCBIDatabase(StrEnum):
+    """NCBI Databases used by NCBIClient"""
+
     NUCCORE = "nuccore"
     TAXONOMY = "taxonomy"
 
 
 class NCBIRank(StrEnum):
+    """Relevant OTU rank types"""
+
     SPECIES = "species"
     ISOLATE = "isolate"
+
+
+class NCBISourceMolType(StrEnum):
+    """The in vivo molecule type of a sequence
+    Based on the INSDC controlled vocabulary list for the /mol_type qualifier
+
+    Reference:
+    https://www.insdc.org/submitting-standards/controlled-vocabulary-moltype-qualifier/
+    """
+
+    GENOMIC_DNA = "genomic DNA"
+    OTHER_DNA = "other DNA"
+    UNASSIGNED_DNA = "unassigned DNA"
+
+    GENOMIC_RNA = "genomic RNA"
+    MRNA = "mRNA"
+    TRNA = "tRNA"
+    TRANSCRIBED_RNA = "transcribed RNA"
+    VIRAL_CRNA = "viral cRNA"
+    OTHER_RNA = "other RNA"
 
 
 class NCBISource(BaseModel):
     taxid: int = Field(validation_alias="db_xref")
     organism: str
-    mol_type: str
+    mol_type: NCBISourceMolType
     isolate: str = ""
     host: str = ""
     segment: str = ""
     strain: str = ""
     clone: str = ""
+
+    @field_validator("mol_type", mode="before")
+    @classmethod
+    def validate_moltype(cls, raw: str) -> NCBISourceMolType:
+        return NCBISourceMolType(raw)
 
     @field_validator("taxid", mode="before")
     @classmethod
@@ -33,9 +62,32 @@ class NCBISource(BaseModel):
         return int(raw.split(":")[1])
 
 
+class NCBIMolType(StrEnum):
+    """The in vivo molecule type of a sequence, corresponds to Genbank's moltype field"""
+
+    DNA = "DNA"
+    RNA = "RNA"
+    TRNA = "tRNA"
+    MRNA = "mRNA"
+    CRNA = "cRNA"
+
+
+class NCBIStrandedness(StrEnum):
+    SINGLE = "single"
+    DOUBLE = "double"
+
+
+class NCBITopology(StrEnum):
+    LINEAR = "linear"
+    CIRCULAR = "circular"
+
+
 class NCBIGenbank(BaseModel):
     accession: str = Field(validation_alias="GBSeq_primary-accession")
     accession_version: str = Field(validation_alias="GBSeq_accession-version")
+    strandedness: NCBIStrandedness = Field(validation_alias="GBSeq_strandedness")
+    moltype: NCBIMolType = Field(validation_alias="GBSeq_moltype")
+    topology: NCBITopology = Field(validation_alias="GBSeq_topology")
     definition: str = Field(validation_alias="GBSeq_definition")
     organism: str = Field(validation_alias="GBSeq_organism")
     sequence: str = Field(validation_alias="GBSeq_sequence")
@@ -45,6 +97,16 @@ class NCBIGenbank(BaseModel):
     @computed_field()
     def refseq(self) -> bool:
         return self.accession.startswith("NC_")
+
+    @field_validator("moltype", mode="before")
+    @classmethod
+    def validate_moltype(cls, raw: str) -> NCBIMolType:
+        return NCBIMolType(raw)
+
+    @field_validator("topology", mode="before")
+    @classmethod
+    def validate_topology(cls, raw: str) -> NCBITopology:
+        return NCBITopology(raw)
 
     @field_validator("sequence", mode="before")
     @classmethod
