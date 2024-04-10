@@ -12,7 +12,9 @@ class DataType(StrEnum):
 
 
 class MolType(StrEnum):
-    """The in vivo molecule type of a sequence, corresponds to Genbank's moltype field"""
+    """The in vivo molecule type of a sequence.
+
+    Corresponds to Genbank's moltype field"""
 
     DNA = "DNA"
     RNA = "RNA"
