@@ -2,8 +2,7 @@ import datetime
 from dataclasses import dataclass
 from uuid import UUID
 
-from virtool_cli.ref.utils import DataType, Molecule
-from virtool_cli.ref.model import IsolateName
+from virtool_cli.ref.utils import DataType, Molecule, IsolateName
 
 
 @dataclass

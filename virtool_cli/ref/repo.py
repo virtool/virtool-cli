@@ -44,8 +44,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
     RepoMeta,
 )
-from virtool_cli.ref.utils import DataType, Molecule, pad_zeroes
-from virtool_cli.ref.model import IsolateName
+from virtool_cli.ref.utils import DataType, Molecule, pad_zeroes, IsolateName
 
 logger = get_logger("repo")
 
