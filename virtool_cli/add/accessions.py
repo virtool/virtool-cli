@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import click
@@ -10,10 +11,20 @@ from virtool_cli.add.helpers import (
     is_addable,
     write_sequences_to_src,
 )
-from virtool_cli.check.otu import verify_accession
 from virtool_cli.ref.legacy import Repo, RepoSequence
 from virtool_cli.utils.format import get_qualifiers
 from virtool_cli.utils.ncbi import request_from_nucleotide
+
+
+def verify_accession(accession: str) -> bool:
+    """Returns True if the accession matches NCBI standards
+    The accession must be free of characters other than digits,
+    capital letters A-Z, '.', and '_'
+
+    :param accession: An accession to be inspected
+    :return: Boolean based on whether the accession is free of invalid characters
+    """
+    return re.search(r"([^A-Z_.0-9])", accession) is None
 
 
 async def add_accession(accession: str, path: Path) -> RepoSequence | None:
