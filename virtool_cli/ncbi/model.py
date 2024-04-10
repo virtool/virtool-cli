@@ -8,16 +8,27 @@ GATC = re.compile("[gatc]+")
 
 
 class NCBIDatabase(StrEnum):
+    """NCBI Databases used by NCBIClient"""
+
     NUCCORE = "nuccore"
     TAXONOMY = "taxonomy"
 
 
 class NCBIRank(StrEnum):
+    """Relevant OTU rank types"""
+
     SPECIES = "species"
     ISOLATE = "isolate"
 
 
 class NCBISourceMolType(StrEnum):
+    """The in vivo molecule type of a sequence
+    Based on the INSDC controlled vocabulary list for the /mol_type qualifier
+
+    Reference:
+    https://www.insdc.org/submitting-standards/controlled-vocabulary-moltype-qualifier/
+    """
+
     GENOMIC_DNA = "genomic DNA"
     OTHER_DNA = "other DNA"
     UNASSIGNED_DNA = "unassigned DNA"
@@ -52,6 +63,8 @@ class NCBISource(BaseModel):
 
 
 class NCBIMolType(StrEnum):
+    """The in vivo molecule type of a sequence, corresponds to Genbank's moltype field"""
+
     DNA = "DNA"
     RNA = "RNA"
     TRNA = "tRNA"
