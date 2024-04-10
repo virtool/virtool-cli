@@ -11,6 +11,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
 )
 from virtool_cli.ref.utils import DataType, Molecule, Strandedness, MolType, Topology
+from virtool_cli.ref.model import IsolateName
 
 
 @pytest.fixture()
@@ -165,8 +166,8 @@ def test_create_isolate(_repo: EventSourcedRepo):
 
     assert isinstance(isolate.id, UUID)
     assert isolate.sequences == []
-    assert isolate.source_name == "A"
-    assert isolate.source_type == "isolate"
+    assert isolate.name.value == "A"
+    assert isolate.name.type == "isolate"
 
     with open(_repo.path.joinpath("src", "00000003.json")) as f:
         event = orjson.loads(f.read())
@@ -177,8 +178,7 @@ def test_create_isolate(_repo: EventSourcedRepo):
         "data": {
             "id": str(isolate.id),
             "legacy_id": None,
-            "source_name": "A",
-            "source_type": "isolate",
+            "name": {"type": "isolate", "value": "A"},
         },
         "id": 3,
         "query": {
@@ -290,8 +290,7 @@ def test_get_otu(_repo: EventSourcedRepo):
             EventSourcedRepoIsolate(
                 id=isolate_a.id,
                 legacy_id=None,
-                source_name="A",
-                source_type="isolate",
+                name=IsolateName(type="isolate", value="A"),
                 sequences=[
                     EventSourcedRepoSequence(
                         id=otu.isolates[0].sequences[0].id,
@@ -306,8 +305,7 @@ def test_get_otu(_repo: EventSourcedRepo):
             EventSourcedRepoIsolate(
                 id=isolate_b.id,
                 legacy_id=None,
-                source_name="B",
-                source_type="isolate",
+                name=IsolateName(type="isolate", value="B"),
                 sequences=[
                     EventSourcedRepoSequence(
                         id=otu.isolates[1].sequences[0].id,

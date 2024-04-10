@@ -2,6 +2,7 @@ import datetime
 
 from pydantic import UUID4, BaseModel, Field, computed_field
 
+from virtool_cli.ref.model import IsolateName
 from virtool_cli.ref.utils import Molecule
 
 
@@ -110,8 +111,7 @@ class CreateIsolateData(EventData):
 
     id: UUID4
     legacy_id: str | None
-    source_name: str
-    source_type: str
+    name: IsolateName
 
 
 class CreateIsolate(Event):

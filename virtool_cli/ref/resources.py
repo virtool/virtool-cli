@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, Molecule
+from virtool_cli.ref.model import IsolateName
 
 
 @dataclass
@@ -74,11 +75,8 @@ class EventSourcedRepoIsolate:
     It the isolate was not migrated from a legacy repository, this will be `None`.
     """
 
-    source_name: str
-    """The isolate's source name."""
-
-    source_type: str
-    """The isolate's source type."""
+    name: IsolateName
+    """The isolate's source name metadata."""
 
     sequences: list[EventSourcedRepoSequence]
     """A list of child sequences."""
@@ -90,8 +88,7 @@ class EventSourcedRepoIsolate:
         return {
             "id": self.id,
             "legacy_id": self.legacy_id,
-            "source_name": self.source_name,
-            "source_type": self.source_type,
+            "name": self.name.model_dump(),
             "sequences": [sequence.dict() for sequence in self.sequences],
         }
 
