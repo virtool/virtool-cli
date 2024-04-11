@@ -12,7 +12,7 @@ def empty_cache_path(tmp_path):
 
 
 def get_test_record(accession: str, cache_example_path) -> dict:
-    with open(cache_example_path / "nuccore" / f"{accession}.json", "r") as f:
+    with open(cache_example_path / "genbank" / f"{accession}.json", "r") as f:
         return json.load(f)
 
 

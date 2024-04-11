@@ -17,7 +17,7 @@ class NCBICache:
         """
         self.path = path
 
-        self._genbank_path = self.path / "nuccore"
+        self._genbank_path = self.path / "genbank"
         self._taxonomy_path = self.path / "taxonomy"
 
         self.path.mkdir(exist_ok=True)
