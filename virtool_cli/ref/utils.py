@@ -1,6 +1,8 @@
 from enum import StrEnum
 from dataclasses import dataclass
 
+from pydantic import BaseModel, field_validator
+
 
 class DataType(StrEnum):
     """The possible reference data types."""
@@ -10,7 +12,9 @@ class DataType(StrEnum):
 
 
 class MolType(StrEnum):
-    """The in vivo molecule type of a sequence, corresponds to Genbank's moltype field"""
+    """The in vivo molecule type of a sequence.
+
+    Corresponds to Genbank's moltype field"""
 
     DNA = "DNA"
     RNA = "RNA"
@@ -51,3 +55,26 @@ def pad_zeroes(number: int) -> str:
     :return: the padded number
     """
     return str(number).zfill(8)
+
+
+class IsolateNameType(StrEnum):
+    ISOLATE = "isolate"
+    STRAIN = "strain"
+    CLONE = "clone"
+
+
+class IsolateName(BaseModel):
+    """Represents a sub-species categorization name for sequences.
+
+    Can be typed as an isolate, a strain or a clone."""
+
+    type: IsolateNameType
+    """The type of sub-species categorization"""
+
+    value: str
+    """The name of this subcategory"""
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def validate_type(cls, raw: str):
+        return IsolateNameType(raw)
