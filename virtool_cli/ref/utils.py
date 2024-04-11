@@ -57,7 +57,7 @@ def pad_zeroes(number: int) -> str:
     return str(number).zfill(8)
 
 
-class SubSpeciesType(StrEnum):
+class IsolateNameType(StrEnum):
     ISOLATE = "isolate"
     STRAIN = "strain"
     CLONE = "clone"
@@ -68,7 +68,7 @@ class IsolateName(BaseModel):
 
     Can be typed as an isolate, a strain or a clone."""
 
-    type: SubSpeciesType
+    type: IsolateNameType
     """The type of sub-species categorization"""
 
     value: str
@@ -77,4 +77,4 @@ class IsolateName(BaseModel):
     @field_validator("type", mode="before")
     @classmethod
     def validate_type(cls, raw: str):
-        return SubSpeciesType(raw)
+        return IsolateNameType(raw)
