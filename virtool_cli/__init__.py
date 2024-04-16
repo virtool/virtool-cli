@@ -11,3 +11,10 @@ TODO: Allow exclusion checks at the Repo level.
 TODO: Don't use the term "blacklist". Use the word "exclusions" only.
 
 """
+
+import os
+
+from Bio import Entrez
+
+Entrez.email = os.environ.get("ENTREZ_EMAIL", None)
+Entrez.api_key = os.environ.get("ENTREZ_API_KEY", None)
