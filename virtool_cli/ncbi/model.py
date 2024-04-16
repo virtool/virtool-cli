@@ -12,6 +12,10 @@ from pydantic import (
 )
 
 
+def to_upper(v: str) -> str:
+    return v.upper()
+
+
 class NCBIDatabase(StrEnum):
     """NCBI Databases used by NCBIClient"""
 
@@ -47,7 +51,7 @@ class NCBISourceMolType(StrEnum):
 
 
 class NCBISource(BaseModel):
-    taxid: Annotated[int, Field(validation_alias="db_xref")]
+    taxid: int
     organism: str
     mol_type: NCBISourceMolType
     isolate: str = ""
@@ -56,10 +60,23 @@ class NCBISource(BaseModel):
     strain: str = ""
     clone: str = ""
 
-    @field_validator("taxid", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def db_xref_to_taxid(cls, raw: str) -> int:
-        return int(raw.split(":")[1])
+    def db_xref_to_taxid(cls, data: dict) -> dict:
+        """Parse db_xref if ``taxid`` is not provided to the model directly.
+
+        This is the realistic use case. The source table does not contain a taxid field,
+        but we want to pass a fake value to the model in testing.
+
+        """
+        if data.get("taxid"):
+            return data
+
+        if db_xref := data.get("db_xref"):
+            data["taxid"] = db_xref.split(":")[1]
+            return data
+
+        raise ValueError("No db_xref or taxid value found in source table")
 
 
 class NCBIMolType(StrEnum):
@@ -112,18 +129,21 @@ class NCBIGenbank(BaseModel):
     @field_validator("source", mode="before")
     @classmethod
     def create_source(cls, raw: list) -> NCBISource:
+        """Create a source object from the feature table."""
         for feature in raw:
             if feature["GBFeature_key"] == "source":
-                source_dict = {
-                    qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
-                    for qual in feature["GBFeature_quals"]
-                }
-                return NCBISource(**source_dict)
+                return NCBISource(
+                    **{
+                        qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
+                        for qual in feature["GBFeature_quals"]
+                    },
+                )
 
         raise ValueError("Feature table contains no ``source`` table.")
 
     @model_validator(mode="after")
     def check_source(self):
+        """Check that the source organism matches the record organism."""
         if self.source.organism != self.organism:
             raise ValueError("Non-matching organism fields on record and source")
 
