@@ -80,7 +80,9 @@ class NCBISource(BaseModel):
 
 
 class NCBIMolType(StrEnum):
-    """The in vivo molecule type of a sequence, corresponds to Genbank's moltype field"""
+    """The in vivo molecule type of a sequence, which corresponds to Genbank's moltype
+    field.
+    """
 
     DNA = "DNA"
     RNA = "RNA"
