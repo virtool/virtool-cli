@@ -1,8 +1,16 @@
 import re
 from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, Field, ConfigDict, AliasChoices
-from pydantic import field_validator, model_validator, computed_field
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 GATC = re.compile("[gatc]+")
 
@@ -51,11 +59,6 @@ class NCBISource(BaseModel):
     strain: str = ""
     clone: str = ""
 
-    @field_validator("mol_type", mode="before")
-    @classmethod
-    def validate_moltype(cls, raw: str) -> NCBISourceMolType:
-        return NCBISourceMolType(raw)
-
     @field_validator("taxid", mode="before")
     @classmethod
     def db_xref_to_taxid(cls, raw: str) -> int:
@@ -83,16 +86,19 @@ class NCBITopology(StrEnum):
 
 
 class NCBIGenbank(BaseModel):
-    accession: str = Field(validation_alias="GBSeq_primary-accession")
-    accession_version: str = Field(validation_alias="GBSeq_accession-version")
-    strandedness: NCBIStrandedness = Field(validation_alias="GBSeq_strandedness")
-    moltype: NCBIMolType = Field(validation_alias="GBSeq_moltype")
-    topology: NCBITopology = Field(validation_alias="GBSeq_topology")
-    definition: str = Field(validation_alias="GBSeq_definition")
-    organism: str = Field(validation_alias="GBSeq_organism")
-    sequence: str = Field(validation_alias="GBSeq_sequence")
-    source: NCBISource = Field(validation_alias="GBSeq_feature-table")
-    comment: str = Field("", validation_alias="GBSeq_comment")
+    accession: Annotated[str, Field(validation_alias="GBSeq_primary-accession")]
+    accession_version: Annotated[str, Field(validation_alias="GBSeq_accession-version")]
+    strandedness: Annotated[
+        NCBIStrandedness,
+        Field(validation_alias="GBSeq_strandedness"),
+    ]
+    moltype: Annotated[NCBIMolType, Field(validation_alias="GBSeq_moltype")]
+    topology: Annotated[NCBITopology, Field(validation_alias="GBSeq_topology")]
+    definition: Annotated[str, Field(validation_alias="GBSeq_definition")]
+    organism: Annotated[str, Field(validation_alias="GBSeq_organism")]
+    sequence: Annotated[str, Field(validation_alias="GBSeq_sequence")]
+    source: Annotated[NCBISource, Field(validation_alias="GBSeq_feature-table")]
+    comment: Annotated[str, Field("", validation_alias="GBSeq_comment")]
 
     @computed_field()
     def refseq(self) -> bool:
@@ -145,30 +151,30 @@ class NCBIGenbank(BaseModel):
 class NCBILineage(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    id: int = Field(validation_alias="TaxId")
-    name: str = Field(validation_alias="ScientificName")
-    rank: str = Field(validation_alias="Rank")
+    id: Annotated[int, Field(validation_alias="TaxId")]
+    name: Annotated[str, Field(validation_alias="ScientificName")]
+    rank: Annotated[str, Field(validation_alias="Rank")]
 
 
 class NCBITaxonomyOtherNames(BaseModel):
-    acronym: list[str] = Field([], validation_alias="Acronym")
-    genbank_acronym: list[str] = Field([], validation_alias="GenbankAcronym")
-    equivalent_name: list[str] = Field([], validation_alias="EquivalentName")
-    synonym: list[str] = Field([], validation_alias="Synonym")
-    includes: list[str] = Field([], validation_alias="Includes")
+    acronym: Annotated[list[str], Field([], validation_alias="Acronym")]
+    genbank_acronym: Annotated[list[str], Field([], validation_alias="GenbankAcronym")]
+    equivalent_name: Annotated[list[str], Field([], validation_alias="EquivalentName")]
+    synonym: Annotated[list[str], Field([], validation_alias="Synonym")]
+    includes: Annotated[list[str], Field([], validation_alias="Includes")]
 
 
 class NCBITaxonomy(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    id: int = Field(validation_alias="TaxId")
-    name: str = Field(validation_alias="ScientificName")
-    other_names: NCBITaxonomyOtherNames = Field(
-        NCBITaxonomyOtherNames(), validation_alias="OtherNames"
-    )
-
-    lineage: list[NCBILineage] = Field(validation_alias="LineageEx")
-    rank: NCBIRank = Field(validation_alias=AliasChoices("rank", "Rank"))
+    id: Annotated[int, Field(validation_alias="TaxId")]
+    name: Annotated[str, Field(validation_alias="ScientificName")]
+    other_names: Annotated[
+        NCBITaxonomyOtherNames,
+        Field(NCBITaxonomyOtherNames(), validation_alias="OtherNames"),
+    ]
+    lineage: Annotated[list[NCBILineage], Field(validation_alias="LineageEx")]
+    rank: Annotated[NCBIRank, Field(validation_alias=AliasChoices("rank", "Rank"))]
 
     @computed_field
     def species(self) -> NCBILineage:
