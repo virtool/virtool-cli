@@ -1,10 +1,19 @@
-import re
 from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, Field, ConfigDict, AliasChoices
-from pydantic import field_validator, model_validator, computed_field
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
-GATC = re.compile("[gatc]+")
+
+def to_upper(v: str) -> str:
+    return v.upper()
 
 
 class NCBIDatabase(StrEnum):
@@ -42,7 +51,7 @@ class NCBISourceMolType(StrEnum):
 
 
 class NCBISource(BaseModel):
-    taxid: int = Field(validation_alias="db_xref")
+    taxid: int
     organism: str
     mol_type: NCBISourceMolType
     isolate: str = ""
@@ -51,19 +60,29 @@ class NCBISource(BaseModel):
     strain: str = ""
     clone: str = ""
 
-    @field_validator("mol_type", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def validate_moltype(cls, raw: str) -> NCBISourceMolType:
-        return NCBISourceMolType(raw)
+    def db_xref_to_taxid(cls, data: dict) -> dict:
+        """Parse db_xref if ``taxid`` is not provided to the model directly.
 
-    @field_validator("taxid", mode="before")
-    @classmethod
-    def db_xref_to_taxid(cls, raw: str) -> int:
-        return int(raw.split(":")[1])
+        This is the realistic use case. The source table does not contain a taxid field,
+        but we want to pass a fake value to the model in testing.
+
+        """
+        if data.get("taxid"):
+            return data
+
+        if db_xref := data.get("db_xref"):
+            data["taxid"] = db_xref.split(":")[1]
+            return data
+
+        raise ValueError("No db_xref or taxid value found in source table")
 
 
 class NCBIMolType(StrEnum):
-    """The in vivo molecule type of a sequence, corresponds to Genbank's moltype field"""
+    """The in vivo molecule type of a sequence, which corresponds to Genbank's moltype
+    field.
+    """
 
     DNA = "DNA"
     RNA = "RNA"
@@ -83,38 +102,26 @@ class NCBITopology(StrEnum):
 
 
 class NCBIGenbank(BaseModel):
-    accession: str = Field(validation_alias="GBSeq_primary-accession")
-    accession_version: str = Field(validation_alias="GBSeq_accession-version")
-    strandedness: NCBIStrandedness = Field(validation_alias="GBSeq_strandedness")
-    moltype: NCBIMolType = Field(validation_alias="GBSeq_moltype")
-    topology: NCBITopology = Field(validation_alias="GBSeq_topology")
-    definition: str = Field(validation_alias="GBSeq_definition")
-    organism: str = Field(validation_alias="GBSeq_organism")
-    sequence: str = Field(validation_alias="GBSeq_sequence")
-    source: NCBISource = Field(validation_alias="GBSeq_feature-table")
-    comment: str = Field("", validation_alias="GBSeq_comment")
+    accession: Annotated[str, Field(validation_alias="GBSeq_primary-accession")]
+    accession_version: Annotated[str, Field(validation_alias="GBSeq_accession-version")]
+    strandedness: Annotated[
+        NCBIStrandedness,
+        Field(validation_alias="GBSeq_strandedness"),
+    ]
+    moltype: Annotated[NCBIMolType, Field(validation_alias="GBSeq_moltype")]
+    topology: Annotated[NCBITopology, Field(validation_alias="GBSeq_topology")]
+    definition: Annotated[str, Field(validation_alias="GBSeq_definition")]
+    organism: Annotated[str, Field(validation_alias="GBSeq_organism")]
+    sequence: Annotated[
+        str,
+        Field(validation_alias="GBSeq_sequence", pattern=r"^[gatc]+$"),
+    ]
+    source: Annotated[NCBISource, Field(validation_alias="GBSeq_feature-table")]
+    comment: Annotated[str, Field("", validation_alias="GBSeq_comment")]
 
     @computed_field()
     def refseq(self) -> bool:
         return self.accession.startswith("NC_")
-
-    @field_validator("moltype", mode="before")
-    @classmethod
-    def validate_moltype(cls, raw: str) -> NCBIMolType:
-        return NCBIMolType(raw)
-
-    @field_validator("topology", mode="before")
-    @classmethod
-    def validate_topology(cls, raw: str) -> NCBITopology:
-        return NCBITopology(raw)
-
-    @field_validator("sequence", mode="before")
-    @classmethod
-    def validate_sequence(cls, raw: str) -> str:
-        if GATC.match(raw):
-            return raw
-
-        raise ValueError("Invalid sequence code")
 
     @field_validator("sequence", mode="after")
     @classmethod
@@ -124,18 +131,21 @@ class NCBIGenbank(BaseModel):
     @field_validator("source", mode="before")
     @classmethod
     def create_source(cls, raw: list) -> NCBISource:
+        """Create a source object from the feature table."""
         for feature in raw:
             if feature["GBFeature_key"] == "source":
-                source_dict = {
-                    qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
-                    for qual in feature["GBFeature_quals"]
-                }
-                return NCBISource(**source_dict)
+                return NCBISource(
+                    **{
+                        qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
+                        for qual in feature["GBFeature_quals"]
+                    },
+                )
 
         raise ValueError("Feature table contains no ``source`` table.")
 
     @model_validator(mode="after")
     def check_source(self):
+        """Check that the source organism matches the record organism."""
         if self.source.organism != self.organism:
             raise ValueError("Non-matching organism fields on record and source")
 
@@ -145,30 +155,30 @@ class NCBIGenbank(BaseModel):
 class NCBILineage(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    id: int = Field(validation_alias="TaxId")
-    name: str = Field(validation_alias="ScientificName")
-    rank: str = Field(validation_alias="Rank")
+    id: Annotated[int, Field(validation_alias="TaxId")]
+    name: Annotated[str, Field(validation_alias="ScientificName")]
+    rank: Annotated[str, Field(validation_alias="Rank")]
 
 
 class NCBITaxonomyOtherNames(BaseModel):
-    acronym: list[str] = Field([], validation_alias="Acronym")
-    genbank_acronym: list[str] = Field([], validation_alias="GenbankAcronym")
-    equivalent_name: list[str] = Field([], validation_alias="EquivalentName")
-    synonym: list[str] = Field([], validation_alias="Synonym")
-    includes: list[str] = Field([], validation_alias="Includes")
+    acronym: Annotated[list[str], Field([], validation_alias="Acronym")]
+    genbank_acronym: Annotated[list[str], Field([], validation_alias="GenbankAcronym")]
+    equivalent_name: Annotated[list[str], Field([], validation_alias="EquivalentName")]
+    synonym: Annotated[list[str], Field([], validation_alias="Synonym")]
+    includes: Annotated[list[str], Field([], validation_alias="Includes")]
 
 
 class NCBITaxonomy(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    id: int = Field(validation_alias="TaxId")
-    name: str = Field(validation_alias="ScientificName")
-    other_names: NCBITaxonomyOtherNames = Field(
-        NCBITaxonomyOtherNames(), validation_alias="OtherNames"
-    )
-
-    lineage: list[NCBILineage] = Field(validation_alias="LineageEx")
-    rank: NCBIRank = Field(validation_alias=AliasChoices("rank", "Rank"))
+    id: Annotated[int, Field(validation_alias="TaxId")]
+    name: Annotated[str, Field(validation_alias="ScientificName")]
+    other_names: Annotated[
+        NCBITaxonomyOtherNames,
+        Field(NCBITaxonomyOtherNames(), validation_alias="OtherNames"),
+    ]
+    lineage: Annotated[list[NCBILineage], Field(validation_alias="LineageEx")]
+    rank: Annotated[NCBIRank, Field(validation_alias=AliasChoices("rank", "Rank"))]
 
     @computed_field
     def species(self) -> NCBILineage:
@@ -180,13 +190,3 @@ class NCBITaxonomy(BaseModel):
                 return item
 
         raise ValueError("No species level taxon found in lineage")
-
-    @field_validator("lineage", mode="before")
-    @classmethod
-    def create_lineage_list(cls, raw: list[dict]):
-        return [NCBILineage(**level_data) for level_data in raw]
-
-    @field_validator("rank", mode="before")
-    @classmethod
-    def validate_rank(cls, raw: str):
-        return NCBIRank(raw)

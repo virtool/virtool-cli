@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestParseGenbank.test_parse_genbank_record[AB017504]
+# name: TestParseGenbank.test_ok[AB017504]
   dict({
     'accession': 'AB017504',
     'accession_version': 'AB017504.1',
@@ -23,7 +23,7 @@
     'topology': <NCBITopology.LINEAR: 'linear'>,
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_record[MH200607]
+# name: TestParseGenbank.test_ok[MH200607]
   dict({
     'accession': 'MH200607',
     'accession_version': 'MH200607.1',
@@ -47,7 +47,7 @@
     'topology': <NCBITopology.LINEAR: 'linear'>,
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_record[MT240513]
+# name: TestParseGenbank.test_ok[MT240513]
   dict({
     'accession': 'MT240513',
     'accession_version': 'MT240513.1',
@@ -71,7 +71,7 @@
     'topology': <NCBITopology.LINEAR: 'linear'>,
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_record[NC_015504]
+# name: TestParseGenbank.test_ok[NC_015504]
   dict({
     'accession': 'NC_015504',
     'accession_version': 'NC_015504.1',
@@ -95,7 +95,7 @@
     'topology': <NCBITopology.CIRCULAR: 'circular'>,
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_record[NC_036587]
+# name: TestParseGenbank.test_ok[NC_036587]
   dict({
     'accession': 'NC_036587',
     'accession_version': 'NC_036587.1',
@@ -119,7 +119,7 @@
     'topology': <NCBITopology.LINEAR: 'linear'>,
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_source[AB017504]
+# name: TestParseGenbank.test_source
   dict({
     'clone': '',
     'host': '',
@@ -131,70 +131,271 @@
     'taxid': 1169032,
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_source[MH200607]
+# name: TestParseTaxonomy.test_ok[1077859]
   dict({
-    'clone': '',
-    'host': 'Eutrema japonicum',
-    'isolate': 'WMoV-6.3',
-    'mol_type': <NCBISourceMolType.GENOMIC_RNA: 'genomic RNA'>,
-    'organism': 'Wasabi mottle virus',
-    'segment': '',
-    'strain': '',
-    'taxid': 1169032,
+    'id': 1077859,
+    'lineage': list([
+      dict({
+        'id': 10239,
+        'name': 'Viruses',
+        'rank': 'superkingdom',
+      }),
+      dict({
+        'id': 2731342,
+        'name': 'Monodnaviria',
+        'rank': 'clade',
+      }),
+      dict({
+        'id': 2732092,
+        'name': 'Shotokuvirae',
+        'rank': 'kingdom',
+      }),
+      dict({
+        'id': 2732416,
+        'name': 'Cressdnaviricota',
+        'rank': 'phylum',
+      }),
+      dict({
+        'id': 2732424,
+        'name': 'Repensiviricetes',
+        'rank': 'class',
+      }),
+      dict({
+        'id': 2732539,
+        'name': 'Geplafuvirales',
+        'rank': 'order',
+      }),
+      dict({
+        'id': 10811,
+        'name': 'Geminiviridae',
+        'rank': 'family',
+      }),
+      dict({
+        'id': 10814,
+        'name': 'Begomovirus',
+        'rank': 'genus',
+      }),
+    ]),
+    'name': 'Tomato chlorotic leaf distortion virus',
+    'other_names': dict({
+      'acronym': list([
+      ]),
+      'equivalent_name': list([
+      ]),
+      'genbank_acronym': list([
+      ]),
+      'includes': list([
+      ]),
+      'synonym': list([
+      ]),
+    }),
+    'rank': <NCBIRank.SPECIES: 'species'>,
+    'species': dict({
+      'id': 1077859,
+      'name': 'Tomato chlorotic leaf distortion virus',
+      'rank': 'species',
+    }),
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_source[MT240513]
+# name: TestParseTaxonomy.test_ok[1198450]
   dict({
-    'clone': '',
-    'host': 'Vasconcellea cundinamarcensis',
-    'isolate': 'AC2-6',
-    'mol_type': <NCBISourceMolType.GENOMIC_RNA: 'genomic RNA'>,
-    'organism': 'Babaco mosaic virus',
-    'segment': '',
-    'strain': '',
-    'taxid': 2060511,
+    'id': 1198450,
+    'lineage': list([
+      dict({
+        'id': 10239,
+        'name': 'Viruses',
+        'rank': 'superkingdom',
+      }),
+      dict({
+        'id': 2731342,
+        'name': 'Monodnaviria',
+        'rank': 'clade',
+      }),
+      dict({
+        'id': 2732092,
+        'name': 'Shotokuvirae',
+        'rank': 'kingdom',
+      }),
+      dict({
+        'id': 2732416,
+        'name': 'Cressdnaviricota',
+        'rank': 'phylum',
+      }),
+      dict({
+        'id': 2732424,
+        'name': 'Repensiviricetes',
+        'rank': 'class',
+      }),
+      dict({
+        'id': 2732539,
+        'name': 'Geplafuvirales',
+        'rank': 'order',
+      }),
+      dict({
+        'id': 10811,
+        'name': 'Geminiviridae',
+        'rank': 'family',
+      }),
+      dict({
+        'id': 10814,
+        'name': 'Begomovirus',
+        'rank': 'genus',
+      }),
+    ]),
+    'name': 'Jacquemontia mosaic Yucatan virus',
+    'other_names': dict({
+      'acronym': list([
+      ]),
+      'equivalent_name': list([
+      ]),
+      'genbank_acronym': list([
+      ]),
+      'includes': list([
+      ]),
+      'synonym': list([
+      ]),
+    }),
+    'rank': <NCBIRank.SPECIES: 'species'>,
+    'species': dict({
+      'id': 1198450,
+      'name': 'Jacquemontia mosaic Yucatan virus',
+      'rank': 'species',
+    }),
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_source[NC_015504]
+# name: TestParseTaxonomy.test_ok[270478]
   dict({
-    'clone': '',
-    'host': 'Musa sp. cv. Kibuzi',
-    'isolate': '',
-    'mol_type': <NCBISourceMolType.GENOMIC_DNA: 'genomic DNA'>,
-    'organism': 'Banana streak UL virus',
-    'segment': '',
-    'strain': '',
-    'taxid': 1016856,
+    'id': 270478,
+    'lineage': list([
+      dict({
+        'id': 10239,
+        'name': 'Viruses',
+        'rank': 'superkingdom',
+      }),
+      dict({
+        'id': 2559587,
+        'name': 'Riboviria',
+        'rank': 'clade',
+      }),
+      dict({
+        'id': 2732396,
+        'name': 'Orthornavirae',
+        'rank': 'kingdom',
+      }),
+      dict({
+        'id': 2732408,
+        'name': 'Pisuviricota',
+        'rank': 'phylum',
+      }),
+      dict({
+        'id': 2732507,
+        'name': 'Stelpaviricetes',
+        'rank': 'class',
+      }),
+      dict({
+        'id': 2732550,
+        'name': 'Patatavirales',
+        'rank': 'order',
+      }),
+      dict({
+        'id': 39729,
+        'name': 'Potyviridae',
+        'rank': 'family',
+      }),
+      dict({
+        'id': 12195,
+        'name': 'Potyvirus',
+        'rank': 'genus',
+      }),
+    ]),
+    'name': 'Zantedeschia mild mosaic virus',
+    'other_names': dict({
+      'acronym': list([
+      ]),
+      'equivalent_name': list([
+      ]),
+      'genbank_acronym': list([
+      ]),
+      'includes': list([
+      ]),
+      'synonym': list([
+      ]),
+    }),
+    'rank': <NCBIRank.SPECIES: 'species'>,
+    'species': dict({
+      'id': 270478,
+      'name': 'Zantedeschia mild mosaic virus',
+      'rank': 'species',
+    }),
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_source[NC_036587]
+# name: TestParseTaxonomy.test_ok[438782]
   dict({
-    'clone': '',
-    'host': 'Vasconcellea x heilbornii',
-    'isolate': 'Tandapi',
-    'mol_type': <NCBISourceMolType.GENOMIC_RNA: 'genomic RNA'>,
-    'organism': 'Babaco mosaic virus',
-    'segment': '',
-    'strain': '',
-    'taxid': 2060511,
+    'id': 438782,
+    'lineage': list([
+      dict({
+        'id': 10239,
+        'name': 'Viruses',
+        'rank': 'superkingdom',
+      }),
+      dict({
+        'id': 2731342,
+        'name': 'Monodnaviria',
+        'rank': 'clade',
+      }),
+      dict({
+        'id': 2732092,
+        'name': 'Shotokuvirae',
+        'rank': 'kingdom',
+      }),
+      dict({
+        'id': 2732416,
+        'name': 'Cressdnaviricota',
+        'rank': 'phylum',
+      }),
+      dict({
+        'id': 2732423,
+        'name': 'Arfiviricetes',
+        'rank': 'class',
+      }),
+      dict({
+        'id': 2732538,
+        'name': 'Mulpavirales',
+        'rank': 'order',
+      }),
+      dict({
+        'id': 251095,
+        'name': 'Nanoviridae',
+        'rank': 'family',
+      }),
+      dict({
+        'id': 251096,
+        'name': 'Babuvirus',
+        'rank': 'genus',
+      }),
+    ]),
+    'name': 'Abaca bunchy top virus',
+    'other_names': dict({
+      'acronym': list([
+      ]),
+      'equivalent_name': list([
+      ]),
+      'genbank_acronym': list([
+      ]),
+      'includes': list([
+      ]),
+      'synonym': list([
+      ]),
+    }),
+    'rank': <NCBIRank.SPECIES: 'species'>,
+    'species': dict({
+      'id': 438782,
+      'name': 'Abaca bunchy top virus',
+      'rank': 'species',
+    }),
   })
 # ---
-# name: TestParseGenbank.test_parse_genbank_source_taxid[AB017504]
-  1169032
-# ---
-# name: TestParseGenbank.test_parse_genbank_source_taxid[MH200607]
-  1169032
-# ---
-# name: TestParseGenbank.test_parse_genbank_source_taxid[MT240513]
-  2060511
-# ---
-# name: TestParseGenbank.test_parse_genbank_source_taxid[NC_015504]
-  1016856
-# ---
-# name: TestParseGenbank.test_parse_genbank_source_taxid[NC_036587]
-  2060511
-# ---
-# name: TestTaxonomyParse.test_parse_taxonomy_record_rank_addendum[1016856-isolate]
+# name: TestParseTaxonomy.test_with_rank
   dict({
     'id': 1016856,
     'lineage': list([
@@ -265,274 +466,4 @@
       'rank': 'species',
     }),
   })
-# ---
-# name: TestTaxonomyParse.test_parse_taxonomy_record_single[1077859]
-  dict({
-    'id': 1077859,
-    'lineage': list([
-      dict({
-        'id': 10239,
-        'name': 'Viruses',
-        'rank': 'superkingdom',
-      }),
-      dict({
-        'id': 2731342,
-        'name': 'Monodnaviria',
-        'rank': 'clade',
-      }),
-      dict({
-        'id': 2732092,
-        'name': 'Shotokuvirae',
-        'rank': 'kingdom',
-      }),
-      dict({
-        'id': 2732416,
-        'name': 'Cressdnaviricota',
-        'rank': 'phylum',
-      }),
-      dict({
-        'id': 2732424,
-        'name': 'Repensiviricetes',
-        'rank': 'class',
-      }),
-      dict({
-        'id': 2732539,
-        'name': 'Geplafuvirales',
-        'rank': 'order',
-      }),
-      dict({
-        'id': 10811,
-        'name': 'Geminiviridae',
-        'rank': 'family',
-      }),
-      dict({
-        'id': 10814,
-        'name': 'Begomovirus',
-        'rank': 'genus',
-      }),
-    ]),
-    'name': 'Tomato chlorotic leaf distortion virus',
-    'other_names': dict({
-      'acronym': list([
-      ]),
-      'equivalent_name': list([
-      ]),
-      'genbank_acronym': list([
-      ]),
-      'includes': list([
-      ]),
-      'synonym': list([
-      ]),
-    }),
-    'rank': <NCBIRank.SPECIES: 'species'>,
-    'species': dict({
-      'id': 1077859,
-      'name': 'Tomato chlorotic leaf distortion virus',
-      'rank': 'species',
-    }),
-  })
-# ---
-# name: TestTaxonomyParse.test_parse_taxonomy_record_single[1198450]
-  dict({
-    'id': 1198450,
-    'lineage': list([
-      dict({
-        'id': 10239,
-        'name': 'Viruses',
-        'rank': 'superkingdom',
-      }),
-      dict({
-        'id': 2731342,
-        'name': 'Monodnaviria',
-        'rank': 'clade',
-      }),
-      dict({
-        'id': 2732092,
-        'name': 'Shotokuvirae',
-        'rank': 'kingdom',
-      }),
-      dict({
-        'id': 2732416,
-        'name': 'Cressdnaviricota',
-        'rank': 'phylum',
-      }),
-      dict({
-        'id': 2732424,
-        'name': 'Repensiviricetes',
-        'rank': 'class',
-      }),
-      dict({
-        'id': 2732539,
-        'name': 'Geplafuvirales',
-        'rank': 'order',
-      }),
-      dict({
-        'id': 10811,
-        'name': 'Geminiviridae',
-        'rank': 'family',
-      }),
-      dict({
-        'id': 10814,
-        'name': 'Begomovirus',
-        'rank': 'genus',
-      }),
-    ]),
-    'name': 'Jacquemontia mosaic Yucatan virus',
-    'other_names': dict({
-      'acronym': list([
-      ]),
-      'equivalent_name': list([
-      ]),
-      'genbank_acronym': list([
-      ]),
-      'includes': list([
-      ]),
-      'synonym': list([
-      ]),
-    }),
-    'rank': <NCBIRank.SPECIES: 'species'>,
-    'species': dict({
-      'id': 1198450,
-      'name': 'Jacquemontia mosaic Yucatan virus',
-      'rank': 'species',
-    }),
-  })
-# ---
-# name: TestTaxonomyParse.test_parse_taxonomy_record_single[270478]
-  dict({
-    'id': 270478,
-    'lineage': list([
-      dict({
-        'id': 10239,
-        'name': 'Viruses',
-        'rank': 'superkingdom',
-      }),
-      dict({
-        'id': 2559587,
-        'name': 'Riboviria',
-        'rank': 'clade',
-      }),
-      dict({
-        'id': 2732396,
-        'name': 'Orthornavirae',
-        'rank': 'kingdom',
-      }),
-      dict({
-        'id': 2732408,
-        'name': 'Pisuviricota',
-        'rank': 'phylum',
-      }),
-      dict({
-        'id': 2732507,
-        'name': 'Stelpaviricetes',
-        'rank': 'class',
-      }),
-      dict({
-        'id': 2732550,
-        'name': 'Patatavirales',
-        'rank': 'order',
-      }),
-      dict({
-        'id': 39729,
-        'name': 'Potyviridae',
-        'rank': 'family',
-      }),
-      dict({
-        'id': 12195,
-        'name': 'Potyvirus',
-        'rank': 'genus',
-      }),
-    ]),
-    'name': 'Zantedeschia mild mosaic virus',
-    'other_names': dict({
-      'acronym': list([
-      ]),
-      'equivalent_name': list([
-      ]),
-      'genbank_acronym': list([
-      ]),
-      'includes': list([
-      ]),
-      'synonym': list([
-      ]),
-    }),
-    'rank': <NCBIRank.SPECIES: 'species'>,
-    'species': dict({
-      'id': 270478,
-      'name': 'Zantedeschia mild mosaic virus',
-      'rank': 'species',
-    }),
-  })
-# ---
-# name: TestTaxonomyParse.test_parse_taxonomy_record_single[438782]
-  dict({
-    'id': 438782,
-    'lineage': list([
-      dict({
-        'id': 10239,
-        'name': 'Viruses',
-        'rank': 'superkingdom',
-      }),
-      dict({
-        'id': 2731342,
-        'name': 'Monodnaviria',
-        'rank': 'clade',
-      }),
-      dict({
-        'id': 2732092,
-        'name': 'Shotokuvirae',
-        'rank': 'kingdom',
-      }),
-      dict({
-        'id': 2732416,
-        'name': 'Cressdnaviricota',
-        'rank': 'phylum',
-      }),
-      dict({
-        'id': 2732423,
-        'name': 'Arfiviricetes',
-        'rank': 'class',
-      }),
-      dict({
-        'id': 2732538,
-        'name': 'Mulpavirales',
-        'rank': 'order',
-      }),
-      dict({
-        'id': 251095,
-        'name': 'Nanoviridae',
-        'rank': 'family',
-      }),
-      dict({
-        'id': 251096,
-        'name': 'Babuvirus',
-        'rank': 'genus',
-      }),
-    ]),
-    'name': 'Abaca bunchy top virus',
-    'other_names': dict({
-      'acronym': list([
-      ]),
-      'equivalent_name': list([
-      ]),
-      'genbank_acronym': list([
-      ]),
-      'includes': list([
-      ]),
-      'synonym': list([
-      ]),
-    }),
-    'rank': <NCBIRank.SPECIES: 'species'>,
-    'species': dict({
-      'id': 438782,
-      'name': 'Abaca bunchy top virus',
-      'rank': 'species',
-    }),
-  })
-# ---
-# name: test_create_lineage_item_alias[lineage_data0]
-  NCBILineage(id=2732397, name='Pararnavirae', rank='kingdom')
-# ---
-# name: test_create_lineage_item_alias[lineage_data1]
-  NCBILineage(id=2732409, name='Artverviricota', rank='phylum')
 # ---
