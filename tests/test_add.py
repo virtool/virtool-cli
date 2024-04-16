@@ -69,6 +69,27 @@ def run_build_reference(repo: Path, output: Path):
     )
 
 
+def index_repo_data(repo: Repo):
+    otus = {}
+
+    for otu in repo.iter_otus():
+        otus[otu.taxid] = otu.dict()
+
+        isolates = {}
+        for isolate in otu.isolates:
+            isolates[(isolate.name.type, isolate.name.value)] = isolate.dict()
+
+            sequences = {}
+            for sequence in isolate.sequences:
+                sequences[sequence.accession] = sequence.dict()
+
+            isolates[(isolate.name.type, isolate.name.value)]["sequences"] = sequences
+
+        otus[otu.taxid]["isolates"] = isolates
+
+    return otus
+
+
 class TestAddOTU:
     @staticmethod
     def run_add_otu(taxid: int, accessions: list[str], path: Path):
@@ -112,26 +133,6 @@ class TestAddOTU:
             assert sorted(otu.get_indexed_isolates()) == snapshot
 
             assert sorted(otu.get_accessions()) == snapshot
-
-        # run_build_reference(repo=precached_repo.path, output=precached_repo.path)
-        #
-        # built_reference_path = precached_repo.path / "reference.json"
-        #
-        # with open(built_reference_path, "rb") as f:
-        #     built_reference = orjson.loads(f.read())
-        #
-        # for otu in built_reference["otus"]:
-        #     assert otu == snapshot(exclude=props("id", "isolates"))
-        #
-        #     for isolate in otu["isolates"]:
-        #         assert isolate == snapshot(exclude=props("id", "sequences"))
-        #
-        #         indexed_sequences = {
-        #             sequence["accession"]: sequence for sequence in isolate["sequences"]
-        #         }
-        #
-        #         for accession in sorted(indexed_sequences):
-        #             assert indexed_sequences[accession] == snapshot(exclude=paths("id"))
 
 
 @pytest.mark.ncbi
