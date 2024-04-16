@@ -1,4 +1,3 @@
-import re
 from enum import StrEnum
 from typing import Annotated
 
@@ -11,8 +10,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-
-GATC = re.compile("[gatc]+")
 
 
 class NCBIDatabase(StrEnum):
@@ -50,7 +47,7 @@ class NCBISourceMolType(StrEnum):
 
 
 class NCBISource(BaseModel):
-    taxid: int = Field(validation_alias="db_xref")
+    taxid: Annotated[int, Field(validation_alias="db_xref")]
     organism: str
     mol_type: NCBISourceMolType
     isolate: str = ""
@@ -96,31 +93,16 @@ class NCBIGenbank(BaseModel):
     topology: Annotated[NCBITopology, Field(validation_alias="GBSeq_topology")]
     definition: Annotated[str, Field(validation_alias="GBSeq_definition")]
     organism: Annotated[str, Field(validation_alias="GBSeq_organism")]
-    sequence: Annotated[str, Field(validation_alias="GBSeq_sequence")]
+    sequence: Annotated[
+        str,
+        Field(validation_alias="GBSeq_sequence", pattern=r"^[gatc]+$"),
+    ]
     source: Annotated[NCBISource, Field(validation_alias="GBSeq_feature-table")]
     comment: Annotated[str, Field("", validation_alias="GBSeq_comment")]
 
     @computed_field()
     def refseq(self) -> bool:
         return self.accession.startswith("NC_")
-
-    @field_validator("moltype", mode="before")
-    @classmethod
-    def validate_moltype(cls, raw: str) -> NCBIMolType:
-        return NCBIMolType(raw)
-
-    @field_validator("topology", mode="before")
-    @classmethod
-    def validate_topology(cls, raw: str) -> NCBITopology:
-        return NCBITopology(raw)
-
-    @field_validator("sequence", mode="before")
-    @classmethod
-    def validate_sequence(cls, raw: str) -> str:
-        if GATC.match(raw):
-            return raw
-
-        raise ValueError("Invalid sequence code")
 
     @field_validator("sequence", mode="after")
     @classmethod
@@ -186,13 +168,3 @@ class NCBITaxonomy(BaseModel):
                 return item
 
         raise ValueError("No species level taxon found in lineage")
-
-    @field_validator("lineage", mode="before")
-    @classmethod
-    def create_lineage_list(cls, raw: list[dict]):
-        return [NCBILineage(**level_data) for level_data in raw]
-
-    @field_validator("rank", mode="before")
-    @classmethod
-    def validate_rank(cls, raw: str):
-        return NCBIRank(raw)
