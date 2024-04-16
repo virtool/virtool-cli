@@ -1,7 +1,7 @@
 from shutil import rmtree
-from structlog import get_logger
 
 import pytest
+from structlog import get_logger
 from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.client import NCBIClient
@@ -23,7 +23,7 @@ def empty_client(tmp_path):
 
 
 class TestClientFetchGenbank:
-    @pytest.mark.ncbi
+    @pytest.mark.ncbi()
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -32,7 +32,10 @@ class TestClientFetchGenbank:
         ],
     )
     def test_fetch_genbank_records_from_ncbi(
-        self, accessions, empty_client, snapshot: SnapshotAssertion
+        self,
+        accessions,
+        empty_client,
+        snapshot: SnapshotAssertion,
     ):
         clean_records = empty_client.fetch_genbank_records(accessions=accessions)
 
@@ -55,9 +58,12 @@ class TestClientFetchGenbank:
         ],
     )
     def test_fetch_genbank_records_from_cache(
-        self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
+        self,
+        accessions,
+        scratch_ncbi_cache_path,
+        snapshot: SnapshotAssertion,
     ):
-        client = NCBIClient(cache_scratch_path, ignore_cache=False)
+        client = NCBIClient(scratch_ncbi_cache_path, ignore_cache=False)
 
         clean_records = client.fetch_genbank_records(accessions=accessions)
 
@@ -66,14 +72,18 @@ class TestClientFetchGenbank:
         for record in clean_records:
             assert record == snapshot(name=f"{record.accession}_validated.json")
 
-    @pytest.mark.ncbi
+    @pytest.mark.ncbi()
     @pytest.mark.parametrize(
-        "accessions", [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]]
+        "accessions",
+        [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]],
     )
     def test_fetch_partially_cached_genbank_records(
-        self, accessions: list[str], cache_scratch_path, snapshot: SnapshotAssertion
+        self,
+        accessions: list[str],
+        scratch_ncbi_cache_path,
+        snapshot: SnapshotAssertion,
     ):
-        client = NCBIClient(cache_scratch_path, ignore_cache=False)
+        client = NCBIClient(scratch_ncbi_cache_path, ignore_cache=False)
 
         assert list(client.cache._genbank_path.glob("*.json")) != []
 
@@ -85,15 +95,15 @@ class TestClientFetchGenbank:
             path.name for path in client.cache._genbank_path.glob("*.json")
         } == snapshot
 
-    @pytest.mark.ncbi
-    async def test_fetch_accessions_fail(self, scratch_client):
-        records = scratch_client.fetch_genbank_records(["friday", "paella", "111"])
+    @pytest.mark.ncbi()
+    async def test_fetch_accessions_fail(self, scratch_ncbi_client):
+        records = scratch_ncbi_client.fetch_genbank_records(["friday", "paella", "111"])
 
         assert not records
 
 
 class TestClientFetchRawGenbank:
-    @pytest.mark.ncbi
+    @pytest.mark.ncbi()
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -108,7 +118,7 @@ class TestClientFetchRawGenbank:
             assert record.get("GBSeq_locus")
             assert record.get("GBSeq_sequence")
 
-    @pytest.mark.ncbi
+    @pytest.mark.ncbi()
     @pytest.mark.parametrize(
         "accessions",
         [
@@ -125,16 +135,16 @@ class TestClientFetchRawGenbank:
             assert record.get("GBSeq_locus", None)
             assert record.get("GBSeq_sequence", None)
 
-    @pytest.mark.ncbi
+    @pytest.mark.ncbi()
     def test_fetch_raw_via_accessions_fail(self):
         records = NCBIClient.fetch_unvalidated_genbank_records(
-            ["friday", "paella", "111"]
+            ["friday", "paella", "111"],
         )
 
         assert not records
 
 
-@pytest.mark.ncbi
+@pytest.mark.ncbi()
 @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
 def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
     assert not list(empty_client.cache._genbank_path.glob("*.json"))
@@ -152,11 +162,14 @@ def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
 
 
 class TestClientFetchTaxonomy:
-    @pytest.mark.ncbi
+    @pytest.mark.ncbi()
     @pytest.mark.flaky(reruns=3, reruns_delay=3, only_rerun=SERVER_ERRORS)
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     def test_fetch_taxonomy_from_ncbi(
-        self, taxid, empty_client, snapshot: SnapshotAssertion
+        self,
+        taxid,
+        empty_client,
+        snapshot: SnapshotAssertion,
     ):
         taxonomy = empty_client.fetch_taxonomy_record(taxid)
 
@@ -166,7 +179,7 @@ class TestClientFetchTaxonomy:
             path.name for path in empty_client.cache._taxonomy_path.glob("*.json")
         } == snapshot
 
-    @pytest.mark.ncbi
+    @pytest.mark.ncbi()
     @pytest.mark.flaky(reruns=3, reruns_delay=3, only_rerun=SERVER_ERRORS)
     @pytest.mark.parametrize("taxid", [1000000000000, 99999999])
     def test_fetch_taxonomy_from_ncbi_fail(self, taxid: int, empty_client):
@@ -176,18 +189,21 @@ class TestClientFetchTaxonomy:
 
     @pytest.mark.parametrize("taxid", [438782, 1198450])
     def test_fetch_taxonomy_from_cache(
-        self, taxid: int, scratch_client, snapshot: SnapshotAssertion
+        self,
+        taxid: int,
+        scratch_ncbi_client,
+        snapshot: SnapshotAssertion,
     ):
-        assert scratch_client.cache.load_taxonomy(taxid)
+        assert scratch_ncbi_client.cache.load_taxonomy(taxid)
 
-        taxonomy = scratch_client.fetch_taxonomy_record(taxid)
+        taxonomy = scratch_ncbi_client.fetch_taxonomy_record(taxid)
 
         assert type(taxonomy) is NCBITaxonomy
 
         assert taxonomy == snapshot(name=f"{taxonomy}_validated.json")
 
 
-@pytest.mark.ncbi
+@pytest.mark.ncbi()
 @pytest.mark.parametrize(
     "name,taxid",
     [
@@ -199,7 +215,7 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     assert NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
 
 
-@pytest.mark.ncbi
+@pytest.mark.ncbi()
 @pytest.mark.parametrize(
     "misspelled,expected",
     [

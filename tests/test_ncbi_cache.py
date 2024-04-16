@@ -1,7 +1,8 @@
 import json
-from syrupy import SnapshotAssertion
+from pathlib import Path
 
 import pytest
+from syrupy import SnapshotAssertion
 
 from virtool_cli.ncbi.cache import NCBICache
 
@@ -12,12 +13,12 @@ def empty_cache_path(tmp_path):
 
 
 def get_test_record(accession: str, cache_example_path) -> dict:
-    with open(cache_example_path / "genbank" / f"{accession}.json", "r") as f:
+    with open(cache_example_path / "genbank" / f"{accession}.json") as f:
         return json.load(f)
 
 
 def get_test_taxonomy(taxon_id: int, cache_example_path) -> dict:
-    with open(cache_example_path / "taxonomy" / f"{taxon_id}.json", "r") as f:
+    with open(cache_example_path / "taxonomy" / f"{taxon_id}.json") as f:
         return json.load(f)
 
 
@@ -35,8 +36,8 @@ def test_cache_init(empty_cache_path):
     assert cache._taxonomy_path.exists()
 
 
-def test_cache_clear(cache_scratch_path):
-    cache = NCBICache(path=cache_scratch_path)
+def test_cache_clear(scratch_ncbi_cache_path):
+    cache = NCBICache(path=scratch_ncbi_cache_path)
 
     assert list(cache._genbank_path.glob("*.json")) != []
     assert list(cache._taxonomy_path.glob("*.json")) != []
@@ -56,24 +57,30 @@ def test_cache_clear(cache_scratch_path):
 )
 class TestCacheGenbankOperations:
     def test_cache_genbank_load_record_batch(
-        self, accessions, cache_scratch_path, snapshot: SnapshotAssertion
+        self,
+        accessions,
+        scratch_ncbi_cache_path,
+        snapshot: SnapshotAssertion,
     ):
-        scratch_cache = NCBICache(cache_scratch_path)
+        scratch_ncbi_cache = NCBICache(scratch_ncbi_cache_path)
 
         for accession in accessions:
-            record = scratch_cache.load_genbank_record(accession)
+            record = scratch_ncbi_cache.load_genbank_record(accession)
 
             assert record == snapshot(name=f"{accession}.json")
 
     def test_cache_genbank_cache_records(
-        self, accessions, cache_example_path, empty_cache_path
+        self,
+        accessions,
+        scratch_ncbi_cache_path: Path,
+        empty_cache_path,
     ):
         assert not empty_cache_path.exists()
 
         cache = NCBICache(empty_cache_path)
 
         for accession in accessions:
-            record = get_test_record(accession, cache_example_path)
+            record = get_test_record(accession, scratch_ncbi_cache_path)
 
             cache.cache_genbank_record(data=record, accession=accession)
 
@@ -81,25 +88,33 @@ class TestCacheGenbankOperations:
 
 
 @pytest.mark.parametrize("fake_accession", ["afjshd", "23222", "wheelhouse"])
-def test_cache_genbank_load_fail(fake_accession, cache_scratch_path):
-    scratch_cache = NCBICache(cache_scratch_path)
+def test_cache_genbank_load_fail(fake_accession, scratch_ncbi_cache_path):
+    scratch_ncbi_cache = NCBICache(scratch_ncbi_cache_path)
 
-    assert scratch_cache.load_genbank_record(fake_accession) is None
+    assert scratch_ncbi_cache.load_genbank_record(fake_accession) is None
 
 
 @pytest.mark.parametrize("taxid", (270478, 438782, 1198450))
 class TestCacheTaxonomyOperations:
     def test_cache_taxonomy_load(
-        self, taxid, cache_scratch_path, snapshot: SnapshotAssertion
+        self,
+        taxid,
+        scratch_ncbi_cache_path,
+        snapshot: SnapshotAssertion,
     ):
-        scratch_cache = NCBICache(cache_scratch_path)
+        scratch_ncbi_cache = NCBICache(scratch_ncbi_cache_path)
 
-        taxonomy = scratch_cache.load_taxonomy(taxid)
+        taxonomy = scratch_ncbi_cache.load_taxonomy(taxid)
 
         assert taxonomy == snapshot(name=f"{taxid}.json")
 
-    def test_cache_taxonomy_cache(self, taxid, cache_example_path, empty_cache_path):
-        taxonomy = get_test_taxonomy(taxid, cache_example_path)
+    def test_cache_taxonomy_cache(
+        self,
+        taxid: int,
+        scratch_ncbi_cache_path: Path,
+        empty_cache_path,
+    ):
+        taxonomy = get_test_taxonomy(taxid, scratch_ncbi_cache_path)
 
         fresh_cache = NCBICache(empty_cache_path)
 

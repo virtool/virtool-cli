@@ -14,9 +14,12 @@ class TestGroupRecords:
         ],
     )
     def test_group_records_by_isolate_success(
-        self, accessions, scratch_client, snapshot: SnapshotAssertion
+        self,
+        accessions,
+        scratch_ncbi_client,
+        snapshot: SnapshotAssertion,
     ):
-        records = scratch_client.fetch_genbank_records(accessions)
+        records = scratch_ncbi_client.fetch_genbank_records(accessions)
 
         assert records
 
@@ -29,8 +32,8 @@ class TestGroupRecords:
             assert grouped_records[source_key] == snapshot
 
     @pytest.mark.parametrize("accessions", [["Y11023"]])
-    def test_group_records_by_isolate_failure(self, accessions, scratch_client):
-        records = scratch_client.fetch_genbank_records(accessions)
+    def test_group_records_by_isolate_failure(self, accessions, scratch_ncbi_client):
+        records = scratch_ncbi_client.fetch_genbank_records(accessions)
 
         assert records
 

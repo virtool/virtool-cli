@@ -3,8 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from virtool_cli.ref.init import init_reference
+from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.ncbi.client import NCBIClient
+from virtool_cli.ref.init import init_reference
 
 
 @pytest.fixture()
@@ -13,32 +14,17 @@ def test_files_path():
 
 
 @pytest.fixture()
-def src_malformed_path(test_files_path: Path) -> Path:
-    return test_files_path / "src_malformed"
-
-
-@pytest.fixture()
-def src_test_path(test_files_path: Path) -> Path:
-    return test_files_path / "src_test"
-
-
-@pytest.fixture()
-def src_scratch_path(src_test_path: Path, tmp_path: Path) -> Path:
-    path = tmp_path / "src_scratch"
-    shutil.copytree(src_test_path, path)
-
-    yield path
-
-    shutil.rmtree(path)
-
-
-@pytest.fixture()
-def scratch_path(src_test_path: Path, cache_example_path: Path, tmp_path: Path) -> Path:
+def scratch_path(
+    test_files_path: Path,
+    tmp_path: Path,
+) -> Path:
+    """The path to a scratch reference repository."""
     path = tmp_path / "reference"
+
     init_reference(path)
 
-    shutil.copytree(src_test_path, path / "src", dirs_exist_ok=True)
-    shutil.copytree(cache_example_path, path / ".cache", dirs_exist_ok=True)
+    shutil.copytree(test_files_path / "src_test", path / "src", dirs_exist_ok=True)
+    shutil.copytree(test_files_path / "cache_test", path / ".cache", dirs_exist_ok=True)
 
     yield path
 
@@ -46,20 +32,26 @@ def scratch_path(src_test_path: Path, cache_example_path: Path, tmp_path: Path) 
 
 
 @pytest.fixture()
-def cache_example_path(test_files_path: Path) -> Path:
-    return test_files_path / "cache_test"
+def scratch_src_path(scratch_path: Path) -> Path:
+    """The source path of a scratch reference repository."""
+    return scratch_path / "src"
 
 
 @pytest.fixture()
-def cache_scratch_path(cache_example_path, tmp_path: Path) -> Path:
-    path = tmp_path / "cache_scratch"
-    shutil.copytree(cache_example_path, path)
-
-    yield path
-
-    shutil.rmtree(path)
+def scratch_ncbi_cache_path(
+    scratch_path: Path,
+) -> Path:
+    """The path to a scratch NCBI client cache."""
+    return scratch_path / ".cache"
 
 
 @pytest.fixture()
-def scratch_client(cache_scratch_path):
-    return NCBIClient(cache_scratch_path, ignore_cache=False)
+def scratch_ncbi_cache(scratch_ncbi_cache_path: Path):
+    """A scratch NCBI cache with preloaded data."""
+    return NCBICache(scratch_ncbi_cache_path)
+
+
+@pytest.fixture()
+def scratch_ncbi_client(scratch_ncbi_cache_path: Path):
+    """A scratch NCBI client with a preloaded cache."""
+    return NCBIClient(scratch_ncbi_cache_path, ignore_cache=False)
