@@ -12,26 +12,16 @@ from virtool_cli.ref.resources import (
 )
 from virtool_cli.ref.utils import (
     DataType,
-    Molecule,
-    Strandedness,
-    MolType,
-    Topology,
     IsolateName,
+    Molecule,
+    MolType,
+    Strandedness,
+    Topology,
 )
 
 
-@pytest.fixture()
-def _repo(tmp_path: Path):
-    return EventSourcedRepo.new(
-        DataType.GENOME,
-        "Generic Viruses",
-        tmp_path / "test_repo",
-        "virus",
-    )
-
-
-def init_otu(repo: EventSourcedRepo) -> EventSourcedRepoOTU:
-    return repo.create_otu(
+def init_otu(empty_repo: EventSourcedRepo) -> EventSourcedRepoOTU:
+    return empty_repo.create_otu(
         "TMV",
         "abcd1234",
         "Tobacco mosaic virus",
@@ -41,24 +31,24 @@ def init_otu(repo: EventSourcedRepo) -> EventSourcedRepoOTU:
     )
 
 
-def test_new(_repo: EventSourcedRepo, tmp_path: Path):
+def test_new(empty_repo: EventSourcedRepo, tmp_path: Path):
     """Test that creating a new ``Repo`` object returns the expected object and creates
     the expected directory structure.
     """
-    assert _repo.path == tmp_path / "test_repo"
-    assert _repo.last_id == 1
+    assert empty_repo.path == tmp_path / "test_repo"
+    assert empty_repo.last_id == 1
 
-    assert _repo.meta.data_type == DataType.GENOME
-    assert _repo.meta.name == "Generic Viruses"
-    assert _repo.meta.organism == "virus"
+    assert empty_repo.meta.data_type == DataType.GENOME
+    assert empty_repo.meta.name == "Generic Viruses"
+    assert empty_repo.meta.organism == "virus"
 
 
 class TestCreateOTU:
-    def test_ok(self, _repo: EventSourcedRepo):
+    def test_ok(self, empty_repo: EventSourcedRepo):
         """Test that creating an OTU returns the expected ``RepoOTU`` object and creates
         the expected event file.
         """
-        otu = _repo.create_otu(
+        otu = empty_repo.create_otu(
             "TMV",
             "abcd1234",
             "Tobacco mosaic virus",
@@ -79,7 +69,7 @@ class TestCreateOTU:
             taxid=12242,
         )
 
-        with open(_repo.path.joinpath("src", "00000002.json")) as f:
+        with open(empty_repo.path.joinpath("src", "00000002.json")) as f:
             event = orjson.loads(f.read())
 
         del event["timestamp"]
@@ -107,13 +97,13 @@ class TestCreateOTU:
             "type": "CreateOTU",
         }
 
-        assert _repo.last_id == 2
+        assert empty_repo.last_id == 2
 
-    def test_duplicate_name(self, _repo: EventSourcedRepo):
+    def test_duplicate_name(self, empty_repo: EventSourcedRepo):
         """Test that creating an OTU with a name that already exists raises a
         ``ValueError``.
         """
-        _repo.create_otu(
+        empty_repo.create_otu(
             "TMV",
             None,
             "Tobacco mosaic virus",
@@ -126,7 +116,7 @@ class TestCreateOTU:
             ValueError,
             match="An OTU with the name 'Tobacco mosaic virus' already exists",
         ):
-            _repo.create_otu(
+            empty_repo.create_otu(
                 "TMV",
                 None,
                 "Tobacco mosaic virus",
@@ -135,11 +125,11 @@ class TestCreateOTU:
                 12242,
             )
 
-    def test_duplicate_legacy_id(self, _repo: EventSourcedRepo):
+    def test_duplicate_legacy_id(self, empty_repo: EventSourcedRepo):
         """Test that creating an OTU with a legacy ID that already exists raises a
         ``ValueError``.
         """
-        _repo.create_otu(
+        empty_repo.create_otu(
             "TMV",
             "abcd1234",
             "Tobacco mosaic virus",
@@ -152,7 +142,7 @@ class TestCreateOTU:
             ValueError,
             match="An OTU with the legacy ID 'abcd1234' already exists",
         ):
-            _repo.create_otu(
+            empty_repo.create_otu(
                 "",
                 "abcd1234",
                 "Abaca bunchy top virus",
@@ -162,20 +152,20 @@ class TestCreateOTU:
             )
 
 
-def test_create_isolate(_repo: EventSourcedRepo):
+def test_create_isolate(empty_repo: EventSourcedRepo):
     """Test that creating an isolate returns the expected ``RepoIsolate`` object and
     creates the expected event file.
     """
-    otu = init_otu(_repo)
+    otu = init_otu(empty_repo)
 
-    isolate = _repo.create_isolate(otu.id, None, "A", "isolate")
+    isolate = empty_repo.create_isolate(otu.id, None, "A", "isolate")
 
     assert isinstance(isolate.id, UUID)
     assert isolate.sequences == []
     assert isolate.name.value == "A"
     assert isolate.name.type == "isolate"
 
-    with open(_repo.path.joinpath("src", "00000003.json")) as f:
+    with open(empty_repo.path.joinpath("src", "00000003.json")) as f:
         event = orjson.loads(f.read())
 
     del event["timestamp"]
@@ -194,18 +184,18 @@ def test_create_isolate(_repo: EventSourcedRepo):
         "type": "CreateIsolate",
     }
 
-    assert _repo.last_id == 3
+    assert empty_repo.last_id == 3
 
 
-def test_create_sequence(_repo: EventSourcedRepo):
+def test_create_sequence(empty_repo: EventSourcedRepo):
     """Test that creating a sequence returns the expected ``RepoSequence`` object and
     creates the expected event file.
     """
-    otu = init_otu(_repo)
+    otu = init_otu(empty_repo)
 
-    isolate = _repo.create_isolate(otu.id, None, "A", "isolate")
+    isolate = empty_repo.create_isolate(otu.id, None, "A", "isolate")
 
-    sequence = _repo.create_sequence(
+    sequence = empty_repo.create_sequence(
         otu.id,
         isolate.id,
         "TMVABC.1",
@@ -224,7 +214,7 @@ def test_create_sequence(_repo: EventSourcedRepo):
         sequence="ACGT",
     )
 
-    with open(_repo.path.joinpath("src", "00000004.json")) as f:
+    with open(empty_repo.path.joinpath("src", "00000004.json")) as f:
         event = orjson.loads(f.read())
 
     del event["timestamp"]
@@ -247,14 +237,14 @@ def test_create_sequence(_repo: EventSourcedRepo):
         "type": "CreateSequence",
     }
 
-    assert _repo.last_id == 4
+    assert empty_repo.last_id == 4
 
 
-def test_get_otu(_repo: EventSourcedRepo):
+def test_get_otu(empty_repo: EventSourcedRepo):
     """Test that getting an OTU returns the expected ``RepoOTU`` object including two
     isolates with one sequence each.
     """
-    otu = _repo.create_otu(
+    otu = empty_repo.create_otu(
         "TMV",
         None,
         "Tobacco mosaic virus",
@@ -263,8 +253,8 @@ def test_get_otu(_repo: EventSourcedRepo):
         12242,
     )
 
-    isolate_a = _repo.create_isolate(otu.id, None, "A", "isolate")
-    _repo.create_sequence(
+    isolate_a = empty_repo.create_isolate(otu.id, None, "A", "isolate")
+    empty_repo.create_sequence(
         otu.id,
         isolate_a.id,
         "TMVABC.1",
@@ -274,8 +264,8 @@ def test_get_otu(_repo: EventSourcedRepo):
         "ACGT",
     )
 
-    isolate_b = _repo.create_isolate(otu.id, None, "B", "isolate")
-    _repo.create_sequence(
+    isolate_b = empty_repo.create_isolate(otu.id, None, "B", "isolate")
+    empty_repo.create_sequence(
         otu.id,
         isolate_b.id,
         "TMVABCB.1",
@@ -285,7 +275,7 @@ def test_get_otu(_repo: EventSourcedRepo):
         "ACGTGGAGAGACC",
     )
 
-    otu = _repo.get_otu(otu.id)
+    otu = empty_repo.get_otu(otu.id)
 
     assert otu == EventSourcedRepoOTU(
         id=otu.id,
@@ -330,4 +320,4 @@ def test_get_otu(_repo: EventSourcedRepo):
         taxid=12242,
     )
 
-    assert _repo.last_id == 6
+    assert empty_repo.last_id == 6

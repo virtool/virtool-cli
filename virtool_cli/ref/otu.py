@@ -1,11 +1,11 @@
-from typing import NamedTuple
-from enum import StrEnum
 from collections import defaultdict
+from enum import StrEnum
+from typing import NamedTuple
 
 import structlog
 
+from virtool_cli.legacy.models import LegacyIsolateSource, LegacySourceType
 from virtool_cli.ncbi.model import NCBIGenbank
-
 
 base_logger = structlog.get_logger()
 
@@ -23,8 +23,7 @@ class SourceKey(NamedTuple):
 
 
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
-    """
-    :param records:
+    """:param records:
     :return:
     """
     isolates = defaultdict(dict)
@@ -37,7 +36,7 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
         )
 
         if record.source.model_fields_set.intersection(
-            {SourceType.ISOLATE, SourceType.STRAIN, SourceType.CLONE}
+            {SourceType.ISOLATE, SourceType.STRAIN, SourceType.CLONE},
         ):
             for source_type in SourceType:
                 if source_type in record.source.model_fields_set:
@@ -69,3 +68,39 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
         )
 
     return isolates
+
+
+def extract_isolate_source(
+    genbank_records: list[NCBIGenbank],
+) -> LegacyIsolateSource:
+    """Extract a legacy isolate source from a set of Genbank records associated with the
+    isolate.
+    """
+    for record in genbank_records:
+        if record.source.isolate:
+            return LegacyIsolateSource(
+                name=record.source.isolate,
+                type=LegacySourceType.ISOLATE,
+            )
+
+        if record.source.strain:
+            return LegacyIsolateSource(
+                name=record.source.strain,
+                type=LegacySourceType.STRAIN,
+            )
+
+        if record.source.clone:
+            return LegacyIsolateSource(
+                name=record.source.clone,
+                type=LegacySourceType.CLONE,
+            )
+
+    accessions = sorted(
+        (record.accession for record in genbank_records if record.accession),
+        key=lambda x: int(x.replace("NC_", "").replace(".1", "")),
+    )
+
+    return LegacyIsolateSource(
+        name=accessions[0].upper(),
+        type=LegacySourceType.GENBANK,
+    )

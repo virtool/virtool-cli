@@ -2,7 +2,7 @@ import datetime
 from dataclasses import dataclass
 from uuid import UUID
 
-from virtool_cli.ref.utils import DataType, Molecule, IsolateName
+from virtool_cli.ref.utils import DataType, IsolateName, Molecule
 
 
 @dataclass
@@ -119,10 +119,10 @@ class EventSourcedRepoOTU:
     molecule: Molecule
     """The molecule of this OTU"""
 
-    schema: list
-
     taxid: int
     """The OTU taxonomy ID."""
+
+    schema: list
 
     def add_isolate(self, isolate: EventSourcedRepoIsolate):
         self.isolates.append(isolate)

@@ -1,3 +1,4 @@
+import glob
 import sys
 from pathlib import Path
 
@@ -5,14 +6,16 @@ import click
 from structlog import get_logger
 
 from virtool_cli.add.cli import add
+from virtool_cli.legacy.utils import iter_legacy_otus
+from virtool_cli.legacy.validate import validate_legacy_repo
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
-from virtool_cli.ref.migrate import run as run_migrate
 from virtool_cli.ref.repo import EventSourcedRepo
-from virtool_cli.ref.utils import DataType
+from virtool_cli.ref.resources import DataType
+from virtool_cli.ref.utils import format_json
 from virtool_cli.update.cli import update
-from virtool_cli.utils.logging import configure_logger, error_message_style
+from virtool_cli.utils.logging import configure_logger
 
 logger = get_logger()
 
@@ -77,26 +80,92 @@ def create(debug: bool, path: Path, taxid: int):
         logger.fatal(f"Taxonomy ID {taxid} not found")
         sys.exit(1)
 
-    otu = repo.create_otu(
-        acronym="",
-        legacy_id=None,
-        name=taxonomy.name,
-        molecule=None,
-        schema=[],
-        taxid=taxid,
-    )
+    repo.create_otu("", None, taxonomy.name, [], taxid)
 
     logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
 
-@ref.command()
+@ref.group()
+def legacy():
+    """Validate and convert legacy references."""
+
+
+@legacy.command()
 @click.option(
-    "-o",
-    "--output-path",
-    type=click.Path(exists=False, path_type=Path),
-    default="reference.json",
-    help="the output path for the reference.json file",
+    "--path",
+    help="the name to the legacy reference repository",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
 )
+def precache(path: Path):
+    """Pre-cache all accessions in a legacy reference repository."""
+    ncbi = NCBIClient(path / ".migration_cache", False)
+
+    buffer = []
+
+    for otu in iter_legacy_otus(path / "src"):
+        for isolate in otu["isolates"]:
+            for sequence in isolate["sequences"]:
+                buffer.append(sequence["accession"])
+
+                if len(buffer) > 450:
+                    ncbi.fetch_genbank_records(buffer)
+                    buffer = []
+
+    if buffer:
+        ncbi.fetch_genbank_records(buffer)
+
+
+@legacy.command(name="format")
+@click.option(
+    "--path",
+    help="the name to the legacy reference repository",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+)
+def reformat(path: Path):
+    """Format a legacy reference repository.
+
+    Re-formats every JSON file in a legacy reference repository to have a consistent
+    format.
+    """
+    src_path = path / "src"
+
+    for path in glob.glob(str(src_path / "**/*.json"), recursive=True):
+        format_json(Path(path))
+
+
+@legacy.command()
+@debug_option
+@click.option(
+    "--fix",
+    is_flag=True,
+    help="attempt to fix errors in-place",
+)
+@click.option(
+    "--limit",
+    default=0,
+    help="exit if this many otus have errors",
+)
+@click.option(
+    "--no-ok",
+    is_flag=True,
+    help="don't print anything if an otu is valid",
+)
+@click.option(
+    "--path",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="the path to a legacy reference directory",
+)
+def validate(debug: bool, fix: bool, limit: int, no_ok: bool, path: Path):
+    """Validate a legacy reference repository."""
+    configure_logger(debug)
+
+    validate_legacy_repo(fix, limit, no_ok, path)
+
+
+@ref.command()
 @click.option(
     "-i",
     "--indent",
@@ -110,28 +179,20 @@ def create(debug: bool, path: Path, taxid: int):
     type=str,
     help="a version string to include in the reference.json file",
 )
-@path_option
+@click.option(
+    "-o",
+    "--output-path",
+    required=True,
+    type=click.Path(exists=False, file_okay=True, path_type=Path),
+    help="the path to write the reference.json file to",
+)
+@click.option(
+    "-p",
+    "--path",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="the path to the reference repository",
+)
 def build(output_path: Path, path: Path, indent: bool, version: str):
     """Build a Virtool reference.json file from a reference repository."""
     build_json(indent, output_path, path, version)
-
-
-@ref.command()
-@click.option(
-    "-src",
-    "--src_path",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    help="the path to a reference directory",
-)
-@click.option("--debug/--no-debug", default=False)
-def migrate(src_path, debug):
-    """Convert a reference directory from v1.x to v2.x"""
-    try:
-        run_migrate(Path(src_path), debug)
-
-    except (FileNotFoundError, NotADirectoryError):
-        click.echo(
-            f"{error_message_style}{src_path} is not a valid reference directory",
-            err=True,
-        )

@@ -1,20 +1,30 @@
-from enum import StrEnum
 from dataclasses import dataclass
+from enum import StrEnum
+from pathlib import Path
 
+import orjson
 from pydantic import BaseModel, field_validator
 
 
-class DataType(StrEnum):
-    """The possible reference data types."""
-
+class DataType:
     BARCODE = "barcode"
     GENOME = "genome"
+
+
+def format_json(path: Path):
+    """Format the JSON file at `path` in place."""
+    with path.open("rb") as f:
+        data = orjson.loads(f.read())
+
+    with path.open("wb") as f:
+        f.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
 
 
 class MolType(StrEnum):
     """The in vivo molecule type of a sequence.
 
-    Corresponds to Genbank's moltype field"""
+    Corresponds to Genbank's moltype field
+    """
 
     DNA = "DNA"
     RNA = "RNA"
@@ -41,7 +51,8 @@ class Topology(StrEnum):
 class Molecule:
     """The strandedness, molecule type and topology of this OTU.
 
-    Corresponds to all sequences found in this OTU."""
+    Corresponds to all sequences found in this OTU.
+    """
 
     strandedness: Strandedness
     type: MolType
@@ -54,6 +65,9 @@ def pad_zeroes(number: int) -> str:
     :param number: the number to pad
     :return: the padded number
     """
+    if number > 99999999:
+        raise ValueError("Number is too large to pad")
+
     return str(number).zfill(8)
 
 
@@ -66,7 +80,8 @@ class IsolateNameType(StrEnum):
 class IsolateName(BaseModel):
     """Represents a sub-species categorization name for sequences.
 
-    Can be typed as an isolate, a strain or a clone."""
+    Can be typed as an isolate, a strain or a clone.
+    """
 
     type: IsolateNameType
     """The type of sub-species categorization"""

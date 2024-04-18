@@ -114,7 +114,10 @@ class NCBIGenbank(BaseModel):
     organism: Annotated[str, Field(validation_alias="GBSeq_organism")]
     sequence: Annotated[
         str,
-        Field(validation_alias="GBSeq_sequence", pattern=r"^[gatc]+$"),
+        Field(
+            validation_alias="GBSeq_sequence",
+            pattern=r"^[ATCGRYKMSWBDHVNatcgrykmswbdhvn]+$",
+        ),
     ]
     source: Annotated[NCBISource, Field(validation_alias="GBSeq_feature-table")]
     comment: Annotated[str, Field("", validation_alias="GBSeq_comment")]
