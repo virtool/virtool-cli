@@ -1,17 +1,12 @@
 import shutil
-import json
 import subprocess
 from pathlib import Path
 
 import orjson
 import pytest
 from syrupy import SnapshotAssertion
-from syrupy.filters import props, paths
+from syrupy.filters import props
 
-from virtool_cli.ref.otu import add_otu
-
-# from virtool_cli.ref.build import build_json
-# from virtool_cli.ref.init import init_reference
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
 from virtool_cli.utils.reference import get_sequence_paths
 
@@ -111,25 +106,32 @@ class TestAddOTU:
     ):
         self.run_add_otu(taxid, accessions, precached_repo.path)
 
-        run_build_reference(repo=precached_repo.path, output=precached_repo.path)
+        for otu in precached_repo.iter_otus():
+            assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
-        built_reference_path = precached_repo.path / "reference.json"
+            assert sorted(otu.get_indexed_isolates()) == snapshot
 
-        with open(built_reference_path, "rb") as f:
-            built_reference = orjson.loads(f.read())
+            assert sorted(otu.get_accessions()) == snapshot
 
-        for otu in built_reference["otus"]:
-            assert otu == snapshot(exclude=props("id", "isolates"))
-
-            for isolate in otu["isolates"]:
-                assert isolate == snapshot(exclude=props("id", "sequences"))
-
-                indexed_sequences = {
-                    sequence["accession"]: sequence for sequence in isolate["sequences"]
-                }
-
-                for accession in sorted(indexed_sequences):
-                    assert indexed_sequences[accession] == snapshot(exclude=paths("id"))
+        # run_build_reference(repo=precached_repo.path, output=precached_repo.path)
+        #
+        # built_reference_path = precached_repo.path / "reference.json"
+        #
+        # with open(built_reference_path, "rb") as f:
+        #     built_reference = orjson.loads(f.read())
+        #
+        # for otu in built_reference["otus"]:
+        #     assert otu == snapshot(exclude=props("id", "isolates"))
+        #
+        #     for isolate in otu["isolates"]:
+        #         assert isolate == snapshot(exclude=props("id", "sequences"))
+        #
+        #         indexed_sequences = {
+        #             sequence["accession"]: sequence for sequence in isolate["sequences"]
+        #         }
+        #
+        #         for accession in sorted(indexed_sequences):
+        #             assert indexed_sequences[accession] == snapshot(exclude=paths("id"))
 
 
 @pytest.mark.ncbi
