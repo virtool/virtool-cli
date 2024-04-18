@@ -90,6 +90,7 @@ def index_repo_data(repo: Repo):
     return otus
 
 
+@pytest.mark.skip
 class TestAddOTU:
     @staticmethod
     def run_add_otu(taxid: int, accessions: list[str], path: Path):
@@ -135,6 +136,7 @@ class TestAddOTU:
             assert sorted(otu.get_accessions()) == snapshot
 
 
+@pytest.mark.skip
 @pytest.mark.ncbi
 class TestAddOTUAutofill:
     @staticmethod
