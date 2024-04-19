@@ -80,7 +80,7 @@ def create(debug: bool, path: Path, taxid: int):
         logger.fatal(f"Taxonomy ID {taxid} not found")
         sys.exit(1)
 
-    repo.create_otu("", None, taxonomy.name, [], taxid)
+    repo.create_otu("", None, taxonomy.name, None, [], taxid)
 
     logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
@@ -103,8 +103,8 @@ def precache(path: Path):
 
     buffer = []
 
-    for otu in iter_legacy_otus(path / "src"):
-        for isolate in otu["isolates"]:
+    for otu_ in iter_legacy_otus(path / "src"):
+        for isolate in otu_["isolates"]:
             for sequence in isolate["sequences"]:
                 buffer.append(sequence["accession"])
 
@@ -131,8 +131,8 @@ def reformat(path: Path):
     """
     src_path = path / "src"
 
-    for path in glob.glob(str(src_path / "**/*.json"), recursive=True):
-        format_json(Path(path))
+    for json_path in glob.glob(str(src_path / "**/*.json"), recursive=True):
+        format_json(Path(json_path))
 
 
 @legacy.command()

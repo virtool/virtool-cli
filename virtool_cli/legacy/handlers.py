@@ -235,12 +235,12 @@ def handle_string_too_short(ctx: HandleErrorContext) -> ErrorHandledResult:
     :return: the error handling result
     """
     field = ctx.error["loc"][-1]
-    input = ctx.error["input"]
+    input_ = ctx.error["input"]
     min_length = ctx.error["ctx"]["min_length"]
 
     result = ErrorHandledResult(
         f"[bold]{field}[/bold] must be a string with a minimum length of "
-        f"{min_length}. it currently has a length of [u]{len(input)}[/u].",
+        f"{min_length}. it currently has a length of [u]{len(input_)}[/u].",
     )
 
     if field == "source_name" and ctx.fix:
@@ -254,7 +254,7 @@ def handle_string_too_short(ctx: HandleErrorContext) -> ErrorHandledResult:
         if not genbank_records:
             return ErrorHandledResult(
                 f"[bold]source_name[/bold] must be a string with a minimum length of "
-                f"{min_length}. it currently has a length of [u]{len(input)}[/u]. we "
+                f"{min_length}. it currently has a length of [u]{len(input_)}[/u]. we "
                 "could not find a source name on genbank.",
             )
 

@@ -99,13 +99,13 @@ class ErrorHandledResult:
 
     message: str
     """The message to display to the user.
-    
+
     Includes ``rich``-compatible markup.
     """
 
     fixed: bool = False
     """Whether the error was fixed.
-    
+
     This value is used to show the user whether the error was fixed or not.    
     """
 

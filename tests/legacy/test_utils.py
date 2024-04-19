@@ -8,7 +8,7 @@ from virtool_cli.legacy.utils import build_legacy_otu, iter_legacy_otus, replace
 
 def test_iter_legacy_otu(legacy_repo_path: Path):
     """Test that all OTUs in the repository are iterated over."""
-    otus = list(iter_legacy_otus(legacy_repo_path / "src"))
+    list(iter_legacy_otus(legacy_repo_path / "src"))
 
 
 class TestReplaceOTU:

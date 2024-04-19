@@ -36,6 +36,7 @@ from virtool_cli.legacy.utils import (
     replace_otu,
 )
 from virtool_cli.ncbi.client import NCBIClient
+from virtool_cli.utils.console import console
 
 logger = get_logger("legacy")
 
@@ -58,7 +59,6 @@ def handle_validation_error(
     :param fix: whether to attempt to fix the errors
     :param ncbi_client: the NCBI client
     :param otu: the otu data
-    :param src_path: the path to the source directory
     """
     handler_results = []
     repaired_otu = deepcopy(otu)
@@ -188,7 +188,9 @@ def validate_legacy_repo(fix: bool, limit: int, no_ok: bool, path: Path):
                     result.repaired_otu,
                 )
 
-            log_otu_validation_result(result.repaired_otu["name"], result, no_ok)
+            log_otu_validation_result(
+                console, result.repaired_otu["name"], result, no_ok
+            )
 
             with_errors_count += 1
 
