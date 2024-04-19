@@ -1,9 +1,7 @@
 import shutil
-from io import StringIO
 from pathlib import Path
 
 import pytest
-from rich.console import Console
 
 from virtool_cli.legacy.utils import build_legacy_otu
 from virtool_cli.ncbi.cache import NCBICache
@@ -12,13 +10,6 @@ from virtool_cli.ref.init import init_reference
 from virtool_cli.ref.legacy import Repo
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.utils import DataType
-
-
-@pytest.fixture()
-def console(mocker) -> Console:
-    console = Console(file=StringIO())
-    mocker.patch("virtool_cli.utils.console.console", console)
-    return console
 
 
 @pytest.fixture()

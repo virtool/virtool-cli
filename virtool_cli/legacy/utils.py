@@ -106,7 +106,7 @@ class ErrorHandledResult:
     fixed: bool = False
     """Whether the error was fixed.
 
-    This value is used to show the user whether the error was fixed or not.    
+    This value is used to show the user whether the error was fixed or not.
     """
 
 

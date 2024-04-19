@@ -1,24 +1,19 @@
-from io import StringIO
-
 import pytest
-from rich.console import Console
 
 from virtool_cli.legacy.utils import ErrorHandledResult
 from virtool_cli.legacy.validate import OTUValidationResult, log_otu_validation_result
 
 
-def test_log_ok():
+def test_log_ok(capfd, mocker):
     """Test that the console logs OK when validation passes."""
     result = OTUValidationResult(
         handler_results=[],
         repaired_otu={"name": "Test virus"},
     )
 
-    console = Console(file=StringIO())
+    log_otu_validation_result("Test virus", result, False)
 
-    log_otu_validation_result(console, "Test virus", result, False)
-
-    assert console.file.getvalue() == (
+    assert capfd.readouterr().out == (
         "Test virus "
         "─────────────────────────────────────────────────────────────────────\n\n"
         "  ‣ OK                                                                   "
@@ -26,7 +21,7 @@ def test_log_ok():
     )
 
 
-def test_log_no_ok():
+def test_log_no_ok(capfd):
     """Test that the console logs nothing when the validation passes and ``no_ok`` is
     set.
     """
@@ -35,15 +30,13 @@ def test_log_no_ok():
         repaired_otu={"name": "Test virus"},
     )
 
-    console = Console(file=StringIO())
+    log_otu_validation_result("Test virus", result, True)
 
-    log_otu_validation_result(console, "Test virus", result, True)
-
-    assert console.file.getvalue() == ""
+    assert capfd.readouterr().out == ""
 
 
 @pytest.mark.parametrize("no_ok", [False, True])
-def test_log_error_single(no_ok: bool):
+def test_log_error_single(no_ok: bool, capfd):
     """Test that the console logs OK correctly."""
     result = OTUValidationResult(
         handler_results=[
@@ -55,11 +48,9 @@ def test_log_error_single(no_ok: bool):
         repaired_otu={"name": "Test virus"},
     )
 
-    console = Console(file=StringIO())
+    log_otu_validation_result("Test virus", result, no_ok)
 
-    log_otu_validation_result(console, "Test virus", result, no_ok)
-
-    assert console.file.getvalue() == (
+    assert capfd.readouterr().out == (
         "Test virus "
         "─────────────────────────────────────────────────────────────────────\n\n"
         "  ‣ [ERROR] Error message                                                "
@@ -68,7 +59,7 @@ def test_log_error_single(no_ok: bool):
 
 
 @pytest.mark.parametrize("no_ok", [False, True])
-def test_log_error_multi(no_ok: bool):
+def test_log_error_multi(no_ok: bool, capfd):
     """Test that the console logs OK correctly."""
     result = OTUValidationResult(
         handler_results=[
@@ -84,11 +75,9 @@ def test_log_error_multi(no_ok: bool):
         repaired_otu={"name": "Test virus"},
     )
 
-    console = Console(file=StringIO())
+    log_otu_validation_result("Test virus", result, no_ok)
 
-    log_otu_validation_result(console, "Test virus", result, no_ok)
-
-    assert console.file.getvalue() == (
+    assert capfd.readouterr().out == (
         "Test virus "
         "─────────────────────────────────────────────────────────────────────\n\n"
         "  ‣ [ERROR] There was a problem                                          "
@@ -99,7 +88,7 @@ def test_log_error_multi(no_ok: bool):
 
 
 @pytest.mark.parametrize("no_ok", [False, True])
-def test_log_error_fixed(no_ok: bool):
+def test_log_error_fixed(no_ok: bool, capfd):
     """Test that the console logs OK correctly."""
     result = OTUValidationResult(
         handler_results=[
@@ -111,11 +100,9 @@ def test_log_error_fixed(no_ok: bool):
         repaired_otu={"name": "Test virus"},
     )
 
-    console = Console(file=StringIO())
+    log_otu_validation_result("Test virus", result, no_ok)
 
-    log_otu_validation_result(console, "Test virus", result, no_ok)
-
-    assert console.file.getvalue() == (
+    assert capfd.readouterr().out == (
         "Test virus "
         "─────────────────────────────────────────────────────────────────────\n\n"
         "  ‣ [FIXED] A fixable problem occurred                                   "

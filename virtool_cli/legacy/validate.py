@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import ValidationError
-from rich.console import Console
 from rich.padding import Padding
 from rich.table import Table
 from structlog import get_logger
@@ -118,7 +117,6 @@ def validate_legacy_otu(
 
 
 def log_otu_validation_result(
-    console: Console,
     otu_name: str,
     otu_validation_result: OTUValidationResult,
     no_ok: bool,
@@ -189,7 +187,9 @@ def validate_legacy_repo(fix: bool, limit: int, no_ok: bool, path: Path):
                 )
 
             log_otu_validation_result(
-                console, result.repaired_otu["name"], result, no_ok
+                result.repaired_otu["name"],
+                result,
+                no_ok,
             )
 
             with_errors_count += 1
