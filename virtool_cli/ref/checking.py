@@ -1,4 +1,3 @@
-from pprint import pprint
 from typing import TYPE_CHECKING
 
 import orjson
@@ -29,8 +28,6 @@ class Checker:
             return data
 
     def check_legacy_id_exists(self, legacy_id: str | None):
-        pprint(list(self._repo.iter_otus()))
-
         if legacy_id is None:
             return
 
@@ -42,8 +39,6 @@ class Checker:
             ],
             "legacy_otu_ids",
         )
-
-        print("legacy_otu_ids", legacy_otu_ids)
 
         if legacy_id in legacy_otu_ids:
             raise ValueError(f"An OTU with the legacy ID '{legacy_id}' already exists")

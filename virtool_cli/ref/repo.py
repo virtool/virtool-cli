@@ -44,7 +44,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
     RepoMeta,
 )
-from virtool_cli.ref.utils import DataType, Molecule, pad_zeroes, IsolateName
+from virtool_cli.ref.utils import DataType, IsolateName, Molecule, pad_zeroes
 
 logger = get_logger("repo")
 
@@ -208,8 +208,8 @@ class EventSourcedRepo:
             excluded_accessions=[],
             isolates=[],
             legacy_id=legacy_id,
-            name=name,
             molecule=molecule,
+            name=name,
             schema=schema,
             taxid=taxid,
         )
@@ -232,7 +232,10 @@ class EventSourcedRepo:
         )
 
         return EventSourcedRepoIsolate(
-            id=isolate_id, legacy_id=legacy_id, sequences=[], name=name
+            id=isolate_id,
+            legacy_id=legacy_id,
+            sequences=[],
+            name=name,
         )
 
     def create_sequence(
@@ -304,8 +307,8 @@ class EventSourcedRepo:
             excluded_accessions=event.data.excluded_accessions,
             isolates=[],
             legacy_id=event.data.legacy_id,
-            name=event.data.name,
             molecule=event.data.molecule,
+            name=event.data.name,
             schema=event.data.otu_schema,
             taxid=event.data.taxid,
         )

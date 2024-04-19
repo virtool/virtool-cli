@@ -1,17 +1,16 @@
 import os
-from pathlib import Path
 from contextlib import contextmanager
 from enum import StrEnum
+from pathlib import Path
+from urllib.error import HTTPError
+from urllib.parse import quote_plus
 
 from Bio import Entrez
-
-from structlog import get_logger
-from urllib.parse import quote_plus
-from urllib.error import HTTPError
 from pydantic import ValidationError
+from structlog import get_logger
 
-from virtool_cli.ncbi.model import NCBIGenbank, NCBITaxonomy, NCBIDatabase, NCBIRank
 from virtool_cli.ncbi.cache import NCBICache
+from virtool_cli.ncbi.model import NCBIDatabase, NCBIGenbank, NCBIRank, NCBITaxonomy
 
 if email := os.environ.get("NCBI_EMAIL"):
     Entrez.email = email
@@ -32,8 +31,7 @@ class GBSeq(StrEnum):
 
 class NCBIClient:
     def __init__(self, cache_path: Path, ignore_cache: bool):
-        """
-        :param cache_path: A path to a directory to be used as a cache
+        """:param cache_path: A path to a directory to be used as a cache
         :param ignore_cache: If True, does not allow the return of cached data
         """
         self.cache = NCBICache(cache_path)
@@ -50,8 +48,7 @@ class NCBIClient:
         return NCBIClient(repo_path / ".cache/ncbi", ignore_cache=ignore_cache)
 
     def fetch_genbank_records(self, accessions: list[str]) -> list[NCBIGenbank]:
-        """
-        Fetch or load NCBI Nucleotide records corresponding to a list of accessions.
+        """Fetch or load NCBI Nucleotide records corresponding to a list of accessions.
         Cache fetched records if found.
         Returns validated records.
 
@@ -74,8 +71,9 @@ class NCBIClient:
                     logger.debug("Missing accession", missing_accession=accession)
 
         fetch_list = list(
-            set(accessions) - {record.get(GBSeq.ACCESSION) for record in records}
+            set(accessions) - {record.get(GBSeq.ACCESSION) for record in records},
         )
+
         if fetch_list:
             logger.debug("Fetching accessions...", fetch_list=fetch_list)
             new_records = NCBIClient.fetch_unvalidated_genbank_records(fetch_list)
@@ -96,8 +94,7 @@ class NCBIClient:
 
     @staticmethod
     def fetch_unvalidated_genbank_records(accessions: list[str]) -> list[dict]:
-        """
-        Take a list of accession numbers, parse the corresponding XML records
+        """Take a list of accession numbers, parse the corresponding XML records
         from GenBank using Entrez.Parser and return
 
         :param accessions: List of accession numbers to fetch from GenBank
@@ -113,7 +110,7 @@ class NCBIClient:
                         id=accessions,
                         rettype="gb",
                         retmode="xml",
-                    )
+                    ),
                 )
 
         except HTTPError as e:
@@ -165,8 +162,7 @@ class NCBIClient:
 
     @staticmethod
     def link_accessions_from_taxid(taxid: int) -> list:
-        """
-        Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
+        """Requests a cross-reference for NCBI Taxonomy and Nucleotide via ELink
         and returns the results as a list.
 
         :param taxid: A NCBI Taxonomy id
@@ -181,7 +177,7 @@ class NCBIClient:
                         db=NCBIDatabase.NUCCORE,
                         id=str(taxid),
                         idtype="acc",
-                    )
+                    ),
                 )
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
@@ -200,8 +196,7 @@ class NCBIClient:
 
     @staticmethod
     def validate_genbank_records(records: list[dict]) -> list[NCBIGenbank]:
-        """
-        Process a list of raw Genbank dicts into validated NCBIGenbank records.
+        """Process a list of raw Genbank dicts into validated NCBIGenbank records.
         Logs an error if there is an issue with validation or parsing,
         but does not fail out.
 
@@ -228,8 +223,7 @@ class NCBIClient:
 
     @staticmethod
     def validate_genbank_record(raw: dict) -> NCBIGenbank:
-        """
-        Parses an NCBI Genbank record from a Genbank dict to
+        """Parses an NCBI Genbank record from a Genbank dict to
         a validated NCBIGenbank
 
         :param raw: A NCBI Nucleotide dict record, parsed by Bio.Entrez.Parser
@@ -238,8 +232,7 @@ class NCBIClient:
         return NCBIGenbank(**raw)
 
     def fetch_taxonomy_record(self, taxid: int) -> NCBITaxonomy | None:
-        """
-        Fetches and validates a taxonomy record from NCBI Taxonomy.
+        """Fetches and validates a taxonomy record from NCBI Taxonomy.
 
         If the record rank has an invalid rank (e.g. "no data"),
         makes an additional docsum fetch and attempts to extract the rank data.
@@ -263,8 +256,10 @@ class NCBIClient:
                 try:
                     records = Entrez.read(
                         Entrez.efetch(
-                            db=NCBIDatabase.TAXONOMY, id=taxid, rettype="null"
-                        )
+                            db=NCBIDatabase.TAXONOMY,
+                            id=taxid,
+                            rettype="null",
+                        ),
                     )
                 except HTTPError as e:
                     logger.error(f"{e.code}: {e.reason}")
@@ -295,7 +290,8 @@ class NCBIClient:
                     )
                 else:
                     logger.error(
-                        "Taxonomy record failed validation", errors=exc.errors()
+                        "Taxonomy record failed validation",
+                        errors=exc.errors(),
                     )
                     return None
 
@@ -318,8 +314,7 @@ class NCBIClient:
 
     @staticmethod
     def _fetch_taxonomy_rank(taxid: int) -> NCBIRank | None:
-        """
-        Takes an NCBI TaxonId and fetches the eSummary XML
+        """Takes an NCBI TaxonId and fetches the eSummary XML
         to extract the rank data and returns a valid NCBIRank if possible.
 
         :param taxid: A NCBI Taxonomy Id
@@ -335,7 +330,7 @@ class NCBIClient:
                         id=taxid,
                         rettype="docsum",
                         retmode="xml",
-                    )
+                    ),
                 )
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
@@ -353,10 +348,10 @@ class NCBIClient:
 
     @staticmethod
     def validate_taxonomy_record(
-        record: dict, rank: NCBIRank | None = None
+        record: dict,
+        rank: NCBIRank | None = None,
     ) -> NCBITaxonomy:
-        """
-        Attempts to validate a raw record from NCBI Taxonomy.
+        """Attempts to validate a raw record from NCBI Taxonomy.
 
         Throws a ValidationError if valid rank data is not found in the record.
 
@@ -401,7 +396,8 @@ class NCBIClient:
 
     @staticmethod
     def fetch_spelling(
-        name: str, db: NCBIDatabase = NCBIDatabase.TAXONOMY
+        name: str,
+        db: NCBIDatabase = NCBIDatabase.TAXONOMY,
     ) -> str | None:
         """Takes the name of an OTU and returns an alternative spelling
         from the Entrez ESpell utility.
@@ -434,7 +430,10 @@ def log_http_error():
 
     except HTTPError as e:
         base_logger.error(
-            "HTTPError raised", code=e.code, reason=e.reason, body=e.read()
+            "HTTPError raised",
+            code=e.code,
+            reason=e.reason,
+            body=e.read(),
         )
         base_logger.exception(e)
         raise e
