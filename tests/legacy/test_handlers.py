@@ -334,6 +334,7 @@ class TestIsolate:
 
 
 class TestSequence:
+    @pytest.mark.ncbi()
     @pytest.mark.parametrize("fix", [True, False], ids=["fix", "no_fix"])
     def test_invalid_accession(
         self,
