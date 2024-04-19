@@ -214,6 +214,7 @@ class TestOTU:
 
 
 class TestIsolate:
+    @pytest.mark.ncbi()
     @pytest.mark.parametrize("fix", [True, False], ids=["fix", "no_fix"])
     def test_source_type_invalid(
         self,
@@ -246,6 +247,7 @@ class TestIsolate:
         else:
             assert otu_result.repaired_otu["isolates"][0]["source_type"] == "unknown"
 
+    @pytest.mark.ncbi()
     @pytest.mark.parametrize("fix", [True, False], ids=["fix", "no_fix"])
     def test_source_name_empty(
         self,
@@ -277,6 +279,7 @@ class TestIsolate:
         else:
             assert otu_result.repaired_otu == legacy_otu
 
+    @pytest.mark.ncbi()
     def test_source_name_empty_failed_fix(
         self,
         mocker,
