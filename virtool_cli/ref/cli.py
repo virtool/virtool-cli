@@ -5,7 +5,6 @@ from pathlib import Path
 import click
 from structlog import get_logger
 
-from virtool_cli.add.cli import add
 from virtool_cli.legacy.utils import iter_legacy_otus
 from virtool_cli.legacy.validate import validate_legacy_repo
 from virtool_cli.ncbi.client import NCBIClient
@@ -14,7 +13,6 @@ from virtool_cli.ref.build import build_json
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.resources import DataType
 from virtool_cli.ref.utils import format_json
-from virtool_cli.update.cli import update
 from virtool_cli.utils.logging import configure_logger
 
 logger = get_logger()
@@ -23,10 +21,6 @@ logger = get_logger()
 @click.group("ref")
 def ref():
     """Manage references"""
-
-
-ref.add_command(update)
-ref.add_command(add)
 
 
 @ref.command()
