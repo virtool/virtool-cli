@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from enum import StrEnum
 from typing import NamedTuple
@@ -5,7 +6,10 @@ from typing import NamedTuple
 import structlog
 
 from virtool_cli.legacy.models import LegacyIsolateSource, LegacySourceType
+from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
+from virtool_cli.ref.repo import EventSourcedRepo as Repo
+from virtool_cli.ref.resources import EventSourcedRepoOTU as RepoOTU
 
 base_logger = structlog.get_logger()
 
@@ -20,6 +24,35 @@ class SourceType(StrEnum):
 class SourceKey(NamedTuple):
     type: SourceType
     name: str
+
+
+def add_otu(repo: Repo, taxid: int) -> RepoOTU:
+    logger = base_logger.bind(taxid=taxid)
+
+    ncbi = NCBIClient.from_repo(repo.path, False)
+
+    taxonomy = ncbi.fetch_taxonomy_record(taxid)
+    if taxonomy is None:
+        logger.fatal(f"Taxonomy ID {taxid} not found")
+        sys.exit(1)
+
+    molecule = None
+
+    try:
+        otu = repo.create_otu(
+            acronym="",
+            legacy_id=None,
+            name=taxonomy.name,
+            molecule=molecule,
+            schema=[],
+            taxid=taxid,
+        )
+    except ValueError:
+        sys.exit(1)
+
+    logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
+
+    return otu
 
 
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
