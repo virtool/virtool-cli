@@ -4,12 +4,14 @@ from pathlib import Path
 import click
 from structlog import get_logger
 
+from virtool_cli.add.otu import add_otu
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
+from virtool_cli.ref.otu import group_genbank_records_by_isolate
 
 
 def add_accessions(
-    path: Path, taxid: int, accessions: list, ignore_cache: bool = False
+    repo: Repo, taxid: int, accessions: list, ignore_cache: bool = False
 ):
     """Add a list of accessions to an OTU. Appropriate if you know the OTU path already.
 
@@ -18,8 +20,13 @@ def add_accessions(
     """
     logger = get_logger("add_accessions", accessions=accessions)
 
-    repo = Repo(path)
-    client = NCBIClient.from_repo(path, ignore_cache=ignore_cache)
+    client = NCBIClient.from_repo(repo.path, ignore_cache=ignore_cache)
+
+    fetch_list = list(set(accessions).difference(set(otu.nofetch)))
+
+    records = client.fetch_genbank_records(fetch_list)
+    if records:
+        grouped_records = group_genbank_records_by_isolate(records)
 
 
 def verify_accession(accession: str) -> bool:

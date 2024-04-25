@@ -4,7 +4,9 @@ from pathlib import Path
 import click
 
 from virtool_cli.add.accessions import add_accessions
+from virtool_cli.add.otu import add_otu
 from virtool_cli.options import debug_option, path_option
+from virtool_cli.ref.repo import EventSourcedRepo as Repo
 from virtool_cli.utils.logging import configure_logger
 
 
@@ -31,7 +33,13 @@ def accessions(debug, path, taxid, accessions_: list[str]):
     """
     configure_logger(debug)
 
-    add_accessions(taxid, path, accessions_)
+    repo = Repo(path)
+
+    otu_index = repo.index_otus()
+    if taxid not in otu_index:
+        add_otu(repo, taxid)
+
+    add_accessions(repo, taxid, accessions_)
 
 
 @add.command()

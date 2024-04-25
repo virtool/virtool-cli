@@ -25,6 +25,9 @@ class SourceKey(NamedTuple):
     type: SourceType
     name: str
 
+    def __str__(self):
+        return f"{self.type},{self.name}"
+
 
 def add_otu(repo: Repo, taxid: int) -> RepoOTU:
     logger = base_logger.bind(taxid=taxid)
@@ -53,6 +56,46 @@ def add_otu(repo: Repo, taxid: int) -> RepoOTU:
     logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
     return otu
+
+
+def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):
+    otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id))
+    fetch_list = list(set(accessions).difference(set(otu.nofetch)))
+
+    ncbi = NCBIClient.from_repo(repo.path, False)
+
+    records = ncbi.fetch_genbank_records(fetch_list)
+
+    record_bins = group_genbank_records_by_isolate(records)
+
+    for isolate_key in record_bins:
+        record_bin = record_bins[isolate_key]
+
+        isolate_id = otu.get_isolate_id(type=isolate_key.type, name=isolate_key.name)
+        if isolate_id is None:
+            otu_logger.debug("Creating isolate")
+            isolate = repo.create_isolate(
+                otu_id=otu.id,
+                legacy_id=None,
+                source_name=isolate_key.name,
+                source_type=isolate_key.type,
+            )
+            isolate_id = isolate.id
+
+        for accession in record_bin:
+            record = record_bin[accession]
+            sequence = repo.create_sequence(
+                otu_id=otu.id,
+                isolate_id=isolate_id,
+                accession=record.accession,
+                definition=record.definition,
+                legacy_id=None,
+                segment=record.source.segment,
+                sequence=record.sequence,
+            )
+
+        # for accession in record_bin:
+        #     otu_logger.debug(record_bin[accession], isolate=str(isolate_key))
 
 
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
