@@ -1,5 +1,6 @@
 from enum import StrEnum
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 class MolType(StrEnum):
     """The in vivo molecule type of a sequence.
@@ -27,13 +28,11 @@ class Topology(StrEnum):
     CIRCULAR = "circular"
 
 
-@dataclass
-class Molecule:
+class Molecule(BaseModel):
     """The strandedness, molecule type and topology of this OTU.
 
     Corresponds to all sequences found in this OTU.
     """
-
     strandedness: Strandedness
     type: MolType
     topology: Topology
