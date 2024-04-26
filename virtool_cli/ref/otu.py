@@ -254,3 +254,19 @@ def extract_isolate_source(
         name=accessions[0].upper(),
         type=LegacySourceType.GENBANK,
     )
+
+
+def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
+    for record in records:
+        if record.refseq:
+            return Molecule(
+                strandedness=record.strandedness.value,
+                type=record.moltype.value,
+                topology=record.topology.value,
+            )
+
+    return Molecule(
+        strandedness=records[0].strandedness.value,
+        type=records[0].moltype.value,
+        topology=records[0].topology.value,
+    )
