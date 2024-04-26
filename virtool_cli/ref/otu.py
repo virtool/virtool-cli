@@ -30,6 +30,62 @@ class SourceKey(NamedTuple):
         return f"{self.type},{self.name}"
 
 
+class OTUClient:
+    def __init__(self, repo: Repo, otu: RepoOTU, ignore_cache: bool = False):
+        self._repo = repo
+        self.otu = otu
+        self.ignore_cache = ignore_cache
+
+    @classmethod
+    def init_from_taxid(cls, repo, taxid: int, ignore_cache: bool = False):
+        logger = base_logger.bind(taxid=taxid)
+        otu_index = repo.index_otus()
+
+        if taxid in otu_index:
+            otu = repo.get_otu(otu_index[taxid])
+
+            return OTUClient(repo, otu, ignore_cache)
+
+        otu = add_otu(repo, taxid)
+        if otu:
+            return OTUClient(repo, otu, ignore_cache)
+
+        logger.warning("OTU could not be found or built.")
+
+        raise ValueError
+
+    @classmethod
+    def create_from_taxid(cls, repo, taxid: int, ignore_cache: bool = False):
+        logger = base_logger.bind(taxid=taxid)
+        otu_index = repo.index_otus()
+        if taxid in otu_index:
+            otu = repo.get_otu(otu_index[taxid])
+
+            logger.error(
+                f"Taxonomy ID {taxid} has already been added to this reference.",
+                otu_id=str(otu.id),
+            )
+            raise ValueError
+
+        otu = add_otu(repo, taxid)
+        if otu:
+            return OTUClient(repo, otu, ignore_cache)
+
+        logger.warning("OTU could not be found or built.")
+
+        raise ValueError
+
+    def update(self):
+        ncbi = NCBIClient.from_repo(self._repo.path, self.ignore_cache)
+
+        linked_accessions = ncbi.link_accessions_from_taxid(self.otu.taxid)
+
+        self.add(linked_accessions)
+
+    def add(self, accessions):
+        add_accessions(self._repo, self.otu, accessions)
+
+
 def add_otu(repo: Repo, taxid: int) -> RepoOTU:
     logger = base_logger.bind(taxid=taxid)
 
@@ -51,22 +107,13 @@ def add_otu(repo: Repo, taxid: int) -> RepoOTU:
             schema=[],
             taxid=taxid,
         )
-    except ValueError:
+    except ValueError as e:
+        logger.warning(e)
         sys.exit(1)
 
     logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
     return otu
-
-
-def update_otu(repo: Repo, otu: RepoOTU):
-    otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id), name=otu.name)
-
-    ncbi = NCBIClient.from_repo(repo.path, False)
-
-    linked_accessions = ncbi.link_accessions_from_taxid(otu.taxid)
-
-    add_accessions(repo, otu, linked_accessions)
 
 
 def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):

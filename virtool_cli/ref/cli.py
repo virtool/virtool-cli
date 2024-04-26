@@ -11,7 +11,7 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
-from virtool_cli.ref.otu import add_otu, update_otu, add_accessions
+from virtool_cli.ref.otu import OTUClient  # add_otu, update_otu, add_accessions
 from virtool_cli.ref.resources import DataType
 from virtool_cli.ref.utils import format_json
 from virtool_cli.utils.logging import configure_logger
@@ -69,14 +69,15 @@ def create(debug: bool, path: Path, taxid: int, autofill: bool):
 
     repo = Repo(path)
 
-    otu = add_otu(repo, taxid)
+    # otu_client = OTUClient.init_from_taxid(repo, taxid)
+
+    try:
+        otu_client = OTUClient.create_from_taxid(repo, taxid)
+    except ValueError:
+        sys.exit(1)
 
     if autofill:
-        client = NCBIClient.from_repo(path, ignore_cache=False)
-
-        all_accessions = client.link_accessions_from_taxid(taxid)
-
-        add_accessions(repo, otu, all_accessions)
+        otu_client.update()
 
 
 @otu.command()
@@ -88,15 +89,14 @@ def update(debug: bool, path: Path, taxid: int):
 
     repo = Repo(path)
 
-    otu_index = repo.index_otus()
-    if taxid in otu_index:
-        otu = repo.get_otu(otu_index[taxid])
-
-        update_otu(repo, otu)
-
-    else:
+    try:
+        otu_client = OTUClient.init_from_taxid(repo, taxid)
+    except FileNotFoundError:
         click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
         click.echo(f'Run "virtool otu create {taxid} --path {path} --autofill" instead')
+        sys.exit(1)
+
+    otu_client.update()
 
 
 @ref.group()
@@ -124,15 +124,14 @@ def add(debug, path, taxid, accessions_: list[str]):
 
     repo = Repo(path)
 
-    otu_index = repo.index_otus()
-    if taxid in otu_index:
-        otu = repo.get_otu(otu_index[taxid])
-    else:
-        click.echo(f"Creating a new OTU for #{taxid}...")
-        otu = add_otu(repo, taxid)
+    try:
+        otu_client = OTUClient.init_from_taxid(repo, taxid)
+    except ValueError:
+        click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
+        click.echo(f'Run "virtool otu create {taxid} --path {path} --autofill" instead')
+        sys.exit(1)
 
-    if accessions_:
-        add_accessions(repo, otu, accessions_)
+    otu_client.add(accessions_)
 
 
 @ref.group()

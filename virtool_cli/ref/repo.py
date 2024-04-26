@@ -242,6 +242,10 @@ class EventSourcedRepo:
         taxid: int,
     ):
         """Create an OTU."""
+        if taxid in self.index_otus():
+            raise ValueError(
+                f"OTU already exists as {self.index_otus()[taxid]}",
+            )
         self.checker.check_otu_name_exists(name)
         self.checker.check_legacy_id_exists(legacy_id)
 
