@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
@@ -20,45 +19,6 @@ def format_json(path: Path):
 
     with path.open("wb") as f:
         f.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
-
-
-class MolType(StrEnum):
-    """The in vivo molecule type of a sequence.
-
-    Corresponds to Genbank's moltype field
-    """
-
-    DNA = "DNA"
-    RNA = "RNA"
-    TRNA = "tRNA"
-    MRNA = "mRNA"
-    CRNA = "cRNA"
-
-
-class Strandedness(StrEnum):
-    """Strandedness of a molecule, either single or double"""
-
-    SINGLE = "single"
-    DOUBLE = "double"
-
-
-class Topology(StrEnum):
-    """Topology of a molecule, either linear or circular"""
-
-    LINEAR = "linear"
-    CIRCULAR = "circular"
-
-
-@dataclass
-class Molecule:
-    """The strandedness, molecule type and topology of this OTU.
-
-    Corresponds to all sequences found in this OTU.
-    """
-
-    strandedness: Strandedness
-    type: MolType
-    topology: Topology
 
 
 def pad_zeroes(number: int) -> str:

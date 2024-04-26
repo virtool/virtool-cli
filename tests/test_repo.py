@@ -10,14 +10,8 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoOTU,
     EventSourcedRepoSequence,
 )
-from virtool_cli.ref.utils import (
-    DataType,
-    IsolateName,
-    Molecule,
-    MolType,
-    Strandedness,
-    Topology,
-)
+from virtool_cli.ref.utils import DataType, IsolateName
+from virtool_cli.utils.models import Molecule, MolType, Strandedness, Topology
 
 
 @pytest.fixture

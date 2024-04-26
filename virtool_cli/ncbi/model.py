@@ -11,6 +11,8 @@ from pydantic import (
     model_validator,
 )
 
+from virtool_cli.utils.models import MolType, Strandedness, Topology
+
 
 def to_upper(v: str) -> str:
     return v.upper()
@@ -79,37 +81,15 @@ class NCBISource(BaseModel):
         raise ValueError("No db_xref or taxid value found in source table")
 
 
-class NCBIMolType(StrEnum):
-    """The in vivo molecule type of a sequence, which corresponds to Genbank's moltype
-    field.
-    """
-
-    DNA = "DNA"
-    RNA = "RNA"
-    TRNA = "tRNA"
-    MRNA = "mRNA"
-    CRNA = "cRNA"
-
-
-class NCBIStrandedness(StrEnum):
-    SINGLE = "single"
-    DOUBLE = "double"
-
-
-class NCBITopology(StrEnum):
-    LINEAR = "linear"
-    CIRCULAR = "circular"
-
-
 class NCBIGenbank(BaseModel):
     accession: Annotated[str, Field(validation_alias="GBSeq_primary-accession")]
     accession_version: Annotated[str, Field(validation_alias="GBSeq_accession-version")]
     strandedness: Annotated[
-        NCBIStrandedness,
+        Strandedness,
         Field(validation_alias="GBSeq_strandedness"),
     ]
-    moltype: Annotated[NCBIMolType, Field(validation_alias="GBSeq_moltype")]
-    topology: Annotated[NCBITopology, Field(validation_alias="GBSeq_topology")]
+    moltype: Annotated[MolType, Field(validation_alias="GBSeq_moltype")]
+    topology: Annotated[Topology, Field(validation_alias="GBSeq_topology")]
     definition: Annotated[str, Field(validation_alias="GBSeq_definition")]
     organism: Annotated[str, Field(validation_alias="GBSeq_organism")]
     sequence: Annotated[

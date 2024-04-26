@@ -50,7 +50,8 @@ from virtool_cli.ref.resources import (
     RepoMeta,
 )
 from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
-from virtool_cli.ref.utils import DataType, IsolateName, Molecule, pad_zeroes
+from virtool_cli.utils.models import Molecule
+from virtool_cli.ref.utils import DataType, IsolateName, pad_zeroes
 
 logger = get_logger("repo")
 
