@@ -49,27 +49,6 @@ def precached_repo(empty_repo_path, cache_example_path):
     shutil.rmtree(empty_repo_path)
 
 
-def index_repo_data(repo: Repo):
-    otus = {}
-
-    for otu in repo.iter_otus():
-        otus[otu.taxid] = otu.dict()
-
-        isolates = {}
-        for isolate in otu.isolates:
-            isolates[(isolate.name.type, isolate.name.value)] = isolate.dict()
-
-            sequences = {}
-            for sequence in isolate.sequences:
-                sequences[sequence.accession] = sequence.dict()
-
-            isolates[(isolate.name.type, isolate.name.value)]["sequences"] = sequences
-
-        otus[otu.taxid]["isolates"] = isolates
-
-    return otus
-
-
 def run_add_otu_command(taxid: int, path: Path, autofill: bool):
     otu_command = [
         "virtool",
