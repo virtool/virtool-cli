@@ -1,4 +1,30 @@
 # serializer version: 1
+# name: TestAddOTU.test_autofill_success[438782]
+  dict({
+    'acronym': '',
+    'excluded_accessions': list([
+    ]),
+    'legacy_id': None,
+    'molecule': None,
+    'name': 'Abaca bunchy top virus',
+    'schema': list([
+    ]),
+    'taxid': 438782,
+  })
+# ---
+# name: TestAddOTU.test_empty_success[438782]
+  dict({
+    'acronym': '',
+    'excluded_accessions': list([
+    ]),
+    'legacy_id': None,
+    'molecule': None,
+    'name': 'Abaca bunchy top virus',
+    'schema': list([
+    ]),
+    'taxid': 438782,
+  })
+# ---
 # name: TestAddSequences.test_success[438782-accessions0]
   dict({
     'acronym': '',

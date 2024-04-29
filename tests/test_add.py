@@ -70,30 +70,46 @@ def index_repo_data(repo: Repo):
     return otus
 
 
-@pytest.mark.skip
-@pytest.mark.ncbi
-class TestAddOTUAutofill:
+class TestAddOTU:
     @staticmethod
-    def run_add_otu(taxid: int, path: Path):
-        subprocess.run(
-            [
-                "virtool",
-                "ref",
-                "otu",
-                "create",
-                str(taxid),
-                "--path",
-                str(path),
-                "--autofill",
-            ],
-            check=False,
-        )
+    def run_command(taxid: int, path: Path, autofill: bool):
+        otu_command = [
+            "virtool",
+            "ref",
+            "otu",
+            "create",
+            str(taxid),
+            "--path",
+            str(path),
+        ]
+
+        if autofill:
+            otu_command.append("--autofill")
+
+        subprocess.run(otu_command, check=False)
 
     @pytest.mark.parametrize("taxid", [438782])
-    def test_success(self, taxid, precached_repo: Repo):
-        # print(list((precached_repo.path / ".cache").iterdir()))
+    def test_empty_success(
+        self, taxid, precached_repo: Repo, snapshot: SnapshotAssertion
+    ):
+        self.run_command(taxid=taxid, path=precached_repo.path, autofill=False)
 
-        self.run_add_otu(taxid=taxid, path=precached_repo.path)
+        for otu in precached_repo.iter_otus():
+            assert otu.dict() == snapshot(exclude=props("id", "isolates"))
+
+            assert not otu.accessions
+
+    @pytest.mark.ncbi
+    @pytest.mark.parametrize("taxid", [438782])
+    def test_autofill_success(
+        self, taxid, precached_repo: Repo, snapshot: SnapshotAssertion
+    ):
+        self.run_command(taxid=taxid, path=precached_repo.path, autofill=True)
+
+        for otu in precached_repo.iter_otus():
+            assert otu.dict() == snapshot(exclude=props("id", "isolates"))
+
+            assert otu.accessions
 
 
 class TestAddSequences:
