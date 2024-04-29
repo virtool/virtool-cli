@@ -146,7 +146,7 @@ class TestCreateOTU:
                 "Tobacco mosaic virus",
                 Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
                 [],
-                12242,
+                438782,
             )
 
     def test_duplicate_legacy_id(self, empty_repo: EventSourcedRepo):
