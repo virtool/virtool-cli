@@ -8,12 +8,16 @@ from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
-from virtool_cli.utils.reference import get_sequence_paths
+
+
+@pytest.fixture()
+def cache_example_path(test_files_path):
+    return test_files_path / "cache_test"
 
 
 @pytest.fixture
 def empty_repo_path(tmp_path):
-    yield tmp_path / "empty_repo"
+    return tmp_path / "empty_repo"
 
 
 @pytest.fixture
@@ -45,30 +49,6 @@ def precached_repo(empty_repo_path, cache_example_path):
     shutil.rmtree(empty_repo_path)
 
 
-def get_all_sequence_paths(otu_path: Path) -> set[Path]:
-    return {
-        sequence_path
-        for isolate_path in otu_path.iterdir()
-        if isolate_path.is_dir()
-        for sequence_path in get_sequence_paths(isolate_path)
-    }
-
-
-def run_build_reference(repo: Path, output: Path):
-    subprocess.run(
-        [
-            "virtool",
-            "ref",
-            "build",
-            "--path",
-            str(repo),
-            "--output-path",
-            str(output),
-        ],
-        check=False,
-    )
-
-
 def index_repo_data(repo: Repo):
     otus = {}
 
@@ -91,18 +71,43 @@ def index_repo_data(repo: Repo):
 
 
 @pytest.mark.skip
-class TestAddOTU:
+@pytest.mark.ncbi
+class TestAddOTUAutofill:
     @staticmethod
-    def run_add_otu(taxid: int, accessions: list[str], path: Path):
+    def run_add_otu(taxid: int, path: Path):
+        subprocess.run(
+            [
+                "virtool",
+                "ref",
+                "otu",
+                "create",
+                str(taxid),
+                "--path",
+                str(path),
+                "--autofill",
+            ],
+            check=False,
+        )
+
+    @pytest.mark.parametrize("taxid", [438782])
+    def test_success(self, taxid, precached_repo: Repo):
+        # print(list((precached_repo.path / ".cache").iterdir()))
+
+        self.run_add_otu(taxid=taxid, path=precached_repo.path)
+
+
+class TestAddSequences:
+    @staticmethod
+    def run_add_sequences(taxid: int, accessions: list[str], path: Path):
         command = [
             "virtool",
             "ref",
-            "otu",
-            "init",
-            "--path",
-            str(path),
+            "sequences",
+            "add",
             "--taxid",
             str(taxid),
+            "--path",
+            str(path),
         ]
 
         subprocess.run([*command, *accessions])
@@ -126,66 +131,19 @@ class TestAddOTU:
     def test_success(
         self, taxid, accessions, precached_repo, snapshot: SnapshotAssertion
     ):
-        self.run_add_otu(taxid, accessions, precached_repo.path)
+        self.run_add_sequences(taxid, accessions, precached_repo.path)
 
         for otu in precached_repo.iter_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
-            assert sorted(otu.get_indexed_isolates()) == snapshot
+            for isolate in otu.isolates:
+                assert isolate.dict() == snapshot(exclude=props("id", "sequences"))
 
-            assert sorted(otu.get_accessions()) == snapshot
+                sequence_dict = {
+                    sequence.accession: sequence for sequence in isolate.sequences
+                }
 
-
-@pytest.mark.skip
-@pytest.mark.ncbi
-class TestAddOTUAutofill:
-    @staticmethod
-    def run_add_otu(taxid: int, path: Path):
-        subprocess.run(
-            ["virtool", "ref", "otu", "create", str(taxid), "--path", str(path)],
-            check=False,
-        )
-
-    @staticmethod
-    def run_build_reference(repo: Path, output: Path):
-        subprocess.run(
-            [
-                "virtool",
-                "ref",
-                "build",
-                "--path",
-                str(repo),
-                "--output-path",
-                str(output),
-            ],
-            check=False,
-        )
-
-    @staticmethod
-    def read_build(path) -> dict:
-        with open(path, "rb") as f:
-            return orjson.loads(f.read())
-
-    @pytest.mark.parametrize("taxid", [438782])
-    def test_success(self, taxid, precached_repo: Repo):
-        print(list((precached_repo.path / ".cache").iterdir()))
-        output_path = precached_repo.path / "reference.json"
-
-        self.run_build_reference(precached_repo.path, precached_repo.path)
-        pre_repo = self.read_build(output_path)
-
-        assert pre_repo["otus"] == []
-
-        self.run_add_otu(taxid=taxid, path=precached_repo.path)
-
-        self.run_build_reference(precached_repo.path, precached_repo.path)
-
-        assert output_path.exists()
-        post_repo = self.read_build(output_path)
-
-        assert post_repo["otus"]
-
-        for key in ["created_at", "data_type", "name"]:
-            assert pre_repo[key] == post_repo[key]
-
-        assert post_repo["otus"] != pre_repo["otus"]
+                for accession in sorted(isolate.accessions):
+                    assert sequence_dict[accession].dict() == snapshot(
+                        exclude=props("id")
+                    )
