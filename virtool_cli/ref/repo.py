@@ -50,11 +50,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
     RepoMeta,
 )
-from virtool_cli.ref.event_index_cache import (
-    EventIndexCache,
-    OTUEventIndex,
-    EventIndexCacheError,
-)
+from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
 
 from virtool_cli.ref.utils import DataType, IsolateName, Molecule, pad_zeroes
 
