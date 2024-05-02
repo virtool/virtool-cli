@@ -2,10 +2,13 @@
 
 This is a work in progress.
 
+**Check that OTUs have only one representative (default) isolate.**
+
+The default isolate is set using `rep_isolate` in the `CreateOTU` event. Therefore only
+one isolate in an OTU can be default.
+
 TODO: Check if excluded accessions exist in the repo.
-TODO: Check that OTUs have only one default isolate.
 TODO: Check for accessions filed in wrong isolates.
-TODO: Check for non-versioned accessions.
 TODO: Check for accession conflicts.
 
 """
@@ -14,6 +17,7 @@ import shutil
 import uuid
 from collections import defaultdict
 from pathlib import Path
+from pprint import pprint
 from typing import Generator, Type
 
 import arrow
@@ -33,6 +37,8 @@ from virtool_cli.ref.events import (
     Event,
     EventData,
     EventQuery,
+    ExcludeAccession,
+    ExcludeAccessionData,
     IsolateQuery,
     OTUQuery,
     RepoQuery,
@@ -164,7 +170,12 @@ class EventSourcedRepo:
         otu_event_index = defaultdict(list)
 
         for event in self._iter_events():
-            if type(event) in (CreateOTU, CreateIsolate, CreateSequence):
+            if type(event) in (
+                CreateOTU,
+                CreateIsolate,
+                CreateSequence,
+                ExcludeAccession,
+            ):
                 otu_event_index[event.query.otu_id].append(event.id)
 
         for otu_id, _ in otu_event_index.items():
@@ -191,7 +202,6 @@ class EventSourcedRepo:
             CreateOTUData(
                 id=otu_id,
                 acronym=acronym,
-                excluded_accessions=[],
                 legacy_id=legacy_id,
                 name=name,
                 molecule=molecule,
@@ -202,17 +212,7 @@ class EventSourcedRepo:
             OTUQuery(otu_id=otu_id),
         )
 
-        return EventSourcedRepoOTU(
-            id=otu_id,
-            acronym=acronym,
-            excluded_accessions=[],
-            isolates=[],
-            legacy_id=legacy_id,
-            molecule=molecule,
-            name=name,
-            schema=schema,
-            taxid=taxid,
-        )
+        return self.get_otu(otu_id)
 
     def create_isolate(
         self,
@@ -276,21 +276,35 @@ class EventSourcedRepo:
             sequence=sequence,
         )
 
-    def get_otu(self, otu_id: uuid.UUID) -> EventSourcedRepoOTU:
-        """Get an OTU by its ID."""
-        return self._reconstitute_otu(
-            [
-                event.id
-                for event in self._iter_events()
-                if (
-                    type(event) in (CreateOTU, CreateIsolate, CreateSequence)
-                    and event.query.otu_id == otu_id
-                )
-            ],
+    def exclude_accession(self, otu_id: uuid.UUID, accession: str):
+        """Exclude an accession for an OTU.
+
+        This accession will not be allowed in the repository in the future.
+
+        :param otu_id: the id of the OTU
+        :param accession: the accession to exclude
+
+        """
+        self._write_event(
+            ExcludeAccession,
+            ExcludeAccessionData(accession=accession),
+            OTUQuery(otu_id=otu_id),
         )
 
-    def _reconstitute_otu(self, event_ids: list[int]):
-        """Reconstitute an OTU from its events."""
+    def get_otu(self, otu_id: uuid.UUID) -> EventSourcedRepoOTU:
+        """Get an OTU by its ID."""
+        pprint(list(self._iter_events()))
+
+        event_ids = [
+            event.id
+            for event in self._iter_events()
+            if (
+                type(event)
+                in (CreateOTU, CreateIsolate, CreateSequence, ExcludeAccession)
+                and event.query.otu_id == otu_id
+            )
+        ]
+
         first_event_id = event_ids[0]
 
         event = self._read_event(first_event_id)
@@ -304,7 +318,7 @@ class EventSourcedRepo:
         otu = EventSourcedRepoOTU(
             id=event.data.id,
             acronym=event.data.acronym,
-            excluded_accessions=event.data.excluded_accessions,
+            excluded_accessions=[],
             isolates=[],
             legacy_id=event.data.legacy_id,
             molecule=event.data.molecule,
@@ -317,7 +331,7 @@ class EventSourcedRepo:
             event = self._read_event(event_id)
 
             if isinstance(event, CreateIsolate):
-                otu.add_isolate(
+                otu.isolates.append(
                     EventSourcedRepoIsolate(
                         id=event.data.id,
                         legacy_id=event.data.legacy_id,
@@ -326,10 +340,13 @@ class EventSourcedRepo:
                     ),
                 )
 
+            elif isinstance(event, ExcludeAccession):
+                otu.excluded_accessions.append(event.data.accession)
+
             elif isinstance(event, CreateSequence):
                 for isolate in otu.isolates:
                     if isolate.id == event.query.isolate_id:
-                        isolate.add_sequence(
+                        isolate.sequences.append(
                             EventSourcedRepoSequence(
                                 id=event.data.id,
                                 accession=event.data.accession,
@@ -381,3 +398,7 @@ def _read_event_at_path(path: Path) -> Event:
                 return CreateIsolate(**loaded)
             case "CreateSequence":
                 return CreateSequence(**loaded)
+            case "ExcludeAccession":
+                return ExcludeAccession(**loaded)
+
+        raise ValueError(f"Unknown event type: {loaded['type']}")
