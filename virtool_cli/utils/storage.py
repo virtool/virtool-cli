@@ -1,11 +1,12 @@
 import json
 from pathlib import Path
+
 import aiofiles
 import structlog
 
-from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
-from virtool_cli.utils.id_generator import generate_unique_ids
 from virtool_cli.utils.format import format_isolate
+from virtool_cli.utils.id_generator import generate_unique_ids
+from virtool_cli.utils.reference import get_isolate_paths, get_sequence_paths
 
 
 async def write_records(
@@ -15,8 +16,7 @@ async def write_records(
     unique_seq: set,
     logger: structlog.BoundLogger = structlog.get_logger(),
 ) -> list:
-    """
-    :param otu_path: A path to an OTU directory under a src reference directory
+    """:param otu_path: A path to an OTU directory under a src reference directory
     :param new_sequences: List of new sequences under the OTU
     :param unique_iso: Set of all unique isolate IDs present in the reference
     :param unique_seq: Set of all unique sequence IDs present in the reference
@@ -26,7 +26,8 @@ async def write_records(
 
     try:
         seq_hashes = generate_unique_ids(
-            n=len(new_sequences), excluded=list(unique_seq)
+            n=len(new_sequences),
+            excluded=list(unique_seq),
         )
     except Exception as e:
         logger.exception(e)
@@ -43,7 +44,9 @@ async def write_records(
         if isolate_name in ref_isolates:
             iso_id = ref_isolates[isolate_name]["id"]
             logger.debug(
-                "Existing isolate name found", iso_name=isolate_name, iso_hash=iso_id
+                "Existing isolate name found",
+                iso_name=isolate_name,
+                iso_hash=iso_id,
             )
 
         else:
@@ -54,7 +57,9 @@ async def write_records(
                 continue
 
             logger.debug(
-                "Assigning new isolate hash", iso_name=isolate_name, iso_hash=iso_id
+                "Assigning new isolate hash",
+                iso_name=isolate_name,
+                iso_hash=iso_id,
             )
 
             try:
@@ -95,8 +100,7 @@ async def write_records(
 
 
 async def store_isolate(isolate: dict, isolate_id: str, otu_path: Path):
-    """
-    Creates a new isolate directory and metadata file under an OTU directory,
+    """Creates a new isolate directory and metadata file under an OTU directory,
     then returns the metadata in dict form
 
     :param isolate: Dictionary containing isolate metadata
@@ -112,8 +116,7 @@ async def store_isolate(isolate: dict, isolate_id: str, otu_path: Path):
 
 
 async def store_sequence(sequence: dict, sequence_id: str, iso_path: Path):
-    """
-    Write sequence to isolate directory within the src directory
+    """Write sequence to isolate directory within the src directory
 
     :param sequence: Dictionary containing formatted sequence data
     :param sequence_id: Unique ID number for this new sequence
@@ -128,8 +131,7 @@ async def store_sequence(sequence: dict, sequence_id: str, iso_path: Path):
 
 
 async def label_isolates(otu_path: Path) -> dict:
-    """
-    Return all isolates present in an OTU directory
+    """Return all isolates present in an OTU directory
 
     :param otu_path: Path to an OTU directory
     :return: A dictionary of isolates indexed by source_name
@@ -149,8 +151,7 @@ async def label_isolates(otu_path: Path) -> dict:
 
 
 async def read_otu(path: Path) -> dict:
-    """
-    Returns a json file in dict form
+    """Returns a json file in dict form
 
     :param path: Path to an OTU directory under a reference source
     :return: Deserialized OTU data in dict form
@@ -162,17 +163,8 @@ async def read_otu(path: Path) -> dict:
     return otu
 
 
-async def parse_sequence(path):
-    async with aiofiles.open(path, "r") as f:
-        contents = await f.read()
-        sequence = json.loads(contents)
-
-    return sequence
-
-
 def get_otu_accessions(otu_path: Path) -> list[str]:
-    """
-    Gets all accessions from an OTU directory and returns a list
+    """Gets all accessions from an OTU directory and returns a list
 
     :param otu_path: Path to an OTU directory under a reference directory
     :return: A list of all accessions under an OTU
@@ -181,55 +173,12 @@ def get_otu_accessions(otu_path: Path) -> list[str]:
 
     for isolate_path in get_isolate_paths(otu_path):
         for sequence_path in get_sequence_paths(isolate_path):
-            with open(sequence_path, "r") as f:
+            with open(sequence_path) as f:
                 sequence = json.load(f)
 
             accession_list.append(sequence["accession"])
 
     return sorted(accession_list)
-
-
-async def get_sequence_metadata(sequence_path: Path) -> dict:
-    """
-    Gets the accession length and segment name from a sequence file
-    and returns it in a dict
-
-    :param sequence_path: Path to a sequence file
-    :return: the sequence accession, sequence length and segment name if present
-    """
-    sequence = await parse_sequence(sequence_path)
-
-    sequence_metadata = {
-        "accession": sequence["accession"],
-        "length": len(sequence["sequence"]),
-    }
-
-    segment = sequence.get("segment", None)
-    if segment is not None:
-        sequence_metadata["segment"] = segment
-
-    return sequence_metadata
-
-
-async def get_otu_accessions_metadata(otu_path: Path) -> dict:
-    """
-    Returns sequence metadata for all sequences present under an OTU
-
-    :param otu_path: Path to an OTU directory under a reference directory
-    :return: An accession-keyed dict containing all constituent sequence metadata
-    """
-    # get length and segment metadata from sequences
-    all_metadata = {}
-
-    for isolate_path in get_isolate_paths(otu_path):
-        for sequence_path in get_sequence_paths(isolate_path):
-            sequence_metadata = await get_sequence_metadata(sequence_path)
-
-            accession = sequence_metadata["accession"]
-
-            all_metadata[accession] = sequence_metadata
-
-    return all_metadata
 
 
 async def fetch_exclusions(otu_path: Path) -> list:
