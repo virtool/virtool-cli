@@ -89,12 +89,11 @@ class CreateOTUData(EventData):
 
     id: UUID4
     acronym: str
-    excluded_accessions: list[str]
     legacy_id: str | None
-    rep_isolate: UUID4 | None
-    name: str
     molecule: Molecule | None
+    name: str
     otu_schema: list = Field(alias="schema")
+    rep_isolate: UUID4 | None
     taxid: int
 
 
@@ -136,3 +135,20 @@ class CreateSequence(Event):
 
     data: CreateSequenceData
     query: SequenceQuery
+
+
+class ExcludeAccessionData(EventData):
+    """The data for the exclusion of an accession."""
+
+    accession: str
+
+
+class ExcludeAccession(Event):
+    """An accession exclusion event.
+
+    This event is emitted when a Genbank accession is not going to be allowed in the
+    reference.
+    """
+
+    data: ExcludeAccessionData
+    query: OTUQuery

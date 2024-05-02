@@ -78,7 +78,6 @@ class TestCreateOTU:
             "data": {
                 "id": str(otu.id),
                 "acronym": "TMV",
-                "excluded_accessions": [],
                 "legacy_id": "abcd1234",
                 "name": "Tobacco mosaic virus",
                 "molecule": {
@@ -321,3 +320,41 @@ def test_get_otu(empty_repo: EventSourcedRepo):
     )
 
     assert empty_repo.last_id == 6
+
+
+def test_exclude_accession(empty_repo: EventSourcedRepo):
+    """Test that excluding an accession from an OTU writes the expected event file and
+    returns the expected OTU objects.
+    """
+    otu = empty_repo.create_otu(
+        "TMV",
+        None,
+        "Tobacco mosaic virus",
+        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+        [],
+        12242,
+    )
+
+    empty_repo.exclude_accession(otu.id, "TMVABC.1")
+
+    with open(empty_repo.path.joinpath("src", "00000003.json")) as f:
+        event = orjson.loads(f.read())
+
+        del event["timestamp"]
+
+        assert event == {
+            "data": {
+                "accession": "TMVABC.1",
+            },
+            "id": 3,
+            "query": {
+                "otu_id": str(otu.id),
+            },
+            "type": "ExcludeAccession",
+        }
+
+    assert empty_repo.get_otu(otu.id).excluded_accessions == ["TMVABC.1"]
+
+    empty_repo.exclude_accession(otu.id, "ABTV.1")
+
+    assert empty_repo.get_otu(otu.id).excluded_accessions == ["TMVABC.1", "ABTV.1"]

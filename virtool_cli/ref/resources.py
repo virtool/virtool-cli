@@ -80,9 +80,6 @@ class EventSourcedRepoIsolate:
     sequences: list[EventSourcedRepoSequence]
     """A list of child sequences."""
 
-    def add_sequence(self, sequence: EventSourcedRepoSequence):
-        self.sequences.append(sequence)
-
     def dict(self):
         return {
             "id": self.id,
