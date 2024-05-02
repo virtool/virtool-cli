@@ -339,11 +339,15 @@ class EventSourcedRepo:
             OTUQuery(otu_id=otu_id),
         )
 
-    def get_otu(self, otu_id: uuid.UUID) -> EventSourcedRepoOTU:
+    def get_otu(
+        self, otu_id: uuid.UUID, ignore_cache: bool = False
+    ) -> EventSourcedRepoOTU:
         """Get an OTU by its ID."""
         pprint(list(self._iter_events()))
 
-        event_ids = self._get_otu_event_list(otu_id)
+        event_ids = self._get_otu_event_list(otu_id, ignore_cache)
+        if not event_ids:
+            return None
 
         first_event_id = event_ids[0]
 
