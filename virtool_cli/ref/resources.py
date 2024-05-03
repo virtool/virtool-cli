@@ -80,6 +80,13 @@ class EventSourcedRepoIsolate:
     sequences: list[EventSourcedRepoSequence]
     """A list of child sequences."""
 
+    @property
+    def accessions(self):
+        return [sequence.accession for sequence in self.sequences]
+
+    def add_sequence(self, sequence: EventSourcedRepoSequence):
+        self.sequences.append(sequence)
+
     def dict(self):
         return {
             "id": self.id,
@@ -113,13 +120,40 @@ class EventSourcedRepoOTU:
     name: str
     """The OTU name (eg. Tobacco mosaic virus)."""
 
-    molecule: Molecule
-    """The molecule of this OTU"""
-
     taxid: int
     """The OTU taxonomy ID."""
 
-    schema: list
+    molecule: Molecule | None = None
+    """The molecule of this OTU"""
+
+    schema: list | None = None
+    """The schema of the OTU"""
+
+    @property
+    def accessions(self):
+        accessions = []
+        for isolate in self.isolates:
+            accessions = [*accessions, *isolate.accessions]
+
+        return accessions
+
+    @property
+    def nofetch(self):
+        return [*self.accessions, *self.excluded_accessions]
+
+    def get_isolate(self, isolate_id) -> EventSourcedRepoIsolate | None:
+        for isolate in self.isolates:
+            if isolate.id == isolate_id:
+                return isolate
+
+        return None
+
+    def get_isolate_id(self, type: str, name: str) -> UUID | None:
+        for isolate in self.isolates:
+            if isolate.name.type == type and isolate.name.value == name:
+                return isolate.id
+
+        return None
 
     def add_isolate(self, isolate: EventSourcedRepoIsolate):
         self.isolates.append(isolate)
