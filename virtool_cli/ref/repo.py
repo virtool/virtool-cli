@@ -221,6 +221,9 @@ class EventSourcedRepo:
             otu = self.get_otu(otu_id)
             yield otu
 
+    def index_otus(self):
+        return {otu.taxid: otu.id for otu in self.iter_otus()}
+
     def create_otu(
         self,
         acronym: str,
