@@ -53,8 +53,6 @@ class EventIndexCache:
         ]
 
     def cache_index(self, event_index: dict[UUID, list[int]], last_id: int):
-        """Takes an event index and caches each individual OTU's events
-        under a separate file."""
         for otu_id in event_index:
             self.cache_otu_events(otu_id, event_index[otu_id], last_id=last_id)
 
@@ -81,7 +79,7 @@ class EventIndexCache:
 
     def load_otu_events(self, otu_id: UUID) -> OTUEventCache | None:
         """
-        Takes a requested OTU Id and returns an OTUEventRecord(at_event, events)
+        Takes a requested OTU Id and returns an OTUEventCache(otu_id, at_event, events)
         if possible, else None if the event record does not exist.
 
         If the cached data is not compatible with the repo's event store,
