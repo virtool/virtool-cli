@@ -159,6 +159,9 @@ class EventSourcedRepo:
         for iterator in range(start, self.last_id + 1):
             yield self._read_event(iterator)
 
+    def _print_events(self):
+        pprint(list(self._iter_events()))
+
     def _read_event(self, event_id: int) -> Event:
         return _read_event_at_path(self.src_path / f"{pad_zeroes(event_id)}.json")
 
@@ -214,13 +217,7 @@ class EventSourcedRepo:
 
     def iter_otus(self) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the repository."""
-        otu_event_index = defaultdict(list)
-
-        for event in self._iter_events():
-            if type(event) in OTU_EVENT_TYPES:
-                otu_event_index[event.query.otu_id].append(event.id)
-
-        for otu_id, _ in otu_event_index.items():
+        for otu_id in self._get_event_index():
             otu = self.get_otu(otu_id)
             yield otu
 
@@ -336,13 +333,15 @@ class EventSourcedRepo:
     def get_otu(
         self, otu_id: uuid.UUID, ignore_cache: bool = False
     ) -> EventSourcedRepoOTU | None:
-        """Get an OTU by its ID."""
-        pprint(list(self._iter_events()))
+        """Return an OTU corresponding with a given OTU Id if it exists, else None."""
+        event_ids = self._get_otu_events(otu_id, ignore_cache)
+        if event_ids:
+            return self._rehydrate_otu(event_ids)
 
-        event_ids = self._get_otu_event_list(otu_id, ignore_cache)
-        if not event_ids:
-            return None
+        return None
 
+    def _rehydrate_otu(self, event_ids: list[int]) -> EventSourcedRepoOTU:
+        """Rebuilds OTU data from a list of event IDs"""
         first_event_id = event_ids[0]
 
         event = self._read_event(first_event_id)
@@ -397,7 +396,7 @@ class EventSourcedRepo:
 
         return otu
 
-    def _get_otu_event_list(
+    def _get_otu_events(
         self, otu_id: uuid.UUID, ignore_cache: bool = False
     ) -> list[int]:
         """
@@ -412,7 +411,7 @@ class EventSourcedRepo:
 
         if not ignore_cache:
             try:
-                otu_event_list = self._load_otu_event_list_from_cache_and_update(otu_id)
+                otu_event_list = self._load_otu_events_from_cache_and_update(otu_id)
 
                 if otu_event_list:
                     return otu_event_list
@@ -433,11 +432,15 @@ class EventSourcedRepo:
             if (type(event) in OTU_EVENT_TYPES and event.query.otu_id == otu_id)
         ]
 
+        otu_logger.debug("Writing events to cache...")
+
+        self._event_index_cache.cache_otu_events(
+            otu_id, event_ids, last_id=self.last_id
+        )
+
         return event_ids
 
-    def _load_otu_event_list_from_cache_and_update(
-        self, otu_id: uuid.UUID
-    ) -> list[int]:
+    def _load_otu_events_from_cache_and_update(self, otu_id: uuid.UUID) -> list[int]:
         """Gets OTU events from the event index cache,
         updates the list it is not up to date and returns the list.
         """
@@ -474,7 +477,10 @@ class EventSourcedRepo:
                         updated_events=otu_event_set,
                     )
 
-                return list(otu_event_set)
+                updated_otu_event_list = list(otu_event_set)
+                self._event_index_cache.cache_otu_events(updated_otu_event_list)
+
+                return updated_otu_event_list
 
             else:
                 raise EventIndexCacheError(
