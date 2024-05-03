@@ -139,8 +139,8 @@ class EventSourcedRepo:
         """The path to the repo src directory."""
         return self.path / "src"
 
-    def _iter_events(self):
-        for path in sorted(self.src_path.iterdir()):
+    def _iter_events(self, reverse: bool = False):
+        for path in sorted(self.src_path.iterdir(), reverse=reverse):
             yield _read_event_at_path(path)
 
     def _iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
@@ -191,7 +191,7 @@ class EventSourcedRepo:
         return event
 
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
-        """Get the current event index, binned and indexed by OTU Id"""
+        """Get the current event index from the event store, binned and indexed by OTU Id."""
         otu_event_index = defaultdict(list)
 
         for event in self._iter_events():

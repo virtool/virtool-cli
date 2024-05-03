@@ -52,7 +52,7 @@ class EventIndexCache:
             if subpath.suffix == ".json"
         ]
 
-    def populate(self, event_index: dict[UUID, list[int]], last_id: int):
+    def cache_index(self, event_index: dict[UUID, list[int]], last_id: int):
         """Takes an event index and caches each individual OTU's events
         under a separate file."""
         for otu_id in event_index:
