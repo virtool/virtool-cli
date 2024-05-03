@@ -20,6 +20,31 @@ from virtool_cli.ref.utils import (
 )
 
 
+@pytest.fixture
+def initialized_repo(empty_repo: EventSourcedRepo):
+    otu = empty_repo.create_otu(
+        "TMV",
+        None,
+        "Tobacco mosaic virus",
+        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+        [],
+        12242,
+    )
+
+    isolate_a = empty_repo.create_isolate(otu.id, None, "A", "isolate")
+    empty_repo.create_sequence(
+        otu.id,
+        isolate_a.id,
+        "TMVABC.1",
+        "TMV",
+        None,
+        "RNA",
+        "ACGT",
+    )
+
+    yield empty_repo
+
+
 def init_otu(empty_repo: EventSourcedRepo) -> EventSourcedRepoOTU:
     return empty_repo.create_otu(
         "TMV",
@@ -274,7 +299,7 @@ def test_get_otu(empty_repo: EventSourcedRepo):
         "ACGTGGAGAGACC",
     )
 
-    otu = empty_repo.get_otu(otu.id)
+    otu = empty_repo.get_otu(otu.id, ignore_cache=True)
 
     assert otu == EventSourcedRepoOTU(
         id=otu.id,
@@ -353,8 +378,56 @@ def test_exclude_accession(empty_repo: EventSourcedRepo):
             "type": "ExcludeAccession",
         }
 
-    assert empty_repo.get_otu(otu.id).excluded_accessions == ["TMVABC.1"]
+    assert empty_repo.get_otu(otu.id, ignore_cache=True).excluded_accessions == [
+        "TMVABC.1"
+    ]
 
     empty_repo.exclude_accession(otu.id, "ABTV.1")
 
-    assert empty_repo.get_otu(otu.id).excluded_accessions == ["TMVABC.1", "ABTV.1"]
+    assert empty_repo.get_otu(otu.id, ignore_cache=True).excluded_accessions == [
+        "TMVABC.1",
+        "ABTV.1",
+    ]
+
+
+class TestEventIndexCache:
+    def test_equivalence(self, initialized_repo: EventSourcedRepo):
+        assert initialized_repo.last_id == 4
+
+        otu = list(initialized_repo.iter_otus())[0]
+
+        otu_from_cache = initialized_repo.get_otu(otu.id, ignore_cache=False)
+        otu_from_scratch = initialized_repo.get_otu(otu.id, ignore_cache=True)
+        assert otu_from_cache == otu_from_scratch
+
+        isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
+        initialized_repo.create_sequence(
+            otu.id,
+            isolate_b.id,
+            "TMVABCB.1",
+            "TMV",
+            None,
+            "RNA",
+            "ACGTGGAGAGACC",
+        )
+
+        assert initialized_repo.last_id == 6
+
+        otu_from_cache = initialized_repo.get_otu(otu.id, ignore_cache=False)
+        otu_from_scratch = initialized_repo.get_otu(otu.id, ignore_cache=True)
+        assert otu_from_cache == otu_from_scratch
+
+    def test_retrieve_nonexistent_otu(self, initialized_repo: EventSourcedRepo):
+        assert (
+            initialized_repo.get_otu(
+                UUID("48b453fb-b60a-4f53-85f1-2941cd3ac5af"), ignore_cache=False
+            )
+            is None
+        )
+
+    def test_get_otu_without_cached_events(self, initialized_repo: EventSourcedRepo):
+        otu = list(initialized_repo.iter_otus())[0]
+
+        initialized_repo._event_index_cache.clear_cached_otu_events(otu.id)
+
+        assert initialized_repo.get_otu(otu.id, ignore_cache=False) is not None
