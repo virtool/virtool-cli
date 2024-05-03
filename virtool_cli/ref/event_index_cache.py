@@ -3,6 +3,7 @@ import dataclasses
 from pathlib import Path
 from uuid import UUID
 from typing import Annotated
+from collections.abc import Generator
 
 import orjson
 from pydantic import Field, ValidationError
@@ -14,7 +15,9 @@ logger = get_logger("repo.cache.event_index")
 
 
 @dataclass
-class OTUEventIndex:
+class OTUEventCache:
+    otu_id: UUID
+
     at_event: Annotated[int, Field(ge=1)]
     """The latest event ID when this cache index was last updated"""
 
@@ -27,12 +30,19 @@ class EventIndexCacheError(Exception):
 
 
 class EventIndexCache:
-    """Maintains a cache of for each OTU UUID in the repo"""
+    """Maintains an index of event records for each OTU UUID in the repo"""
 
     def __init__(self, path: Path):
         self.path = path
 
         self.path.mkdir(exist_ok=True)
+
+    def iter_event_records(self) -> Generator[OTUEventCache, None, None]:
+        """Iterates through each OTU in the index"""
+        for subpath in self.path.iterdir():
+            if subpath.suffix == ".json":
+                otu_id = UUID(subpath.stem)
+                yield self.load_otu_events(otu_id)
 
     def list_otu_ids(self) -> list[UUID]:
         """Returns a list of OTU Ids with extant data in the cache."""
@@ -59,7 +69,7 @@ class EventIndexCache:
         :param event_list: A list of event IDs
         :param last_id: The last added Id in the event store at point of caching
         """
-        index_data = OTUEventIndex(at_event=last_id, events=event_list)
+        index_data = OTUEventCache(otu_id=otu_id, at_event=last_id, events=event_list)
 
         try:
             with open(self.path / f"{otu_id}.json", "wb") as f:
@@ -69,18 +79,15 @@ class EventIndexCache:
                 "OTU event index updated", otu_id=str(otu_id), events=event_list
             )
 
-    def load_otu_event_index(self, otu_id: UUID) -> OTUEventIndex | None:
+    def load_otu_events(self, otu_id: UUID) -> OTUEventCache | None:
         """
-        Takes a requested OTU Id and the last recorded Event Id in the event store
-        and returns an OTUEventIndex(at_event, events) if possible.
-
-        Returns None if the cached event list is nonexistent.
+        Takes a requested OTU Id and returns an OTUEventRecord(at_event, events)
+        if possible, else None if the event record does not exist.
 
         If the cached data is not compatible with the repo's event store,
         raise an EventIndexCacheError.
 
         :param otu_id: A Virtool OTU Id
-        :param last_id: The last added Id in the event store at point of caching
         :return: OTUEventIndex(at_event, events) if a valid event list
             can be found in the cache, else None
         """
@@ -93,7 +100,7 @@ class EventIndexCache:
             cached_data = orjson.loads(f.read())
 
         try:
-            otu_index_cache = OTUEventIndex(**cached_data)
+            otu_index_cache = OTUEventCache(**cached_data)
         except ValidationError:
             raise EventIndexCacheError(
                 "Bad Index: Events could not be retrieved from cache"
@@ -101,6 +108,6 @@ class EventIndexCache:
 
         return otu_index_cache
 
-    def clear_otu_event_index_cache(self, otu_id: UUID):
+    def clear_cached_otu_events(self, otu_id: UUID):
         """Delete a given OTU's cached data from the cache."""
         (self.path / f"{otu_id}.json").unlink(missing_ok=True)

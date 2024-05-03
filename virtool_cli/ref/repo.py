@@ -57,6 +57,9 @@ from virtool_cli.ref.utils import DataType, IsolateName, Molecule, pad_zeroes
 logger = get_logger("repo")
 
 
+OTU_EVENT_TYPES = (CreateOTU, CreateIsolate, CreateSequence, ExcludeAccession)
+
+
 class EventSourcedRepo:
     def __init__(self, path: Path):
         self.path = path
@@ -188,11 +191,11 @@ class EventSourcedRepo:
         return event
 
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
-        """Get the current event index, binned and indexed by OTU ID"""
+        """Get the current event index, binned and indexed by OTU Id"""
         otu_event_index = defaultdict(list)
 
         for event in self._iter_events():
-            if type(event) in (CreateOTU, CreateIsolate, CreateSequence):
+            if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
         return otu_event_index
@@ -204,7 +207,7 @@ class EventSourcedRepo:
         otu_event_index = defaultdict(list)
 
         for event in self._iter_events_from_index(start):
-            if type(event) in (CreateOTU, CreateIsolate, CreateSequence):
+            if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
         return otu_event_index
@@ -214,12 +217,7 @@ class EventSourcedRepo:
         otu_event_index = defaultdict(list)
 
         for event in self._iter_events():
-            if type(event) in (
-                CreateOTU,
-                CreateIsolate,
-                CreateSequence,
-                ExcludeAccession,
-            ):
+            if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
         for otu_id, _ in otu_event_index.items():
@@ -337,7 +335,7 @@ class EventSourcedRepo:
 
     def get_otu(
         self, otu_id: uuid.UUID, ignore_cache: bool = False
-    ) -> EventSourcedRepoOTU:
+    ) -> EventSourcedRepoOTU | None:
         """Get an OTU by its ID."""
         pprint(list(self._iter_events()))
 
@@ -419,24 +417,23 @@ class EventSourcedRepo:
                 if otu_event_list:
                     return otu_event_list
 
-                otu_logger.error("Event index cache was empty.")
+                otu_logger.debug("Event index cache was empty.")
 
             except EventIndexCacheError as e:
                 logger.error(e)
                 logger.warning("Deleting bad index...")
 
-                self._event_index_cache.clear_otu_event_index_cache(otu_id)
+                self._event_index_cache.clear_cached_otu_events(otu_id)
 
         otu_logger.debug("Searching event store for matching events...")
-        return [
+
+        event_ids = [
             event.id
             for event in self._iter_events()
-            if (
-                type(event)
-                in (CreateOTU, CreateIsolate, CreateSequence, ExcludeAccession)
-                and event.query.otu_id == otu_id
-            )
+            if (type(event) in OTU_EVENT_TYPES and event.query.otu_id == otu_id)
         ]
+
+        return event_ids
 
     def _load_otu_event_list_from_cache_and_update(
         self, otu_id: uuid.UUID
@@ -448,14 +445,14 @@ class EventSourcedRepo:
 
         cached_otu_index = None
         try:
-            cached_otu_index = self._event_index_cache.load_otu_event_index(otu_id)
+            cached_otu_index = self._event_index_cache.load_otu_events(otu_id)
 
         except EventIndexCacheError as e:
             logger.error(e)
 
             logger.warning("Deleting bad index...")
 
-            self._event_index_cache.clear_otu_event_index_cache(otu_id)
+            self._event_index_cache.clear_cached_otu_events(otu_id)
 
         if cached_otu_index is not None:
             if cached_otu_index.at_event == self.last_id:
@@ -469,12 +466,7 @@ class EventSourcedRepo:
                 for event in self._iter_events_from_index(
                     start=cached_otu_index.at_event
                 ):
-                    if type(event) in (
-                        CreateOTU,
-                        CreateIsolate,
-                        CreateSequence,
-                        ExcludeAccession,
-                    ):
+                    if type(event) in OTU_EVENT_TYPES:
                         otu_event_set.add(event.id)
 
                     otu_logger.debug(
