@@ -45,12 +45,16 @@ class OTUClient:
             otu = repo.get_otu(otu_index[taxid])
 
             return OTUClient(repo, otu, ignore_cache)
+        else:
+            logger.info(
+                "This OTU has not been added to the reference yet. Requesting from Taxonomy...",
+            )
+            otu = add_otu(repo, taxid)
 
-        otu = add_otu(repo, taxid)
         if otu:
             return OTUClient(repo, otu, ignore_cache)
 
-        logger.warning("OTU could not be found or built.")
+        logger.error("OTU could not be found or built.")
 
         raise ValueError
 
@@ -111,7 +115,7 @@ def add_otu(repo: Repo, taxid: int) -> RepoOTU:
         logger.warning(e)
         sys.exit(1)
 
-    logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
+    logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
     return otu
 
@@ -131,7 +135,7 @@ def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):
 
     record_bins = group_genbank_records_by_isolate(records)
 
-    new_sequences = []
+    new_accessions = []
 
     for isolate_key in record_bins:
         record_bin = record_bins[isolate_key]
@@ -161,11 +165,12 @@ def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):
                 sequence=record.sequence,
             )
 
-            new_sequences.append(str(sequence.id))
+            new_accessions.append(sequence.accession)
 
-    if new_sequences:
+    if new_accessions:
         otu_logger.info(
-            f"Added {len(new_sequences)} sequences to OTU", new_sequences=new_sequences
+            f"Added {len(new_accessions)} sequences to {otu.taxid}",
+            new_accessions=new_accessions,
         )
 
     else:

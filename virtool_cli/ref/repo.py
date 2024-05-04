@@ -249,6 +249,9 @@ class EventSourcedRepo:
         self.checker.check_otu_name_exists(name)
         self.checker.check_legacy_id_exists(legacy_id)
 
+        otu_logger = logger.bind(taxid=taxid, name=name, legacy_id=legacy_id)
+        otu_logger.info(f"Creating new OTU for Taxonomy ID {taxid}...")
+
         otu_id = uuid.uuid4()
 
         event = self._write_event(
@@ -266,7 +269,7 @@ class EventSourcedRepo:
             OTUQuery(otu_id=otu_id),
         )
 
-        logger.debug("OTU written", event_id=event.id, otu_id=str(otu_id), taxid=taxid)
+        otu_logger.debug("OTU written", event_id=event.id, otu_id=str(otu_id))
 
         return self.get_otu(otu_id)
 
@@ -461,9 +464,9 @@ class EventSourcedRepo:
                 )
 
             except EventIndexCacheError as e:
-                logger.error(e)
-                logger.warning("Deleting bad index...")
+                logger.warning(e, last_event=self.last_id)
 
+                logger.debug("Deleting bad index...")
                 self._event_index_cache.clear_cached_otu_events(otu_id)
 
         otu_logger.debug("Searching event store for matching events...")
