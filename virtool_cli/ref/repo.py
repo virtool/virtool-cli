@@ -156,7 +156,7 @@ class EventSourcedRepo:
         if start > self.last_id:
             raise IndexError(f"Start index cannot be >{self.last_id}")
 
-        for iterator in range(start, self.last_id):
+        for iterator in range(start, self.last_id + 1):
             yield self._read_event(iterator)
 
     def _read_event(self, event_id: int) -> Event:
