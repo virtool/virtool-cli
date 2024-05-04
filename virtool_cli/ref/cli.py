@@ -90,10 +90,12 @@ def update(debug: bool, path: Path, taxid: int):
     repo = Repo(path)
 
     try:
-        otu_client = OTUClient.init_from_taxid(repo, taxid)
-    except FileNotFoundError:
+        otu_client = OTUClient.init_from_taxid(
+            repo, taxid, ignore_cache=False, create_otu=False
+        )
+    except ValueError:
         click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
-        click.echo(f'Run "virtool otu create {taxid} --path {path} --autofill" instead')
+        click.echo(f'Run "virtool otu create {taxid} --autofill" instead.')
         sys.exit(1)
 
     otu_client.update()

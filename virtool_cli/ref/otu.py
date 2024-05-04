@@ -37,7 +37,9 @@ class OTUClient:
         self.ignore_cache = ignore_cache
 
     @classmethod
-    def init_from_taxid(cls, repo, taxid: int, ignore_cache: bool = False):
+    def init_from_taxid(
+        cls, repo, taxid: int, ignore_cache: bool = False, create_otu: bool = True
+    ):
         logger = base_logger.bind(taxid=taxid)
         otu_index = repo.index_otus()
 
@@ -46,10 +48,13 @@ class OTUClient:
 
             return OTUClient(repo, otu, ignore_cache)
         else:
-            logger.info(
-                "This OTU has not been added to the reference yet. Requesting from Taxonomy...",
-            )
-            otu = add_otu(repo, taxid)
+            if create_otu:
+                logger.info(
+                    "This OTU has not been added to the reference yet. Requesting from Taxonomy...",
+                )
+                otu = add_otu(repo, taxid)
+            else:
+                raise ValueError
 
         if otu:
             return OTUClient(repo, otu, ignore_cache)
