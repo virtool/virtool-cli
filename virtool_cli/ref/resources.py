@@ -1,12 +1,12 @@
 import datetime
 from dataclasses import dataclass
+from pydantic import BaseModel, field_validator
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, IsolateName, Molecule
 
 
-@dataclass
-class RepoMeta:
+class RepoMeta(BaseModel):
     """Represents the metadata for a Virtool reference repository."""
 
     id: UUID
@@ -23,6 +23,11 @@ class RepoMeta:
 
     organism: str
     """The repository organism."""
+
+    @field_validator("data_type", mode="before")
+    @classmethod
+    def datatype_conversion(cls, raw: str) -> DataType:
+        return DataType(raw)
 
 
 @dataclass
@@ -81,7 +86,7 @@ class EventSourcedRepoIsolate:
     """A list of child sequences."""
 
     @property
-    def accessions(self):
+    def accessions(self) -> list:
         return [sequence.accession for sequence in self.sequences]
 
     def add_sequence(self, sequence: EventSourcedRepoSequence):
@@ -130,7 +135,7 @@ class EventSourcedRepoOTU:
     """The schema of the OTU"""
 
     @property
-    def accessions(self):
+    def accessions(self) -> list:
         accessions = []
         for isolate in self.isolates:
             accessions = [*accessions, *isolate.accessions]
