@@ -38,7 +38,7 @@ class OTUClient:
 
     @classmethod
     def init_from_taxid(
-        cls, repo, taxid: int, ignore_cache: bool = False, create_otu: bool = True
+        cls, repo, taxid: int, create_otu: bool = True, ignore_cache: bool = False
     ):
         logger = base_logger.bind(taxid=taxid)
         otu_index = repo.index_otus()
@@ -53,11 +53,11 @@ class OTUClient:
                     "This OTU has not been added to the reference yet. Requesting from Taxonomy...",
                 )
                 otu = add_otu(repo, taxid)
+
+                if otu:
+                    return OTUClient(repo, otu, ignore_cache)
             else:
                 raise ValueError
-
-        if otu:
-            return OTUClient(repo, otu, ignore_cache)
 
         logger.error("OTU could not be found or built.")
 

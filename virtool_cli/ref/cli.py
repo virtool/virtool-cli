@@ -91,7 +91,7 @@ def update(debug: bool, path: Path, taxid: int):
 
     try:
         otu_client = OTUClient.init_from_taxid(
-            repo, taxid, ignore_cache=False, create_otu=False
+            repo, taxid, create_otu=False, ignore_cache=False
         )
     except ValueError:
         click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
