@@ -194,7 +194,8 @@ class EventSourcedRepo:
         return event
 
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
-        """Get the current event index from the event store, binned and indexed by OTU Id."""
+        """Get the current event index from the event store,
+        binned and indexed by OTU Id."""
         otu_event_index = defaultdict(list)
 
         for event in self._iter_events():
@@ -363,7 +364,7 @@ class EventSourcedRepo:
         self, otu_id: uuid.UUID, ignore_cache: bool = False
     ) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None."""
-        logger.debug(f"Getting OTU from events...", otu_id=str(otu_id))
+        logger.debug("Getting OTU from events...", otu_id=str(otu_id))
         event_ids = self._get_otu_events(otu_id, ignore_cache)
 
         if event_ids:
@@ -501,39 +502,37 @@ class EventSourcedRepo:
             if cached_otu_index.at_event == self.last_id:
                 return cached_otu_index.events
 
-            elif cached_otu_index.at_event < self.last_id:
-                otu_logger.warning(
-                    "Cached event list is out of date",
-                    cached_events=cached_otu_index.events,
-                    cache_at=cached_otu_index.at_event,
-                    last_event=self.last_id,
-                )
-
-                otu_event_set = set(cached_otu_index.events)
-
-                for event in self._iter_events_from_index(
-                    start=cached_otu_index.at_event
-                ):
-                    if type(event) in OTU_EVENT_TYPES:
-                        otu_event_set.add(event.id)
-
-                otu_logger.debug(
-                    "Added new events to event list.",
-                    cached_events=cached_otu_index.events,
-                    updated_events=list(otu_event_set),
-                )
-
-                updated_otu_event_list = list(otu_event_set)
-                self._event_index_cache.cache_otu_events(
-                    otu_id, updated_otu_event_list, last_id=self.last_id
-                )
-
-                return updated_otu_event_list
-
-            else:
+            if cached_otu_index.at_event > self.last_id:
                 raise EventIndexCacheError(
-                    "Bad Index: Cached event index is greater than current repo's last ID"
+                    "Bad Index: "
+                    + "Cached event index is greater than current repo's last ID"
                 )
+
+            otu_logger.warning(
+                "Cached event list is out of date",
+                cached_events=cached_otu_index.events,
+                cache_at=cached_otu_index.at_event,
+                last_event=self.last_id,
+            )
+
+            otu_event_set = set(cached_otu_index.events)
+
+            for event in self._iter_events_from_index(start=cached_otu_index.at_event):
+                if type(event) in OTU_EVENT_TYPES:
+                    otu_event_set.add(event.id)
+
+            otu_logger.debug(
+                "Added new events to event list.",
+                cached_events=cached_otu_index.events,
+                updated_events=list(otu_event_set),
+            )
+
+            updated_otu_event_list = list(otu_event_set)
+            self._event_index_cache.cache_otu_events(
+                otu_id, updated_otu_event_list, last_id=self.last_id
+            )
+
+            return updated_otu_event_list
 
         return []
 
