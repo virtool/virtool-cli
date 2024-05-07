@@ -390,6 +390,47 @@ def test_exclude_accession(empty_repo: EventSourcedRepo):
     }
 
 
+def test_get_accessions(initialized_repo: EventSourcedRepo):
+    otu = list(initialized_repo.iter_otus())[0]
+
+    assert otu.accession_set == {"TMVABC"}
+
+    isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
+    initialized_repo.create_sequence(
+        otu.id,
+        isolate_b.id,
+        "TMVABCB",
+        "TMV",
+        None,
+        "RNA",
+        "ACGTGGAGAGACC",
+    )
+
+    otu = list(initialized_repo.iter_otus())[0]
+
+    assert otu.accession_set == {"TMVABC", "TMVABCB"}
+
+
+def test_get_blocked_accessions(initialized_repo: EventSourcedRepo):
+    otu_id = initialized_repo.index_otus()[12242]
+    isolate_b = initialized_repo.create_isolate(otu_id, None, "B", "isolate")
+    initialized_repo.create_sequence(
+        otu_id,
+        isolate_b.id,
+        "TMVABCB",
+        "TMV",
+        None,
+        "RNA",
+        "ACGTGGAGAGACC",
+    )
+
+    initialized_repo.exclude_accession(otu_id, "GROK")
+    initialized_repo.exclude_accession(otu_id, "TOK")
+
+    otu = initialized_repo.get_otu(otu_id)
+
+    assert otu.blocked_accession_set == {"TMVABC", "TMVABCB", "GROK", "TOK"}
+
 
 class TestEventIndexCache:
     def test_equivalence(self, initialized_repo: EventSourcedRepo):
