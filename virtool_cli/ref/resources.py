@@ -85,9 +85,6 @@ class EventSourcedRepoIsolate:
         """Return a list of accessions contained in this isolate"""
         return [sequence.accession for sequence in self.sequences]
 
-    def add_sequence(self, sequence: EventSourcedRepoSequence):
-        self.sequences.append(sequence)
-
     def dict(self):
         return {
             "id": self.id,
@@ -162,9 +159,6 @@ class EventSourcedRepoOTU:
                 return isolate.id
 
         return None
-
-    def add_isolate(self, isolate: EventSourcedRepoIsolate):
-        self.isolates.append(isolate)
 
     def dict(self):
         return {
