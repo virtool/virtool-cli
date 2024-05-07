@@ -24,11 +24,6 @@ class RepoMeta(BaseModel):
     organism: str
     """The repository organism."""
 
-    @field_validator("data_type", mode="before")
-    @classmethod
-    def datatype_conversion(cls, raw: str) -> DataType:
-        return DataType(raw)
-
 
 @dataclass
 class EventSourcedRepoSequence:
@@ -86,7 +81,7 @@ class EventSourcedRepoIsolate:
     """A list of child sequences."""
 
     @property
-    def accessions(self) -> list:
+    def accession_list(self) -> list:
         """Return a list of accessions contained in this isolate"""
         return [sequence.accession for sequence in self.sequences]
 
@@ -136,17 +131,19 @@ class EventSourcedRepoOTU:
     """The schema of the OTU"""
 
     @property
-    def accessions(self) -> list:
+    def accession_list(self) -> list:
         """Return a list of accessions contained in this isolate"""
         accessions = []
         for isolate in self.isolates:
-            accessions = accessions + isolate.accessions
+            accessions += isolate.accession_list
 
         return accessions
 
     @property
-    def blocked_accessions(self) -> list:
-        return self.accessions + self.excluded_accessions
+    def blocked_accession_list(self) -> list:
+        """Returns a list of accessions to be blocked from fetches,
+        i.e. accessions that have already been added and excluded accessions."""
+        return self.accession_list + self.excluded_accessions
 
     def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
         """Return the isolate instance associated with a given UUID if it exists,

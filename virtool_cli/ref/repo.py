@@ -156,11 +156,8 @@ class EventSourcedRepo:
         if start > self.last_id:
             raise IndexError(f"Start index cannot be >{self.last_id}")
 
-        for iterator in range(start, self.last_id + 1):
-            yield self._read_event(iterator)
-
-    def _print_events(self):
-        pprint(list(self._iter_events()))
+        for event_index in range(start, self.last_id + 1):
+            yield self._read_event(event_index)
 
     def _read_event(self, event_id: int) -> Event:
         return _read_event_at_path(self.src_path / f"{pad_zeroes(event_id)}.json")
