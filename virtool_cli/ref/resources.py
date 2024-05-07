@@ -87,6 +87,7 @@ class EventSourcedRepoIsolate:
 
     @property
     def accessions(self) -> list:
+        """Return a list of accessions contained in this isolate"""
         return [sequence.accession for sequence in self.sequences]
 
     def add_sequence(self, sequence: EventSourcedRepoSequence):
@@ -136,17 +137,21 @@ class EventSourcedRepoOTU:
 
     @property
     def accessions(self) -> list:
+        """Return a list of accessions contained in this isolate"""
         accessions = []
         for isolate in self.isolates:
-            accessions = [*accessions, *isolate.accessions]
+            accessions = accessions + isolate.accessions
 
         return accessions
 
     @property
-    def nofetch(self):
-        return [*self.accessions, *self.excluded_accessions]
+    def blocked_accessions(self) -> list:
+        return self.accessions + self.excluded_accessions
 
-    def get_isolate(self, isolate_id) -> EventSourcedRepoIsolate | None:
+    def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
+        """Return the isolate instance associated with a given UUID if it exists,
+        else None.
+        """
         for isolate in self.isolates:
             if isolate.id == isolate_id:
                 return isolate
@@ -154,6 +159,7 @@ class EventSourcedRepoOTU:
         return None
 
     def get_isolate_id(self, type: str, name: str) -> UUID | None:
+        """Return an UUID if the name is extant in this OTU."""
         for isolate in self.isolates:
             if isolate.name.type == type and isolate.name.value == name:
                 return isolate.id
