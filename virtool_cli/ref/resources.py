@@ -81,9 +81,9 @@ class EventSourcedRepoIsolate:
     """A list of child sequences."""
 
     @property
-    def accession_list(self) -> list:
-        """Return a list of accessions contained in this isolate"""
-        return [sequence.accession for sequence in self.sequences]
+    def accession_set(self) -> set:
+        """Return a set of accessions contained in this isolate"""
+        return {sequence.accession for sequence in self.sequences}
 
     def dict(self):
         return {
@@ -104,7 +104,7 @@ class EventSourcedRepoOTU:
     acronym: str
     """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
-    excluded_accessions: list[str]
+    excluded_accessions: set[str]
 
     isolates: list[EventSourcedRepoIsolate]
     """A list of child isolates."""
@@ -128,19 +128,19 @@ class EventSourcedRepoOTU:
     """The schema of the OTU"""
 
     @property
-    def accession_list(self) -> list:
-        """Return a list of accessions contained in this isolate"""
-        accessions = []
+    def accession_set(self) -> set:
+        """Return a set of accessions contained in this isolate"""
+        accessions = set()
         for isolate in self.isolates:
-            accessions += isolate.accession_list
+            accessions.update(isolate.accession_set)
 
         return accessions
 
     @property
-    def blocked_accession_list(self) -> list:
-        """Returns a list of accessions to be blocked from fetches,
+    def blocked_accession_set(self) -> set:
+        """Returns a set of accessions to be blocked from fetches,
         i.e. accessions that have already been added and excluded accessions."""
-        return self.accession_list + self.excluded_accessions
+        return self.accession_set.union(self.excluded_accessions)
 
     def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
         """Return the isolate instance associated with a given UUID if it exists,

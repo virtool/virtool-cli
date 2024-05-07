@@ -384,7 +384,7 @@ class EventSourcedRepo:
         otu = EventSourcedRepoOTU(
             id=event.data.id,
             acronym=event.data.acronym,
-            excluded_accessions=[],
+            excluded_accessions=set(),
             isolates=[],
             legacy_id=event.data.legacy_id,
             molecule=event.data.molecule,
@@ -407,7 +407,7 @@ class EventSourcedRepo:
                 )
 
             elif isinstance(event, ExcludeAccession):
-                otu.excluded_accessions.append(event.data.accession)
+                otu.excluded_accessions.add(event.data.accession)
 
             elif isinstance(event, CreateSequence):
                 for isolate in otu.isolates:
