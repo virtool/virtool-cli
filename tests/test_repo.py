@@ -432,6 +432,26 @@ def test_get_blocked_accessions(initialized_repo: EventSourcedRepo):
     assert otu.blocked_accession_set == {"TMVABC", "TMVABCB", "GROK", "TOK"}
 
 
+def test_get_isolate(initialized_repo: EventSourcedRepo):
+    otu = list(initialized_repo.iter_otus())[0]
+
+    isolate_ids = {isolate.id for isolate in otu.isolates}
+
+    for isolate_id in isolate_ids:
+        assert otu.get_isolate(isolate_id) in otu.isolates
+
+
+def test_get_isolate_id_by_name(initialized_repo: EventSourcedRepo):
+    otu = list(initialized_repo.iter_otus())[0]
+
+    isolate_ids = {isolate.id for isolate in otu.isolates}
+
+    assert (
+        otu.get_isolate_id_by_name(IsolateName(type="isolate", value="A"))
+        in isolate_ids
+    )
+
+
 class TestEventIndexCache:
     def test_equivalence(self, initialized_repo: EventSourcedRepo):
         assert initialized_repo.last_id == 4
