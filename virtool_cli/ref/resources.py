@@ -152,7 +152,7 @@ class EventSourcedRepoOTU:
 
         return None
 
-    def get_isolate_id(self, type: str, name: str) -> UUID | None:
+    def get_isolate_id_by_name(self, type: str, name: str) -> UUID | None:
         """Return an UUID if the name is extant in this OTU."""
         for isolate in self.isolates:
             if isolate.name.type == type and isolate.name.value == name:
