@@ -164,7 +164,7 @@ class EventSourcedRepoOTU:
         return {
             "id": self.id,
             "acronym": self.acronym,
-            "excluded_accessions": self.excluded_accessions,
+            "excluded_accessions": list(self.excluded_accessions),
             "isolates": [isolate.dict() for isolate in self.isolates],
             "legacy_id": self.legacy_id,
             "name": self.name,
