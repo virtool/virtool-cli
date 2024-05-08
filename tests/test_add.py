@@ -2,7 +2,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import orjson
 import pytest
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
@@ -176,7 +175,7 @@ class TestUpdateOTU:
             ),
         ],
     )
-    def test_no_exceptions(
+    def test_success_no_exclusions(
         self, taxid: int, accessions: list[str], precached_repo: Repo
     ):
         run_add_otu_command(taxid, path=precached_repo.path, autofill=False)
@@ -184,14 +183,14 @@ class TestUpdateOTU:
 
         otu = list(precached_repo.iter_otus())[0]
 
-        pre_accession_list = sorted(otu.accession_set)
+        pre_accession_set = otu.accession_set
 
-        assert accessions == pre_accession_list
+        assert set(accessions) == pre_accession_set
 
         run_update_otu_command(taxid, path=precached_repo.path)
 
         otu = list(precached_repo.iter_otus())[0]
 
-        assert set(accessions) != set(otu.accession_set)
+        assert set(otu.accession_set) != pre_accession_set
 
-        assert set(accessions) < set(otu.accession_set)
+        assert set(otu.accession_set) > pre_accession_set
