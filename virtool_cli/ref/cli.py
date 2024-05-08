@@ -11,7 +11,7 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
-from virtool_cli.ref.otu import add_otu, add_accessions
+from virtool_cli.ref.otu import add_otu, update_otu, add_accessions
 from virtool_cli.ref.resources import DataType
 from virtool_cli.ref.utils import format_json
 from virtool_cli.utils.logging import configure_logger
@@ -51,7 +51,7 @@ def ref():
 )
 def init(data_type: DataType, name: str, organism: str, path: Path):
     """Create a new event-sourced repo."""
-    EventSourcedRepo.new(data_type, name, path, organism)
+    Repo.new(data_type, name, path, organism)
 
 
 @ref.group()
@@ -61,17 +61,50 @@ def otu():
 
 @otu.command()
 @click.argument("TAXID", type=int)
+@click.option("--autofill/--no-fill", default=False)
 @debug_option
 @path_option
-def create(debug: bool, path: Path, taxid: int):
+def create(debug: bool, path: Path, taxid: int, autofill: bool):
     configure_logger(debug)
 
     repo = Repo(path)
 
-    add_otu(repo, taxid)
+    otu = add_otu(repo, taxid)
+
+    if autofill:
+        client = NCBIClient.from_repo(path, ignore_cache=False)
+
+        all_accessions = client.link_accessions_from_taxid(taxid)
+
+        add_accessions(repo, otu, all_accessions)
 
 
 @otu.command()
+@click.argument("TAXID", type=int)
+@debug_option
+@path_option
+def update(debug: bool, path: Path, taxid: int):
+    configure_logger(debug)
+
+    repo = Repo(path)
+
+    otu_index = repo.index_otus()
+    if taxid in otu_index:
+        otu = repo.get_otu(otu_index[taxid])
+
+        update_otu(repo, otu)
+
+    else:
+        click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
+        click.echo(f'Run "virtool otu create {taxid} --path {path} --autofill" instead')
+
+
+@ref.group()
+def sequences():
+    """Manage sequences"""
+
+
+@sequences.command()
 @click.argument(
     "accessions_",
     metavar="ACCESSIONS",
@@ -81,7 +114,7 @@ def create(debug: bool, path: Path, taxid: int):
 @click.option("--taxid", type=int, required=True)
 @path_option
 @debug_option
-def fill(debug, path, taxid, accessions_: list[str]):
+def add(debug, path, taxid, accessions_: list[str]):
     """Fetch and write the data for the given NCBI accessions to an OTU.
 
     virtool add accessions --taxid 2697049 MN996528.1 --path [repo_path]
@@ -100,15 +133,6 @@ def fill(debug, path, taxid, accessions_: list[str]):
 
     if accessions_:
         add_accessions(repo, otu, accessions_)
-
-    else:
-        click.echo("No accessions stipulated. Adding all accessions to fetch list...")
-
-        client = NCBIClient.from_repo(path, ignore_cache=False)
-
-        all_accessions = client.link_accessions_from_taxid(taxid)
-
-        add_accessions(repo, otu, all_accessions)
 
 
 @ref.group()

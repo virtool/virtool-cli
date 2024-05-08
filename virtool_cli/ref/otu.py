@@ -10,6 +10,7 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
 from virtool_cli.ref.resources import EventSourcedRepoOTU as RepoOTU
+from virtool_cli.ref.utils import Molecule, IsolateName
 
 base_logger = structlog.get_logger()
 
@@ -58,9 +59,24 @@ def add_otu(repo: Repo, taxid: int) -> RepoOTU:
     return otu
 
 
+def update_otu(repo: Repo, otu: RepoOTU):
+    otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id), name=otu.name)
+
+    ncbi = NCBIClient.from_repo(repo.path, False)
+
+    linked_accessions = ncbi.link_accessions_from_taxid(otu.taxid)
+
+    add_accessions(repo, otu, linked_accessions)
+
+
 def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):
-    otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id))
-    fetch_list = list(set(accessions).difference(set(otu.nofetch)))
+    otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id), name=otu.name)
+    fetch_list = list(set(accessions).difference(otu.accession_set))
+    if not fetch_list:
+        otu_logger.info("OTU is up to date.")
+        return
+
+    otu_logger.info(f"Fetching {len(fetch_list)} accessions...", fetch_list=fetch_list)
 
     ncbi = NCBIClient.from_repo(repo.path, False)
 
@@ -68,10 +84,14 @@ def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):
 
     record_bins = group_genbank_records_by_isolate(records)
 
+    new_sequences = []
+
     for isolate_key in record_bins:
         record_bin = record_bins[isolate_key]
 
-        isolate_id = otu.get_isolate_id(type=isolate_key.type, name=isolate_key.name)
+        isolate_id = otu.get_isolate_id_by_name(
+            IsolateName(type=isolate_key.type, value=isolate_key.name)
+        )
         if isolate_id is None:
             otu_logger.debug("Creating isolate")
             isolate = repo.create_isolate(
@@ -94,8 +114,15 @@ def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):
                 sequence=record.sequence,
             )
 
-        # for accession in record_bin:
-        #     otu_logger.debug(record_bin[accession], isolate=str(isolate_key))
+            new_sequences.append(str(sequence.id))
+
+    if new_sequences:
+        otu_logger.info(
+            f"Added {len(new_sequences)} sequences to OTU", new_sequences=new_sequences
+        )
+
+    else:
+        otu_logger.info(f"No new sequences added to OTU")
 
 
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
@@ -138,10 +165,10 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
             )
 
             isolates[source_key][record.accession] = record
-
-        logger.debug(
-            "Record does not contain sufficient source data for inclusion.",
-        )
+        else:
+            logger.debug(
+                "Record does not contain sufficient source data for inclusion.",
+            )
 
     return isolates
 
