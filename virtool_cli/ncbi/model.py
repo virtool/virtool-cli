@@ -120,7 +120,7 @@ class NCBIGenbank(BaseModel):
         ),
     ]
     source: Annotated[NCBISource, Field(validation_alias="GBSeq_feature-table")]
-    comment: Annotated[str, Field("", validation_alias="GBSeq_comment")]
+    comment: Annotated[str, Field(validation_alias="GBSeq_comment")] = ""
 
     @computed_field()
     def refseq(self) -> bool:
@@ -164,11 +164,11 @@ class NCBILineage(BaseModel):
 
 
 class NCBITaxonomyOtherNames(BaseModel):
-    acronym: Annotated[list[str], Field([], validation_alias="Acronym")]
-    genbank_acronym: Annotated[list[str], Field([], validation_alias="GenbankAcronym")]
-    equivalent_name: Annotated[list[str], Field([], validation_alias="EquivalentName")]
-    synonym: Annotated[list[str], Field([], validation_alias="Synonym")]
-    includes: Annotated[list[str], Field([], validation_alias="Includes")]
+    acronym: Annotated[list[str], Field(validation_alias="Acronym")] = []
+    genbank_acronym: Annotated[list[str], Field(validation_alias="GenbankAcronym")] = []
+    equivalent_name: Annotated[list[str], Field(validation_alias="EquivalentName")] = []
+    synonym: Annotated[list[str], Field(validation_alias="Synonym")] = []
+    includes: Annotated[list[str], Field(validation_alias="Includes")] = []
 
 
 class NCBITaxonomy(BaseModel):
@@ -178,8 +178,8 @@ class NCBITaxonomy(BaseModel):
     name: Annotated[str, Field(validation_alias="ScientificName")]
     other_names: Annotated[
         NCBITaxonomyOtherNames,
-        Field(NCBITaxonomyOtherNames(), validation_alias="OtherNames"),
-    ]
+        Field(validation_alias="OtherNames"),
+    ] = NCBITaxonomyOtherNames()
     lineage: Annotated[list[NCBILineage], Field(validation_alias="LineageEx")]
     rank: Annotated[NCBIRank, Field(validation_alias=AliasChoices("rank", "Rank"))]
 

@@ -1,12 +1,12 @@
 import datetime
 from dataclasses import dataclass
+from pydantic import BaseModel, field_validator
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, IsolateName, Molecule
 
 
-@dataclass
-class RepoMeta:
+class RepoMeta(BaseModel):
     """Represents the metadata for a Virtool reference repository."""
 
     id: UUID
@@ -80,6 +80,11 @@ class EventSourcedRepoIsolate:
     sequences: list[EventSourcedRepoSequence]
     """A list of child sequences."""
 
+    @property
+    def accession_set(self) -> set:
+        """Return a set of accessions contained in this isolate"""
+        return {sequence.accession for sequence in self.sequences}
+
     def dict(self):
         return {
             "id": self.id,
@@ -99,7 +104,7 @@ class EventSourcedRepoOTU:
     acronym: str
     """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
-    excluded_accessions: list[str]
+    excluded_accessions: set[str]
 
     isolates: list[EventSourcedRepoIsolate]
     """A list of child isolates."""
@@ -113,16 +118,47 @@ class EventSourcedRepoOTU:
     name: str
     """The OTU name (eg. Tobacco mosaic virus)."""
 
-    molecule: Molecule
-    """The molecule of this OTU"""
-
     taxid: int
     """The OTU taxonomy ID."""
 
-    schema: list
+    molecule: Molecule | None = None
+    """The molecule of this OTU"""
 
-    def add_isolate(self, isolate: EventSourcedRepoIsolate):
-        self.isolates.append(isolate)
+    schema: list | None = None
+    """The schema of the OTU"""
+
+    @property
+    def accession_set(self) -> set:
+        """Return a set of accessions contained in this isolate"""
+        accessions = set()
+        for isolate in self.isolates:
+            accessions.update(isolate.accession_set)
+
+        return accessions
+
+    @property
+    def blocked_accession_set(self) -> set:
+        """Returns a set of accessions to be blocked from fetches,
+        i.e. accessions that have already been added and excluded accessions."""
+        return self.accession_set.union(self.excluded_accessions)
+
+    def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
+        """Return the isolate instance associated with a given UUID if it exists,
+        else None.
+        """
+        for isolate in self.isolates:
+            if isolate.id == isolate_id:
+                return isolate
+
+        return None
+
+    def get_isolate_id_by_name(self, name: IsolateName) -> UUID | None:
+        """Return an UUID if the name is extant in this OTU."""
+        for isolate in self.isolates:
+            if isolate.name == name:
+                return isolate.id
+
+        return None
 
     def dict(self):
         return {
