@@ -1,7 +1,7 @@
 import datetime
 import dataclasses
 from dataclasses import dataclass
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, IsolateName, Molecule
