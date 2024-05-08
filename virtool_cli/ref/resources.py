@@ -88,20 +88,24 @@ class EventSourcedRepoIsolate:
 
     @property
     def accession_set(self) -> set[str]:
+        """Return a set of accessions contained in this isolate."""
         return set(self._sequences_by_accession.keys())
 
     def add_sequence(self, sequence: EventSourcedRepoSequence):
+        """Add a new sequence to private dictionary"""
         self._sequences_by_accession[sequence.accession] = sequence
 
     def get_sequence_by_accession(
         self, accession: str
     ) -> EventSourcedRepoSequence | None:
+        """Return a sequence with the given accession if it exists in the isolate,
+        else None"""
         if accession in self._sequences_by_accession:
             return self._sequences_by_accession[accession]
 
         return None
 
-    def dict(self):
+    def dict(self) -> dict:
         return {
             "id": self.id,
             "legacy_id": self.legacy_id,
