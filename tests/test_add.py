@@ -70,64 +70,78 @@ def index_repo_data(repo: Repo):
     return otus
 
 
+def run_add_otu_command(taxid: int, path: Path, autofill: bool):
+    otu_command = [
+        "virtool",
+        "ref",
+        "otu",
+        "create",
+        str(taxid),
+        "--path",
+        str(path),
+    ]
+
+    if autofill:
+        otu_command.append("--autofill")
+
+    subprocess.run(otu_command, check=False)
+
+
+def run_add_sequences_command(taxid: int, accessions: list[str], path: Path):
+    command = [
+        "virtool",
+        "ref",
+        "sequences",
+        "add",
+        "--taxid",
+        str(taxid),
+        "--path",
+        str(path),
+    ]
+
+    subprocess.run([*command, *accessions])
+
+
+def run_update_otu_command(taxid: int, path: Path):
+    otu_command = [
+        "virtool",
+        "ref",
+        "otu",
+        "update",
+        str(taxid),
+        "--path",
+        str(path),
+    ]
+
+    subprocess.run(otu_command, check=False)
+
+
 class TestAddOTU:
-    @staticmethod
-    def run_command(taxid: int, path: Path, autofill: bool):
-        otu_command = [
-            "virtool",
-            "ref",
-            "otu",
-            "create",
-            str(taxid),
-            "--path",
-            str(path),
-        ]
-
-        if autofill:
-            otu_command.append("--autofill")
-
-        subprocess.run(otu_command, check=False)
-
     @pytest.mark.parametrize("taxid", [438782])
     def test_empty_success(
         self, taxid, precached_repo: Repo, snapshot: SnapshotAssertion
     ):
-        self.run_command(taxid=taxid, path=precached_repo.path, autofill=False)
+        run_add_otu_command(taxid=taxid, path=precached_repo.path, autofill=False)
 
         for otu in precached_repo.iter_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
-            assert not otu.accessions
+            assert not otu.accession_set
 
     @pytest.mark.ncbi
     @pytest.mark.parametrize("taxid", [438782])
     def test_autofill_success(
         self, taxid, precached_repo: Repo, snapshot: SnapshotAssertion
     ):
-        self.run_command(taxid=taxid, path=precached_repo.path, autofill=True)
+        run_add_otu_command(taxid=taxid, path=precached_repo.path, autofill=True)
 
         for otu in precached_repo.iter_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
-            assert otu.accessions
+            assert otu.accession_set
 
 
 class TestAddSequences:
-    @staticmethod
-    def run_add_sequences(taxid: int, accessions: list[str], path: Path):
-        command = [
-            "virtool",
-            "ref",
-            "sequences",
-            "add",
-            "--taxid",
-            str(taxid),
-            "--path",
-            str(path),
-        ]
-
-        subprocess.run([*command, *accessions])
-
     @pytest.mark.parametrize(
         "taxid,accessions",
         [
@@ -147,7 +161,7 @@ class TestAddSequences:
     def test_success(
         self, taxid, accessions, precached_repo, snapshot: SnapshotAssertion
     ):
-        self.run_add_sequences(taxid, accessions, precached_repo.path)
+        run_add_sequences_command(taxid, accessions, precached_repo.path)
 
         for otu in precached_repo.iter_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
@@ -159,7 +173,46 @@ class TestAddSequences:
                     sequence.accession: sequence for sequence in isolate.sequences
                 }
 
-                for accession in sorted(isolate.accessions):
+                for accession in sorted(isolate.accession_set):
                     assert sequence_dict[accession].dict() == snapshot(
                         exclude=props("id")
                     )
+
+
+@pytest.mark.ncbi
+class TestUpdateOTU:
+    @pytest.mark.parametrize(
+        "taxid,accessions",
+        [
+            (
+                438782,
+                [
+                    "NC_010314",
+                    "NC_010315",
+                    "NC_010316",
+                    "NC_010317",
+                    "NC_010318",
+                    "NC_010319",
+                ],
+            ),
+        ],
+    )
+    def test_no_exceptions(
+        self, taxid: int, accessions: list[str], precached_repo: Repo
+    ):
+        run_add_otu_command(taxid, path=precached_repo.path, autofill=False)
+        run_add_sequences_command(taxid, accessions, path=precached_repo.path)
+
+        otu = list(precached_repo.iter_otus())[0]
+
+        pre_accession_list = sorted(otu.accession_set)
+
+        assert accessions == pre_accession_list
+
+        run_update_otu_command(taxid, path=precached_repo.path)
+
+        otu = list(precached_repo.iter_otus())[0]
+
+        assert set(accessions) != set(otu.accession_set)
+
+        assert set(accessions) < set(otu.accession_set)
