@@ -302,43 +302,45 @@ class TestRetrieveOTU:
 
         otu = empty_repo.get_otu(otu.id, ignore_cache=True)
 
+        otu_contents = [
+            EventSourcedRepoIsolate(
+                id=isolate_a.id,
+                legacy_id=None,
+                name=IsolateName(type="isolate", value="A"),
+                _sequences_by_accession={
+                    "TMVABC": EventSourcedRepoSequence(
+                        id=otu.isolates[0].sequences[0].id,
+                        accession="TMVABC",
+                        definition="TMV",
+                        legacy_id=None,
+                        segment="RNA",
+                        sequence="ACGT",
+                    ),
+                },
+            ),
+            EventSourcedRepoIsolate(
+                id=isolate_b.id,
+                legacy_id=None,
+                name=IsolateName(type="isolate", value="B"),
+                _sequences_by_accession={
+                    "TMVABCB": EventSourcedRepoSequence(
+                        id=otu.isolates[1].sequences[0].id,
+                        accession="TMVABCB",
+                        definition="TMV",
+                        legacy_id=None,
+                        segment="RNA",
+                        sequence="ACGTGGAGAGACC",
+                    ),
+                },
+            ),
+        ]
+
         assert otu == EventSourcedRepoOTU(
             id=otu.id,
             acronym="TMV",
             excluded_accessions=set(),
             legacy_id=None,
-            isolates=[
-                EventSourcedRepoIsolate(
-                    id=isolate_a.id,
-                    legacy_id=None,
-                    name=IsolateName(type="isolate", value="A"),
-                    _sequences_by_accession={
-                        "TMVABC": EventSourcedRepoSequence(
-                            id=otu.isolates[0].sequences[0].id,
-                            accession="TMVABC",
-                            definition="TMV",
-                            legacy_id=None,
-                            segment="RNA",
-                            sequence="ACGT",
-                        ),
-                    },
-                ),
-                EventSourcedRepoIsolate(
-                    id=isolate_b.id,
-                    legacy_id=None,
-                    name=IsolateName(type="isolate", value="B"),
-                    _sequences_by_accession={
-                        "TMVABCB": EventSourcedRepoSequence(
-                            id=otu.isolates[1].sequences[0].id,
-                            accession="TMVABCB",
-                            definition="TMV",
-                            legacy_id=None,
-                            segment="RNA",
-                            sequence="ACGTGGAGAGACC",
-                        ),
-                    },
-                ),
-            ],
+            isolates=otu_contents,
             name="Tobacco mosaic virus",
             molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
             schema=[],
