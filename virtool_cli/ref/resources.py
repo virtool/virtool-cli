@@ -1,4 +1,5 @@
 import datetime
+import dataclasses
 from dataclasses import dataclass
 from pydantic import BaseModel, field_validator
 from uuid import UUID
@@ -77,13 +78,28 @@ class EventSourcedRepoIsolate:
     name: IsolateName
     """The isolate's source name metadata."""
 
-    sequences: list[EventSourcedRepoSequence]
-    """A list of child sequences."""
+    _sequences_by_accession: dict = dataclasses.field(default_factory=dict)
+    """A dictionary of sequences indexed by accession"""
 
     @property
-    def accession_set(self) -> set:
-        """Return a set of accessions contained in this isolate"""
-        return {sequence.accession for sequence in self.sequences}
+    def sequences(self) -> list[EventSourcedRepoSequence]:
+        """Return a list of child sequences."""
+        return list(self._sequences_by_accession.values())
+
+    @property
+    def accession_set(self) -> set[str]:
+        return set(self._sequences_by_accession.keys())
+
+    def add_sequence(self, sequence: EventSourcedRepoSequence):
+        self._sequences_by_accession[sequence.accession] = sequence
+
+    def get_sequence_by_accession(
+        self, accession: str
+    ) -> EventSourcedRepoSequence | None:
+        if accession in self._sequences_by_accession:
+            return self._sequences_by_accession[accession]
+
+        return None
 
     def dict(self):
         return {

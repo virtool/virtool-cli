@@ -311,8 +311,8 @@ def test_get_otu(empty_repo: EventSourcedRepo):
                 id=isolate_a.id,
                 legacy_id=None,
                 name=IsolateName(type="isolate", value="A"),
-                sequences=[
-                    EventSourcedRepoSequence(
+                _sequences_by_accession={
+                    "TMVABC": EventSourcedRepoSequence(
                         id=otu.isolates[0].sequences[0].id,
                         accession="TMVABC",
                         definition="TMV",
@@ -320,14 +320,14 @@ def test_get_otu(empty_repo: EventSourcedRepo):
                         segment="RNA",
                         sequence="ACGT",
                     ),
-                ],
+                },
             ),
             EventSourcedRepoIsolate(
                 id=isolate_b.id,
                 legacy_id=None,
                 name=IsolateName(type="isolate", value="B"),
-                sequences=[
-                    EventSourcedRepoSequence(
+                _sequences_by_accession={
+                    "TMVABCB": EventSourcedRepoSequence(
                         id=otu.isolates[1].sequences[0].id,
                         accession="TMVABCB",
                         definition="TMV",
@@ -335,7 +335,7 @@ def test_get_otu(empty_repo: EventSourcedRepo):
                         segment="RNA",
                         sequence="ACGTGGAGAGACC",
                     ),
-                ],
+                },
             ),
         ],
         name="Tobacco mosaic virus",

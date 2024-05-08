@@ -293,7 +293,7 @@ class EventSourcedRepo:
         return EventSourcedRepoIsolate(
             id=isolate_id,
             legacy_id=legacy_id,
-            sequences=[],
+            _sequences_by_accession={},
             name=name,
         )
 
@@ -401,7 +401,7 @@ class EventSourcedRepo:
                     EventSourcedRepoIsolate(
                         id=event.data.id,
                         legacy_id=event.data.legacy_id,
-                        sequences=[],
+                        _sequences_by_accession={},
                         name=event.data.name,
                     ),
                 )
@@ -412,7 +412,7 @@ class EventSourcedRepo:
             elif isinstance(event, CreateSequence):
                 for isolate in otu.isolates:
                     if isolate.id == event.query.isolate_id:
-                        isolate.sequences.append(
+                        isolate.add_sequence(
                             EventSourcedRepoSequence(
                                 id=event.data.id,
                                 accession=event.data.accession,
