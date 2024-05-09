@@ -1,3 +1,4 @@
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -77,6 +78,9 @@ class IsolateNameType(StrEnum):
     CLONE = "clone"
 
 
+IsolateNameKey = namedtuple("IsolateNameKey", ["type", "value"])
+
+
 class IsolateName(BaseModel):
     """Represents a sub-species categorization name for sequences.
 
@@ -88,6 +92,10 @@ class IsolateName(BaseModel):
 
     value: str
     """The name of this subcategory"""
+
+    @property
+    def frozen(self):
+        return IsolateNameKey(type=self.type, value=self.value)
 
     @field_validator("type", mode="before")
     @classmethod
