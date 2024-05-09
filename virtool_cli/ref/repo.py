@@ -273,6 +273,7 @@ class EventSourcedRepo:
         source_name: str,
         source_type: str,
     ):
+        """TODO: Protect from isolate overwrites"""
         isolate_id = uuid.uuid4()
 
         name = IsolateName(**{"type": source_type, "value": source_name})

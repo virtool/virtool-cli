@@ -168,9 +168,6 @@ class EventSourcedRepoOTU:
         return self.accession_set.union(self.excluded_accessions)
 
     def add_isolate(self, isolate: EventSourcedRepoIsolate):
-        if isolate.id in self._isolates_by_id:
-            raise ValueError("Isolate already exists")
-
         self._isolates_by_id[isolate.id] = isolate
 
     def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
