@@ -75,10 +75,11 @@ def pad_zeroes(number: int) -> str:
     return str(number).zfill(8)
 
 
-class IsolateNameType(StrEnum):
+class SourceType(StrEnum):
     ISOLATE = "isolate"
     STRAIN = "strain"
     CLONE = "clone"
+    REFSEQ = "refseq"
 
 
 IsolateNameKey = namedtuple("IsolateNameKey", ["type", "value"])
@@ -90,7 +91,7 @@ class IsolateName(BaseModel):
     Can be typed as an isolate, a strain or a clone.
     """
 
-    type: IsolateNameType
+    type: SourceType
     """The type of sub-species categorization"""
 
     value: str
@@ -99,11 +100,6 @@ class IsolateName(BaseModel):
     @property
     def frozen(self):
         return IsolateNameKey(type=self.type, value=self.value)
-
-    @field_validator("type", mode="before")
-    @classmethod
-    def validate_type(cls, raw: str):
-        return IsolateNameType(raw)
 
 
 def extract_isolate_source(

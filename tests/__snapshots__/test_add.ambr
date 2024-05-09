@@ -42,7 +42,7 @@
   dict({
     'legacy_id': None,
     'name': dict({
-      'type': <IsolateNameType.ISOLATE: 'isolate'>,
+      'type': <SourceType.ISOLATE: 'isolate'>,
       'value': 'Q767',
     }),
   })

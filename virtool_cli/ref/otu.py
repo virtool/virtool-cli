@@ -1,7 +1,5 @@
 import sys
 from collections import defaultdict
-from enum import StrEnum
-from typing import NamedTuple
 
 import structlog
 
@@ -9,27 +7,15 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
 from virtool_cli.ref.resources import EventSourcedRepoOTU as RepoOTU
-from virtool_cli.ref.utils import Molecule, IsolateName
+from virtool_cli.ref.utils import Molecule, IsolateName, SourceType
 
 base_logger = structlog.get_logger()
 
 
-class SourceType(StrEnum):
-    ISOLATE = "isolate"
-    STRAIN = "strain"
-    CLONE = "clone"
-    REFSEQ = "refseq"
-
-
-class SourceKey(NamedTuple):
-    type: SourceType
-    name: str
-
-    def __str__(self):
-        return f"{self.type},{self.name}"
-
-
 def add_otu(repo: Repo, taxid: int) -> RepoOTU:
+    """Fetch a Taxonomy record and add the OTU to the given repo.
+
+    If the OTU cannot be added, terminate the command."""
     logger = base_logger.bind(taxid=taxid)
 
     ncbi = NCBIClient.from_repo(repo.path, False)
@@ -73,7 +59,7 @@ class OTUClient:
         cls, repo, taxid: int, create_otu: bool = True, ignore_cache: bool = False
     ):
         """
-        Initializes a new OTUClient from a Taxonomy ID.
+        Initialize a new OTUClient from a Taxonomy ID.
 
         If create_otu flag is True, fetches the Taxonomy record and adds a new OTU.
         """
@@ -102,7 +88,7 @@ class OTUClient:
 
     @classmethod
     def create_from_taxid(cls, repo, taxid: int, ignore_cache: bool = False):
-        """Initializes a new OTU and a new OTUClient from a Taxonomy ID."""
+        """Initialize a new OTU and a new OTUClient from a Taxonomy ID."""
         logger = base_logger.bind(taxid=taxid)
         otu_index = repo.index_otus()
         if taxid in otu_index:
@@ -123,8 +109,8 @@ class OTUClient:
         raise ValueError
 
     def update(self):
-        """Fetches a full list of Nucleotide accessions associated with the OTU
-        and passes the list to the add."""
+        """Fetch a full list of Nucleotide accessions associated with the OTU
+        and pass the list to the add method."""
         ncbi = NCBIClient.from_repo(self._repo.path, self.ignore_cache)
 
         linked_accessions = ncbi.link_accessions_from_taxid(self.otu.taxid)
@@ -132,13 +118,12 @@ class OTUClient:
         self.add(linked_accessions)
 
     def add(self, accessions: list):
-        """
-        Add
-        """
+        """Take a list of accessions, filter for eligible accessions and
+        add new sequences to the OTU"""
         otu_logger = base_logger.bind(
             taxid=self.otu.taxid, otu_id=str(self.otu.id), name=self.otu.name
         )
-        fetch_list = list(set(accessions).difference(self.otu.accession_set))
+        fetch_list = list(set(accessions).difference(self.otu.blocked_accession_set))
         if not fetch_list:
             otu_logger.info("OTU is up to date.")
             return
@@ -152,6 +137,7 @@ class OTUClient:
         if records and not self.otu.molecule:
             # TODO: Upcoming UpdateMolecule event?
             molecule = self.get_molecule_from_records(records)
+            otu_logger.debug("Retrieved new molecule data", molecule=molecule)
 
         record_bins = group_genbank_records_by_isolate(records)
 
