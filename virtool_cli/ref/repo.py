@@ -280,9 +280,10 @@ class EventSourcedRepo:
         source_name: str,
         source_type: str,
     ):
+        """TODO: Protect from isolate overwrites"""
         isolate_id = uuid.uuid4()
 
-        name = IsolateName(type=source_type, value=source_name)
+        name = IsolateName(**{"type": source_type, "value": source_name})
 
         event = self._write_event(
             CreateIsolate,
@@ -300,7 +301,7 @@ class EventSourcedRepo:
         return EventSourcedRepoIsolate(
             id=isolate_id,
             legacy_id=legacy_id,
-            sequences=[],
+            _sequences_by_accession={},
             name=name,
         )
 
@@ -392,23 +393,21 @@ class EventSourcedRepo:
             id=event.data.id,
             acronym=event.data.acronym,
             excluded_accessions=set(),
-            isolates=[],
             legacy_id=event.data.legacy_id,
-            molecule=event.data.molecule,
             name=event.data.name,
-            schema=event.data.otu_schema,
             taxid=event.data.taxid,
+            molecule=event.data.molecule,
+            schema=event.data.otu_schema,
         )
 
         for event_id in event_ids[1:]:
             event = self._read_event(event_id)
 
             if isinstance(event, CreateIsolate):
-                otu.isolates.append(
+                otu.add_isolate(
                     EventSourcedRepoIsolate(
                         id=event.data.id,
                         legacy_id=event.data.legacy_id,
-                        sequences=[],
                         name=event.data.name,
                     ),
                 )
@@ -419,7 +418,7 @@ class EventSourcedRepo:
             elif isinstance(event, CreateSequence):
                 for isolate in otu.isolates:
                     if isolate.id == event.query.isolate_id:
-                        isolate.sequences.append(
+                        isolate.add_sequence(
                             EventSourcedRepoSequence(
                                 id=event.data.id,
                                 accession=event.data.accession,

@@ -86,12 +86,12 @@ class TestCreateOTU:
             id=otu.id,
             acronym="TMV",
             excluded_accessions=set(),
-            isolates=[],
             legacy_id="abcd1234",
             name="Tobacco mosaic virus",
             molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
             schema=[],
             taxid=12242,
+            _isolates_by_id={},
         )
 
         with open(empty_repo.path.joinpath("src", "00000002.json")) as f:
@@ -264,55 +264,51 @@ def test_create_sequence(empty_repo: EventSourcedRepo):
     assert empty_repo.last_id == 4
 
 
-def test_get_otu(empty_repo: EventSourcedRepo):
-    """Test that getting an OTU returns the expected ``RepoOTU`` object including two
-    isolates with one sequence each.
-    """
-    otu = empty_repo.create_otu(
-        "TMV",
-        None,
-        "Tobacco mosaic virus",
-        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
-        [],
-        12242,
-    )
+class TestRetrieveOTU:
+    def test_get_otu(self, empty_repo: EventSourcedRepo):
+        """Test that getting an OTU returns the expected ``RepoOTU`` object including two
+        isolates with one sequence each.
+        """
+        otu = empty_repo.create_otu(
+            "TMV",
+            None,
+            "Tobacco mosaic virus",
+            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            [],
+            12242,
+        )
 
-    isolate_a = empty_repo.create_isolate(otu.id, None, "A", "isolate")
-    empty_repo.create_sequence(
-        otu.id,
-        isolate_a.id,
-        "TMVABC",
-        "TMV",
-        None,
-        "RNA",
-        "ACGT",
-    )
+        isolate_a = empty_repo.create_isolate(otu.id, None, "A", "isolate")
+        empty_repo.create_sequence(
+            otu.id,
+            isolate_a.id,
+            "TMVABC",
+            "TMV",
+            None,
+            "RNA",
+            "ACGT",
+        )
 
-    isolate_b = empty_repo.create_isolate(otu.id, None, "B", "isolate")
-    empty_repo.create_sequence(
-        otu.id,
-        isolate_b.id,
-        "TMVABCB",
-        "TMV",
-        None,
-        "RNA",
-        "ACGTGGAGAGACC",
-    )
+        isolate_b = empty_repo.create_isolate(otu.id, None, "B", "isolate")
+        empty_repo.create_sequence(
+            otu.id,
+            isolate_b.id,
+            "TMVABCB",
+            "TMV",
+            None,
+            "RNA",
+            "ACGTGGAGAGACC",
+        )
 
-    otu = empty_repo.get_otu(otu.id, ignore_cache=True)
+        otu = empty_repo.get_otu(otu.id, ignore_cache=True)
 
-    assert otu == EventSourcedRepoOTU(
-        id=otu.id,
-        acronym="TMV",
-        excluded_accessions=set(),
-        legacy_id=None,
-        isolates=[
-            EventSourcedRepoIsolate(
+        otu_contents = {
+            isolate_a.id: EventSourcedRepoIsolate(
                 id=isolate_a.id,
                 legacy_id=None,
-                name=IsolateName(type="isolate", value="A"),
-                sequences=[
-                    EventSourcedRepoSequence(
+                name=IsolateName(**{"type": "isolate", "value": "A"}),
+                _sequences_by_accession={
+                    "TMVABC": EventSourcedRepoSequence(
                         id=otu.isolates[0].sequences[0].id,
                         accession="TMVABC",
                         definition="TMV",
@@ -320,14 +316,14 @@ def test_get_otu(empty_repo: EventSourcedRepo):
                         segment="RNA",
                         sequence="ACGT",
                     ),
-                ],
+                },
             ),
-            EventSourcedRepoIsolate(
+            isolate_b.id: EventSourcedRepoIsolate(
                 id=isolate_b.id,
                 legacy_id=None,
-                name=IsolateName(type="isolate", value="B"),
-                sequences=[
-                    EventSourcedRepoSequence(
+                name=IsolateName(**{"type": "isolate", "value": "B"}),
+                _sequences_by_accession={
+                    "TMVABCB": EventSourcedRepoSequence(
                         id=otu.isolates[1].sequences[0].id,
                         accession="TMVABCB",
                         definition="TMV",
@@ -335,16 +331,81 @@ def test_get_otu(empty_repo: EventSourcedRepo):
                         segment="RNA",
                         sequence="ACGTGGAGAGACC",
                     ),
-                ],
+                },
             ),
-        ],
-        name="Tobacco mosaic virus",
-        molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
-        schema=[],
-        taxid=12242,
-    )
+        }
 
-    assert empty_repo.last_id == 6
+        assert otu == EventSourcedRepoOTU(
+            id=otu.id,
+            acronym="TMV",
+            excluded_accessions=set(),
+            legacy_id=None,
+            name="Tobacco mosaic virus",
+            molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            schema=[],
+            taxid=12242,
+            _isolates_by_id=otu_contents,
+        )
+
+        assert empty_repo.last_id == 6
+
+    def test_get_accessions(self, initialized_repo: EventSourcedRepo):
+        otu = list(initialized_repo.iter_otus())[0]
+
+        assert otu.accession_set == {"TMVABC"}
+
+        isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
+        initialized_repo.create_sequence(
+            otu.id,
+            isolate_b.id,
+            "TMVABCB",
+            "TMV",
+            None,
+            "RNA",
+            "ACGTGGAGAGACC",
+        )
+
+        otu = list(initialized_repo.iter_otus())[0]
+
+        assert otu.accession_set == {"TMVABC", "TMVABCB"}
+
+    def test_get_blocked_accessions(self, initialized_repo: EventSourcedRepo):
+        otu_id = initialized_repo.index_otus()[12242]
+        isolate_b = initialized_repo.create_isolate(otu_id, None, "B", "isolate")
+        initialized_repo.create_sequence(
+            otu_id,
+            isolate_b.id,
+            "TMVABCB",
+            "TMV",
+            None,
+            "RNA",
+            "ACGTGGAGAGACC",
+        )
+
+        initialized_repo.exclude_accession(otu_id, "GROK")
+        initialized_repo.exclude_accession(otu_id, "TOK")
+
+        otu = initialized_repo.get_otu(otu_id)
+
+        assert otu.blocked_accession_set == {"TMVABC", "TMVABCB", "GROK", "TOK"}
+
+    def test_get_isolate(self, initialized_repo: EventSourcedRepo):
+        otu = list(initialized_repo.iter_otus())[0]
+
+        isolate_ids = {isolate.id for isolate in otu.isolates}
+
+        for isolate_id in isolate_ids:
+            assert otu.get_isolate(isolate_id) in otu.isolates
+
+    def test_get_isolate_id_by_name(self, initialized_repo: EventSourcedRepo):
+        otu = list(initialized_repo.iter_otus())[0]
+
+        isolate_ids = {isolate.id for isolate in otu.isolates}
+
+        assert (
+            otu.get_isolate_id_by_name(IsolateName(**{"type": "isolate", "value": "A"}))
+            in isolate_ids
+        )
 
 
 def test_exclude_accession(empty_repo: EventSourcedRepo):
@@ -388,68 +449,6 @@ def test_exclude_accession(empty_repo: EventSourcedRepo):
         "TMVABC",
         "ABTV",
     }
-
-
-def test_get_accessions(initialized_repo: EventSourcedRepo):
-    otu = list(initialized_repo.iter_otus())[0]
-
-    assert otu.accession_set == {"TMVABC"}
-
-    isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
-    initialized_repo.create_sequence(
-        otu.id,
-        isolate_b.id,
-        "TMVABCB",
-        "TMV",
-        None,
-        "RNA",
-        "ACGTGGAGAGACC",
-    )
-
-    otu = list(initialized_repo.iter_otus())[0]
-
-    assert otu.accession_set == {"TMVABC", "TMVABCB"}
-
-
-def test_get_blocked_accessions(initialized_repo: EventSourcedRepo):
-    otu_id = initialized_repo.index_otus()[12242]
-    isolate_b = initialized_repo.create_isolate(otu_id, None, "B", "isolate")
-    initialized_repo.create_sequence(
-        otu_id,
-        isolate_b.id,
-        "TMVABCB",
-        "TMV",
-        None,
-        "RNA",
-        "ACGTGGAGAGACC",
-    )
-
-    initialized_repo.exclude_accession(otu_id, "GROK")
-    initialized_repo.exclude_accession(otu_id, "TOK")
-
-    otu = initialized_repo.get_otu(otu_id)
-
-    assert otu.blocked_accession_set == {"TMVABC", "TMVABCB", "GROK", "TOK"}
-
-
-def test_get_isolate(initialized_repo: EventSourcedRepo):
-    otu = list(initialized_repo.iter_otus())[0]
-
-    isolate_ids = {isolate.id for isolate in otu.isolates}
-
-    for isolate_id in isolate_ids:
-        assert otu.get_isolate(isolate_id) in otu.isolates
-
-
-def test_get_isolate_id_by_name(initialized_repo: EventSourcedRepo):
-    otu = list(initialized_repo.iter_otus())[0]
-
-    isolate_ids = {isolate.id for isolate in otu.isolates}
-
-    assert (
-        otu.get_isolate_id_by_name(IsolateName(type="isolate", value="A"))
-        in isolate_ids
-    )
 
 
 class TestEventIndexCache:

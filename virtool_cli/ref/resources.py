@@ -1,6 +1,7 @@
 import datetime
+import dataclasses
 from dataclasses import dataclass
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, IsolateName, Molecule
@@ -77,15 +78,34 @@ class EventSourcedRepoIsolate:
     name: IsolateName
     """The isolate's source name metadata."""
 
-    sequences: list[EventSourcedRepoSequence]
-    """A list of child sequences."""
+    _sequences_by_accession: dict = dataclasses.field(default_factory=dict)
+    """A dictionary of sequences indexed by accession"""
 
     @property
-    def accession_set(self) -> set:
-        """Return a set of accessions contained in this isolate"""
-        return {sequence.accession for sequence in self.sequences}
+    def sequences(self) -> list[EventSourcedRepoSequence]:
+        """Return a list of child sequences."""
+        return list(self._sequences_by_accession.values())
 
-    def dict(self):
+    @property
+    def accession_set(self) -> set[str]:
+        """Return a set of accessions contained in this isolate."""
+        return set(self._sequences_by_accession.keys())
+
+    def add_sequence(self, sequence: EventSourcedRepoSequence):
+        """Add a new sequence to private dictionary"""
+        self._sequences_by_accession[sequence.accession] = sequence
+
+    def get_sequence_by_accession(
+        self, accession: str
+    ) -> EventSourcedRepoSequence | None:
+        """Return a sequence with the given accession if it exists in the isolate,
+        else None"""
+        if accession in self._sequences_by_accession:
+            return self._sequences_by_accession[accession]
+
+        return None
+
+    def dict(self) -> dict:
         return {
             "id": self.id,
             "legacy_id": self.legacy_id,
@@ -106,9 +126,6 @@ class EventSourcedRepoOTU:
 
     excluded_accessions: set[str]
 
-    isolates: list[EventSourcedRepoIsolate]
-    """A list of child isolates."""
-
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
@@ -127,6 +144,14 @@ class EventSourcedRepoOTU:
     schema: list | None = None
     """The schema of the OTU"""
 
+    _isolates_by_id: dict = dataclasses.field(default_factory=dict)
+    """A dictionary of isolates indexed by isolate UUID"""
+
+    @property
+    def isolates(self) -> list:
+        """Returns a list of child isolates"""
+        return list(self._isolates_by_id.values())
+
     @property
     def accession_set(self) -> set:
         """Return a set of accessions contained in this isolate"""
@@ -142,13 +167,15 @@ class EventSourcedRepoOTU:
         i.e. accessions that have already been added and excluded accessions."""
         return self.accession_set.union(self.excluded_accessions)
 
+    def add_isolate(self, isolate: EventSourcedRepoIsolate):
+        self._isolates_by_id[isolate.id] = isolate
+
     def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
         """Return the isolate instance associated with a given UUID if it exists,
         else None.
         """
-        for isolate in self.isolates:
-            if isolate.id == isolate_id:
-                return isolate
+        if isolate_id in self._isolates_by_id:
+            return self._isolates_by_id[isolate_id]
 
         return None
 
