@@ -126,9 +126,6 @@ class EventSourcedRepoOTU:
 
     excluded_accessions: set[str]
 
-    isolates: list[EventSourcedRepoIsolate]
-    """A list of child isolates."""
-
     legacy_id: str | None
     """A string based ID carried over from a legacy Virtool reference repository.
 
@@ -147,6 +144,14 @@ class EventSourcedRepoOTU:
     schema: list | None = None
     """The schema of the OTU"""
 
+    _isolates_by_id: dict = dataclasses.field(default_factory=dict)
+    """A dictionary of isolates indexed by isolate UUID"""
+
+    @property
+    def isolates(self) -> list:
+        """Returns a list of child isolates"""
+        return list(self._isolates_by_id.values())
+
     @property
     def accession_set(self) -> set:
         """Return a set of accessions contained in this isolate"""
@@ -162,13 +167,18 @@ class EventSourcedRepoOTU:
         i.e. accessions that have already been added and excluded accessions."""
         return self.accession_set.union(self.excluded_accessions)
 
+    def add_isolate(self, isolate: EventSourcedRepoIsolate):
+        if isolate.id in self._isolates_by_id:
+            raise ValueError("Isolate already exists")
+
+        self._isolates_by_id[isolate.id] = isolate
+
     def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
         """Return the isolate instance associated with a given UUID if it exists,
         else None.
         """
-        for isolate in self.isolates:
-            if isolate.id == isolate_id:
-                return isolate
+        if isolate_id in self._isolates_by_id:
+            return self._isolates_by_id[isolate_id]
 
         return None
 

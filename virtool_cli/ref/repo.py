@@ -275,7 +275,7 @@ class EventSourcedRepo:
     ):
         isolate_id = uuid.uuid4()
 
-        name = IsolateName(type=source_type, value=source_name)
+        name = IsolateName(**{"type": source_type, "value": source_name})
 
         event = self._write_event(
             CreateIsolate,
@@ -385,19 +385,19 @@ class EventSourcedRepo:
             id=event.data.id,
             acronym=event.data.acronym,
             excluded_accessions=set(),
-            isolates=[],
             legacy_id=event.data.legacy_id,
-            molecule=event.data.molecule,
             name=event.data.name,
-            schema=event.data.otu_schema,
             taxid=event.data.taxid,
+            molecule=event.data.molecule,
+            schema=event.data.otu_schema,
+            _isolates_by_id={},
         )
 
         for event_id in event_ids[1:]:
             event = self._read_event(event_id)
 
             if isinstance(event, CreateIsolate):
-                otu.isolates.append(
+                otu.add_isolate(
                     EventSourcedRepoIsolate(
                         id=event.data.id,
                         legacy_id=event.data.legacy_id,
