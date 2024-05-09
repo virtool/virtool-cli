@@ -86,12 +86,12 @@ class TestCreateOTU:
             id=otu.id,
             acronym="TMV",
             excluded_accessions=set(),
-            isolates=[],
             legacy_id="abcd1234",
             name="Tobacco mosaic virus",
             molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
             schema=[],
             taxid=12242,
+            _isolates_by_id={},
         )
 
         with open(empty_repo.path.joinpath("src", "00000002.json")) as f:
@@ -302,11 +302,11 @@ class TestRetrieveOTU:
 
         otu = empty_repo.get_otu(otu.id, ignore_cache=True)
 
-        otu_contents = [
-            EventSourcedRepoIsolate(
+        otu_contents = {
+            isolate_a.id: EventSourcedRepoIsolate(
                 id=isolate_a.id,
                 legacy_id=None,
-                name=IsolateName(type="isolate", value="A"),
+                name=IsolateName(**{"type": "isolate", "value": "A"}),
                 _sequences_by_accession={
                     "TMVABC": EventSourcedRepoSequence(
                         id=otu.isolates[0].sequences[0].id,
@@ -318,10 +318,10 @@ class TestRetrieveOTU:
                     ),
                 },
             ),
-            EventSourcedRepoIsolate(
+            isolate_b.id: EventSourcedRepoIsolate(
                 id=isolate_b.id,
                 legacy_id=None,
-                name=IsolateName(type="isolate", value="B"),
+                name=IsolateName(**{"type": "isolate", "value": "B"}),
                 _sequences_by_accession={
                     "TMVABCB": EventSourcedRepoSequence(
                         id=otu.isolates[1].sequences[0].id,
@@ -333,18 +333,18 @@ class TestRetrieveOTU:
                     ),
                 },
             ),
-        ]
+        }
 
         assert otu == EventSourcedRepoOTU(
             id=otu.id,
             acronym="TMV",
             excluded_accessions=set(),
             legacy_id=None,
-            isolates=otu_contents,
             name="Tobacco mosaic virus",
             molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
             schema=[],
             taxid=12242,
+            _isolates_by_id=otu_contents,
         )
 
         assert empty_repo.last_id == 6
@@ -403,7 +403,7 @@ class TestRetrieveOTU:
         isolate_ids = {isolate.id for isolate in otu.isolates}
 
         assert (
-            otu.get_isolate_id_by_name(IsolateName(type="isolate", value="A"))
+            otu.get_isolate_id_by_name(IsolateName(**{"type": "isolate", "value": "A"}))
             in isolate_ids
         )
 
