@@ -4,7 +4,7 @@ from enum import StrEnum
 from pathlib import Path
 
 import orjson
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from virtool_cli.legacy.models import LegacyIsolateSource, LegacySourceType
 from virtool_cli.ncbi.model import NCBIGenbank
