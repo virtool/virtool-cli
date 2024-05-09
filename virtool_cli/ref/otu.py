@@ -31,15 +31,23 @@ class SourceKey(NamedTuple):
 
 
 class OTUClient:
+    """Handles NCBI data for a single OTU."""
+
     def __init__(self, repo: Repo, otu: RepoOTU, ignore_cache: bool = False):
         self._repo = repo
         self.otu = otu
         self.ignore_cache = ignore_cache
+        self.client = NCBIClient.from_repo(self._repo.path, False)
 
     @classmethod
     def init_from_taxid(
         cls, repo, taxid: int, create_otu: bool = True, ignore_cache: bool = False
     ):
+        """
+        Initializes a new OTUClient from a Taxonomy ID.
+
+        If create_otu flag is True, fetches the Taxonomy record and adds a new OTU.
+        """
         logger = base_logger.bind(taxid=taxid)
         otu_index = repo.index_otus()
 
@@ -65,6 +73,7 @@ class OTUClient:
 
     @classmethod
     def create_from_taxid(cls, repo, taxid: int, ignore_cache: bool = False):
+        """Initializes a new OTU and a new OTUClient from a Taxonomy ID."""
         logger = base_logger.bind(taxid=taxid)
         otu_index = repo.index_otus()
         if taxid in otu_index:
@@ -85,6 +94,8 @@ class OTUClient:
         raise ValueError
 
     def update(self):
+        """Fetches a full list of Nucleotide accessions associated with the OTU
+        and passes the list to the add."""
         ncbi = NCBIClient.from_repo(self._repo.path, self.ignore_cache)
 
         linked_accessions = ncbi.link_accessions_from_taxid(self.otu.taxid)
@@ -92,7 +103,62 @@ class OTUClient:
         self.add(linked_accessions)
 
     def add(self, accessions):
-        add_accessions(self._repo, self.otu, accessions)
+        otu_logger = base_logger.bind(
+            taxid=self.otu.taxid, otu_id=str(self.otu.id), name=self.otu.name
+        )
+        fetch_list = list(set(accessions).difference(self.otu.accession_set))
+        if not fetch_list:
+            otu_logger.info("OTU is up to date.")
+            return
+
+        otu_logger.info(
+            f"Fetching {len(fetch_list)} accessions...", fetch_list=fetch_list
+        )
+
+        records = self.client.fetch_genbank_records(fetch_list)
+
+        record_bins = group_genbank_records_by_isolate(records)
+
+        new_accessions = []
+
+        for isolate_key in record_bins:
+            record_bin = record_bins[isolate_key]
+
+            isolate_id = self.otu.get_isolate_id_by_name(
+                IsolateName(type=isolate_key.type, value=isolate_key.name)
+            )
+            if isolate_id is None:
+                otu_logger.debug("Creating isolate")
+                isolate = self._repo.create_isolate(
+                    otu_id=self.otu.id,
+                    legacy_id=None,
+                    source_name=isolate_key.name,
+                    source_type=isolate_key.type,
+                )
+                isolate_id = isolate.id
+
+            for accession in record_bin:
+                record = record_bin[accession]
+                sequence = self._repo.create_sequence(
+                    otu_id=self.otu.id,
+                    isolate_id=isolate_id,
+                    accession=record.accession,
+                    definition=record.definition,
+                    legacy_id=None,
+                    segment=record.source.segment,
+                    sequence=record.sequence,
+                )
+
+                new_accessions.append(sequence.accession)
+
+        if new_accessions:
+            otu_logger.info(
+                f"Added {len(new_accessions)} sequences to {self.otu.taxid}",
+                new_accessions=new_accessions,
+            )
+
+        else:
+            otu_logger.info(f"No new sequences added to OTU")
 
 
 def add_otu(repo: Repo, taxid: int) -> RepoOTU:
@@ -123,63 +189,6 @@ def add_otu(repo: Repo, taxid: int) -> RepoOTU:
     logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
     return otu
-
-
-def add_accessions(repo: Repo, otu: RepoOTU, accessions: list[str]):
-    otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id), name=otu.name)
-    fetch_list = list(set(accessions).difference(otu.accession_set))
-    if not fetch_list:
-        otu_logger.info("OTU is up to date.")
-        return
-
-    otu_logger.info(f"Fetching {len(fetch_list)} accessions...", fetch_list=fetch_list)
-
-    ncbi = NCBIClient.from_repo(repo.path, False)
-
-    records = ncbi.fetch_genbank_records(fetch_list)
-
-    record_bins = group_genbank_records_by_isolate(records)
-
-    new_accessions = []
-
-    for isolate_key in record_bins:
-        record_bin = record_bins[isolate_key]
-
-        isolate_id = otu.get_isolate_id_by_name(
-            IsolateName(type=isolate_key.type, value=isolate_key.name)
-        )
-        if isolate_id is None:
-            otu_logger.debug("Creating isolate")
-            isolate = repo.create_isolate(
-                otu_id=otu.id,
-                legacy_id=None,
-                source_name=isolate_key.name,
-                source_type=isolate_key.type,
-            )
-            isolate_id = isolate.id
-
-        for accession in record_bin:
-            record = record_bin[accession]
-            sequence = repo.create_sequence(
-                otu_id=otu.id,
-                isolate_id=isolate_id,
-                accession=record.accession,
-                definition=record.definition,
-                legacy_id=None,
-                segment=record.source.segment,
-                sequence=record.sequence,
-            )
-
-            new_accessions.append(sequence.accession)
-
-    if new_accessions:
-        otu_logger.info(
-            f"Added {len(new_accessions)} sequences to {otu.taxid}",
-            new_accessions=new_accessions,
-        )
-
-    else:
-        otu_logger.info(f"No new sequences added to OTU")
 
 
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
@@ -270,13 +279,17 @@ def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
     for record in records:
         if record.refseq:
             return Molecule(
-                strandedness=record.strandedness.value,
-                type=record.moltype.value,
-                topology=record.topology.value,
+                **{
+                    "strandedness": record.strandedness.value,
+                    "type": record.moltype.value,
+                    "topology": record.topology.value,
+                }
             )
 
     return Molecule(
-        strandedness=records[0].strandedness.value,
-        type=records[0].moltype.value,
-        topology=records[0].topology.value,
+        **{
+            "strandedness": records[0].strandedness.value,
+            "type": records[0].moltype.value,
+            "topology": records[0].topology.value,
+        }
     )
