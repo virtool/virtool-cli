@@ -5,7 +5,6 @@ from typing import NamedTuple
 
 import structlog
 
-from virtool_cli.legacy.models import LegacyIsolateSource, LegacySourceType
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
@@ -28,6 +27,36 @@ class SourceKey(NamedTuple):
 
     def __str__(self):
         return f"{self.type},{self.name}"
+
+
+def add_otu(repo: Repo, taxid: int) -> RepoOTU:
+    logger = base_logger.bind(taxid=taxid)
+
+    ncbi = NCBIClient.from_repo(repo.path, False)
+
+    taxonomy = ncbi.fetch_taxonomy_record(taxid)
+    if taxonomy is None:
+        logger.fatal(f"Taxonomy ID {taxid} not found")
+        sys.exit(1)
+
+    molecule = None
+
+    try:
+        otu = repo.create_otu(
+            acronym="",
+            legacy_id=None,
+            name=taxonomy.name,
+            molecule=molecule,
+            schema=[],
+            taxid=taxid,
+        )
+    except ValueError as e:
+        logger.warning(e)
+        sys.exit(1)
+
+    logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
+
+    return otu
 
 
 class OTUClient:
@@ -161,36 +190,6 @@ class OTUClient:
             otu_logger.info(f"No new sequences added to OTU")
 
 
-def add_otu(repo: Repo, taxid: int) -> RepoOTU:
-    logger = base_logger.bind(taxid=taxid)
-
-    ncbi = NCBIClient.from_repo(repo.path, False)
-
-    taxonomy = ncbi.fetch_taxonomy_record(taxid)
-    if taxonomy is None:
-        logger.fatal(f"Taxonomy ID {taxid} not found")
-        sys.exit(1)
-
-    molecule = None
-
-    try:
-        otu = repo.create_otu(
-            acronym="",
-            legacy_id=None,
-            name=taxonomy.name,
-            molecule=molecule,
-            schema=[],
-            taxid=taxid,
-        )
-    except ValueError as e:
-        logger.warning(e)
-        sys.exit(1)
-
-    logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
-
-    return otu
-
-
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
     """:param records:
     :return:
@@ -237,42 +236,6 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
             )
 
     return isolates
-
-
-def extract_isolate_source(
-    genbank_records: list[NCBIGenbank],
-) -> LegacyIsolateSource:
-    """Extract a legacy isolate source from a set of Genbank records associated with the
-    isolate.
-    """
-    for record in genbank_records:
-        if record.source.isolate:
-            return LegacyIsolateSource(
-                name=record.source.isolate,
-                type=LegacySourceType.ISOLATE,
-            )
-
-        if record.source.strain:
-            return LegacyIsolateSource(
-                name=record.source.strain,
-                type=LegacySourceType.STRAIN,
-            )
-
-        if record.source.clone:
-            return LegacyIsolateSource(
-                name=record.source.clone,
-                type=LegacySourceType.CLONE,
-            )
-
-    accessions = sorted(
-        (record.accession for record in genbank_records if record.accession),
-        key=lambda x: int(x.replace("NC_", "").replace(".1", "")),
-    )
-
-    return LegacyIsolateSource(
-        name=accessions[0].upper(),
-        type=LegacySourceType.GENBANK,
-    )
 
 
 def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
