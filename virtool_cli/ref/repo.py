@@ -390,7 +390,6 @@ class EventSourcedRepo:
             taxid=event.data.taxid,
             molecule=event.data.molecule,
             schema=event.data.otu_schema,
-            _isolates_by_id={},
         )
 
         for event_id in event_ids[1:]:
@@ -401,7 +400,6 @@ class EventSourcedRepo:
                     EventSourcedRepoIsolate(
                         id=event.data.id,
                         legacy_id=event.data.legacy_id,
-                        _sequences_by_accession={},
                         name=event.data.name,
                     ),
                 )
