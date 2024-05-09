@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 from uuid import UUID
 
-from virtool_cli.ref.utils import DataType, IsolateName, Molecule
+from virtool_cli.ref.utils import DataType, IsolateName, IsolateNameKey, Molecule
 
 
 class RepoMeta(BaseModel):
@@ -179,7 +179,7 @@ class EventSourcedRepoOTU:
 
         return None
 
-    def get_isolate_id_by_name(self, name: IsolateName) -> UUID | None:
+    def get_isolate_id_by_name(self, name: IsolateName | IsolateNameKey) -> UUID | None:
         """Return an UUID if the name is extant in this OTU."""
         for isolate in self.isolates:
             if isolate.name == name:

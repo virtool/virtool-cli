@@ -69,11 +69,10 @@ def create(debug: bool, path: Path, taxid: int, autofill: bool):
 
     repo = Repo(path)
 
-    # otu_client = OTUClient.init_from_taxid(repo, taxid)
-
     try:
-        otu_client = OTUClient.create_from_taxid(repo, taxid)
-    except ValueError:
+        otu_client = OTUClient.create_from_taxid(repo, taxid, autofill)
+    except ValueError as e:
+        click.echo(e, err=True)
         sys.exit(1)
 
     if autofill:

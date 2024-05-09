@@ -131,7 +131,10 @@ class OTUClient:
 
         self.add(linked_accessions)
 
-    def add(self, accessions):
+    def add(self, accessions: list):
+        """
+        Add
+        """
         otu_logger = base_logger.bind(
             taxid=self.otu.taxid, otu_id=str(self.otu.id), name=self.otu.name
         )
@@ -146,6 +149,10 @@ class OTUClient:
 
         records = self.client.fetch_genbank_records(fetch_list)
 
+        if records and not self.otu.molecule:
+            # TODO: Upcoming UpdateMolecule event?
+            molecule = self.get_molecule_from_records(records)
+
         record_bins = group_genbank_records_by_isolate(records)
 
         new_accessions = []
@@ -153,15 +160,15 @@ class OTUClient:
         for isolate_key in record_bins:
             record_bin = record_bins[isolate_key]
 
-            isolate_id = self.otu.get_isolate_id_by_name(
-                IsolateName(type=isolate_key.type, value=isolate_key.name)
-            )
+            isolate_id = self.otu.get_isolate_id_by_name(isolate_key)
             if isolate_id is None:
-                otu_logger.debug("Creating isolate")
+                otu_logger.debug(
+                    f"Creating isolate for {isolate_key.type}, {isolate_key.value}"
+                )
                 isolate = self._repo.create_isolate(
                     otu_id=self.otu.id,
                     legacy_id=None,
-                    source_name=isolate_key.name,
+                    source_name=isolate_key.value,
                     source_type=isolate_key.type,
                 )
                 isolate_id = isolate.id
@@ -189,11 +196,29 @@ class OTUClient:
         else:
             otu_logger.info(f"No new sequences added to OTU")
 
+    @staticmethod
+    def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
+        for record in records:
+            if record.refseq:
+                return Molecule(
+                    **{
+                        "strandedness": record.strandedness.value,
+                        "type": record.moltype.value,
+                        "topology": record.topology.value,
+                    }
+                )
+
+        return Molecule(
+            **{
+                "strandedness": records[0].strandedness.value,
+                "type": records[0].moltype.value,
+                "topology": records[0].topology.value,
+            }
+        )
+
 
 def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
-    """:param records:
-    :return:
-    """
+    """Indexes Genbank records by isolate name"""
     isolates = defaultdict(dict)
 
     for record in records:
@@ -208,12 +233,14 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
         ):
             for source_type in SourceType:
                 if source_type in record.source.model_fields_set:
-                    source_key = SourceKey(
-                        type=SourceType(source_type),
-                        name=record.source.model_dump()[source_type],
+                    isolate_name = IsolateName(
+                        **{
+                            "type": SourceType(source_type),
+                            "value": record.source.model_dump()[source_type],
+                        },
                     )
 
-                    isolates[source_key][record.accession] = record
+                    isolates[isolate_name.frozen][record.accession] = record
 
                     break
 
@@ -224,35 +251,17 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
                 record=record,
             )
 
-            source_key = SourceKey(
-                type=SourceType(SourceType.REFSEQ),
-                name=record.accession,
+            isolate_name = IsolateName(
+                **{
+                    "type": SourceType(SourceType.REFSEQ),
+                    "value": record.accession,
+                },
             )
 
-            isolates[source_key][record.accession] = record
-        else:
-            logger.debug(
-                "Record does not contain sufficient source data for inclusion.",
-            )
+            isolates[isolate_name.frozen][record.accession] = record
+
+        logger.debug(
+            "Record does not contain sufficient source data for inclusion.",
+        )
 
     return isolates
-
-
-def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
-    for record in records:
-        if record.refseq:
-            return Molecule(
-                **{
-                    "strandedness": record.strandedness.value,
-                    "type": record.moltype.value,
-                    "topology": record.topology.value,
-                }
-            )
-
-    return Molecule(
-        **{
-            "strandedness": records[0].strandedness.value,
-            "type": records[0].moltype.value,
-            "topology": records[0].topology.value,
-        }
-    )
