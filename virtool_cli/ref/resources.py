@@ -188,6 +188,7 @@ class EventSourcedRepoOTU:
         return None
 
     def dict(self):
+        """Return data in JSON-ready form"""
         return {
             "id": self.id,
             "acronym": self.acronym,

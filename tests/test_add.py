@@ -77,7 +77,7 @@ def run_add_sequences_command(taxid: int, accessions: list[str], path: Path):
         str(path),
     ]
 
-    subprocess.run([*command, *accessions])
+    subprocess.run(command + accessions)
 
 
 def run_update_otu_command(taxid: int, path: Path):
@@ -142,19 +142,17 @@ class TestAddSequences:
         run_add_sequences_command(taxid, accessions, precached_repo.path)
 
         for otu in precached_repo.iter_otus():
+            assert otu.accession_set == set(accessions)
+
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
             for isolate in otu.isolates:
                 assert isolate.dict() == snapshot(exclude=props("id", "sequences"))
 
-                sequence_dict = {
-                    sequence.accession: sequence for sequence in isolate.sequences
-                }
-
                 for accession in sorted(isolate.accession_set):
-                    assert sequence_dict[accession].dict() == snapshot(
-                        exclude=props("id")
-                    )
+                    assert isolate.get_sequence_by_accession(
+                        accession
+                    ).dict() == snapshot(exclude=props("id"))
 
 
 @pytest.mark.ncbi
