@@ -7,46 +7,13 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.resources import EventSourcedRepoOTU
-from virtool_cli.ref.utils import Molecule, IsolateName, IsolateNameType
+from virtool_cli.ref.utils import Molecule, IsolateName, IsolateNameType, IsolateNameKey
 
 base_logger = structlog.get_logger()
 
 
-def add_otu(
+def create_otu(
     repo: EventSourcedRepo, taxid: int, ignore_cache: bool = False
-) -> EventSourcedRepoOTU:
-    """Fetch a Taxonomy record and add the OTU to the given repo.
-
-    If the OTU cannot be added, terminate the command."""
-    logger = base_logger.bind(taxid=taxid)
-
-    ncbi = NCBIClient.from_repo(repo.path, ignore_cache)
-
-    taxonomy = ncbi.fetch_taxonomy_record(taxid)
-    if taxonomy is None:
-        logger.fatal(f"Taxonomy ID {taxid} not found")
-        sys.exit(1)
-
-    try:
-        otu = repo.create_otu(
-            acronym="",
-            legacy_id=None,
-            name=taxonomy.name,
-            molecule=None,
-            schema=[],
-            taxid=taxid,
-        )
-    except ValueError as e:
-        logger.warning(e)
-        sys.exit(1)
-
-    logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
-
-    return otu
-
-
-def create_otu_from_taxid(
-    repo, taxid: int, ignore_cache: bool = False
 ) -> EventSourcedRepoOTU:
     """Initialize a new OTU from a Taxonomy ID."""
     logger = base_logger.bind(taxid=taxid)
@@ -64,13 +31,28 @@ def create_otu_from_taxid(
             f"Taxonomy ID {taxid} has already been added to this reference under OTU Id {str(otu.id)}."
         )
 
-    otu = add_otu(repo, taxid, ignore_cache)
-    if otu:
-        return otu
+    ncbi = NCBIClient.from_repo(repo.path, ignore_cache)
 
-    raise ValueError(
-        f"Could not add Taxonomy id {taxid} to this repo due to record formatting issues."
-    )
+    taxonomy = ncbi.fetch_taxonomy_record(taxid)
+    if taxonomy is None:
+        logger.fatal(f"Taxonomy ID {taxid} not found")
+        sys.exit(1)
+
+    try:
+        otu = repo.create_otu(
+            acronym="",
+            legacy_id=None,
+            name=taxonomy.name,
+            molecule=None,
+            schema=[],
+            taxid=taxid,
+        )
+        logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
+
+        return otu
+    except ValueError as e:
+        logger.warning(e)
+        sys.exit(1)
 
 
 def update_otu(
@@ -85,7 +67,9 @@ def update_otu(
     add_sequences(repo, otu, linked_accessions)
 
 
-def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
+def group_genbank_records_by_isolate(
+    records: list[NCBIGenbank],
+) -> dict[IsolateNameKey, dict[str, NCBIGenbank]]:
     """Indexes Genbank records by isolate name"""
     isolates = defaultdict(dict)
 
@@ -200,6 +184,7 @@ def add_sequences(repo: EventSourcedRepo, otu: EventSourcedRepoOTU, accessions: 
 
 
 def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
+    """Return relevant molecule metadata from one or more records"""
     for record in records:
         if record.refseq:
             return Molecule(

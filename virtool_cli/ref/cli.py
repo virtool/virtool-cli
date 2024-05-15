@@ -11,7 +11,7 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
-from virtool_cli.ref.otu import create_otu_from_taxid, add_sequences, update_otu
+from virtool_cli.ref.otu import create_otu, add_sequences, update_otu
 from virtool_cli.ref.resources import DataType
 from virtool_cli.ref.utils import format_json
 from virtool_cli.utils.logging import configure_logger
@@ -70,7 +70,7 @@ def create(debug: bool, path: Path, taxid: int, autofill: bool):
     repo = Repo(path)
 
     try:
-        otu = create_otu_from_taxid(repo, taxid, ignore_cache=False)
+        otu = create_otu(repo, taxid, ignore_cache=False)
     except ValueError as e:
         click.echo(e, err=True)
         sys.exit(1)
