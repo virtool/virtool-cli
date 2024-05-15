@@ -1,5 +1,4 @@
 import datetime
-import dataclasses
 from dataclasses import dataclass
 from pydantic import BaseModel
 from uuid import UUID
@@ -188,6 +187,12 @@ class EventSourcedRepoOTU:
 
         return accessions
 
+    @property
+    def blocked_accessions(self) -> set:
+        """Returns a set of accessions to be blocked from fetches,
+        i.e. accessions that have already been added and excluded accessions."""
+        return self.accessions.union(self.excluded_accessions)
+
     def __repr__(self) -> str:
         """Return a shorthand representation of the OTU's contents"""
         return (
@@ -195,12 +200,6 @@ class EventSourcedRepoOTU:
             + f"{self.id}, taxid={self.taxid}, name={self.name}, "
             + f"accessions={self.accessions})"
         )
-
-    @property
-    def blocked_accessions(self) -> set:
-        """Returns a set of accessions to be blocked from fetches,
-        i.e. accessions that have already been added and excluded accessions."""
-        return self.accessions.union(self.excluded_accessions)
 
     def add_isolate(self, isolate: EventSourcedRepoIsolate):
         self._isolates_by_id[isolate.id] = isolate
