@@ -82,16 +82,19 @@ class TestCreateOTU:
             12242,
         )
 
-        assert otu == EventSourcedRepoOTU(
-            id=otu.id,
-            acronym="TMV",
-            excluded_accessions=set(),
-            legacy_id="abcd1234",
-            name="Tobacco mosaic virus",
-            molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
-            schema=[],
-            taxid=12242,
-            _isolates_by_id={},
+        assert (
+            otu.dict()
+            == EventSourcedRepoOTU(
+                id=otu.id,
+                acronym="TMV",
+                excluded_accessions=None,
+                legacy_id="abcd1234",
+                name="Tobacco mosaic virus",
+                molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                schema=[],
+                taxid=12242,
+                _isolates_by_id={},
+            ).dict()
         )
 
         with open(empty_repo.path.joinpath("src", "00000002.json")) as f:
@@ -335,16 +338,19 @@ class TestRetrieveOTU:
             ),
         }
 
-        assert otu == EventSourcedRepoOTU(
-            id=otu.id,
-            acronym="TMV",
-            excluded_accessions=set(),
-            legacy_id=None,
-            name="Tobacco mosaic virus",
-            molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
-            schema=[],
-            taxid=12242,
-            _isolates_by_id=otu_contents,
+        assert (
+            otu.dict()
+            == EventSourcedRepoOTU(
+                id=otu.id,
+                acronym="TMV",
+                excluded_accessions=[],
+                legacy_id=None,
+                name="Tobacco mosaic virus",
+                molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                schema=[],
+                taxid=12242,
+                _isolates_by_id=otu_contents,
+            ).dict()
         )
 
         assert empty_repo.last_id == 6
@@ -387,7 +393,7 @@ class TestRetrieveOTU:
 
         otu = initialized_repo.get_otu(otu_id)
 
-        assert otu.blocked_accession_set == {"TMVABC", "TMVABCB", "GROK", "TOK"}
+        assert otu.blocked_accessions == {"TMVABC", "TMVABCB", "GROK", "TOK"}
 
     def test_get_isolate(self, initialized_repo: EventSourcedRepo):
         otu = list(initialized_repo.iter_otus())[0]
@@ -459,7 +465,7 @@ class TestEventIndexCache:
 
         otu_from_cache = initialized_repo.get_otu(otu.id, ignore_cache=False)
         otu_from_scratch = initialized_repo.get_otu(otu.id, ignore_cache=True)
-        assert otu_from_cache == otu_from_scratch
+        assert otu_from_cache.dict() == otu_from_scratch.dict()
 
         isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
         initialized_repo.create_sequence(
@@ -476,7 +482,7 @@ class TestEventIndexCache:
 
         otu_from_cache = initialized_repo.get_otu(otu.id, ignore_cache=False)
         otu_from_scratch = initialized_repo.get_otu(otu.id, ignore_cache=True)
-        assert otu_from_cache == otu_from_scratch
+        assert otu_from_cache.dict() == otu_from_scratch.dict()
 
     def test_retrieve_nonexistent_otu(self, initialized_repo: EventSourcedRepo):
         assert (

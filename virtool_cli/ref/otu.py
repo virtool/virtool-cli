@@ -154,7 +154,7 @@ def add_sequences(repo: EventSourcedRepo, otu: EventSourcedRepoOTU, accessions: 
     client = NCBIClient.from_repo(repo.path, False)
 
     otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id), name=otu.name)
-    fetch_list = list(set(accessions).difference(otu.blocked_accession_set))
+    fetch_list = list(set(accessions).difference(otu.blocked_accessions))
     if not fetch_list:
         otu_logger.info("OTU is up to date.")
         return
