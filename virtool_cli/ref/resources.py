@@ -87,7 +87,7 @@ class EventSourcedRepoIsolate:
         return list(self._sequences_by_accession.values())
 
     @property
-    def accession_set(self) -> set[str]:
+    def accessions(self) -> set[str]:
         """Return a set of accessions contained in this isolate."""
         return set(self._sequences_by_accession.keys())
 
@@ -153,11 +153,11 @@ class EventSourcedRepoOTU:
         return list(self._isolates_by_id.values())
 
     @property
-    def accession_set(self) -> set:
+    def accessions(self) -> set:
         """Return a set of accessions contained in this isolate"""
         accessions = set()
         for isolate in self.isolates:
-            accessions.update(isolate.accession_set)
+            accessions.update(isolate.accessions)
 
         return accessions
 
@@ -165,7 +165,7 @@ class EventSourcedRepoOTU:
     def blocked_accession_set(self) -> set:
         """Returns a set of accessions to be blocked from fetches,
         i.e. accessions that have already been added and excluded accessions."""
-        return self.accession_set.union(self.excluded_accessions)
+        return self.accessions.union(self.excluded_accessions)
 
     def add_isolate(self, isolate: EventSourcedRepoIsolate):
         self._isolates_by_id[isolate.id] = isolate

@@ -352,7 +352,7 @@ class TestRetrieveOTU:
     def test_get_accessions(self, initialized_repo: EventSourcedRepo):
         otu = list(initialized_repo.iter_otus())[0]
 
-        assert otu.accession_set == {"TMVABC"}
+        assert otu.accessions == {"TMVABC"}
 
         isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
         initialized_repo.create_sequence(
@@ -367,7 +367,7 @@ class TestRetrieveOTU:
 
         otu = list(initialized_repo.iter_otus())[0]
 
-        assert otu.accession_set == {"TMVABC", "TMVABCB"}
+        assert otu.accessions == {"TMVABC", "TMVABCB"}
 
     def test_get_blocked_accessions(self, initialized_repo: EventSourcedRepo):
         otu_id = initialized_repo.index_otus()[12242]

@@ -104,7 +104,7 @@ class TestAddOTU:
         for otu in precached_repo.iter_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
-            assert not otu.accession_set
+            assert not otu.accessions
 
     @pytest.mark.ncbi
     @pytest.mark.parametrize("taxid", [438782])
@@ -116,7 +116,7 @@ class TestAddOTU:
         for otu in precached_repo.iter_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
-            assert otu.accession_set
+            assert otu.accessions
 
 
 class TestAddSequences:
@@ -142,14 +142,14 @@ class TestAddSequences:
         run_add_sequences_command(taxid, accessions, precached_repo.path)
 
         for otu in precached_repo.iter_otus():
-            assert otu.accession_set == set(accessions)
+            assert otu.accessions == set(accessions)
 
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
             for isolate in otu.isolates:
                 assert isolate.dict() == snapshot(exclude=props("id", "sequences"))
 
-                for accession in sorted(isolate.accession_set):
+                for accession in sorted(isolate.accessions):
                     assert isolate.get_sequence_by_accession(
                         accession
                     ).dict() == snapshot(exclude=props("id"))
@@ -181,7 +181,7 @@ class TestUpdateOTU:
 
         otu = list(precached_repo.iter_otus())[0]
 
-        pre_accession_set = otu.accession_set
+        pre_accession_set = otu.accessions
 
         assert set(accessions) == pre_accession_set
 
@@ -189,6 +189,6 @@ class TestUpdateOTU:
 
         otu = list(precached_repo.iter_otus())[0]
 
-        assert set(otu.accession_set) != pre_accession_set
+        assert set(otu.accessions) != pre_accession_set
 
-        assert set(otu.accession_set) > pre_accession_set
+        assert set(otu.accessions) > pre_accession_set
