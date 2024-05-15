@@ -172,7 +172,7 @@ class EventSourcedRepoOTU:
 
     @property
     def isolates(self) -> list[EventSourcedRepoIsolate]:
-        """Returns all isolates in OTU"""
+        """Isolates contained in this OTU"""
         return list(self._isolates_by_id.values())
 
     @property
@@ -186,7 +186,7 @@ class EventSourcedRepoOTU:
 
     @property
     def blocked_accessions(self) -> set[str]:
-        """Returns a set of accessions to be blocked from fetches,
+        """A set of accessions to be blocked from fetches,
         i.e. accessions that have already been added and excluded accessions."""
         return self.accessions.union(self.excluded_accessions)
 
