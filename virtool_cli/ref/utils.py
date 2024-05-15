@@ -75,7 +75,7 @@ def pad_zeroes(number: int) -> str:
     return str(number).zfill(8)
 
 
-class SourceType(StrEnum):
+class IsolateNameType(StrEnum):
     ISOLATE = "isolate"
     STRAIN = "strain"
     CLONE = "clone"
@@ -91,7 +91,7 @@ class IsolateName(BaseModel):
     Can be typed as an isolate, a strain or a clone.
     """
 
-    type: SourceType
+    type: IsolateNameType
     """The type of sub-species categorization"""
 
     value: str

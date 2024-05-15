@@ -7,7 +7,7 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.resources import EventSourcedRepoOTU
-from virtool_cli.ref.utils import Molecule, IsolateName, SourceType
+from virtool_cli.ref.utils import Molecule, IsolateName, IsolateNameType
 
 base_logger = structlog.get_logger()
 
@@ -110,13 +110,13 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
         )
 
         if record.source.model_fields_set.intersection(
-            {SourceType.ISOLATE, SourceType.STRAIN, SourceType.CLONE},
+            {IsolateNameType.ISOLATE, IsolateNameType.STRAIN, IsolateNameType.CLONE},
         ):
-            for source_type in SourceType:
+            for source_type in IsolateNameType:
                 if source_type in record.source.model_fields_set:
                     isolate_name = IsolateName(
                         **{
-                            "type": SourceType(source_type),
+                            "type": IsolateNameType(source_type),
                             "value": record.source.model_dump()[source_type],
                         },
                     )
@@ -134,7 +134,7 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
 
             isolate_name = IsolateName(
                 **{
-                    "type": SourceType(SourceType.REFSEQ),
+                    "type": IsolateNameType(IsolateNameType.REFSEQ),
                     "value": record.accession,
                 },
             )

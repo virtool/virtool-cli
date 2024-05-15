@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0]
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='Tochigi',
   )
 # ---
@@ -12,7 +12,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].2
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='WMoV-6.3',
   )
 # ---
@@ -23,7 +23,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].4
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='SFU2',
   )
 # ---
@@ -34,7 +34,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].6
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='Shizuoka',
   )
 # ---
@@ -45,7 +45,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1]
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='Tandapi',
   )
 # ---
@@ -56,7 +56,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1].2
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='AC2-6',
   )
 # ---
@@ -67,7 +67,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1].4
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='IB1-7',
   )
 # ---
@@ -78,7 +78,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions2]
   IsolateNameKey(
-    type=<SourceType.REFSEQ: 'refseq'>,
+    type=<IsolateNameType.REFSEQ: 'refseq'>,
     value='NC_003493',
   )
 # ---
@@ -89,7 +89,7 @@
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions2].2
   IsolateNameKey(
-    type=<SourceType.ISOLATE: 'isolate'>,
+    type=<IsolateNameType.ISOLATE: 'isolate'>,
     value='Q1369',
   )
 # ---
