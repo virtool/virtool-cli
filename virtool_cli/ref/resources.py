@@ -66,12 +66,12 @@ class EventSourcedRepoIsolate:
 
     def __init__(
         self,
-        id: UUID,
+        uuid: UUID,
         name: IsolateName,
         legacy_id: str | None = None,
         _sequences_by_accession: dict | None = None,
     ):
-        self.id = id
+        self.id = uuid
         """The isolate id."""
 
         self.name = name
@@ -134,7 +134,7 @@ class EventSourcedRepoOTU:
 
     def __init__(
         self,
-        id: UUID,
+        uuid: UUID,
         taxid: int,
         name: str,
         acronym: str = "",
@@ -144,7 +144,7 @@ class EventSourcedRepoOTU:
         excluded_accessions: list | None = None,
         _isolates_by_id: dict | None = None,
     ):
-        self.id = id
+        self.id = uuid
         """The OTU id."""
 
         self.taxid = taxid

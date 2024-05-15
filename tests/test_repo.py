@@ -85,7 +85,7 @@ class TestCreateOTU:
         assert (
             otu.dict()
             == EventSourcedRepoOTU(
-                id=otu.id,
+                uuid=otu.id,
                 acronym="TMV",
                 excluded_accessions=None,
                 legacy_id="abcd1234",
@@ -307,7 +307,7 @@ class TestRetrieveOTU:
 
         otu_contents = {
             isolate_a.id: EventSourcedRepoIsolate(
-                id=isolate_a.id,
+                uuid=isolate_a.id,
                 legacy_id=None,
                 name=IsolateName(**{"type": "isolate", "value": "A"}),
                 _sequences_by_accession={
@@ -322,7 +322,7 @@ class TestRetrieveOTU:
                 },
             ),
             isolate_b.id: EventSourcedRepoIsolate(
-                id=isolate_b.id,
+                uuid=isolate_b.id,
                 legacy_id=None,
                 name=IsolateName(**{"type": "isolate", "value": "B"}),
                 _sequences_by_accession={
@@ -341,7 +341,7 @@ class TestRetrieveOTU:
         assert (
             otu.dict()
             == EventSourcedRepoOTU(
-                id=otu.id,
+                uuid=otu.id,
                 acronym="TMV",
                 excluded_accessions=[],
                 legacy_id=None,
