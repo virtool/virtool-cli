@@ -1,19 +1,20 @@
 import sys
 from collections import defaultdict
-from pathlib import Path
 
 import structlog
 
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
-from virtool_cli.ref.repo import EventSourcedRepo as Repo
-from virtool_cli.ref.resources import EventSourcedRepoOTU as RepoOTU
+from virtool_cli.ref.repo import EventSourcedRepo
+from virtool_cli.ref.resources import EventSourcedRepoOTU
 from virtool_cli.ref.utils import Molecule, IsolateName, SourceType
 
 base_logger = structlog.get_logger()
 
 
-def add_otu(repo: Repo, taxid: int, ignore_cache: bool = False) -> RepoOTU:
+def add_otu(
+    repo: EventSourcedRepo, taxid: int, ignore_cache: bool = False
+) -> EventSourcedRepoOTU:
     """Fetch a Taxonomy record and add the OTU to the given repo.
 
     If the OTU cannot be added, terminate the command."""
@@ -46,7 +47,7 @@ def add_otu(repo: Repo, taxid: int, ignore_cache: bool = False) -> RepoOTU:
     return otu
 
 
-def get_otu_from_taxid(repo, taxid: int):
+def get_otu_from_taxid(repo, taxid: int) -> EventSourcedRepoOTU:
     """
     Initialize a new OTU from a Taxonomy ID.
 
@@ -61,7 +62,9 @@ def get_otu_from_taxid(repo, taxid: int):
     raise ValueError
 
 
-def create_otu_from_taxid(repo, taxid: int, ignore_cache: bool = False) -> RepoOTU:
+def create_otu_from_taxid(
+    repo, taxid: int, ignore_cache: bool = False
+) -> EventSourcedRepoOTU:
     """Initialize a new OTU from a Taxonomy ID."""
     logger = base_logger.bind(taxid=taxid)
 
@@ -83,7 +86,9 @@ def create_otu_from_taxid(repo, taxid: int, ignore_cache: bool = False) -> RepoO
     raise ValueError
 
 
-def update_otu(repo: Repo, otu: RepoOTU, ignore_cache: bool = False):
+def update_otu(
+    repo: EventSourcedRepo, otu: EventSourcedRepoOTU, ignore_cache: bool = False
+):
     """Fetch a full list of Nucleotide accessions associated with the OTU
     and pass the list to the add method."""
     ncbi = NCBIClient.from_repo(repo.path, ignore_cache)
@@ -143,7 +148,7 @@ def group_genbank_records_by_isolate(records: list[NCBIGenbank]) -> dict:
     return isolates
 
 
-def add_sequences(repo: Repo, otu: RepoOTU, accessions: list):
+def add_sequences(repo: EventSourcedRepo, otu: EventSourcedRepoOTU, accessions: list):
     """Take a list of accessions, filter for eligible accessions and
     add new sequences to the OTU"""
     client = NCBIClient.from_repo(repo.path, False)
