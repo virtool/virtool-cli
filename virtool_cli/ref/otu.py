@@ -59,7 +59,7 @@ def get_otu_from_taxid(repo, taxid: int) -> EventSourcedRepoOTU:
         otu = repo.get_otu(otu_index[taxid])
         return otu
 
-    raise ValueError
+    raise ValueError(f"No OTU found for Taxonomy id {taxid} in this repo.")
 
 
 def create_otu_from_taxid(
@@ -77,13 +77,17 @@ def create_otu_from_taxid(
             f"Taxonomy ID {taxid} has already been added to this reference.",
             otu_id=str(otu.id),
         )
-        raise ValueError
+        raise ValueError(
+            f"Taxonomy ID {taxid} has already been added to this reference under OTU Id {str(otu.id)}."
+        )
 
     otu = add_otu(repo, taxid, ignore_cache)
     if otu:
         return otu
 
-    raise ValueError
+    raise ValueError(
+        f"Could not add Taxonomy id {taxid} to this repo due to record formatting issues."
+    )
 
 
 def update_otu(
