@@ -377,6 +377,16 @@ class EventSourcedRepo:
 
         return None
 
+    def get_otu_by_taxid(self, taxid) -> EventSourcedRepoOTU | None:
+        """Return an OTU corresponding with a given OTU Id if it exists, else None"""
+        otu_index = self.index_otus()
+
+        if taxid in otu_index:
+            otu = self.get_otu(otu_index[taxid])
+            return otu
+
+        return None
+
     def _rehydrate_otu(self, event_ids: list[int]) -> EventSourcedRepoOTU:
         """Rebuilds OTU data from a list of event IDs"""
         first_event_id = event_ids[0]

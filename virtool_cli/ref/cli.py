@@ -11,12 +11,7 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
 from virtool_cli.ref.repo import EventSourcedRepo as Repo
-from virtool_cli.ref.otu import (
-    get_otu_from_taxid,
-    create_otu_from_taxid,
-    add_sequences,
-    update_otu,
-)
+from virtool_cli.ref.otu import create_otu_from_taxid, add_sequences, update_otu
 from virtool_cli.ref.resources import DataType
 from virtool_cli.ref.utils import format_json
 from virtool_cli.utils.logging import configure_logger
@@ -92,10 +87,8 @@ def update(debug: bool, path: Path, taxid: int):
     configure_logger(debug)
 
     repo = Repo(path)
-
-    try:
-        otu = get_otu_from_taxid(repo, taxid)
-    except ValueError:
+    otu = repo.get_otu_by_taxid(taxid)
+    if otu is None:
         click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
         click.echo(f'Run "virtool otu create {taxid} --autofill" instead.')
         sys.exit(1)
@@ -128,9 +121,8 @@ def add(debug, path, taxid, accessions_: list[str]):
 
     repo = Repo(path)
 
-    try:
-        otu = get_otu_from_taxid(repo, taxid)
-    except ValueError:
+    otu = repo.get_otu_by_taxid(taxid)
+    if otu is None:
         click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
         click.echo(f'Run "virtool otu create {taxid} --path {path} --autofill" instead')
         sys.exit(1)

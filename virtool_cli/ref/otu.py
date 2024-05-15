@@ -27,14 +27,12 @@ def add_otu(
         logger.fatal(f"Taxonomy ID {taxid} not found")
         sys.exit(1)
 
-    molecule = None
-
     try:
         otu = repo.create_otu(
             acronym="",
             legacy_id=None,
             name=taxonomy.name,
-            molecule=molecule,
+            molecule=None,
             schema=[],
             taxid=taxid,
         )
@@ -45,21 +43,6 @@ def add_otu(
     logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
     return otu
-
-
-def get_otu_from_taxid(repo, taxid: int) -> EventSourcedRepoOTU:
-    """
-    Initialize a new OTU from a Taxonomy ID.
-
-    If create_otu flag is True, fetches the Taxonomy record and adds a new OTU.
-    """
-    otu_index = repo.index_otus()
-
-    if taxid in otu_index:
-        otu = repo.get_otu(otu_index[taxid])
-        return otu
-
-    raise ValueError(f"No OTU found for Taxonomy id {taxid} in this repo.")
 
 
 def create_otu_from_taxid(
