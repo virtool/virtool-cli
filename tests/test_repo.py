@@ -310,8 +310,8 @@ class TestRetrieveOTU:
                 uuid=isolate_a.id,
                 legacy_id=None,
                 name=IsolateName(**{"type": "isolate", "value": "A"}),
-                sequences_by_accession={
-                    "TMVABC": EventSourcedRepoSequence(
+                sequences=[
+                    EventSourcedRepoSequence(
                         id=otu.isolates[0].sequences[0].id,
                         accession="TMVABC",
                         definition="TMV",
@@ -319,14 +319,14 @@ class TestRetrieveOTU:
                         segment="RNA",
                         sequence="ACGT",
                     ),
-                },
+                ],
             ),
             isolate_b.id: EventSourcedRepoIsolate(
                 uuid=isolate_b.id,
                 legacy_id=None,
                 name=IsolateName(**{"type": "isolate", "value": "B"}),
-                sequences_by_accession={
-                    "TMVABCB": EventSourcedRepoSequence(
+                sequences=[
+                    EventSourcedRepoSequence(
                         id=otu.isolates[1].sequences[0].id,
                         accession="TMVABCB",
                         definition="TMV",
@@ -334,7 +334,7 @@ class TestRetrieveOTU:
                         segment="RNA",
                         sequence="ACGTGGAGAGACC",
                     ),
-                },
+                ],
             ),
         }
 

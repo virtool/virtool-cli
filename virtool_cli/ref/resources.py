@@ -68,8 +68,8 @@ class EventSourcedRepoIsolate:
         self,
         uuid: UUID,
         name: IsolateName,
+        sequences: list[EventSourcedRepoSequence] | None = None,
         legacy_id: str | None = None,
-        sequences_by_accession: dict | None = None,
     ):
         self.id = uuid
         """The isolate id."""
@@ -77,9 +77,12 @@ class EventSourcedRepoIsolate:
         self.name = name
         """The isolate's source name metadata."""
 
-        self.sequences_by_accession = (
-            {} if sequences_by_accession is None else sequences_by_accession
-        )
+        if sequences is None:
+            self._sequences_by_accession = {}
+        else:
+            self._sequences_by_accession = {
+                sequence.accession: sequence for sequence in sequences
+            }
         """A dictionary of sequences indexed by accession"""
 
         self.legacy_id = legacy_id
@@ -91,12 +94,12 @@ class EventSourcedRepoIsolate:
     @property
     def sequences(self) -> list[EventSourcedRepoSequence]:
         """A list of sequences in this isolate."""
-        return list(self.sequences_by_accession.values())
+        return list(self._sequences_by_accession.values())
 
     @property
     def accessions(self) -> set[str]:
         """A set of accession numbers for sequences in the isolate."""
-        return set(self.sequences_by_accession.keys())
+        return set(self._sequences_by_accession.keys())
 
     def __repr__(self) -> str:
         """Return a shorthand representation of the isolate's contents"""
@@ -108,14 +111,14 @@ class EventSourcedRepoIsolate:
 
     def add_sequence(self, sequence: EventSourcedRepoSequence):
         """Add a sequence to the isolate."""
-        self.sequences_by_accession[sequence.accession] = sequence
+        self._sequences_by_accession[sequence.accession] = sequence
 
     def get_sequence_by_accession(
         self, accession: str
     ) -> EventSourcedRepoSequence | None:
         """Return a sequence with the given accession if it exists in the isolate,
         else None"""
-        return self.sequences_by_accession.get(accession)
+        return self._sequences_by_accession.get(accession)
 
     def dict(self) -> dict:
         return {

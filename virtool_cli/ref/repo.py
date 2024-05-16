@@ -301,8 +301,8 @@ class EventSourcedRepo:
         return EventSourcedRepoIsolate(
             uuid=isolate_id,
             legacy_id=legacy_id,
-            sequences_by_accession={},
             name=name,
+            sequences=[],
         )
 
     def create_sequence(
@@ -402,7 +402,7 @@ class EventSourcedRepo:
         otu = EventSourcedRepoOTU(
             uuid=event.data.id,
             acronym=event.data.acronym,
-            excluded_accessions=set(),
+            excluded_accessions=[],
             legacy_id=event.data.legacy_id,
             name=event.data.name,
             taxid=event.data.taxid,
