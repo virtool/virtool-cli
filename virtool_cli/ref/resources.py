@@ -69,7 +69,7 @@ class EventSourcedRepoIsolate:
         uuid: UUID,
         name: IsolateName,
         legacy_id: str | None = None,
-        _sequences_by_accession: dict | None = None,
+        sequences_by_accession: dict | None = None,
     ):
         self.id = uuid
         """The isolate id."""
@@ -77,8 +77,8 @@ class EventSourcedRepoIsolate:
         self.name = name
         """The isolate's source name metadata."""
 
-        self._sequences_by_accession = (
-            {} if _sequences_by_accession is None else _sequences_by_accession
+        self.sequences_by_accession = (
+            {} if sequences_by_accession is None else sequences_by_accession
         )
         """A dictionary of sequences indexed by accession"""
 
@@ -91,12 +91,12 @@ class EventSourcedRepoIsolate:
     @property
     def sequences(self) -> list[EventSourcedRepoSequence]:
         """A list of sequences in this isolate."""
-        return list(self._sequences_by_accession.values())
+        return list(self.sequences_by_accession.values())
 
     @property
     def accessions(self) -> set[str]:
         """A set of accession numbers for sequences in the isolate."""
-        return set(self._sequences_by_accession.keys())
+        return set(self.sequences_by_accession.keys())
 
     def __repr__(self) -> str:
         """Return a shorthand representation of the isolate's contents"""
@@ -108,14 +108,14 @@ class EventSourcedRepoIsolate:
 
     def add_sequence(self, sequence: EventSourcedRepoSequence):
         """Add a sequence to the isolate."""
-        self._sequences_by_accession[sequence.accession] = sequence
+        self.sequences_by_accession[sequence.accession] = sequence
 
     def get_sequence_by_accession(
         self, accession: str
     ) -> EventSourcedRepoSequence | None:
         """Return a sequence with the given accession if it exists in the isolate,
         else None"""
-        return self._sequences_by_accession.get(accession)
+        return self.sequences_by_accession.get(accession)
 
     def dict(self) -> dict:
         return {

@@ -301,7 +301,7 @@ class EventSourcedRepo:
         return EventSourcedRepoIsolate(
             uuid=isolate_id,
             legacy_id=legacy_id,
-            _sequences_by_accession={},
+            sequences_by_accession={},
             name=name,
         )
 
