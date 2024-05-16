@@ -93,7 +93,7 @@ class TestCreateOTU:
                 molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
                 schema=[],
                 taxid=12242,
-                _isolates_by_id={},
+                isolates=[],
             ).dict()
         )
 
@@ -305,8 +305,8 @@ class TestRetrieveOTU:
 
         otu = empty_repo.get_otu(otu.id, ignore_cache=True)
 
-        otu_contents = {
-            isolate_a.id: EventSourcedRepoIsolate(
+        otu_contents = [
+            EventSourcedRepoIsolate(
                 uuid=isolate_a.id,
                 legacy_id=None,
                 name=IsolateName(**{"type": "isolate", "value": "A"}),
@@ -321,7 +321,7 @@ class TestRetrieveOTU:
                     ),
                 ],
             ),
-            isolate_b.id: EventSourcedRepoIsolate(
+            EventSourcedRepoIsolate(
                 uuid=isolate_b.id,
                 legacy_id=None,
                 name=IsolateName(**{"type": "isolate", "value": "B"}),
@@ -336,7 +336,7 @@ class TestRetrieveOTU:
                     ),
                 ],
             ),
-        }
+        ]
 
         assert (
             otu.dict()
@@ -349,7 +349,7 @@ class TestRetrieveOTU:
                 molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
                 schema=[],
                 taxid=12242,
-                _isolates_by_id=otu_contents,
+                isolates=otu_contents,
             ).dict()
         )
 
