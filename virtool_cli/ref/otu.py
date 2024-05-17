@@ -7,7 +7,7 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.resources import EventSourcedRepoOTU
-from virtool_cli.ref.utils import Molecule, IsolateName, IsolateNameType, IsolateNameKey
+from virtool_cli.ref.utils import Molecule, IsolateName, IsolateNameType
 
 base_logger = structlog.get_logger()
 
@@ -69,7 +69,7 @@ def update_otu(
 
 def group_genbank_records_by_isolate(
     records: list[NCBIGenbank],
-) -> dict[IsolateNameKey, dict[str, NCBIGenbank]]:
+) -> dict[IsolateName, dict[str, NCBIGenbank]]:
     """Indexes Genbank records by isolate name"""
     isolates = defaultdict(dict)
 
