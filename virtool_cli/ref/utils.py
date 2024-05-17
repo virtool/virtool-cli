@@ -4,7 +4,6 @@ from enum import StrEnum
 from pathlib import Path
 
 import orjson
-from pydantic import BaseModel
 
 from virtool_cli.legacy.models import LegacyIsolateSource, LegacySourceType
 from virtool_cli.ncbi.model import NCBIGenbank
@@ -85,7 +84,8 @@ class IsolateNameType(StrEnum):
 IsolateNameKey = namedtuple("IsolateNameKey", ["type", "value"])
 
 
-class IsolateName(BaseModel):
+@dataclass(frozen=True)
+class IsolateName:
     """Represents a sub-species categorization name for sequences.
 
     Can be typed as an isolate, a strain or a clone.
@@ -96,10 +96,6 @@ class IsolateName(BaseModel):
 
     value: str
     """The name of this subcategory"""
-
-    @property
-    def frozen(self):
-        return IsolateNameKey(type=self.type, value=self.value)
 
 
 def extract_isolate_source(

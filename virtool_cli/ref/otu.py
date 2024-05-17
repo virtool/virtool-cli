@@ -92,7 +92,7 @@ def group_genbank_records_by_isolate(
                         },
                     )
 
-                    isolates[isolate_name.frozen][record.accession] = record
+                    isolates[isolate_name][record.accession] = record
 
                     break
 
@@ -110,7 +110,7 @@ def group_genbank_records_by_isolate(
                 },
             )
 
-            isolates[isolate_name.frozen][record.accession] = record
+            isolates[isolate_name][record.accession] = record
 
         logger.debug(
             "Record does not contain sufficient source data for inclusion.",

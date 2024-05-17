@@ -124,7 +124,7 @@ class EventSourcedRepoIsolate:
         return {
             "id": self.id,
             "legacy_id": self.legacy_id,
-            "name": self.name.model_dump(),
+            "name": {"type": self.name.type, "value": self.name.value},
             "sequences": [sequence.dict() for sequence in self.sequences],
         }
 
