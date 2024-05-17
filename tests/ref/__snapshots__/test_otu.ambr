@@ -1,9 +1,6 @@
 # serializer version: 1
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0]
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='Tochigi',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='Tochigi')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].1
   dict({
@@ -11,10 +8,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].2
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='WMoV-6.3',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='WMoV-6.3')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].3
   dict({
@@ -22,10 +16,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].4
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='SFU2',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='SFU2')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].5
   dict({
@@ -33,10 +24,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].6
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='Shizuoka',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='Shizuoka')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions0].7
   dict({
@@ -44,10 +32,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1]
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='Tandapi',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='Tandapi')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1].1
   dict({
@@ -55,10 +40,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1].2
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='AC2-6',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='AC2-6')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1].3
   dict({
@@ -66,10 +48,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1].4
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='IB1-7',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='IB1-7')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions1].5
   dict({
@@ -77,10 +56,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions2]
-  IsolateNameKey(
-    type=<IsolateNameType.REFSEQ: 'refseq'>,
-    value='NC_003493',
-  )
+  IsolateName(type=<IsolateNameType.REFSEQ: 'refseq'>, value='NC_003493')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions2].1
   dict({
@@ -88,10 +64,7 @@
   })
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions2].2
-  IsolateNameKey(
-    type=<IsolateNameType.ISOLATE: 'isolate'>,
-    value='Q1369',
-  )
+  IsolateName(type=<IsolateNameType.ISOLATE: 'isolate'>, value='Q1369')
 # ---
 # name: TestGroupRecords.test_group_records_by_isolate_success[accessions2].3
   dict({
