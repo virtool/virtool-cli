@@ -10,8 +10,9 @@ from virtool_cli.legacy.validate import validate_legacy_repo
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
-from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.otu import create_otu, add_sequences, update_otu
+from virtool_cli.ref.snapshot import SnapshotCache
+from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.resources import DataType
 from virtool_cli.ref.utils import format_json
 from virtool_cli.utils.logging import configure_logger
@@ -138,6 +139,22 @@ def add(debug, ignore_cache, path, taxid, accessions_: list[str]):
         sys.exit(1)
 
     add_sequences(repo, otu, accessions=accessions_, ignore_cache=ignore_cache)
+
+
+@ref.command()
+@click.option("--indent/--no-indent", default=False)
+@debug_option
+@path_option
+def snapshot(debug: bool, path: Path, indent: bool):
+    configure_logger(debug)
+
+    """Build a snapshot of the current repository contents."""
+    repo = EventSourcedRepo(path)
+    snapshot_cache = SnapshotCache(repo)
+
+    snapshot_cache.snapshot(indent)
+
+    click.echo("Snapshot taken")
 
 
 @ref.group()
