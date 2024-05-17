@@ -45,8 +45,8 @@ class OTUSnapshotCache:
             f.write(orjson.dumps(otu.dict(exclude_contents=True), option=options))
 
         toc = {
-            f"{isolate.name}": {
-                "id": isolate.id,
+            f"{isolate.id}": {
+                "name": isolate.name,
                 "accessions": list(isolate.accessions),
             }
             for isolate in otu.isolates
