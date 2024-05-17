@@ -19,6 +19,12 @@ from virtool_cli.utils.logging import configure_logger
 logger = get_logger()
 
 
+ignore_cache_option = click.option(
+    "--ignore-cache", is_flag=True, help="Ignore cached records"
+)
+"""A click option for disabling cached results in fetch operations."""
+
+
 @click.group("ref")
 def ref():
     """Manage references"""
@@ -62,9 +68,10 @@ def otu():
 @otu.command()
 @click.argument("TAXID", type=int)
 @click.option("--autofill/--no-fill", default=False)
+@ignore_cache_option
 @debug_option
 @path_option
-def create(debug: bool, path: Path, taxid: int, autofill: bool):
+def create(debug: bool, ignore_cache: bool, path: Path, taxid: int, autofill: bool):
     configure_logger(debug)
 
     repo = EventSourcedRepo(path)
@@ -76,24 +83,26 @@ def create(debug: bool, path: Path, taxid: int, autofill: bool):
         sys.exit(1)
 
     if autofill:
-        update_otu(repo, otu, ignore_cache=False)
+        update_otu(repo, otu, ignore_cache=ignore_cache)
 
 
 @otu.command()
 @click.argument("TAXID", type=int)
+@ignore_cache_option
 @debug_option
 @path_option
-def update(debug: bool, path: Path, taxid: int):
+def update(debug: bool, ignore_cache: bool, path: Path, taxid: int):
     configure_logger(debug)
 
     repo = EventSourcedRepo(path)
+
     otu = repo.get_otu_by_taxid(taxid)
     if otu is None:
         click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
         click.echo(f'Run "virtool otu create {taxid} --autofill" instead.')
         sys.exit(1)
 
-    update_otu(repo, otu, ignore_cache=False)
+    update_otu(repo, otu, ignore_cache=ignore_cache)
 
 
 @ref.group()
@@ -109,9 +118,10 @@ def sequences():
     type=str,
 )
 @click.option("--taxid", type=int, required=True)
+@ignore_cache_option
 @path_option
 @debug_option
-def add(debug, path, taxid, accessions_: list[str]):
+def add(debug, ignore_cache, path, taxid, accessions_: list[str]):
     """Fetch and write the data for the given NCBI accessions to an OTU.
 
     virtool add accessions --taxid 2697049 MN996528.1 --path [repo_path]
@@ -127,7 +137,7 @@ def add(debug, path, taxid, accessions_: list[str]):
         click.echo(f'Run "virtool otu create {taxid} --path {path} --autofill" instead')
         sys.exit(1)
 
-    add_sequences(repo, otu, accessions_)
+    add_sequences(repo, otu, accessions=accessions_, ignore_cache=ignore_cache)
 
 
 @ref.group()

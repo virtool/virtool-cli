@@ -119,10 +119,15 @@ def group_genbank_records_by_isolate(
     return isolates
 
 
-def add_sequences(repo: EventSourcedRepo, otu: EventSourcedRepoOTU, accessions: list):
+def add_sequences(
+    repo: EventSourcedRepo,
+    otu: EventSourcedRepoOTU,
+    accessions: list,
+    ignore_cache: bool = False,
+):
     """Take a list of accessions, filter for eligible accessions and
     add new sequences to the OTU"""
-    client = NCBIClient.from_repo(repo.path, False)
+    client = NCBIClient.from_repo(repo.path, ignore_cache)
 
     otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id), name=otu.name)
     fetch_list = list(set(accessions).difference(otu.blocked_accessions))
