@@ -1,4 +1,3 @@
-from collections import namedtuple
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -80,8 +79,8 @@ class IsolateNameType(StrEnum):
     CLONE = "clone"
     REFSEQ = "refseq"
 
-
-IsolateNameKey = namedtuple("IsolateNameKey", ["type", "value"])
+    def __repr__(self):
+        return self.value
 
 
 @dataclass(frozen=True)
