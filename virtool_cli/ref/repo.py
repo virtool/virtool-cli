@@ -376,7 +376,10 @@ class EventSourcedRepo:
         event_ids = self._get_otu_events(otu_id, ignore_cache)
 
         if event_ids:
-            return self._rehydrate_otu(event_ids)
+            try:
+                return self._rehydrate_otu(event_ids)
+            except ValueError as e:
+                logger.fatal(e)
 
         return None
 

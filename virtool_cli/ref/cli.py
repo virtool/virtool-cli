@@ -68,7 +68,7 @@ def otu():
 
 @otu.command()
 @click.argument("TAXID", type=int)
-@click.option("--autofill/--no-fill", default=False)
+@click.option("--autofill", is_flag=True, default=False)
 @ignore_cache_option
 @debug_option
 @path_option
@@ -97,7 +97,10 @@ def update(debug: bool, ignore_cache: bool, path: Path, taxid: int):
 
     repo = EventSourcedRepo(path)
 
-    otu = repo.get_otu_by_taxid(taxid)
+    try:
+        otu = repo.get_otu_by_taxid(taxid)
+    except ValueError:
+        sys.exit(1)
     if otu is None:
         click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
         click.echo(f'Run "virtool otu create {taxid} --autofill" instead.')
