@@ -166,17 +166,20 @@ def add_sequences(
 
         for accession in record_bin:
             record = record_bin[accession]
-            sequence = repo.create_sequence(
-                otu_id=otu.id,
-                isolate_id=isolate_id,
-                accession=record.accession,
-                definition=record.definition,
-                legacy_id=None,
-                segment=record.source.segment,
-                sequence=record.sequence,
-            )
+            if accession in otu.accessions:
+                otu_logger.warning(f"{accession} already exists in OTU")
+            else:
+                sequence = repo.create_sequence(
+                    otu_id=otu.id,
+                    isolate_id=isolate_id,
+                    accession=record.accession,
+                    definition=record.definition,
+                    legacy_id=None,
+                    segment=record.source.segment,
+                    sequence=record.sequence,
+                )
 
-            new_accessions.append(sequence.accession)
+                new_accessions.append(sequence.accession)
 
     if new_accessions:
         otu_logger.info(
