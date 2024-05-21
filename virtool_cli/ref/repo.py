@@ -216,10 +216,17 @@ class EventSourcedRepo:
 
         return otu_event_index
 
-    def iter_otus(self) -> Generator[EventSourcedRepoOTU, None, None]:
+    def iter_otus(
+        self, ignore_cache: bool = False
+    ) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the repository."""
-        for otu_id in self._get_event_index():
-            otu = self.get_otu(otu_id)
+        if ignore_cache:
+            event_index = self._get_event_index()
+        else:
+            event_index = self._event_index_cache.load_index()
+
+        for otu_id in event_index:
+            otu = self.get_otu(otu_id, ignore_cache)
             yield otu
 
     def index_otus(self, ignore_cache: bool = False):

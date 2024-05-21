@@ -53,8 +53,17 @@ class EventIndexCache:
         ]
 
     def cache_index(self, event_index: dict[UUID, list[int]], last_id: int):
+        """Cache an event index dictionary"""
         for otu_id in event_index:
             self.cache_otu_events(otu_id, event_index[otu_id], last_id=last_id)
+
+    def load_index(self):
+        """Cache an event index dictionary"""
+        event_index = {}
+        for otu_event_records in self.iter_event_records():
+            event_index[otu_event_records.otu_id] = otu_event_records.events
+
+        return event_index
 
     def clear(self):
         """Clear and reset cache."""
