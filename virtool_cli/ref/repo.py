@@ -389,6 +389,7 @@ class EventSourcedRepo:
 
     def _rehydrate_otu(self, event_ids: list[int]) -> EventSourcedRepoOTU:
         """Rebuilds OTU data from a list of event IDs"""
+        event_ids.sort()
         first_event_id = event_ids[0]
 
         event = self._read_event(first_event_id)
