@@ -527,6 +527,7 @@ class EventSourcedRepo:
                     + "Cached event index is greater than current repo's last ID"
                 )
 
+            # Update event list
             otu_logger.debug(
                 "Cached event list is out of date",
                 cached_events=cached_otu_index.events,
@@ -534,24 +535,25 @@ class EventSourcedRepo:
                 last_event=self.last_id,
             )
 
-            otu_event_set = set(cached_otu_index.events)
+            otu_event_list = cached_otu_index.events
 
             for event in self._iter_events_from_index(start=cached_otu_index.at_event):
-                if type(event) in OTU_EVENT_TYPES:
-                    otu_event_set.add(event.id)
+                if type(event) in OTU_EVENT_TYPES and event.id not in otu_event_list:
+                    otu_event_list.append(event.id)
+
+            otu_event_list.sort()
 
             otu_logger.debug(
                 "Added new events to event list.",
                 cached_events=cached_otu_index.events,
-                updated_events=list(otu_event_set),
+                updated_events=otu_event_list,
             )
 
-            updated_otu_event_list = list(otu_event_set)
             self._event_index_cache.cache_otu_events(
-                otu_id, updated_otu_event_list, last_id=self.last_id
+                otu_id, otu_event_list, last_id=self.last_id
             )
 
-            return updated_otu_event_list
+            return otu_event_list
 
         return []
 
