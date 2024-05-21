@@ -527,7 +527,7 @@ class EventSourcedRepo:
                     + "Cached event index is greater than current repo's last ID"
                 )
 
-            otu_logger.warning(
+            otu_logger.debug(
                 "Cached event list is out of date",
                 cached_events=cached_otu_index.events,
                 cache_at=cached_otu_index.at_event,
