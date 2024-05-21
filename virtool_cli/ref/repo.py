@@ -222,13 +222,18 @@ class EventSourcedRepo:
     def index_otus(self, ignore_cache: bool = False):
         if not ignore_cache:
             otu_ids = self._event_index_cache.list_otu_ids()
+            if otu_ids:
+                otu_index = {}
+                for otu_id in otu_ids:
+                    try:
+                        otu = self.get_otu(otu_id, ignore_cache)
+                    except ValueError as e:
+                        logger.error(f"Indexing Error: {e}", otu_id=otu_id)
+                        break
 
-            otu_index = {}
-            for otu_id in otu_ids:
-                otu = self.get_otu(otu_id, ignore_cache)
-                if otu:
-                    otu_index[otu.taxid] = otu_id
-            return otu_index
+                    if otu:
+                        otu_index[otu.taxid] = otu_id
+                return otu_index
 
         return {otu.taxid: otu.id for otu in self.iter_otus()}
 
