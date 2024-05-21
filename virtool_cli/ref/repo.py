@@ -79,6 +79,8 @@ class EventSourcedRepo:
 
         self._event_index_cache = EventIndexCache(self.cache_path / "event_index")
 
+        self._otu_metadata_by_taxid = {}
+
         logger.info("Finished loading repository", event_count=self.last_id)
 
     @classmethod
@@ -218,22 +220,25 @@ class EventSourcedRepo:
             yield otu
 
     def index_otus(self, ignore_cache: bool = False):
+        """Index all OTUs"""
         if not ignore_cache:
             otu_ids = self._event_index_cache.list_otu_ids()
             if otu_ids:
                 otu_index = {}
                 for otu_id in otu_ids:
                     try:
-                        otu = self.get_otu(otu_id, ignore_cache)
+                        otu_metadata = self._get_otu_metadata(
+                            self._event_index_cache.load_otu_events(otu_id).events
+                        )
                     except ValueError as e:
                         logger.error(f"Indexing Error: {e}", otu_id=otu_id)
                         break
 
-                    if otu:
-                        otu_index[otu.taxid] = otu_id
+                    if otu_metadata:
+                        otu_index[otu_metadata["taxid"]] = otu_id
                 return otu_index
 
-        return {otu.taxid: otu.id for otu in self.iter_otus()}
+        return {otu.taxid: otu.id for otu in self.iter_otus(ignore_cache=True)}
 
     def create_otu(
         self,
@@ -444,6 +449,29 @@ class EventSourcedRepo:
                         )
 
         return otu
+
+    def _get_otu_metadata(self, event_ids: list[int]) -> dict | None:
+        """Retrieves OTU metadata from a list of event IDs"""
+        if not event_ids:
+            return None
+        event_ids.sort()
+        first_event_id = event_ids[0]
+
+        event = self._read_event(first_event_id)
+
+        if not isinstance(event, CreateOTU):
+            raise ValueError(
+                f"The first event ({first_event_id}) for an OTU is not a CreateOTU "
+                "event",
+            )
+
+        return {
+            "id": event.data.id,
+            "acronym": event.data.acronym,
+            "legacy_id": event.data.legacy_id,
+            "name": event.data.name,
+            "taxid": event.data.taxid,
+        }
 
     def _get_otu_events(
         self, otu_id: uuid.UUID, ignore_cache: bool = False
