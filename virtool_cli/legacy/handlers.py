@@ -1,7 +1,7 @@
 import json
 
 from virtool_cli.legacy.utils import ErrorHandledResult, HandleErrorContext
-from virtool_cli.ref.otu import extract_isolate_source
+from virtool_cli.ref.utils import extract_isolate_source
 
 
 def handle_enum(ctx: HandleErrorContext) -> ErrorHandledResult:

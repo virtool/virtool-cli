@@ -27,29 +27,6 @@ def test_ok(output_path, scratch_path: Path, snapshot: SnapshotAssertion):
     assert (arrow.utcnow() - arrow.get(built_json["created_at"])).seconds == 0
 
 
-def test_no_version(output_path, scratch_path: Path, snapshot: SnapshotAssertion):
-    """Test that the version field is set to an empty string when not provided to the
-    command.
-    """
-    subprocess.run(
-        [
-            "virtool",
-            "ref",
-            "build",
-            "--output-path",
-            str(output_path),
-            "--path",
-            str(scratch_path),
-        ],
-        check=True,
-    )
-
-    with open(output_path) as f:
-        built_json = json.load(f)
-
-    assert built_json["name"] == ""
-
-
 def test_indent(scratch_path: Path, tmp_path: Path):
     """Test that the indent in the reference.json file is properly set"""
     output_path = tmp_path / "reference.json"

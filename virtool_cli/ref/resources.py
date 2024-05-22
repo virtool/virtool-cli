@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, IsolateName, Molecule
@@ -61,96 +61,157 @@ class EventSourcedRepoSequence:
         }
 
 
-@dataclass
 class EventSourcedRepoIsolate:
     """Represents an isolate in a Virtool reference repository."""
 
-    id: UUID
-    """The isolate id."""
+    def __init__(
+        self,
+        uuid: UUID,
+        name: IsolateName,
+        sequences: list[EventSourcedRepoSequence] | None = None,
+        legacy_id: str | None = None,
+    ):
+        self.id = uuid
+        """The isolate id."""
 
-    legacy_id: str | None
-    """A string based ID carried over from a legacy Virtool reference repository.
+        self.name = name
+        """The isolate's source name metadata."""
 
-    It the isolate was not migrated from a legacy repository, this will be `None`.
-    """
+        if sequences is None:
+            self._sequences_by_accession = {}
+        else:
+            self._sequences_by_accession = {
+                sequence.accession: sequence for sequence in sequences
+            }
+        """A dictionary of sequences indexed by accession"""
 
-    name: IsolateName
-    """The isolate's source name metadata."""
-
-    sequences: list[EventSourcedRepoSequence]
-    """A list of child sequences."""
+        self.legacy_id = legacy_id
+        """A string based ID carried over from a legacy Virtool reference repository.
+    
+        It the isolate was not migrated from a legacy repository, this will be `None`.
+        """
 
     @property
-    def accession_set(self) -> set:
-        """Return a set of accessions contained in this isolate"""
-        return {sequence.accession for sequence in self.sequences}
+    def sequences(self) -> list[EventSourcedRepoSequence]:
+        """A list of sequences in this isolate."""
+        return list(self._sequences_by_accession.values())
 
-    def dict(self):
+    @property
+    def accessions(self) -> set[str]:
+        """A set of accession numbers for sequences in the isolate."""
+        return set(self._sequences_by_accession.keys())
+
+    def __repr__(self) -> str:
+        """Return a shorthand representation of the isolate's contents"""
+        return (
+            "EventSourcedRepoIsolate("
+            + f"{self.id}, type={self.name.type}, name={self.name.value}, "
+            + f"accessions={self.accessions})"
+        )
+
+    def add_sequence(self, sequence: EventSourcedRepoSequence):
+        """Add a sequence to the isolate."""
+        self._sequences_by_accession[sequence.accession] = sequence
+
+    def get_sequence_by_accession(
+        self, accession: str
+    ) -> EventSourcedRepoSequence | None:
+        """Return a sequence with the given accession if it exists in the isolate,
+        else None"""
+        return self._sequences_by_accession.get(accession)
+
+    def dict(self) -> dict:
         return {
             "id": self.id,
             "legacy_id": self.legacy_id,
-            "name": self.name.model_dump(),
+            "name": {"type": self.name.type, "value": self.name.value},
             "sequences": [sequence.dict() for sequence in self.sequences],
         }
 
 
-@dataclass
 class EventSourcedRepoOTU:
     """Represents an OTU in a Virtool reference repository."""
 
-    id: UUID
-    """The OTU id."""
+    def __init__(
+        self,
+        uuid: UUID,
+        taxid: int,
+        name: str,
+        acronym: str = "",
+        molecule: Molecule | None = None,
+        legacy_id: str | None = None,
+        schema: list | None = None,
+        excluded_accessions: list[str] | None = None,
+        isolates: list[EventSourcedRepoIsolate] | None = None,
+    ):
+        self.id = uuid
+        """The OTU id."""
 
-    acronym: str
-    """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
+        self.taxid = taxid
+        """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
-    excluded_accessions: set[str]
+        self.name = name
+        """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
-    isolates: list[EventSourcedRepoIsolate]
-    """A list of child isolates."""
+        self.acronym = acronym
+        """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
 
-    legacy_id: str | None
-    """A string based ID carried over from a legacy Virtool reference repository.
+        self.legacy_id = legacy_id
+        """A string based ID carried over from a legacy Virtool reference repository."""
 
-    It the OTU was not migrated from a legacy repository, this will be `None`.
-    """
+        self.molecule = molecule
+        """The molecule of this OTU"""
 
-    name: str
-    """The OTU name (eg. Tobacco mosaic virus)."""
+        self.schema = schema
+        """The schema of the OTU"""
 
-    taxid: int
-    """The OTU taxonomy ID."""
+        self.excluded_accessions = (
+            set() if excluded_accessions is None else set(excluded_accessions)
+        )
+        """A set of accessions that should not be retrieved in future fetch operations"""
 
-    molecule: Molecule | None = None
-    """The molecule of this OTU"""
-
-    schema: list | None = None
-    """The schema of the OTU"""
+        if isolates is None:
+            self._isolates_by_id = {}
+        else:
+            self._isolates_by_id = {isolate.id: isolate for isolate in isolates}
+        """A dictionary of isolates indexed by isolate UUID"""
 
     @property
-    def accession_set(self) -> set:
-        """Return a set of accessions contained in this isolate"""
+    def isolates(self) -> list[EventSourcedRepoIsolate]:
+        """Isolates contained in this OTU"""
+        return list(self._isolates_by_id.values())
+
+    @property
+    def accessions(self) -> set[str]:
+        """A set of accessions contained in this isolate"""
         accessions = set()
         for isolate in self.isolates:
-            accessions.update(isolate.accession_set)
+            accessions.update(isolate.accessions)
 
         return accessions
 
     @property
-    def blocked_accession_set(self) -> set:
-        """Returns a set of accessions to be blocked from fetches,
+    def blocked_accessions(self) -> set[str]:
+        """A set of accessions to be blocked from fetches,
         i.e. accessions that have already been added and excluded accessions."""
-        return self.accession_set.union(self.excluded_accessions)
+        return self.accessions.union(self.excluded_accessions)
+
+    def __repr__(self) -> str:
+        """Return a shorthand representation of the OTU's contents"""
+        return (
+            "EventSourcedRepoOTU("
+            + f"{self.id}, taxid={self.taxid}, name={self.name}, "
+            + f"accessions={self.accessions})"
+        )
+
+    def add_isolate(self, isolate: EventSourcedRepoIsolate):
+        self._isolates_by_id[isolate.id] = isolate
 
     def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
         """Return the isolate instance associated with a given UUID if it exists,
         else None.
         """
-        for isolate in self.isolates:
-            if isolate.id == isolate_id:
-                return isolate
-
-        return None
+        return self._isolates_by_id.get(isolate_id)
 
     def get_isolate_id_by_name(self, name: IsolateName) -> UUID | None:
         """Return an UUID if the name is extant in this OTU."""
@@ -160,11 +221,12 @@ class EventSourcedRepoOTU:
 
         return None
 
-    def dict(self):
+    def dict(self) -> dict:
+        """Return data in JSON-ready form"""
         return {
             "id": self.id,
             "acronym": self.acronym,
-            "excluded_accessions": self.excluded_accessions,
+            "excluded_accessions": list(self.excluded_accessions),
             "isolates": [isolate.dict() for isolate in self.isolates],
             "legacy_id": self.legacy_id,
             "name": self.name,

@@ -3,7 +3,9 @@ from enum import StrEnum
 from pathlib import Path
 
 import orjson
-from pydantic import BaseModel, field_validator
+
+from virtool_cli.legacy.models import LegacyIsolateSource, LegacySourceType
+from virtool_cli.ncbi.model import NCBIGenbank
 
 
 class DataType(StrEnum):
@@ -75,9 +77,14 @@ class IsolateNameType(StrEnum):
     ISOLATE = "isolate"
     STRAIN = "strain"
     CLONE = "clone"
+    REFSEQ = "refseq"
+
+    def __repr__(self):
+        return self.value
 
 
-class IsolateName(BaseModel):
+@dataclass(frozen=True)
+class IsolateName:
     """Represents a sub-species categorization name for sequences.
 
     Can be typed as an isolate, a strain or a clone.
@@ -89,7 +96,38 @@ class IsolateName(BaseModel):
     value: str
     """The name of this subcategory"""
 
-    @field_validator("type", mode="before")
-    @classmethod
-    def validate_type(cls, raw: str):
-        return IsolateNameType(raw)
+
+def extract_isolate_source(
+    genbank_records: list[NCBIGenbank],
+) -> LegacyIsolateSource:
+    """Extract a legacy isolate source from a set of Genbank records associated with the
+    isolate.
+    """
+    for record in genbank_records:
+        if record.source.isolate:
+            return LegacyIsolateSource(
+                name=record.source.isolate,
+                type=LegacySourceType.ISOLATE,
+            )
+
+        if record.source.strain:
+            return LegacyIsolateSource(
+                name=record.source.strain,
+                type=LegacySourceType.STRAIN,
+            )
+
+        if record.source.clone:
+            return LegacyIsolateSource(
+                name=record.source.clone,
+                type=LegacySourceType.CLONE,
+            )
+
+    accessions = sorted(
+        (record.accession for record in genbank_records if record.accession),
+        key=lambda x: int(x.replace("NC_", "").replace(".1", "")),
+    )
+
+    return LegacyIsolateSource(
+        name=accessions[0].upper(),
+        type=LegacySourceType.GENBANK,
+    )

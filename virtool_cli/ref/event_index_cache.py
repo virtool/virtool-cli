@@ -67,7 +67,9 @@ class EventIndexCache:
         :param event_list: A list of event IDs
         :param last_id: The last added Id in the event store at point of caching
         """
-        index_data = OTUEventCache(otu_id=otu_id, at_event=last_id, events=event_list)
+        index_data = OTUEventCache(
+            otu_id=otu_id, at_event=last_id, events=sorted(event_list)
+        )
 
         try:
             with open(self.path / f"{otu_id}.json", "wb") as f:

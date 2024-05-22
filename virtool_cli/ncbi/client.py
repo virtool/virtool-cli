@@ -247,9 +247,9 @@ class NCBIClient:
         if not self.ignore_cache:
             record = self.cache.load_taxonomy(taxid)
             if record:
-                logger.info("Cached record found")
+                logger.debug("Cached record found")
             else:
-                logger.info("Cached record not found")
+                logger.debug("Cached record not found")
 
         if record is None:
             with log_http_error():

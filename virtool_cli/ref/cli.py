@@ -5,28 +5,29 @@ from pathlib import Path
 import click
 from structlog import get_logger
 
-from virtool_cli.add.cli import add
 from virtool_cli.legacy.utils import iter_legacy_otus
 from virtool_cli.legacy.validate import validate_legacy_repo
 from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.options import debug_option, path_option
 from virtool_cli.ref.build import build_json
 from virtool_cli.ref.repo import EventSourcedRepo
+from virtool_cli.ref.otu import create_otu, add_sequences, update_otu
 from virtool_cli.ref.resources import DataType
 from virtool_cli.ref.utils import format_json
-from virtool_cli.update.cli import update
 from virtool_cli.utils.logging import configure_logger
 
 logger = get_logger()
 
 
+ignore_cache_option = click.option(
+    "--ignore-cache", is_flag=True, help="Ignore cached records"
+)
+"""A click option for disabling cached results in fetch operations."""
+
+
 @click.group("ref")
 def ref():
     """Manage references"""
-
-
-ref.add_command(update)
-ref.add_command(add)
 
 
 @ref.command()
@@ -66,23 +67,77 @@ def otu():
 
 @otu.command()
 @click.argument("TAXID", type=int)
+@click.option("--autofill/--no-fill", default=False)
+@ignore_cache_option
 @debug_option
 @path_option
-def create(debug: bool, path: Path, taxid: int):
+def create(debug: bool, ignore_cache: bool, path: Path, taxid: int, autofill: bool):
     configure_logger(debug)
 
     repo = EventSourcedRepo(path)
-    ncbi = NCBIClient.from_repo(repo.path, False)
 
-    taxonomy = ncbi.fetch_taxonomy_record(taxid)
-
-    if taxonomy is None:
-        logger.fatal(f"Taxonomy ID {taxid} not found")
+    try:
+        otu = create_otu(repo, taxid, ignore_cache=False)
+    except ValueError as e:
+        click.echo(e, err=True)
         sys.exit(1)
 
-    repo.create_otu("", None, taxonomy.name, None, [], taxid)
+    if autofill:
+        update_otu(repo, otu, ignore_cache=ignore_cache)
 
-    logger.info("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
+
+@otu.command()
+@click.argument("TAXID", type=int)
+@ignore_cache_option
+@debug_option
+@path_option
+def update(debug: bool, ignore_cache: bool, path: Path, taxid: int):
+    configure_logger(debug)
+
+    repo = EventSourcedRepo(path)
+
+    otu = repo.get_otu_by_taxid(taxid)
+    if otu is None:
+        click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
+        click.echo(f'Run "virtool otu create {taxid} --autofill" instead.')
+        sys.exit(1)
+
+    update_otu(repo, otu, ignore_cache=ignore_cache)
+
+
+@ref.group()
+def sequences():
+    """Manage sequences"""
+
+
+@sequences.command()
+@click.argument(
+    "accessions_",
+    metavar="ACCESSIONS",
+    nargs=-1,
+    type=str,
+)
+@click.option("--taxid", type=int, required=True)
+@ignore_cache_option
+@path_option
+@debug_option
+def add(debug, ignore_cache, path, taxid, accessions_: list[str]):
+    """Fetch and write the data for the given NCBI accessions to an OTU.
+
+    virtool add accessions --taxid 2697049 MN996528.1 --path [repo_path]
+
+    """
+    configure_logger(debug)
+
+    repo = EventSourcedRepo(path)
+
+    otu = repo.get_otu_by_taxid(taxid)
+    if otu is None:
+        click.echo(f"OTU not found for Taxonomy ID {taxid}.", err=True)
+        click.echo(f'Run "virtool otu create {taxid} --path {path} --autofill" instead')
+        sys.exit(1)
+
+    add_sequences(repo, otu, accessions=accessions_, ignore_cache=ignore_cache)
 
 
 @ref.group()
