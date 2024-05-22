@@ -13,7 +13,6 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoOTU,
     EventSourcedRepoIsolate,
     EventSourcedRepoSequence,
-    IsolateName,
 )
 
 
