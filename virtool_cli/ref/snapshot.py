@@ -13,6 +13,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoOTU,
     EventSourcedRepoIsolate,
     EventSourcedRepoSequence,
+    IsolateName,
 )
 
 
@@ -93,16 +94,15 @@ class OTUSnapshotCache:
 
         isolates = []
         for key in toc:
-            isolate_id = UUID(key[toc]["id"])
+            isolate_id = UUID(toc[key]["id"])
 
             with open(self._data_path / f"{isolate_id}.json", "rb") as f:
                 isolate_dict = orjson.loads(f.read())
 
             sequences = []
 
-            accession_index = key[toc]["accessions"]
-            for accession in accession_index:
-                sequence_id = UUID(accession_index[accession])
+            for accession in toc[key]["accessions"]:
+                sequence_id = UUID(toc[key]["accessions"][accession])
 
                 with open(self._data_path / f"{sequence_id}.json", "rb") as f:
                     sequence_dict = orjson.loads(f.read())
@@ -111,12 +111,14 @@ class OTUSnapshotCache:
 
                 sequences.append(sequence)
 
+            isolate_dict["uuid"] = UUID(isolate_dict.pop("id"))
             isolate_dict["sequences"] = sequences
 
             isolate = EventSourcedRepoIsolate(**isolate_dict)
 
             isolates.append(isolate)
 
+        otu_dict["uuid"] = UUID(otu_dict.pop("id"))
         otu_dict["isolates"] = isolates
 
         return EventSourcedRepoOTU(**otu_dict)
