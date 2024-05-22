@@ -17,7 +17,6 @@ import shutil
 import uuid
 from collections import defaultdict
 from pathlib import Path
-from pprint import pprint
 from typing import Generator, Type
 
 import arrow
@@ -51,7 +50,6 @@ from virtool_cli.ref.resources import (
     RepoMeta,
 )
 from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
-
 from virtool_cli.ref.utils import DataType, IsolateName, Molecule, pad_zeroes
 
 logger = get_logger("repo")
