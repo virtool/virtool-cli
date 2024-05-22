@@ -42,7 +42,11 @@ class OTUSnapshotCache:
 
     def cache(self, otu: "EventSourcedRepoOTU", options=None):
         otu_dict = otu.dict(exclude_contents=True)
-        otu_dict["contents"] = {
+
+        with open(self._metadata_path, "wb") as f:
+            f.write(orjson.dumps(otu_dict, option=options))
+
+        toc = {
             f"{isolate.name}": {
                 "id": isolate.id,
                 "accessions": {
@@ -52,12 +56,8 @@ class OTUSnapshotCache:
             }
             for isolate in otu.isolates
         }
-
-        with open(self._metadata_path, "wb") as f:
-            f.write(orjson.dumps(otu_dict, option=options))
-
-        # with open(self._toc_path, "wb") as f:
-        #     f.write(orjson.dumps(toc, option=options))
+        with open(self._toc_path, "wb") as f:
+            f.write(orjson.dumps(toc, option=options))
 
         # if otu.schema:
         #     with open(self.path / "schema.json", "wb") as f:
