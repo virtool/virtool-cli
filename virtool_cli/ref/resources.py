@@ -201,7 +201,7 @@ class EventSourcedRepoOTU:
         return (
             "EventSourcedRepoOTU("
             + f"{self.id}, taxid={self.taxid}, name={self.name}, "
-            + f"accessions={self.accessions})"
+            + f"accessions={list(self.accessions)})"
         )
 
     def add_isolate(self, isolate: EventSourcedRepoIsolate):
