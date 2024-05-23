@@ -1,4 +1,4 @@
-from shutil import rmtree
+import shutil
 
 import pytest
 from structlog import get_logger
@@ -19,7 +19,7 @@ def empty_client(tmp_path):
 
     yield NCBIClient(dummy_cache_path, ignore_cache=True)
 
-    rmtree(dummy_cache_path)
+    shutil.rmtree(dummy_cache_path)
 
 
 class TestClientFetchGenbank:
@@ -78,22 +78,27 @@ class TestClientFetchGenbank:
         [["AB017503", "AB017504", "MH200607", "MK431779", "NC_003355"]],
     )
     def test_fetch_partially_cached_genbank_records(
-        self,
-        accessions: list[str],
-        scratch_ncbi_cache_path,
-        snapshot: SnapshotAssertion,
+        self, accessions: list[str], empty_client, test_files_path
     ):
-        client = NCBIClient(scratch_ncbi_cache_path, ignore_cache=False)
+        ncbi_cache_files = test_files_path / "cache_test"
+        for accession in ("AB017504", "MH200607"):
+            shutil.copy(
+                ncbi_cache_files / f"genbank/{accession}.json",
+                empty_client.cache._genbank_path / f"{accession}.json",
+            )
 
-        assert list(client.cache._genbank_path.glob("*.json")) != []
+        assert list(empty_client.cache._genbank_path.glob("*.json")) != []
 
-        clean_records = client.fetch_genbank_records(accessions=accessions)
+        clean_records = empty_client.fetch_genbank_records(accessions=accessions)
 
         assert clean_records
 
-        assert {
-            path.name for path in client.cache._genbank_path.glob("*.json")
-        } == snapshot
+        cache_contents = [
+            path.stem for path in empty_client.cache._genbank_path.glob("*.json")
+        ]
+
+        for accession in accessions:
+            assert accession in cache_contents
 
     @pytest.mark.ncbi()
     async def test_fetch_accessions_fail(self, scratch_ncbi_client):

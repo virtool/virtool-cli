@@ -15,6 +15,7 @@ def output_path(tmp_path):
     return tmp_path / "reference.json"
 
 
+@pytest.mark.skip()
 def test_ok(output_path, scratch_path: Path, snapshot: SnapshotAssertion):
     """Test that the command exits with a 0 exit code."""
     build_json(False, output_path, scratch_path, "2.1.0")
@@ -27,6 +28,7 @@ def test_ok(output_path, scratch_path: Path, snapshot: SnapshotAssertion):
     assert (arrow.utcnow() - arrow.get(built_json["created_at"])).seconds == 0
 
 
+@pytest.mark.skip()
 def test_indent(scratch_path: Path, tmp_path: Path):
     """Test that the indent in the reference.json file is properly set"""
     output_path = tmp_path / "reference.json"

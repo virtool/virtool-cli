@@ -60,6 +60,14 @@ def scratch_ncbi_cache_path(
 
 
 @pytest.fixture()
+def scratch_partial_ncbi_cache_path(
+    scratch_path: Path,
+) -> Path:
+    """The path to a scratch NCBI client cache."""
+    return scratch_path / ".cache"
+
+
+@pytest.fixture()
 def scratch_ncbi_cache(scratch_ncbi_cache_path: Path):
     """A scratch NCBI cache with preloaded data."""
     return NCBICache(scratch_ncbi_cache_path)

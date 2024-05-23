@@ -35,22 +35,6 @@
     'NC_036587.json',
   })
 # ---
-# name: TestClientFetchGenbank.test_fetch_partially_cached_genbank_records[accessions0]
-  set({
-    'AB017503.json',
-    'AB017504.json',
-    'GU256539.json',
-    'MH200607.json',
-    'MK431779.json',
-    'MT240490.json',
-    'MT240513.json',
-    'NC_003355.json',
-    'NC_003493.json',
-    'NC_015504.json',
-    'NC_036587.json',
-    'Y11023.json',
-  })
-# ---
 # name: TestClientFetchTaxonomy.test_fetch_taxonomy_from_cache[1198450][id=1198450 name='Jacquemontia mosaic Yucatan virus' other_names=NCBITaxonomyOtherNames(acronym=[], genbank_acronym=[], equivalent_name=[], synonym=[], includes=[]) lineage=[NCBILineage(id=10239, name='Viruses', rank='superkingdom'), NCBILineage(id=2731342, name='Monodnaviria', rank='clade'), NCBILineage(id=2732092, name='Shotokuvirae', rank='kingdom'), NCBILineage(id=2732416, name='Cressdnaviricota', rank='phylum'), NCBILineage(id=2732424, name='Repensiviricetes', rank='class'), NCBILineage(id=2732539, name='Geplafuvirales', rank='order'), NCBILineage(id=10811, name='Geminiviridae', rank='family'), NCBILineage(id=10814, name='Begomovirus', rank='genus')] rank=<NCBIRank.SPECIES: 'species'> species=NCBILineage(id=1198450, name='Jacquemontia mosaic Yucatan virus', rank='species')_validated.json]
   NCBITaxonomy(id=1198450, name='Jacquemontia mosaic Yucatan virus', other_names=NCBITaxonomyOtherNames(acronym=[], genbank_acronym=[], equivalent_name=[], synonym=[], includes=[]), lineage=[NCBILineage(id=10239, name='Viruses', rank='superkingdom'), NCBILineage(id=2731342, name='Monodnaviria', rank='clade'), NCBILineage(id=2732092, name='Shotokuvirae', rank='kingdom'), NCBILineage(id=2732416, name='Cressdnaviricota', rank='phylum'), NCBILineage(id=2732424, name='Repensiviricetes', rank='class'), NCBILineage(id=2732539, name='Geplafuvirales', rank='order'), NCBILineage(id=10811, name='Geminiviridae', rank='family'), NCBILineage(id=10814, name='Begomovirus', rank='genus')], rank=<NCBIRank.SPECIES: 'species'>, species=NCBILineage(id=1198450, name='Jacquemontia mosaic Yucatan virus', rank='species'))
 # ---
