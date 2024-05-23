@@ -5,7 +5,7 @@ import aiofiles
 import structlog
 
 from virtool_cli.utils.deprecated.format import format_isolate
-from virtool_cli.utils.id_generator import generate_unique_ids
+from virtool_cli.legacy.utils import generate_unique_ids
 from virtool_cli.utils.deprecated.reference import get_isolate_paths, get_sequence_paths
 
 
