@@ -20,7 +20,11 @@ def initialized_repo(empty_repo: EventSourcedRepo):
         "TMV",
         None,
         "Tobacco mosaic virus",
-        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+        Molecule(
+            strandedness=Strandedness.SINGLE,
+            type=MolType.RNA,
+            topology=Topology.LINEAR,
+        ),
         [],
         12242,
     )
@@ -44,7 +48,11 @@ def init_otu(empty_repo: EventSourcedRepo) -> EventSourcedRepoOTU:
         "TMV",
         "abcd1234",
         "Tobacco mosaic virus",
-        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+        Molecule(
+            strandedness=Strandedness.SINGLE,
+            type=MolType.RNA,
+            topology=Topology.LINEAR,
+        ),
         [],
         12242,
     )
@@ -71,7 +79,11 @@ class TestCreateOTU:
             "TMV",
             "abcd1234",
             "Tobacco mosaic virus",
-            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            Molecule(
+                strandedness=Strandedness.SINGLE,
+                type=MolType.RNA,
+                topology=Topology.LINEAR,
+            ),
             [],
             12242,
         )
@@ -84,7 +96,11 @@ class TestCreateOTU:
                 excluded_accessions=None,
                 legacy_id="abcd1234",
                 name="Tobacco mosaic virus",
-                molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                molecule=Molecule(
+                    strandedness=Strandedness.SINGLE,
+                    type=MolType.RNA,
+                    topology=Topology.LINEAR,
+                ),
                 schema=[],
                 taxid=12242,
                 isolates=[],
@@ -128,7 +144,11 @@ class TestCreateOTU:
             "TMV",
             None,
             "Tobacco mosaic virus",
-            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            Molecule(
+                strandedness=Strandedness.SINGLE,
+                type=MolType.RNA,
+                topology=Topology.LINEAR,
+            ),
             [],
             12242,
         )
@@ -141,7 +161,11 @@ class TestCreateOTU:
                 "TMV",
                 None,
                 "Tobacco mosaic virus",
-                Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                Molecule(
+                    strandedness=Strandedness.SINGLE,
+                    type=MolType.RNA,
+                    topology=Topology.LINEAR,
+                ),
                 [],
                 438782,
             )
@@ -154,7 +178,11 @@ class TestCreateOTU:
             "TMV",
             "abcd1234",
             "Tobacco mosaic virus",
-            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            Molecule(
+                strandedness=Strandedness.SINGLE,
+                type=MolType.RNA,
+                topology=Topology.LINEAR,
+            ),
             [],
             12242,
         )
@@ -167,7 +195,11 @@ class TestCreateOTU:
                 "",
                 "abcd1234",
                 "Abaca bunchy top virus",
-                Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                Molecule(
+                    strandedness=Strandedness.SINGLE,
+                    type=MolType.RNA,
+                    topology=Topology.LINEAR,
+                ),
                 [],
                 438782,
             )
@@ -270,7 +302,11 @@ class TestRetrieveOTU:
             "TMV",
             None,
             "Tobacco mosaic virus",
-            Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+            Molecule(
+                strandedness=Strandedness.SINGLE,
+                type=MolType.RNA,
+                topology=Topology.LINEAR,
+            ),
             [],
             12242,
         )
@@ -340,7 +376,11 @@ class TestRetrieveOTU:
                 excluded_accessions=[],
                 legacy_id=None,
                 name="Tobacco mosaic virus",
-                molecule=Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+                molecule=Molecule(
+                    strandedness=Strandedness.SINGLE,
+                    type=MolType.RNA,
+                    topology=Topology.LINEAR,
+                ),
                 schema=[],
                 taxid=12242,
                 isolates=otu_contents,
@@ -416,7 +456,11 @@ def test_exclude_accession(empty_repo: EventSourcedRepo):
         "TMV",
         None,
         "Tobacco mosaic virus",
-        Molecule(Strandedness.SINGLE, MolType.RNA, Topology.LINEAR),
+        Molecule(
+            strandedness=Strandedness.SINGLE,
+            type=MolType.RNA,
+            topology=Topology.LINEAR,
+        ),
         [],
         12242,
     )

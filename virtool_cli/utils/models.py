@@ -2,21 +2,21 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
+
 class MolType(StrEnum):
     """The in vivo molecule type of a sequence.
 
     Corresponds to Genbank's moltype field
     """
-
     DNA = "DNA"
     RNA = "RNA"
     TRNA = "tRNA"
     MRNA = "mRNA"
     CRNA = "cRNA"
 
+
 class Strandedness(StrEnum):
     """Strandedness of a molecule, either single or double"""
-
     SINGLE = "single"
     DOUBLE = "double"
 

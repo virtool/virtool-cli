@@ -19,7 +19,6 @@ def precached_repo(empty_repo, cache_example_path):
     shutil.rmtree(empty_repo.path)
 
 
-@pytest.mark.ncbi
 @pytest.fixture
 def ref_table_of_contents() -> dict[int, list[str]]:
     return {
@@ -63,6 +62,7 @@ def ref_table_of_contents() -> dict[int, list[str]]:
     }
 
 
+@pytest.mark.ncbi()
 def test_init_and_add(ref_table_of_contents, precached_repo):
     for taxid in ref_table_of_contents:
         subprocess.run(
