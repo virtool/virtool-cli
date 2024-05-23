@@ -2,8 +2,7 @@
 
 from pathlib import Path
 
-from virtool_cli.legacy.utils import iter_legacy_otus
-from virtool_cli.utils.console import console
+from virtool_cli.legacy.utils import iter_legacy_otus, console
 
 
 def check_unique_accessions(path: Path):

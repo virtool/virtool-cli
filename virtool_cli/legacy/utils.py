@@ -5,8 +5,12 @@ from typing import Generator
 import orjson
 from orjson import orjson
 from pydantic_core import ErrorDetails
+import rich.console
 
 from virtool_cli.ncbi.client import NCBIClient
+
+
+console = rich.console.Console()
 
 
 class HandleErrorContext:
