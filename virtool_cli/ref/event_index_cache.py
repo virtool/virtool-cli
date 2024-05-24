@@ -6,7 +6,7 @@ from typing import Annotated
 from collections.abc import Generator
 
 import orjson
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, model_validator
 from pydantic.dataclasses import dataclass
 
 from structlog import get_logger
@@ -23,6 +23,10 @@ class OTUEventCache:
 
     events: list[int]
     """A list of event IDs"""
+
+    @model_validator(mode="after")
+    def sort_events(self):
+        return self.events.sort()
 
 
 class EventIndexCacheError(Exception):
