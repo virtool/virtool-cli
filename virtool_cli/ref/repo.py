@@ -136,7 +136,7 @@ class EventSourcedRepo:
     @property
     def src_path(self) -> Path:
         """The path to the repo src directory."""
-        return self.path / "src"
+        return self._src.path
 
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
         """Get the current event index from the event store,
