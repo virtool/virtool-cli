@@ -542,7 +542,7 @@ class EventSourcedRepo:
 
 
 class EventStore:
-    def __init__(self, path):
+    def __init__(self, path: Path):
         self.path = path
 
         self.last_id = 0
