@@ -2,16 +2,16 @@ import pytest
 import shutil
 import subprocess
 
-
-@pytest.fixture()
-def cache_example_path(test_files_path):
-    return test_files_path / "cache_test"
+from syrupy import SnapshotAssertion
+from syrupy.filters import props
 
 
 @pytest.fixture
-def precached_repo(empty_repo, cache_example_path):
+def precached_repo(empty_repo, test_files_path):
     shutil.copytree(
-        cache_example_path, (empty_repo.path / ".cache/ncbi"), dirs_exist_ok=True
+        (test_files_path / "cache_test"),
+        (empty_repo.path / ".cache/ncbi"),
+        dirs_exist_ok=True,
     )
 
     yield empty_repo
@@ -63,7 +63,9 @@ def ref_table_of_contents() -> dict[int, list[str]]:
 
 
 @pytest.mark.ncbi()
-def test_init_and_add(ref_table_of_contents, precached_repo):
+def test_add_ref_mini(
+    ref_table_of_contents, precached_repo, snapshot: SnapshotAssertion
+):
     for taxid in ref_table_of_contents:
         subprocess.run(
             [
@@ -95,7 +97,9 @@ def test_init_and_add(ref_table_of_contents, precached_repo):
 
     for taxid in ref_table_of_contents:
         otu = precached_repo.get_otu_by_taxid(taxid)
-        assert otu is not None
+        assert otu.dict() == snapshot(exclude=props("id", "isolates"))
+        assert otu.accessions == snapshot
 
-        for accession in ref_table_of_contents[taxid]:
-            assert accession.split(".")[0] in otu.accessions
+        assert otu.accessions == set(
+            accession.split(".")[0] for accession in ref_table_of_contents[taxid]
+        )
