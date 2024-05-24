@@ -64,15 +64,9 @@ class EventSourcedRepo:
         self.path = path
         """The path to the repo directory."""
 
-        self.last_id = 0
-
         logger.info("Loading repository")
 
-        # cursory src validation
-        for event_id in self._get_source_event_ids():
-            if event_id - self.last_id != 1:
-                raise ValueError("Event IDs are not sequential.")
-            self.last_id = event_id
+        self._src = EventStore(self.path / "src")
 
         self.checker = Checker(self)
 
@@ -126,9 +120,13 @@ class EventSourcedRepo:
         return EventSourcedRepo(path)
 
     @property
+    def last_id(self):
+        return self._src.last_id
+
+    @property
     def meta(self):
         """The metadata for the repository."""
-        for event in self._iter_events():
+        for event in self._src.iter_events():
             if isinstance(event, CreateRepo):
                 repo = event.data.model_dump()
                 return RepoMeta(**repo, created_at=event.timestamp)
@@ -140,76 +138,12 @@ class EventSourcedRepo:
         """The path to the repo src directory."""
         return self.path / "src"
 
-    def _iter_events(self, reverse: bool = False):
-        for path in sorted(self.src_path.glob("*.json"), reverse=reverse):
-            if path.stem == "meta":
-                continue
-            yield _read_event_at_path(path)
-
-    def _get_source_event_ids(self) -> list:
-        event_ids = []
-        for event_path in self.src_path.iterdir():
-            try:
-                event_ids.append(int(event_path.stem))
-            except ValueError:
-                continue
-        event_ids.sort()
-
-        return event_ids
-
-    def _iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
-        """Iterates through events in the src directory using the index id.
-
-        :param start: The event ID to be read first.
-            Setting start > 1 will begin the iterator
-            from the middle of the event store.
-        """
-        if start < 1:
-            raise IndexError("Start index cannot be <1")
-
-        if start > self.last_id:
-            raise IndexError(f"Start index cannot be >{self.last_id}")
-
-        for event_index in range(start, self.last_id + 1):
-            yield self._read_event(event_index)
-
-    def _read_event(self, event_id: int) -> Event:
-        return _read_event_at_path(self.src_path / f"{pad_zeroes(event_id)}.json")
-
-    def _write_event(
-        self,
-        cls: Type[Event],
-        data: EventData,
-        query: EventQuery,
-    ) -> Event:
-        """Write a new event to the repository."""
-        event_id = self.last_id + 1
-
-        event = cls(
-            id=event_id,
-            data=data,
-            query=query,
-            timestamp=arrow.utcnow().naive,
-        )
-
-        with open(self.src_path / f"{pad_zeroes(event_id)}.json", "wb") as f:
-            f.write(
-                orjson.dumps(
-                    event.model_dump(by_alias=True),
-                    f,
-                ),
-            )
-
-        self.last_id = event_id
-
-        return event
-
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
         """Get the current event index from the event store,
         binned and indexed by OTU Id."""
         otu_event_index = defaultdict(list)
 
-        for event in self._iter_events():
+        for event in self._src.iter_events():
             if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
@@ -221,7 +155,7 @@ class EventSourcedRepo:
         """Get the current event index, binned and indexed by OTU ID"""
         otu_event_index = defaultdict(list)
 
-        for event in self._iter_events_from_index(start):
+        for event in self._src.iter_events_from_index(start):
             if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
@@ -283,7 +217,7 @@ class EventSourcedRepo:
 
         otu_id = uuid.uuid4()
 
-        event = self._write_event(
+        event = self._src.write_event(
             CreateOTU,
             CreateOTUData(
                 id=otu_id,
@@ -314,7 +248,7 @@ class EventSourcedRepo:
 
         name = IsolateName(**{"type": source_type, "value": source_name})
 
-        event = self._write_event(
+        event = self._src.write_event(
             CreateIsolate,
             CreateIsolateData(id=isolate_id, legacy_id=legacy_id, name=name),
             IsolateQuery(isolate_id=isolate_id, otu_id=otu_id),
@@ -346,7 +280,7 @@ class EventSourcedRepo:
     ):
         sequence_id = uuid.uuid4()
 
-        event = self._write_event(
+        event = self._src.write_event(
             CreateSequence,
             CreateSequenceData(
                 id=sequence_id,
@@ -388,7 +322,7 @@ class EventSourcedRepo:
         :param accession: the accession to exclude
 
         """
-        self._write_event(
+        self._src.write_event(
             ExcludeAccession,
             ExcludeAccessionData(accession=accession),
             OTUQuery(otu_id=otu_id),
@@ -421,7 +355,7 @@ class EventSourcedRepo:
         event_ids.sort()
         first_event_id = event_ids[0]
 
-        event = self._read_event(first_event_id)
+        event = self._src.read_event(first_event_id)
 
         if not isinstance(event, CreateOTU):
             raise ValueError(
@@ -441,7 +375,7 @@ class EventSourcedRepo:
         )
 
         for event_id in event_ids[1:]:
-            event = self._read_event(event_id)
+            event = self._src.read_event(event_id)
 
             if isinstance(event, CreateIsolate):
                 otu.add_isolate(
@@ -478,7 +412,7 @@ class EventSourcedRepo:
         event_ids.sort()
         first_event_id = event_ids[0]
 
-        event = self._read_event(first_event_id)
+        event = self._src.read_event(first_event_id)
 
         if not isinstance(event, CreateOTU):
             raise ValueError(
@@ -535,7 +469,7 @@ class EventSourcedRepo:
 
         event_ids = [
             event.id
-            for event in self._iter_events()
+            for event in self._src.iter_events()
             if (type(event) in OTU_EVENT_TYPES and event.query.otu_id == otu_id)
         ]
 
@@ -584,7 +518,9 @@ class EventSourcedRepo:
 
             otu_event_list = cached_otu_index.events
 
-            for event in self._iter_events_from_index(start=cached_otu_index.at_event):
+            for event in self._src.iter_events_from_index(
+                start=cached_otu_index.at_event
+            ):
                 if type(event) in OTU_EVENT_TYPES and event.id not in otu_event_list:
                     otu_event_list.append(event.id)
 
@@ -603,6 +539,79 @@ class EventSourcedRepo:
             return otu_event_list
 
         return []
+
+
+class EventStore:
+    def __init__(self, path):
+        self.path = path
+
+        self.last_id = 0
+        for event_id in self.event_ids:
+            if event_id - self.last_id != 1:
+                raise ValueError("Event IDs are not sequential.")
+
+            self.last_id = event_id
+
+    @property
+    def event_ids(self) -> list:
+        return sorted(
+            [
+                int(event_path.stem)
+                for event_path in self.path.iterdir()
+                if event_path.suffix == ".json"
+            ]
+        )
+
+    def iter_events(self, reverse: bool = False):
+        for path in sorted(self.path.iterdir(), reverse=reverse):
+            yield _read_event_at_path(path)
+
+    def iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
+        """Iterates through events in the src directory using the index id.
+
+        :param start: The event ID to be read first.
+            Setting start > 1 will begin the iterator
+            from the middle of the event store.
+        """
+        if start < 1:
+            raise IndexError("Start index cannot be <1")
+
+        if start > self.last_id:
+            raise IndexError(f"Start index cannot be >{self.last_id}")
+
+        for event_index in range(start, self.last_id + 1):
+            yield self.read_event(event_index)
+
+    def read_event(self, event_id: int) -> Event:
+        return _read_event_at_path(self.path / f"{pad_zeroes(event_id)}.json")
+
+    def write_event(
+        self,
+        cls: Type[Event],
+        data: EventData,
+        query: EventQuery,
+    ) -> Event:
+        """Write a new event to the repository."""
+        event_id = self.last_id + 1
+
+        event = cls(
+            id=event_id,
+            data=data,
+            query=query,
+            timestamp=arrow.utcnow().naive,
+        )
+
+        with open(self.path / f"{pad_zeroes(event_id)}.json", "wb") as f:
+            f.write(
+                orjson.dumps(
+                    event.model_dump(by_alias=True),
+                    f,
+                ),
+            )
+
+        self.last_id = event_id
+
+        return event
 
 
 def _write_event(
