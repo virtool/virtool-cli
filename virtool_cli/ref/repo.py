@@ -424,9 +424,8 @@ class EventIndex:
                 otu_index[otu_metadata["taxid"]] = otu_id
         return otu_index
 
-    def list_otu_ids(self, ignore_cache: bool = False):
-        if not ignore_cache:
-            return self._cache.list_otu_ids()
+    def list_otu_ids(self, ignore_cache: bool = False) -> list[uuid.UUID]:
+        return list(self.get(ignore_cache).keys())
 
     def get(self, ignore_cache: bool = False) -> dict[uuid.UUID, list[int]]:
         if not ignore_cache:
@@ -470,7 +469,7 @@ class EventIndex:
 
         if not ignore_cache:
             try:
-                otu_event_list = self.load_otu_events_and_update(otu_id)
+                otu_event_list = self._load_otu_events_and_update(otu_id)
 
                 if otu_event_list:
                     otu_logger.debug(
@@ -506,7 +505,7 @@ class EventIndex:
 
         return event_ids
 
-    def load_otu_events_and_update(self, otu_id: uuid.UUID) -> list[int]:
+    def _load_otu_events_and_update(self, otu_id: uuid.UUID) -> list[int]:
         """Gets OTU events from the event index cache,
         updates the list it is not up to date and returns the list.
         """
