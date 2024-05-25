@@ -76,10 +76,6 @@ class EventSourcedRepo:
 
         self.checker = Checker(self)
 
-        self._event_index_cache = EventIndexCache(self.cache_path / "event_index")
-
-        self._otu_metadata_by_taxid = {}
-
         logger.info("Finished loading repository", event_count=self.last_id)
 
     @classmethod
@@ -151,25 +147,7 @@ class EventSourcedRepo:
             yield otu
 
     def index_otus(self, ignore_cache: bool = False):
-        """Index all OTUs"""
-        if not ignore_cache:
-            otu_ids = self._event_index_cache.list_otu_ids()
-            if otu_ids:
-                otu_index = {}
-                for otu_id in otu_ids:
-                    try:
-                        otu_metadata = self._get_otu_metadata(
-                            self._event_index_cache.load_otu_events(otu_id).events
-                        )
-                    except ValueError as e:
-                        logger.error(f"Indexing Error: {e}", otu_id=otu_id)
-                        break
-
-                    if otu_metadata:
-                        otu_index[otu_metadata["taxid"]] = otu_id
-                return otu_index
-
-        return {otu.taxid: otu.id for otu in self.iter_otus(ignore_cache=True)}
+        return self._index.index_otu_metadata(ignore_cache)
 
     def create_otu(
         self,
@@ -414,6 +392,38 @@ class EventIndex:
     def last_id(self):
         return self._src.last_id
 
+    def index_otu_metadata(self, ignore_cache: bool = False):
+        """Index all OTUs"""
+        if not ignore_cache:
+            otu_ids = self._cache.list_otu_ids()
+            if otu_ids:
+                otu_index = {}
+                for otu_id in otu_ids:
+                    try:
+                        otu_metadata = self.get_otu_metadata(
+                            self._cache.load_otu_events(otu_id).events
+                        )
+                    except ValueError as e:
+                        logger.error(f"Indexing Error: {e}", otu_id=otu_id)
+                        break
+
+                    if otu_metadata:
+                        otu_index[otu_metadata["taxid"]] = otu_id
+                return otu_index
+
+        event_index = self.generate()
+        otu_index = {}
+        for otu_id in event_index:
+            try:
+                otu_metadata = self.get_otu_metadata(event_index[otu_id])
+            except ValueError as e:
+                logger.error(f"Indexing Error: {e}", otu_id=otu_id)
+                break
+
+            if otu_metadata:
+                otu_index[otu_metadata["taxid"]] = otu_id
+        return otu_index
+
     def list_otu_ids(self, ignore_cache: bool = False):
         if not ignore_cache:
             return self._cache.list_otu_ids()
@@ -552,6 +562,29 @@ class EventIndex:
             return otu_event_list
 
         return []
+
+    def get_otu_metadata(self, event_ids: list[int]) -> dict | None:
+        """Retrieves OTU metadata from a list of event IDs"""
+        if not event_ids:
+            return None
+        event_ids.sort()
+        first_event_id = event_ids[0]
+
+        event = self._src.read_event(first_event_id)
+
+        if not isinstance(event, CreateOTU):
+            raise ValueError(
+                f"The first event ({first_event_id}) for an OTU is not a CreateOTU "
+                "event",
+            )
+
+        return {
+            "id": event.data.id,
+            "acronym": event.data.acronym,
+            "legacy_id": event.data.legacy_id,
+            "name": event.data.name,
+            "taxid": event.data.taxid,
+        }
 
 
 class EventStore:
