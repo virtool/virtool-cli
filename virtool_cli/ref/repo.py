@@ -542,6 +542,8 @@ class EventSourcedRepo:
 
 
 class EventStore:
+    """Interface for the event store"""
+
     def __init__(self, path: Path):
         self.path = path
 
