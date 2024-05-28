@@ -533,6 +533,6 @@ class TestEventIndexCache:
     def test_get_otu_without_cached_events(self, initialized_repo: EventSourcedRepo):
         otu = list(initialized_repo.iter_otus())[0]
 
-        initialized_repo._index._cache.clear_cached_otu_events(otu.id)
+        initialized_repo._event_index._cache.clear_cached_otu_events(otu.id)
 
         assert initialized_repo.get_otu(otu.id, ignore_cache=False) is not None

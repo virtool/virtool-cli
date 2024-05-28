@@ -70,7 +70,7 @@ class EventSourcedRepo:
 
         self._src = EventStore(self.path / "src")
 
-        self._index = EventIndex(
+        self._event_index = EventIndex(
             self._src, cache_path=(self.cache_path / "event_index")
         )
 
@@ -142,12 +142,12 @@ class EventSourcedRepo:
         self, ignore_cache: bool = False
     ) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the repository."""
-        for otu_id in self._index.get(ignore_cache):
+        for otu_id in self._event_index.get(ignore_cache):
             otu = self.get_otu(otu_id, ignore_cache)
             yield otu
 
     def index_otus(self, ignore_cache: bool = False):
-        return self._index.index_otu_metadata(ignore_cache)
+        return self._event_index.index_otu_metadata(ignore_cache)
 
     def create_otu(
         self,
@@ -287,7 +287,7 @@ class EventSourcedRepo:
     ) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None."""
         logger.debug("Getting OTU from events...", otu_id=str(otu_id))
-        event_ids = self._index.get_otu_events(otu_id, ignore_cache)
+        event_ids = self._event_index.get_otu_events(otu_id, ignore_cache)
 
         if event_ids:
             return self._rehydrate_otu(event_ids)
