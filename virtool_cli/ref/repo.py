@@ -359,29 +359,6 @@ class EventSourcedRepo:
 
         return otu
 
-    def _get_otu_metadata(self, event_ids: list[int]) -> dict | None:
-        """Retrieves OTU metadata from a list of event IDs"""
-        if not event_ids:
-            return None
-        event_ids.sort()
-        first_event_id = event_ids[0]
-
-        event = self._src.read_event(first_event_id)
-
-        if not isinstance(event, CreateOTU):
-            raise ValueError(
-                f"The first event ({first_event_id}) for an OTU is not a CreateOTU "
-                "event",
-            )
-
-        return {
-            "id": event.data.id,
-            "acronym": event.data.acronym,
-            "legacy_id": event.data.legacy_id,
-            "name": event.data.name,
-            "taxid": event.data.taxid,
-        }
-
 
 class EventIndex:
     def __init__(self, event_store: "EventStore", cache_path: Path):
