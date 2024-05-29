@@ -556,16 +556,20 @@ class EventStore:
 
     @property
     def event_ids(self) -> list:
-        return sorted(
-            [
-                int(event_path.stem)
-                for event_path in self.path.iterdir()
-                if event_path.suffix == ".json"
-            ]
-        )
+        event_ids = []
+        for event_path in self.path.iterdir():
+            try:
+                event_ids.append(int(event_path.stem))
+            except ValueError:
+                continue
+        event_ids.sort()
+
+        return event_ids
 
     def iter_events(self, reverse: bool = False):
-        for path in sorted(self.path.iterdir(), reverse=reverse):
+        for path in sorted(self.path.glob("*.json"), reverse=reverse):
+            if path.stem == "meta":
+                continue
             yield _read_event_at_path(path)
 
     def iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
