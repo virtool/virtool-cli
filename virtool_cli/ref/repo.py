@@ -141,7 +141,9 @@ class EventSourcedRepo:
         return self.path / "src"
 
     def _iter_events(self, reverse: bool = False):
-        for path in sorted(self.src_path.iterdir(), reverse=reverse):
+        for path in sorted(self.src_path.glob("*.json"), reverse=reverse):
+            if path.stem == "meta":
+                continue
             yield _read_event_at_path(path)
 
     def _get_source_event_ids(self) -> list:
