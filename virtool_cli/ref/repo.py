@@ -145,7 +145,15 @@ class EventSourcedRepo:
             yield _read_event_at_path(path)
 
     def _get_source_event_ids(self) -> list:
-        return sorted([int(event_path.stem) for event_path in self.src_path.iterdir()])
+        event_ids = []
+        for event_path in self.src_path.iterdir():
+            try:
+                event_ids.append(int(event_path.stem))
+            except ValueError:
+                continue
+        event_ids.sort()
+
+        return event_ids
 
     def _iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
         """Iterates through events in the src directory using the index id.
