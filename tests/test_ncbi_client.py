@@ -150,7 +150,7 @@ class TestClientFetchRawGenbank:
 
 
 @pytest.mark.ncbi()
-@pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
+@pytest.mark.parametrize("taxid", [345184, 1198450, 1016856])
 def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
     assert not list(empty_client.cache._genbank_path.glob("*.json"))
 

@@ -96,6 +96,19 @@
     'NC_038797.json',
   })
 # ---
+# name: test_fetch_records_by_taxid[345184]
+  set({
+    'DQ178608.json',
+    'DQ178609.json',
+    'DQ178610.json',
+    'DQ178611.json',
+    'DQ178612.json',
+    'DQ178613.json',
+    'DQ178614.json',
+    'NC_038792.json',
+    'NC_038793.json',
+  })
+# ---
 # name: test_fetch_records_by_taxid[438782]
   set({
     'EF546802.json',

@@ -95,7 +95,7 @@ def run_update_otu_command(taxid: int, path: Path):
 
 
 class TestAddOTU:
-    @pytest.mark.parametrize("taxid", [438782])
+    @pytest.mark.parametrize("taxid", [345184])
     def test_empty_success(
         self, taxid, precached_repo: Repo, snapshot: SnapshotAssertion
     ):
@@ -107,7 +107,7 @@ class TestAddOTU:
             assert not otu.accessions
 
     @pytest.mark.ncbi
-    @pytest.mark.parametrize("taxid", [438782])
+    @pytest.mark.parametrize("taxid", [345184])
     def test_autofill_success(
         self, taxid, precached_repo: Repo, snapshot: SnapshotAssertion
     ):
@@ -124,15 +124,8 @@ class TestAddSequences:
         "taxid,accessions",
         [
             (
-                438782,
-                [
-                    "NC_010314",
-                    "NC_010315",
-                    "NC_010316",
-                    "NC_010317",
-                    "NC_010318",
-                    "NC_010319",
-                ],
+                345184,
+                ["DQ178614", "DQ178613", "DQ178610", "DQ178611"],
             ),
         ],
     )
@@ -161,15 +154,8 @@ class TestUpdateOTU:
         "taxid,accessions",
         [
             (
-                438782,
-                [
-                    "NC_010314",
-                    "NC_010315",
-                    "NC_010316",
-                    "NC_010317",
-                    "NC_010318",
-                    "NC_010319",
-                ],
+                345184,
+                ["DQ178614", "DQ178613", "DQ178610", "DQ178611"],
             ),
         ],
     )
