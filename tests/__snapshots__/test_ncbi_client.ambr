@@ -109,28 +109,3 @@
     'NC_038793.json',
   })
 # ---
-# name: test_fetch_records_by_taxid[438782]
-  set({
-    'EF546802.json',
-    'EF546803.json',
-    'EF546804.json',
-    'EF546805.json',
-    'EF546806.json',
-    'EF546807.json',
-    'EF546808.json',
-    'EF546809.json',
-    'EF546810.json',
-    'EF546811.json',
-    'EF546812.json',
-    'EF546813.json',
-    'FJ787433.json',
-    'FJ787434.json',
-    'FJ787435.json',
-    'NC_010314.json',
-    'NC_010315.json',
-    'NC_010316.json',
-    'NC_010317.json',
-    'NC_010318.json',
-    'NC_010319.json',
-  })
-# ---
