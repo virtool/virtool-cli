@@ -237,6 +237,16 @@ class EventSourcedRepoOTU:
         """
         return self._isolates_by_id.get(isolate_id)
 
+    def get_sequence_by_accession(self, accession) -> EventSourcedRepoSequence | None:
+        if accession not in self.accessions:
+            return None
+
+        for isolate in self.isolates:
+            if (sequence := isolate.get_sequence_by_accession(accession)) is not None:
+                return sequence
+
+        raise ValueError(f"Accession {accession} found in index, but not in data")
+
     def get_isolate_id_by_name(self, name: IsolateName) -> UUID | None:
         """Return an UUID if the name is extant in this OTU."""
         for isolate in self.isolates:
