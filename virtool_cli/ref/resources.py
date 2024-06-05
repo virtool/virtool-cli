@@ -138,6 +138,27 @@ class EventSourcedRepoIsolate:
 
         return isolate_dict
 
+    def __eq__(self, other) -> bool:
+        if self.id != other.id:
+            return False
+
+        if self.name.type != other.name.type:
+            return False
+
+        if self.name.value != other.name.value:
+            return False
+
+        if self.accessions != other.accessions:
+            return False
+
+        for accession in self.accessions:
+            if self.get_sequence_by_accession(
+                accession
+            ) != other.get_sequence_by_accession(accession):
+                return False
+
+        return True
+
 
 class EventSourcedRepoOTU:
     """Represents an OTU in a Virtool reference repository."""
@@ -273,3 +294,22 @@ class EventSourcedRepoOTU:
             ]
 
         return otu_dict
+
+    def __eq__(self, other) -> bool:
+        if self.id != other.id:
+            return False
+
+        if self.taxid != other.taxid:
+            return False
+
+        if self.isolate_ids != other.isolate_ids:
+            return False
+
+        if self.accessions != other.accessions:
+            return False
+
+        for isolate_id in self.isolate_ids:
+            if self.get_isolate(isolate_id) != other.get_isolate(isolate_id):
+                return False
+
+        return True
