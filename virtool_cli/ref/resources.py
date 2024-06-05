@@ -126,13 +126,17 @@ class EventSourcedRepoIsolate:
         else None"""
         return self._sequences_by_accession.get(accession)
 
-    def dict(self) -> dict:
-        return {
+    def dict(self, exclude_contents: bool = False):
+        isolate_dict = {
             "id": self.id,
             "legacy_id": self.legacy_id,
             "name": {"type": self.name.type, "value": self.name.value},
-            "sequences": [sequence.dict() for sequence in self.sequences],
         }
+
+        if not exclude_contents:
+            isolate_dict["sequences"] = [sequence.dict() for sequence in self.sequences]
+
+        return isolate_dict
 
 
 class EventSourcedRepoOTU:
@@ -241,16 +245,21 @@ class EventSourcedRepoOTU:
 
         return None
 
-    def dict(self) -> dict:
-        """Return data in JSON-ready form"""
-        return {
+    def dict(self, exclude_contents: bool = False):
+        otu_dict = {
             "id": self.id,
             "acronym": self.acronym,
             "excluded_accessions": list(self.excluded_accessions),
-            "isolates": [isolate.dict() for isolate in self.isolates],
             "legacy_id": self.legacy_id,
             "name": self.name,
             "molecule": self.molecule,
             "schema": self.schema,
             "taxid": self.taxid,
         }
+
+        if not exclude_contents:
+            otu_dict["isolates"] = [
+                isolate.dict(exclude_contents=False) for isolate in self.isolates
+            ]
+
+        return otu_dict
