@@ -102,6 +102,11 @@ class EventSourcedRepoIsolate:
         """A set of accession numbers for sequences in the isolate."""
         return set(self._sequences_by_accession.keys())
 
+    @property
+    def sequence_ids(self) -> set[UUID]:
+        """A set of UUIDs for sequences in the isolate."""
+        return set(sequence.id for sequence in self.sequences)
+
     def __repr__(self) -> str:
         """Return a shorthand representation of the isolate's contents"""
         return (
@@ -183,6 +188,11 @@ class EventSourcedRepoOTU:
         return list(self._isolates_by_id.values())
 
     @property
+    def isolate_ids(self) -> set[UUID]:
+        """A set of UUIDs for isolates in the OTU"""
+        return set(self._isolates_by_id.keys())
+
+    @property
     def accessions(self) -> set[str]:
         """A set of accessions contained in this isolate"""
         accessions = set()
@@ -190,6 +200,15 @@ class EventSourcedRepoOTU:
             accessions.update(isolate.accessions)
 
         return accessions
+
+    @property
+    def sequence_ids(self) -> set[UUID]:
+        """A set of UUIDs for sequences in the OTU"""
+        sequence_ids = set()
+        for isolate in self.isolates:
+            sequence_ids.update(isolate.sequence_ids)
+
+        return sequence_ids
 
     @property
     def blocked_accessions(self) -> set[str]:
