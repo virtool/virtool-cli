@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, IsolateName
@@ -174,6 +174,7 @@ class EventSourcedRepoOTU:
         schema: list | None = None,
         excluded_accessions: list[str] | None = None,
         isolates: list[EventSourcedRepoIsolate] | None = None,
+        repr_isolate: UUID | None = None,
     ):
         self.id = uuid
         """The OTU id."""
@@ -206,6 +207,8 @@ class EventSourcedRepoOTU:
         else:
             self._isolates_by_id = {isolate.id: isolate for isolate in isolates}
         """A dictionary of isolates indexed by isolate UUID"""
+
+        self.repr_isolate = repr_isolate
 
     @property
     def isolates(self) -> list[EventSourcedRepoIsolate]:
