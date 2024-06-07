@@ -92,6 +92,15 @@ class EventSourcedRepoIsolate:
         It the isolate was not migrated from a legacy repository, this will be `None`.
         """
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "EventSourcedRepoIsolate":
+        return EventSourcedRepoIsolate(
+            uuid=data["id"],
+            name=IsolateName(type=data["name"]["type"], value=data["name"]["value"]),
+            sequences=data.get("sequences"),
+            legacy_id=data.get("legacy_id"),
+        )
+
     @property
     def sequences(self) -> list[EventSourcedRepoSequence]:
         """A list of sequences in this isolate."""
@@ -209,6 +218,19 @@ class EventSourcedRepoOTU:
         """A dictionary of isolates indexed by isolate UUID"""
 
         self.repr_isolate = repr_isolate
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "EventSourcedRepoOTU":
+        return EventSourcedRepoOTU(
+            uuid=data["id"],
+            taxid=data["taxid"],
+            name=data["name"],
+            acronym=data.get("acronym"),
+            molecule=data.get("molecule"),
+            schema=data.get("schema"),
+            isolates=data.get("isolates"),
+            repr_isolate=data.get("repr_isolate"),
+        )
 
     @property
     def isolates(self) -> list[EventSourcedRepoIsolate]:
