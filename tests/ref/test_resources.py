@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import uuid4, UUID
 
 import pytest
 
@@ -7,6 +7,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoIsolate,
     EventSourcedRepoSequence,
 )
+from virtool_cli.ref.utils import IsolateName, IsolateNameType
 
 
 class TestSequence:
@@ -33,6 +34,13 @@ class TestSequence:
 
 
 class TestIsolate:
+    def test_minimal_init(self):
+        isolate = EventSourcedRepoIsolate(
+            uuid=uuid4(), name=IsolateName(type=IsolateNameType.ISOLATE, value="A")
+        )
+
+        assert isolate._sequences_by_accession == {}
+
     @pytest.mark.parametrize("taxid", [345184])
     def test_equivalence(self, taxid, scratch_repo):
         otu = scratch_repo.get_otu_by_taxid(taxid)
@@ -51,7 +59,15 @@ class TestIsolate:
 
 
 class TestOTU:
-    # @pytest.mark.skip()
+    def test_minimal_init(self):
+        otu = EventSourcedRepoOTU(
+            uuid=uuid4(),
+            taxid=12242,
+            name="Tobacco mosaic virus",
+        )
+
+        assert otu._isolates_by_id == {}
+
     @pytest.mark.parametrize("taxid", [345184])
     def test_equivalence(self, taxid, scratch_repo):
         otu = scratch_repo.get_otu_by_taxid(taxid)
