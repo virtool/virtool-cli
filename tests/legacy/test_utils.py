@@ -3,7 +3,12 @@ from pathlib import Path
 
 import pytest
 
-from virtool_cli.legacy.utils import build_legacy_otu, iter_legacy_otus, replace_otu
+from virtool_cli.legacy.utils import (
+    build_legacy_otu,
+    iter_legacy_otus,
+    replace_otu,
+    generate_unique_ids,
+)
 
 
 def test_iter_legacy_otu(legacy_repo_path: Path):
@@ -70,3 +75,16 @@ class TestReplaceOTU:
             )
 
         assert str(e.value) == f"No such OTU parent directory: {otu_path.parent}"
+
+
+def test_utils_hashing():
+    initial_hashes = generate_unique_ids(n=40, length=8, mixed_case=False, excluded=[])
+
+    additional_hashes = generate_unique_ids(
+        n=20,
+        length=8,
+        mixed_case=False,
+        excluded=initial_hashes,
+    )
+
+    assert initial_hashes.isdisjoint(additional_hashes)

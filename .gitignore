@@ -1,5 +1,5 @@
 .idea
-.cache
+/.cache
 /venv
 __pycache__
 .pytest_cache

@@ -2,7 +2,8 @@ import datetime
 
 from pydantic import UUID4, BaseModel, Field, computed_field
 
-from virtool_cli.ref.utils import IsolateName, Molecule
+from virtool_cli.ref.utils import IsolateName
+from virtool_cli.utils.models import Molecule
 
 
 class EventQuery(BaseModel):

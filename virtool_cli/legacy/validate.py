@@ -33,9 +33,9 @@ from virtool_cli.legacy.utils import (
     HandleErrorContext,
     build_legacy_otu,
     replace_otu,
+    console,
 )
 from virtool_cli.ncbi.client import NCBIClient
-from virtool_cli.utils.console import console
 
 logger = get_logger("legacy")
 

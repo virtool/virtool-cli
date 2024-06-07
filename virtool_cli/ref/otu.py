@@ -7,7 +7,8 @@ from virtool_cli.ncbi.client import NCBIClient
 from virtool_cli.ncbi.model import NCBIGenbank
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.resources import EventSourcedRepoOTU
-from virtool_cli.ref.utils import Molecule, IsolateName, IsolateNameType
+from virtool_cli.ref.utils import IsolateName, IsolateNameType
+from virtool_cli.utils.models import Molecule
 
 base_logger = structlog.get_logger()
 

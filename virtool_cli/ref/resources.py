@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 from uuid import UUID
 
-from virtool_cli.ref.utils import DataType, IsolateName, Molecule
+from virtool_cli.ref.utils import DataType, IsolateName
+from virtool_cli.utils.models import Molecule
 
 
 class RepoMeta(BaseModel):
@@ -201,7 +202,7 @@ class EventSourcedRepoOTU:
         return (
             "EventSourcedRepoOTU("
             + f"{self.id}, taxid={self.taxid}, name={self.name}, "
-            + f"accessions={self.accessions})"
+            + f"accessions={list(self.accessions)})"
         )
 
     def add_isolate(self, isolate: EventSourcedRepoIsolate):

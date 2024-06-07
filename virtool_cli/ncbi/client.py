@@ -104,14 +104,18 @@ class NCBIClient:
 
         try:
             with log_http_error():
-                records = Entrez.read(
-                    Entrez.efetch(
-                        db=NCBIDatabase.NUCCORE,
-                        id=accessions,
-                        rettype="gb",
-                        retmode="xml",
-                    ),
-                )
+                try:
+                    records = Entrez.read(
+                        Entrez.efetch(
+                            db=NCBIDatabase.NUCCORE,
+                            id=accessions,
+                            rettype="gb",
+                            retmode="xml",
+                        ),
+                    )
+                except RuntimeError as e:
+                    logger.warning(f"Bad ID. (RunTime Error: {e})")
+                    return []
 
         except HTTPError as e:
             if e.code == 400:

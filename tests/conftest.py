@@ -18,28 +18,23 @@ def test_files_path():
 
 
 @pytest.fixture()
-def scratch_path(
-    test_files_path: Path,
-    tmp_path: Path,
-) -> Path:
+def scratch_path(scratch_repo: EventSourcedRepo) -> Path:
     """The path to a scratch reference repository."""
-    path = tmp_path / "reference"
+    return scratch_repo.path
 
-    init_reference(path)
+
+@pytest.fixture()
+def scratch_repo(test_files_path: Path, tmp_path: Path) -> EventSourcedRepo:
+    """A prepared scratch repository."""
+    path = tmp_path / "reference"
 
     shutil.copytree(test_files_path / "src_test", path / "src", dirs_exist_ok=True)
     shutil.copytree(test_files_path / "cache_test", path / ".cache", dirs_exist_ok=True)
 
-    return path
+    yield EventSourcedRepo(path)
 
-
-@pytest.fixture()
-def scratch_repo(scratch_path: Path) -> Repo:
-    """The path to a scratch legacy repository.
-
-    TODO: Remove this along with flattened repo code.
-    """
-    return Repo(scratch_path)
+    shutil.rmtree(path / ".cache")
+    shutil.rmtree(path / "src")
 
 
 @pytest.fixture()
@@ -53,6 +48,14 @@ def scratch_src_path(scratch_path: Path) -> Path:
 
 @pytest.fixture()
 def scratch_ncbi_cache_path(
+    scratch_path: Path,
+) -> Path:
+    """The path to a scratch NCBI client cache."""
+    return scratch_path / ".cache"
+
+
+@pytest.fixture()
+def scratch_partial_ncbi_cache_path(
     scratch_path: Path,
 ) -> Path:
     """The path to a scratch NCBI client cache."""

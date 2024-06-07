@@ -17,7 +17,6 @@ import shutil
 import uuid
 from collections import defaultdict
 from pathlib import Path
-from pprint import pprint
 from typing import Generator, Type
 
 import arrow
@@ -51,8 +50,8 @@ from virtool_cli.ref.resources import (
     RepoMeta,
 )
 from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
-
-from virtool_cli.ref.utils import DataType, IsolateName, Molecule, pad_zeroes
+from virtool_cli.utils.models import Molecule
+from virtool_cli.ref.utils import DataType, IsolateName, pad_zeroes
 
 logger = get_logger("repo")
 
@@ -69,17 +68,19 @@ class EventSourcedRepo:
 
         logger.info("Loading repository")
 
-        for event in self._iter_events():
-            if event.id - self.last_id != 1:
+        # cursory src validation
+        for event_id in self._get_source_event_ids():
+            if event_id - self.last_id != 1:
                 raise ValueError("Event IDs are not sequential.")
-
-            self.last_id = event.id
+            self.last_id = event_id
 
         self.checker = Checker(self)
 
         self.cache_path = self.path / ".cache"
 
         self._event_index_cache = EventIndexCache(self.cache_path / "event_index")
+
+        self._otu_metadata_by_taxid = {}
 
         logger.info("Finished loading repository", event_count=self.last_id)
 
@@ -140,8 +141,21 @@ class EventSourcedRepo:
         return self.path / "src"
 
     def _iter_events(self, reverse: bool = False):
-        for path in sorted(self.src_path.iterdir(), reverse=reverse):
+        for path in sorted(self.src_path.glob("*.json"), reverse=reverse):
+            if path.stem == "meta":
+                continue
             yield _read_event_at_path(path)
+
+    def _get_source_event_ids(self) -> list:
+        event_ids = []
+        for event_path in self.src_path.iterdir():
+            try:
+                event_ids.append(int(event_path.stem))
+            except ValueError:
+                continue
+        event_ids.sort()
+
+        return event_ids
 
     def _iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
         """Iterates through events in the src directory using the index id.
@@ -213,29 +227,39 @@ class EventSourcedRepo:
 
         return otu_event_index
 
-    def iter_otus(self) -> Generator[EventSourcedRepoOTU, None, None]:
+    def iter_otus(
+        self, ignore_cache: bool = False
+    ) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the repository."""
-        for otu_id in self._get_event_index():
-            otu = self.get_otu(otu_id)
+        if ignore_cache:
+            event_index = self._get_event_index()
+        else:
+            event_index = self._event_index_cache.load_index()
+
+        for otu_id in event_index:
+            otu = self.get_otu(otu_id, ignore_cache)
             yield otu
 
     def index_otus(self, ignore_cache: bool = False):
+        """Index all OTUs"""
         if not ignore_cache:
             otu_ids = self._event_index_cache.list_otu_ids()
             if otu_ids:
                 otu_index = {}
                 for otu_id in otu_ids:
                     try:
-                        otu = self.get_otu(otu_id, ignore_cache)
+                        otu_metadata = self._get_otu_metadata(
+                            self._event_index_cache.load_otu_events(otu_id).events
+                        )
                     except ValueError as e:
                         logger.error(f"Indexing Error: {e}", otu_id=otu_id)
                         break
 
-                    if otu:
-                        otu_index[otu.taxid] = otu_id
+                    if otu_metadata:
+                        otu_index[otu_metadata["taxid"]] = otu_id
                 return otu_index
 
-        return {otu.taxid: otu.id for otu in self.iter_otus()}
+        return {otu.taxid: otu.id for otu in self.iter_otus(ignore_cache=True)}
 
     def create_otu(
         self,
@@ -446,6 +470,29 @@ class EventSourcedRepo:
                         )
 
         return otu
+
+    def _get_otu_metadata(self, event_ids: list[int]) -> dict | None:
+        """Retrieves OTU metadata from a list of event IDs"""
+        if not event_ids:
+            return None
+        event_ids.sort()
+        first_event_id = event_ids[0]
+
+        event = self._read_event(first_event_id)
+
+        if not isinstance(event, CreateOTU):
+            raise ValueError(
+                f"The first event ({first_event_id}) for an OTU is not a CreateOTU "
+                "event",
+            )
+
+        return {
+            "id": event.data.id,
+            "acronym": event.data.acronym,
+            "legacy_id": event.data.legacy_id,
+            "name": event.data.name,
+            "taxid": event.data.taxid,
+        }
 
     def _get_otu_events(
         self, otu_id: uuid.UUID, ignore_cache: bool = False
