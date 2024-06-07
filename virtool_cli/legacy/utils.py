@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from random import choice
@@ -275,3 +276,36 @@ def generate_unique_ids(
         new_uniques.add(generate_random_alphanumeric(length, mixed_case, excluded_set))
 
     return new_uniques
+
+
+def generate_otu_dirname(name: str, otu_id: str = "") -> str:
+    """
+    Takes in a human-readable string, replaces whitespace and symbols
+    and adds the Virtool hash id as a suffix
+
+    :param name: Human-readable, searchable name of the OTU
+    :param otu_id: ID hash of OTU
+    :return: A directory name in the form of 'converted_otu_name--taxid'
+    """
+    no_plus = name.replace("+", "plus ")
+    no_symbols = re.split(r"[():/-]+", no_plus)
+    joined = " ".join(no_symbols)
+    no_whitespace = re.sub(r"[\s]+", "_", joined)
+
+    dirname = no_whitespace.lower()
+    dirname += "--" + otu_id
+
+    return dirname
+
+
+def is_v1(src_path: Path) -> bool:
+    """
+    Returns True if the given reference directory is formatted under version 1 guidelines.
+    Determines if virtool ref migrate should be run before using this version of virtool-cli
+
+    :param src_path: Path to a src database directory
+    :return: Boolean value depending on whether alphabetized bins are found.
+    """
+    alpha_bins = list(src_path.glob("[a-z]"))
+
+    return bool(alpha_bins)

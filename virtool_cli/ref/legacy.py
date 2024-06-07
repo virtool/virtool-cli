@@ -7,8 +7,11 @@ from typing import Any
 
 import click
 
-from virtool_cli.legacy.utils import generate_random_alphanumeric
-from virtool_cli.utils.deprecated.reference import generate_otu_dirname, is_v1
+from virtool_cli.legacy.utils import (
+    generate_random_alphanumeric,
+    generate_otu_dirname,
+    is_v1,
+)
 
 
 @dataclass
