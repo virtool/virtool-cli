@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel
 from uuid import UUID
 
 from virtool_cli.ref.utils import DataType, IsolateName
