@@ -78,12 +78,11 @@ class EventSourcedRepoIsolate:
         self.name = name
         """The isolate's source name metadata."""
 
-        if sequences is None:
-            self._sequences_by_accession = {}
-        else:
-            self._sequences_by_accession = {
-                sequence.accession: sequence for sequence in sequences
-            }
+        self._sequences_by_accession = (
+            {}
+            if sequences is None
+            else {sequence.accession: sequence for sequence in sequences}
+        )
         """A dictionary of sequences indexed by accession"""
 
         self.legacy_id = legacy_id
@@ -94,6 +93,7 @@ class EventSourcedRepoIsolate:
 
     @classmethod
     def from_dict(cls, data: dict) -> "EventSourcedRepoIsolate":
+        """Build a new isolate from .dict() output"""
         return EventSourcedRepoIsolate(
             uuid=data["id"],
             name=IsolateName(type=data["name"]["type"], value=data["name"]["value"]),
@@ -189,10 +189,10 @@ class EventSourcedRepoOTU:
         """The OTU id."""
 
         self.taxid = taxid
-        """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
+        """The NCBI Taxonomy id for this OTU."""
 
         self.name = name
-        """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
+        """The name of the OTU (eg. TMV for Tobacco mosaic virus)"""
 
         self.acronym = acronym
         """The OTU acronym (eg. TMV for Tobacco mosaic virus)."""
@@ -211,16 +211,17 @@ class EventSourcedRepoOTU:
         )
         """A set of accessions that should not be retrieved in future fetch operations"""
 
-        if isolates is None:
-            self._isolates_by_id = {}
-        else:
-            self._isolates_by_id = {isolate.id: isolate for isolate in isolates}
+        self._isolates_by_id = (
+            {} if isolates is None else {isolate.id: isolate for isolate in isolates}
+        )
         """A dictionary of isolates indexed by isolate UUID"""
 
         self.repr_isolate = repr_isolate
+        """The UUID of the representative isolate of this OTU"""
 
     @classmethod
     def from_dict(cls, data: dict) -> "EventSourcedRepoOTU":
+        """Build a new OTU from .dict() output"""
         return EventSourcedRepoOTU(
             uuid=data["id"],
             taxid=data["taxid"],
