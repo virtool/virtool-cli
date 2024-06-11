@@ -311,7 +311,9 @@ class EventSourcedRepoOTU:
             "excluded_accessions": list(self.excluded_accessions),
             "legacy_id": self.legacy_id,
             "name": self.name,
-            "molecule": self.molecule,
+            "molecule": (
+                self.molecule.model_dump() if self.molecule is not None else None
+            ),
             "schema": self.schema,
             "taxid": self.taxid,
         }
