@@ -68,10 +68,10 @@ class EventSourcedRepo:
 
         self.cache_path = self.path / ".cache"
 
-        self._src = EventStore(self.path / "src")
+        self._event_store = EventStore(self.path / "src")
 
         self._event_index = EventIndex(
-            self._src, cache_path=(self.cache_path / "event_index")
+            self._event_store, cache_path=(self.cache_path / "event_index")
         )
 
         self.checker = Checker(self)
@@ -121,12 +121,13 @@ class EventSourcedRepo:
 
     @property
     def last_id(self):
-        return self._src.last_id
+        """The id of the most recent event in the event store."""
+        return self._event_store.last_id
 
     @property
     def meta(self):
         """The metadata for the repository."""
-        for event in self._src.iter_events():
+        for event in self._event_store.iter_events():
             if isinstance(event, CreateRepo):
                 repo = event.data.model_dump()
                 return RepoMeta(**repo, created_at=event.timestamp)
@@ -136,7 +137,7 @@ class EventSourcedRepo:
     @property
     def src_path(self) -> Path:
         """The path to the repo src directory."""
-        return self._src.path
+        return self._event_store.path
 
     def iter_otus(
         self, ignore_cache: bool = False
@@ -171,7 +172,7 @@ class EventSourcedRepo:
 
         otu_id = uuid.uuid4()
 
-        event = self._src.write_event(
+        event = self._event_store.write_event(
             CreateOTU,
             CreateOTUData(
                 id=otu_id,
@@ -202,7 +203,7 @@ class EventSourcedRepo:
 
         name = IsolateName(**{"type": source_type, "value": source_name})
 
-        event = self._src.write_event(
+        event = self._event_store.write_event(
             CreateIsolate,
             CreateIsolateData(id=isolate_id, legacy_id=legacy_id, name=name),
             IsolateQuery(isolate_id=isolate_id, otu_id=otu_id),
@@ -234,7 +235,7 @@ class EventSourcedRepo:
     ):
         sequence_id = uuid.uuid4()
 
-        event = self._src.write_event(
+        event = self._event_store.write_event(
             CreateSequence,
             CreateSequenceData(
                 id=sequence_id,
@@ -276,7 +277,7 @@ class EventSourcedRepo:
         :param accession: the accession to exclude
 
         """
-        self._src.write_event(
+        self._event_store.write_event(
             ExcludeAccession,
             ExcludeAccessionData(accession=accession),
             OTUQuery(otu_id=otu_id),
@@ -309,7 +310,7 @@ class EventSourcedRepo:
         event_ids.sort()
         first_event_id = event_ids[0]
 
-        event = self._src.read_event(first_event_id)
+        event = self._event_store.read_event(first_event_id)
 
         if not isinstance(event, CreateOTU):
             raise ValueError(
@@ -329,7 +330,7 @@ class EventSourcedRepo:
         )
 
         for event_id in event_ids[1:]:
-            event = self._src.read_event(event_id)
+            event = self._event_store.read_event(event_id)
 
             if isinstance(event, CreateIsolate):
                 otu.add_isolate(
@@ -362,12 +363,12 @@ class EventSourcedRepo:
 
 class EventIndex:
     def __init__(self, event_store: "EventStore", cache_path: Path):
-        self._src = event_store
+        self._event_store = event_store
         self._cache = EventIndexCache(cache_path)
 
     @property
     def last_id(self):
-        return self._src.last_id
+        return self._event_store.last_id
 
     def index_otu_metadata(self, ignore_cache: bool = False):
         """Index all OTUs"""
@@ -415,7 +416,7 @@ class EventIndex:
         binned and indexed by OTU Id."""
         otu_event_index = defaultdict(list)
 
-        for event in self._src.iter_events():
+        for event in self._event_store.iter_events():
             if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
@@ -425,7 +426,7 @@ class EventIndex:
         """Get the current event index, binned and indexed by OTU ID"""
         otu_event_index = defaultdict(list)
 
-        for event in self._src.iter_events_from_index(start):
+        for event in self._event_store.iter_events_from_index(start):
             if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
@@ -472,7 +473,7 @@ class EventIndex:
 
         event_ids = [
             event.id
-            for event in self._src.iter_events()
+            for event in self._event_store.iter_events()
             if (type(event) in OTU_EVENT_TYPES and event.query.otu_id == otu_id)
         ]
 
@@ -519,7 +520,7 @@ class EventIndex:
 
             otu_event_list = cached_otu_index.events
 
-            for event in self._src.iter_events_from_index(
+            for event in self._event_store.iter_events_from_index(
                 start=cached_otu_index.at_event
             ):
                 if type(event) in OTU_EVENT_TYPES and event.id not in otu_event_list:
@@ -543,10 +544,10 @@ class EventIndex:
         """Retrieves OTU metadata from a list of event IDs"""
         if not event_ids:
             return None
-        event_ids.sort()
-        first_event_id = event_ids[0]
 
-        event = self._src.read_event(first_event_id)
+        first_event_id = sorted(event_ids)[0]
+
+        event = self._event_store.read_event(first_event_id)
 
         if not isinstance(event, CreateOTU):
             raise ValueError(
@@ -590,9 +591,8 @@ class EventStore:
 
     def iter_events(self, reverse: bool = False):
         for path in sorted(self.path.glob("*.json"), reverse=reverse):
-            if path.stem == "meta":
-                continue
-            yield _read_event_at_path(path)
+            if path.stem != "meta":
+                yield _read_event_at_path(path)
 
     def iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
         """Iterates through events in the src directory using the index id.
