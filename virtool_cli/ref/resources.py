@@ -114,7 +114,7 @@ class EventSourcedRepoIsolate:
     @property
     def sequence_ids(self) -> set[UUID]:
         """A set of UUIDs for sequences in the isolate."""
-        return set(sequence.id for sequence in self.sequences)
+        return {sequence.id for sequence in self.sequences}
 
     def __repr__(self) -> str:
         """Return a shorthand representation of the isolate's contents"""
@@ -132,7 +132,7 @@ class EventSourcedRepoIsolate:
         self, accession: str
     ) -> EventSourcedRepoSequence | None:
         """Return a sequence with the given accession if it exists in the isolate,
-        else None"""
+        else None."""
         return self._sequences_by_accession.get(accession)
 
     def dict(self, exclude_contents: bool = False):
@@ -147,7 +147,10 @@ class EventSourcedRepoIsolate:
 
         return isolate_dict
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: "EventSourcedRepoIsolate") -> bool:
+        if type(other) is not EventSourcedRepoIsolate:
+            return False
+
         if self.id != other.id:
             return False
 
@@ -221,7 +224,7 @@ class EventSourcedRepoOTU:
 
     @classmethod
     def from_dict(cls, data: dict) -> "EventSourcedRepoOTU":
-        """Build a new OTU from .dict() output"""
+        """Build a new OTU from .dict() output."""
         return EventSourcedRepoOTU(
             uuid=data["id"],
             taxid=data["taxid"],
@@ -240,12 +243,12 @@ class EventSourcedRepoOTU:
 
     @property
     def isolate_ids(self) -> set[UUID]:
-        """A set of UUIDs for isolates in the OTU"""
+        """A set of UUIDs for isolates in the OTU."""
         return set(self._isolates_by_id.keys())
 
     @property
     def accessions(self) -> set[str]:
-        """A set of accessions contained in this isolate"""
+        """A set of accessions contained in this isolate."""
         accessions = set()
         for isolate in self.isolates:
             accessions.update(isolate.accessions)
@@ -254,7 +257,7 @@ class EventSourcedRepoOTU:
 
     @property
     def sequence_ids(self) -> set[UUID]:
-        """A set of UUIDs for sequences in the OTU"""
+        """A set of UUIDs for sequences in the OTU."""
         sequence_ids = set()
         for isolate in self.isolates:
             sequence_ids.update(isolate.sequence_ids)
@@ -285,7 +288,9 @@ class EventSourcedRepoOTU:
         """
         return self._isolates_by_id.get(isolate_id)
 
-    def get_sequence_by_accession(self, accession) -> EventSourcedRepoSequence | None:
+    def get_sequence_by_accession(
+        self, accession: str
+    ) -> EventSourcedRepoSequence | None:
         """Return a sequence corresponding to given accession if it exists in this OTU."""
         if accession not in self.accessions:
             return None
@@ -325,7 +330,10 @@ class EventSourcedRepoOTU:
 
         return otu_dict
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: "EventSourcedRepoOTU") -> bool:
+        if type(other) is not EventSourcedRepoOTU:
+            return False
+
         if self.id != other.id:
             return False
 
