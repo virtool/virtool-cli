@@ -66,7 +66,7 @@ class EventSourcedRepo:
 
         logger.info("Loading repository")
 
-        self._src = EventStore(self.path / "src")
+        self._event_store = EventStore(self.path / "src")
 
         self.checker = Checker(self)
 
@@ -121,12 +121,13 @@ class EventSourcedRepo:
 
     @property
     def last_id(self):
-        return self._src.last_id
+        """The id of the most recently added event in the event store."""
+        return self._event_store.last_id
 
     @property
     def meta(self):
         """The metadata for the repository."""
-        for event in self._src.iter_events():
+        for event in self._event_store.iter_events():
             if isinstance(event, CreateRepo):
                 repo = event.data.model_dump()
                 return RepoMeta(**repo, created_at=event.timestamp)
@@ -136,14 +137,14 @@ class EventSourcedRepo:
     @property
     def src_path(self) -> Path:
         """The path to the repo src directory."""
-        return self._src.path
+        return self._event_store.path
 
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
         """Get the current event index from the event store,
         binned and indexed by OTU Id."""
         otu_event_index = defaultdict(list)
 
-        for event in self._src.iter_events():
+        for event in self._event_store.iter_events():
             if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
@@ -155,7 +156,7 @@ class EventSourcedRepo:
         """Get the current event index, binned and indexed by OTU ID"""
         otu_event_index = defaultdict(list)
 
-        for event in self._src.iter_events_from_index(start):
+        for event in self._event_store.iter_events_from_index(start):
             if type(event) in OTU_EVENT_TYPES:
                 otu_event_index[event.query.otu_id].append(event.id)
 
@@ -217,7 +218,7 @@ class EventSourcedRepo:
 
         otu_id = uuid.uuid4()
 
-        event = self._src.write_event(
+        event = self._event_store.write_event(
             CreateOTU,
             CreateOTUData(
                 id=otu_id,
@@ -248,7 +249,7 @@ class EventSourcedRepo:
 
         name = IsolateName(**{"type": source_type, "value": source_name})
 
-        event = self._src.write_event(
+        event = self._event_store.write_event(
             CreateIsolate,
             CreateIsolateData(id=isolate_id, legacy_id=legacy_id, name=name),
             IsolateQuery(isolate_id=isolate_id, otu_id=otu_id),
@@ -280,7 +281,7 @@ class EventSourcedRepo:
     ):
         sequence_id = uuid.uuid4()
 
-        event = self._src.write_event(
+        event = self._event_store.write_event(
             CreateSequence,
             CreateSequenceData(
                 id=sequence_id,
@@ -322,7 +323,7 @@ class EventSourcedRepo:
         :param accession: the accession to exclude
 
         """
-        self._src.write_event(
+        self._event_store.write_event(
             ExcludeAccession,
             ExcludeAccessionData(accession=accession),
             OTUQuery(otu_id=otu_id),
@@ -352,10 +353,9 @@ class EventSourcedRepo:
 
     def _rehydrate_otu(self, event_ids: list[int]) -> EventSourcedRepoOTU:
         """Rebuilds OTU data from a list of event IDs"""
-        event_ids.sort()
-        first_event_id = event_ids[0]
+        first_event_id = sorted(event_ids)[0]
 
-        event = self._src.read_event(first_event_id)
+        event = self._event_store.read_event(first_event_id)
 
         if not isinstance(event, CreateOTU):
             raise ValueError(
@@ -375,7 +375,7 @@ class EventSourcedRepo:
         )
 
         for event_id in event_ids[1:]:
-            event = self._src.read_event(event_id)
+            event = self._event_store.read_event(event_id)
 
             if isinstance(event, CreateIsolate):
                 otu.add_isolate(
@@ -412,7 +412,7 @@ class EventSourcedRepo:
         event_ids.sort()
         first_event_id = event_ids[0]
 
-        event = self._src.read_event(first_event_id)
+        event = self._event_store.read_event(first_event_id)
 
         if not isinstance(event, CreateOTU):
             raise ValueError(
@@ -469,7 +469,7 @@ class EventSourcedRepo:
 
         event_ids = [
             event.id
-            for event in self._src.iter_events()
+            for event in self._event_store.iter_events()
             if (type(event) in OTU_EVENT_TYPES and event.query.otu_id == otu_id)
         ]
 
@@ -518,7 +518,7 @@ class EventSourcedRepo:
 
             otu_event_list = cached_otu_index.events
 
-            for event in self._src.iter_events_from_index(
+            for event in self._event_store.iter_events_from_index(
                 start=cached_otu_index.at_event
             ):
                 if type(event) in OTU_EVENT_TYPES and event.id not in otu_event_list:
