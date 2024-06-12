@@ -34,20 +34,19 @@ class TestSequence:
 
 
 class TestIsolate:
-    def test_minimal_init(self):
+    def test_no_sequences(self):
+        """Test that an isolate intializes correctly with no sequences."""
         isolate = EventSourcedRepoIsolate(
             uuid=uuid4(), name=IsolateName(type=IsolateNameType.ISOLATE, value="A")
         )
 
-        assert isolate._sequences_by_accession == {}
+        assert isolate.sequences == []
 
     @pytest.mark.parametrize("taxid", [345184])
     def test_equivalence(self, taxid, scratch_repo):
         otu = scratch_repo.get_otu_by_taxid(taxid)
 
         for isolate in otu.isolates:
-            assert type(isolate) is EventSourcedRepoIsolate
-
             isolate_copy = EventSourcedRepoIsolate(
                 uuid=isolate.id,
                 name=isolate.name,
@@ -59,20 +58,19 @@ class TestIsolate:
 
 
 class TestOTU:
-    def test_minimal_init(self):
+    def test_no_isolates(self):
+        """Test that an isolate intializes correctly with no isolates."""
         otu = EventSourcedRepoOTU(
             uuid=uuid4(),
             taxid=12242,
             name="Tobacco mosaic virus",
         )
 
-        assert otu._isolates_by_id == {}
+        assert otu.isolates == []
 
     @pytest.mark.parametrize("taxid", [345184])
     def test_equivalence(self, taxid, scratch_repo):
         otu = scratch_repo.get_otu_by_taxid(taxid)
-
-        assert type(otu) is EventSourcedRepoOTU
 
         otu_copy = EventSourcedRepoOTU(
             uuid=otu.id,
