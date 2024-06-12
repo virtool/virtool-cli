@@ -21,6 +21,7 @@ class TestSequence:
         ],
     )
     def test_equivalence(self, taxid, accessions, scratch_repo):
+        """Test that the == operator works correctly."""
         otu = scratch_repo.get_otu_by_taxid(taxid)
 
         for accession in accessions:
@@ -44,6 +45,7 @@ class TestIsolate:
 
     @pytest.mark.parametrize("taxid", [345184])
     def test_equivalence(self, taxid, scratch_repo):
+        """Test that the == operator works correctly."""
         otu = scratch_repo.get_otu_by_taxid(taxid)
 
         for isolate in otu.isolates:
@@ -70,6 +72,7 @@ class TestOTU:
 
     @pytest.mark.parametrize("taxid", [345184])
     def test_equivalence(self, taxid, scratch_repo):
+        """Test that the == operator works correctly."""
         otu = scratch_repo.get_otu_by_taxid(taxid)
 
         otu_copy = EventSourcedRepoOTU(

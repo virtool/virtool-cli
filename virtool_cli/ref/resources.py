@@ -117,7 +117,7 @@ class EventSourcedRepoIsolate:
         return {sequence.id for sequence in self.sequences}
 
     def __repr__(self) -> str:
-        """Return a shorthand representation of the isolate's contents"""
+        """Return a shorthand representation of the isolate's contents."""
         return (
             "EventSourcedRepoIsolate("
             + f"{self.id}, type={self.name.type}, name={self.name.value}, "
@@ -238,7 +238,7 @@ class EventSourcedRepoOTU:
 
     @property
     def isolates(self) -> list[EventSourcedRepoIsolate]:
-        """Isolates contained in this OTU"""
+        """Isolates contained in this OTU."""
         return list(self._isolates_by_id.values())
 
     @property
@@ -271,7 +271,7 @@ class EventSourcedRepoOTU:
         return self.accessions.union(self.excluded_accessions)
 
     def __repr__(self) -> str:
-        """Return a shorthand representation of the OTU's contents"""
+        """Return a shorthand representation of the OTU's contents."""
         return (
             "EventSourcedRepoOTU("
             + f"{self.id}, taxid={self.taxid}, name={self.name}, "
