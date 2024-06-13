@@ -101,7 +101,7 @@ class TestAddOTU:
     ):
         run_add_otu_command(taxid=taxid, path=precached_repo.path, autofill=False)
 
-        for otu in precached_repo.iter_otus():
+        for otu in precached_repo.get_all_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
             assert not otu.accessions
@@ -113,7 +113,7 @@ class TestAddOTU:
     ):
         run_add_otu_command(taxid=taxid, path=precached_repo.path, autofill=True)
 
-        for otu in precached_repo.iter_otus():
+        for otu in precached_repo.get_all_otus():
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
 
             assert otu.accessions
@@ -134,7 +134,7 @@ class TestAddSequences:
     ):
         run_add_sequences_command(taxid, accessions, precached_repo.path)
 
-        for otu in precached_repo.iter_otus():
+        for otu in precached_repo.get_all_otus():
             assert otu.accessions == set(accessions)
 
             assert otu.dict() == snapshot(exclude=props("id", "isolates"))
@@ -165,7 +165,7 @@ class TestUpdateOTU:
         run_add_otu_command(taxid, path=precached_repo.path, autofill=False)
         run_add_sequences_command(taxid, accessions, path=precached_repo.path)
 
-        otu = list(precached_repo.iter_otus())[0]
+        otu = precached_repo.get_all_otus()[0]
 
         pre_accession_set = otu.accessions
 
@@ -173,7 +173,7 @@ class TestUpdateOTU:
 
         run_update_otu_command(taxid, path=precached_repo.path)
 
-        otu = list(precached_repo.iter_otus())[0]
+        otu = precached_repo.get_all_otus()[0]
 
         assert set(otu.accessions) != pre_accession_set
 

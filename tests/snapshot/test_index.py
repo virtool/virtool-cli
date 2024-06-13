@@ -7,7 +7,7 @@ import pytest
 
 class TestSnapshotIndex:
     def test_otu_ids(self, scratch_repo):
-        true_otu_ids = [otu.id for otu in scratch_repo.iter_otus(ignore_cache=True)]
+        true_otu_ids = [otu.id for otu in scratch_repo.get_all_otus(ignore_cache=True)]
 
         assert scratch_repo._snapshotter.otu_ids
 
@@ -18,7 +18,7 @@ class TestSnapshotIndex:
 
     def test_taxids(self, scratch_repo):
         true_otu_taxids = [
-            otu.taxid for otu in scratch_repo.iter_otus(ignore_cache=True)
+            otu.taxid for otu in scratch_repo.get_all_otus(ignore_cache=True)
         ]
 
         assert scratch_repo._snapshotter.taxids
@@ -29,7 +29,9 @@ class TestSnapshotIndex:
             assert taxid in scratch_repo._snapshotter.index_by_taxid
 
     def test_names(self, scratch_repo):
-        true_otu_names = [otu.name for otu in scratch_repo.iter_otus(ignore_cache=True)]
+        true_otu_names = [
+            otu.name for otu in scratch_repo.get_all_otus(ignore_cache=True)
+        ]
 
         assert scratch_repo._snapshotter.taxids
 

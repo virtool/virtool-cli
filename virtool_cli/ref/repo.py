@@ -23,7 +23,6 @@ import arrow
 from orjson import orjson
 from structlog import get_logger
 
-from virtool_cli.ref.checking import Checker
 from virtool_cli.ref.events import (
     CreateIsolate,
     CreateIsolateData,
@@ -89,8 +88,7 @@ class EventSourcedRepo:
         # Take a new snapshot if no existing data is found.
         if not self._snapshotter.otu_ids:
             logger.debug("No snapshot data found. Building new snapshot...")
-            otus = list(self.iter_otus(ignore_cache=True))
-            self._snapshotter.snapshot(otus)
+            self.snapshot()
 
         logger.info("Finished loading repository", event_count=self.last_id)
 
@@ -188,10 +186,13 @@ class EventSourcedRepo:
         return otu_event_index
 
     def snapshot(self):
-        otus = [otu for otu in self._iter_otus(ignore_cache=True)]
-        self._snapshotter.snapshot(otus, indent=True)
+        """Create a snapshot using all the OTUs in the event store."""
+        self._snapshotter.snapshot(
+            self.get_all_otus(ignore_cache=True),
+            indent=True,
+        )
 
-    def _iter_otus(
+    def iter_otus(
         self, ignore_cache: bool = False
     ) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the repository."""
@@ -203,6 +204,20 @@ class EventSourcedRepo:
         for otu_id in event_index:
             otu = self.get_otu(otu_id, ignore_cache)
             yield otu
+
+    def get_all_otus(self, ignore_cache: bool = False) -> list[EventSourcedRepoOTU]:
+        """Retrieve all OTUs from the event store and return as a list."""
+        if ignore_cache:
+            event_index = self._get_event_index()
+        else:
+            event_index = self._event_index_cache.load_index()
+
+        otus = []
+        for otu_id in event_index:
+            if otu := self.get_otu(otu_id, ignore_cache):
+                otus.append(otu)
+
+        return otus
 
     def index_otus(self, ignore_cache: bool = False):
         """Index all OTUs"""
@@ -223,7 +238,7 @@ class EventSourcedRepo:
                         otu_index[otu_metadata["taxid"]] = otu_id
                 return otu_index
 
-        return {otu.taxid: otu.id for otu in self.iter_otus(ignore_cache=True)}
+        return {otu.taxid: otu.id for otu in self.get_all_otus(ignore_cache=True)}
 
     def create_otu(
         self,
