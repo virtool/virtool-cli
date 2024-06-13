@@ -17,7 +17,9 @@ class OTUSnapshot:
 
         self.path.mkdir(exist_ok=True)
 
-        self._metadata_path = self.path / "otu.json"
+        self._metadata_path = self.path / "metadata.json"
+
+        self._otu_path = self.path / "otu.json"
 
         self._toc_path = self.path / "toc.json"
 
@@ -30,10 +32,12 @@ class OTUSnapshot:
         self.path.mkdir()
         self._data_path.mkdir()
 
-    def cache(self, otu: "EventSourcedRepoOTU", options=None):
+    def cache(
+        self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
+    ):
         otu_dict = otu.dict(exclude_contents=True)
 
-        with open(self._metadata_path, "wb") as f:
+        with open(self._otu_path, "wb") as f:
             f.write(orjson.dumps(otu_dict, option=options))
 
         toc = {
@@ -91,7 +95,8 @@ class OTUSnapshot:
             f.write(orjson.dumps(sequence.dict(), option=options))
 
     def load(self) -> "EventSourcedRepoOTU":
-        with open(self._metadata_path, "rb") as f:
+        """Load an OTU from the snapshot."""
+        with open(self._otu_path, "rb") as f:
             otu_dict = orjson.loads(f.read())
 
         with open(self._toc_path, "rb") as f:
