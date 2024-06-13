@@ -372,6 +372,18 @@ class EventSourcedRepo:
             OTUQuery(otu_id=otu_id),
         )
 
+    def read_otu(self, otu_id: uuid.UUID) -> EventSourcedRepoOTU | None:
+        """Return an OTU corresponding to a UUID if found in snapshot, else None"""
+        logger.debug("Loading OTU from snapshot...", otu_id=str(otu_id))
+
+        return self._snapshotter.load_otu(otu_id)
+
+    def read_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
+        """Return an OTU corresponding to a Taxonomy ID if found in snapshot, else None"""
+        logger.debug("Loading OTU from snapshot...", taxid=taxid)
+
+        return self._snapshotter.load_otu_by_taxid(taxid)
+
     def get_otu(
         self, otu_id: uuid.UUID, ignore_cache: bool = False
     ) -> EventSourcedRepoOTU | None:
@@ -384,7 +396,7 @@ class EventSourcedRepo:
 
         return None
 
-    def get_otu_by_taxid(self, taxid) -> EventSourcedRepoOTU | None:
+    def get_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None"""
         otu_index = self.index_otus()
 
