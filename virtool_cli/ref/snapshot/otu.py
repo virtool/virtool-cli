@@ -3,12 +3,19 @@ from pathlib import Path
 from uuid import UUID
 
 from orjson import orjson
+from pydantic import BaseModel
 
 from virtool_cli.ref.resources import (
     EventSourcedRepoOTU,
     EventSourcedRepoSequence,
     EventSourcedRepoIsolate,
 )
+
+
+class OTUSnapshotMeta(BaseModel):
+    """Structures metadata about the OTU snapshot itself."""
+
+    at_event: int | None = None
 
 
 class OTUSnapshot:
@@ -21,16 +28,23 @@ class OTUSnapshot:
         self._data_path = self.path / "data"
         """The path of this snapshot's data directory."""
 
+        self._metadata_path = self.path / "metadata.json"
+        """The path of this snapshot's metadata file."""
+
         if not self.path.exists():
             self.path.mkdir()
 
         if not self._data_path.exists():
             self._data_path.mkdir()
 
-        self._metadata_path = self.path / "metadata.json"
-        """The path of this snapshot's metadata file."""
+        self._metadata = (
+            self._load_metadata() if self._metadata_path.exists() else OTUSnapshotMeta()
+        )
+        """The metadata for this snapshot."""
 
-        self.at_event = self._get_at_event()
+    @property
+    def at_event(self) -> int | None:
+        return self._metadata.at_event
 
     @property
     def _otu_path(self):
@@ -40,20 +54,17 @@ class OTUSnapshot:
     def _toc_path(self):
         return self.path / "toc.json"
 
-    def _get_at_event(self) -> int | None:
-        metadata_dict = self._read_metadata()
-        return metadata_dict.get("at_event")
-
-    def _read_metadata(self) -> dict:
+    def _load_metadata(self) -> OTUSnapshotMeta | None:
         if self._metadata_path.exists():
             with open(self._metadata_path, "rb") as f:
-                metadata_dict = orjson.loads(f.read())
+                metadata = OTUSnapshotMeta.model_validate_json(f.read())
 
-            return metadata_dict
+            return metadata
 
-        return {}
+        return None
 
     def clean(self):
+        """Delete and remake OTUSnapshot directory structure."""
         shutil.rmtree(self.path)
         self.path.mkdir()
         self._data_path.mkdir()
@@ -61,6 +72,7 @@ class OTUSnapshot:
     def cache(
         self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
     ):
+        """Cache an OTU at a given event."""
         otu_dict = otu.dict(exclude_contents=True)
 
         with open(self._otu_path, "wb") as f:
