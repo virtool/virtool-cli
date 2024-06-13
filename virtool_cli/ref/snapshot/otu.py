@@ -10,6 +10,12 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
     EventSourcedRepoIsolate,
 )
+from virtool_cli.ref.snapshot.model import (
+    OTUSnapshotOTU,
+    OTUSnapshotIsolate,
+    OTUSnapshotSequence,
+    OTUSnapshotToCIsolate,
+)
 
 
 class OTUSnapshotMeta(BaseModel):
@@ -138,17 +144,17 @@ class OTUSnapshot:
     def load(self) -> "EventSourcedRepoOTU":
         """Load an OTU from the snapshot."""
         with open(self._otu_path, "rb") as f:
-            otu_dict = orjson.loads(f.read())
+            otu_structure = OTUSnapshotOTU.model_validate_json(f.read())
 
         with open(self._toc_path, "rb") as f:
             toc = orjson.loads(f.read())
 
         isolates = []
         for key in toc:
-            isolate_id = UUID(toc[key]["id"])
+            isolate_entry = OTUSnapshotToCIsolate(**toc[key])
 
-            with open(self._data_path / f"{isolate_id}.json", "rb") as f:
-                isolate_dict = orjson.loads(f.read())
+            with open(self._data_path / f"{isolate_entry.id}.json", "rb") as f:
+                isolate_structure = OTUSnapshotIsolate.model_validate_json(f.read())
 
             sequences = []
 
@@ -156,20 +162,22 @@ class OTUSnapshot:
                 sequence_id = UUID(toc[key]["accessions"][accession])
 
                 with open(self._data_path / f"{sequence_id}.json", "rb") as f:
-                    sequence_dict = orjson.loads(f.read())
+                    sequence_structure = OTUSnapshotSequence.model_validate_json(
+                        f.read()
+                    )
 
-                sequence = EventSourcedRepoSequence(**sequence_dict)
+                sequence = EventSourcedRepoSequence(**sequence_structure.model_dump())
 
                 sequences.append(sequence)
 
-            isolate_dict["uuid"] = UUID(isolate_dict.pop("id"))
-            isolate_dict["sequences"] = sequences
+            isolate_dict = isolate_structure.model_dump()
+            isolate_dict["uuid"] = isolate_dict.pop("id")
 
-            isolate = EventSourcedRepoIsolate(**isolate_dict)
+            isolate = EventSourcedRepoIsolate(**isolate_dict, sequences=sequences)
 
             isolates.append(isolate)
 
-        otu_dict["uuid"] = UUID(otu_dict.pop("id"))
-        otu_dict["isolates"] = isolates
+        otu_dict = otu_structure.model_dump(by_alias=True)
+        otu_dict["uuid"] = otu_dict.pop("id")
 
-        return EventSourcedRepoOTU(**otu_dict)
+        return EventSourcedRepoOTU(**otu_dict, isolates=isolates)
