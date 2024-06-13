@@ -1,3 +1,4 @@
+from uuid import UUID
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -92,3 +93,11 @@ def extract_isolate_source(
         name=accessions[0].upper(),
         type=LegacySourceType.GENBANK,
     )
+
+
+def parse_uuid(raw: str) -> UUID | None:
+    """Returns UUID or None without erroring"""
+    try:
+        return UUID(raw)
+    except ValueError:
+        return None
