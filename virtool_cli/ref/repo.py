@@ -192,17 +192,10 @@ class EventSourcedRepo:
             indent=True,
         )
 
-    def iter_otus(
-        self, ignore_cache: bool = False
-    ) -> Generator[EventSourcedRepoOTU, None, None]:
-        """Iterate over the OTUs in the repository."""
-        if ignore_cache:
-            event_index = self._get_event_index()
-        else:
-            event_index = self._event_index_cache.load_index()
-
-        for otu_id in event_index:
-            otu = self.get_otu(otu_id, ignore_cache)
+    def iter_otus(self) -> Generator[EventSourcedRepoOTU, None, None]:
+        """Iterate over the OTUs in the snapshot."""
+        for otu_id in self._snapshotter.otu_ids:
+            otu = self._snapshotter.get_otu(otu_id)
             yield otu
 
     def get_all_otus(self, ignore_cache: bool = False) -> list[EventSourcedRepoOTU]:
