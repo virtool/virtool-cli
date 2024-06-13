@@ -15,6 +15,7 @@ from virtool_cli.ref.snapshot.model import (
     OTUSnapshotIsolate,
     OTUSnapshotSequence,
     OTUSnapshotToCIsolate,
+    toc_adapter,
 )
 
 
@@ -69,6 +70,38 @@ class OTUSnapshot:
 
         return None
 
+    def _write_metadata(self, indent) -> None:
+        with open(self._metadata_path, "w") as f:
+            f.write(self._metadata.model_dump_json(indent=indent))
+
+    def _load_toc(self):
+        with open(self._toc_path, "rb") as f:
+            toc_dict = orjson.loads(f.read())
+
+        return {key: OTUSnapshotToCIsolate(**toc_dict[key]) for key in toc_dict}
+
+    @staticmethod
+    def _create_toc(otu: "EventSourcedRepoOTU") -> dict[str, OTUSnapshotToCIsolate]:
+        toc = {
+            f"{isolate.name}": OTUSnapshotToCIsolate(
+                id=isolate.id,
+                accessions={
+                    accession: isolate.get_sequence_by_accession(accession).id
+                    for accession in sorted(isolate.accessions)
+                },
+            )
+            for isolate in otu.isolates
+        }
+        return toc
+
+    def _write_toc(self, toc: dict[str, OTUSnapshotToCIsolate], options):
+        with open(self._toc_path, "wb") as f:
+            f.write(
+                orjson.dumps(
+                    {key: toc[key].model_dump() for key in toc}, option=options
+                )
+            )
+
     def clean(self):
         """Delete and remake OTUSnapshot directory structure."""
         shutil.rmtree(self.path)
@@ -79,23 +112,14 @@ class OTUSnapshot:
         self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
     ):
         """Cache an OTU at a given event."""
+        self._metadata.at_event = at_event
+
         otu_dict = otu.dict(exclude_contents=True)
 
         with open(self._otu_path, "wb") as f:
             f.write(orjson.dumps(otu_dict, option=options))
 
-        toc = {
-            f"{isolate.name}": {
-                "id": isolate.id,
-                "accessions": {
-                    accession: isolate.get_sequence_by_accession(accession).id
-                    for accession in sorted(isolate.accessions)
-                },
-            }
-            for isolate in otu.isolates
-        }
-        with open(self._toc_path, "wb") as f:
-            f.write(orjson.dumps(toc, option=options))
+        self._write_toc(toc=self._create_toc(otu), options=options)
 
         for isolate in otu.isolates:
             with open(self._data_path / f"{isolate.id}.json", "wb") as f:
@@ -107,59 +131,61 @@ class OTUSnapshot:
                 with open(self._data_path / f"{sequence.id}.json", "wb") as f:
                     f.write(orjson.dumps(sequence.dict(), option=options))
 
-        with open(self._metadata_path, "wb") as f:
-            f.write(orjson.dumps({"at_event": at_event}, option=options))
+        self._write_metadata(indent=None)
 
-    def cache_isolate(self, isolate, options=None):
-        with open(self._toc_path, "rb") as f:
-            toc = orjson.loads(f.read())
-        toc[f"{isolate.name}"] = {
-            "id": isolate.id,
-            "accessions": {
+    def cache_isolate(self, isolate, at_event: int | None = None, options=None):
+        self._metadata.at_event = at_event
+
+        toc = self._load_toc()
+        toc[f"{isolate.name}"] = OTUSnapshotToCIsolate(
+            id=isolate.id,
+            accessions={
                 accession: isolate.get_sequence_by_accession(accession).id
                 for accession in sorted(isolate.accessions)
             },
-        }
-        with open(self._toc_path, "wb") as f:
-            f.write(orjson.dumps(toc, option=options))
+        )
+        self._write_toc(toc, options=options)
 
         with open(self._data_path / f"{isolate.id}.json", "wb") as f:
             f.write(orjson.dumps(isolate.dict(exclude_contents=True), option=options))
 
-    def cache_sequence(self, sequence, isolate_id: UUID, options=None):
-        with open(self._toc_path, "rb") as f:
-            toc = orjson.loads(f.read())
+        self._write_metadata(indent=None)
 
-        for isolate_name in toc:
-            if toc[isolate_name]["id"] == isolate_id:
-                toc[isolate_name]["accessions"].append(sequence.accession)
-                toc[isolate_name]["accessions"].sort()
+    def cache_sequence(
+        self, sequence, isolate_id: UUID, at_event: int | None = None, options=None
+    ):
+        self._metadata.at_event = at_event
 
-        with open(self._toc_path, "wb") as f:
-            f.write(orjson.dumps(toc, option=options))
+        toc = self._load_toc()
+        for key in toc:
+            if toc[key].id == isolate_id:
+                toc[key].accessions[sequence.accession] = sequence.id
+                break
+        self._write_toc(toc, options=options)
 
         with open(self._data_path / f"{sequence.id}.json", "wb") as f:
             f.write(orjson.dumps(sequence.dict(), option=options))
+
+        self._write_metadata(indent=None)
 
     def load(self) -> "EventSourcedRepoOTU":
         """Load an OTU from the snapshot."""
         with open(self._otu_path, "rb") as f:
             otu_structure = OTUSnapshotOTU.model_validate_json(f.read())
 
-        with open(self._toc_path, "rb") as f:
-            toc = orjson.loads(f.read())
+        toc = self._load_toc()
 
         isolates = []
         for key in toc:
-            isolate_entry = OTUSnapshotToCIsolate(**toc[key])
+            isolate_entry = toc[key]
 
             with open(self._data_path / f"{isolate_entry.id}.json", "rb") as f:
                 isolate_structure = OTUSnapshotIsolate.model_validate_json(f.read())
 
             sequences = []
 
-            for accession in toc[key]["accessions"]:
-                sequence_id = UUID(toc[key]["accessions"][accession])
+            for accession in toc[key].accessions:
+                sequence_id = toc[key].accessions[accession]
 
                 with open(self._data_path / f"{sequence_id}.json", "rb") as f:
                     sequence_structure = OTUSnapshotSequence.model_validate_json(

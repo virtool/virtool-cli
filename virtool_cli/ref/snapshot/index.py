@@ -184,22 +184,27 @@ class SnapshotIndex:
         return self.load_otu(otu_id)
 
     def cache_isolate(
-        self, otu_id: UUID, isolate: EventSourcedRepoIsolate, options=None
+        self,
+        otu_id: UUID,
+        isolate: EventSourcedRepoIsolate,
+        at_event: int | None = None,
+        options=None,
     ):
         """Cache a new isolate"""
         otu_snap = OTUSnapshot(self.path / f"{otu_id}")
-        otu_snap.cache_isolate(isolate, options)
+        otu_snap.cache_isolate(isolate, at_event, options)
 
     def cache_sequence(
         self,
         otu_id: UUID,
         isolate_id: UUID,
         sequence: EventSourcedRepoSequence,
+        at_event: int | None = None,
         options=None,
     ):
         """Cache a new sequence"""
         otu_snap = OTUSnapshot(self.path / f"{otu_id}")
-        otu_snap.cache_sequence(sequence, isolate_id, options)
+        otu_snap.cache_sequence(sequence, isolate_id, at_event, options)
 
     def _build_index(self) -> dict:
         """Build a new index from the contents of the snapshot cache directory"""

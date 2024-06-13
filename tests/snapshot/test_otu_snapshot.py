@@ -1,17 +1,16 @@
 import shutil
-from typing import List, Dict
 from uuid import UUID
 
 import orjson
 import pytest
 from pydantic import TypeAdapter, ValidationError
-from syrupy import SnapshotAssertion
 
 from virtool_cli.ref.snapshot.otu import OTUSnapshot
 from virtool_cli.ref.snapshot.model import (
     OTUSnapshotOTU,
     OTUSnapshotIsolate,
     OTUSnapshotToCIsolate,
+    toc_adapter,
 )
 
 
@@ -97,8 +96,6 @@ class TestOTUSnapshot:
 
         with open((otu_snapshot_path / "toc.json"), "rb") as f:
             toc_dict = orjson.loads(f.read())
-
-        toc_adapter = TypeAdapter(Dict[str, OTUSnapshotToCIsolate])
 
         try:
             toc_adapter.validate_python(toc_dict)

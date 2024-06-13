@@ -1,6 +1,13 @@
-from typing import Annotated
+from typing import Annotated, Dict
 
-from pydantic import BaseModel, Field, UUID4, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    TypeAdapter,
+    UUID4,
+    ValidationError,
+    field_validator,
+)
 
 from virtool_cli.utils.models import Molecule
 from virtool_cli.ref.utils import IsolateName, IsolateNameType
@@ -74,4 +81,7 @@ class OTUSnapshotOTU(BaseModel):
 
 class OTUSnapshotToCIsolate(BaseModel):
     id: UUID4
-    accessions: dict
+    accessions: dict[str, UUID4]
+
+
+toc_adapter = TypeAdapter(Dict[str, OTUSnapshotToCIsolate])

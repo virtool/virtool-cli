@@ -277,7 +277,7 @@ class EventSourcedRepo:
 
         otu = self.get_otu(otu_id)
 
-        self._snapshotter.cache_otu(otu)
+        self._snapshotter.cache_otu(otu, at_event=self.last_id)
 
         return otu
 
@@ -313,7 +313,7 @@ class EventSourcedRepo:
             sequences=[],
         )
 
-        self._snapshotter.cache_isolate(otu_id, isolate)
+        self._snapshotter.cache_isolate(otu_id, isolate, at_event=self.last_id)
 
         return isolate
 
@@ -362,7 +362,9 @@ class EventSourcedRepo:
             sequence=sequence,
         )
 
-        self._snapshotter.cache_sequence(otu_id, isolate_id, sequence)
+        self._snapshotter.cache_sequence(
+            otu_id, isolate_id, sequence, at_event=self.last_id
+        )
 
         return sequence
 
