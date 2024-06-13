@@ -124,13 +124,18 @@ class SnapshotIndex:
         shutil.rmtree(self.path)
         self.path.mkdir(exist_ok=True)
 
-    def snapshot(self, otus: list[EventSourcedRepoOTU], indent: bool = False):
+    def snapshot(
+        self,
+        otus: list[EventSourcedRepoOTU],
+        at_event: int | None = None,
+        indent: bool = False,
+    ):
         """Take a new snapshot"""
         options = orjson.OPT_INDENT_2 if indent else None
 
         _index = {}
         for otu in otus:
-            self.cache_otu(otu, options=options)
+            self.cache_otu(otu, at_event=at_event, options=options)
             metadata = OTUMetadata(
                 id=otu.id,
                 taxid=otu.taxid,
@@ -148,11 +153,13 @@ class SnapshotIndex:
         for otu_id in self.otu_ids:
             yield self.load_otu(otu_id)
 
-    def cache_otu(self, otu: "EventSourcedRepoOTU", options=None):
+    def cache_otu(
+        self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
+    ):
         """Snapshots a single OTU"""
         logger.debug(f"Writing a snapshot for {otu.taxid}...")
         otu_snap = OTUSnapshot(self.path / f"{otu.id}")
-        otu_snap.cache(otu, options)
+        otu_snap.cache(otu, at_event, options)
 
         self._index[otu.id] = OTUMetadata.from_otu(otu)
         self._cache_index()

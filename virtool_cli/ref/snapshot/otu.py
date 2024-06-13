@@ -12,20 +12,46 @@ from virtool_cli.ref.resources import (
 
 
 class OTUSnapshot:
+    """Manages snapshot data for a single OTU."""
+
     def __init__(self, path: Path):
         self.path = path
-
-        self.path.mkdir(exist_ok=True)
-
-        self._metadata_path = self.path / "metadata.json"
-
-        self._otu_path = self.path / "otu.json"
-
-        self._toc_path = self.path / "toc.json"
+        """The path of this snapshot's directory."""
 
         self._data_path = self.path / "data"
+        """The path of this snapshot's data directory."""
 
-        self._data_path.mkdir(exist_ok=True)
+        if not self.path.exists():
+            self.path.mkdir()
+
+        if not self._data_path.exists():
+            self._data_path.mkdir()
+
+        self._metadata_path = self.path / "metadata.json"
+        """The path of this snapshot's metadata file."""
+
+        self.at_event = self._get_at_event()
+
+    @property
+    def _otu_path(self):
+        return self.path / "otu.json"
+
+    @property
+    def _toc_path(self):
+        return self.path / "toc.json"
+
+    def _get_at_event(self) -> int | None:
+        metadata_dict = self._read_metadata()
+        return metadata_dict.get("at_event")
+
+    def _read_metadata(self) -> dict:
+        if self._metadata_path.exists():
+            with open(self._metadata_path, "rb") as f:
+                metadata_dict = orjson.loads(f.read())
+
+            return metadata_dict
+
+        return {}
 
     def clean(self):
         shutil.rmtree(self.path)
@@ -62,6 +88,9 @@ class OTUSnapshot:
             for sequence in isolate.sequences:
                 with open(self._data_path / f"{sequence.id}.json", "wb") as f:
                     f.write(orjson.dumps(sequence.dict(), option=options))
+
+        with open(self._metadata_path, "wb") as f:
+            f.write(orjson.dumps({"at_event": at_event}, option=options))
 
     def cache_isolate(self, isolate, options=None):
         with open(self._toc_path, "rb") as f:

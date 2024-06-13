@@ -189,6 +189,7 @@ class EventSourcedRepo:
         """Create a snapshot using all the OTUs in the event store."""
         self._snapshotter.snapshot(
             self.get_all_otus(ignore_cache=True),
+            at_event=self.last_id,
             indent=True,
         )
 
