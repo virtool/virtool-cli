@@ -413,10 +413,16 @@ class NCBIClient:
         logger = base_logger.bind(query=name)
         try:
             with log_http_error():
-                record = Entrez.read(Entrez.espell(db=db, term=quote_plus(name)))
+                handle = Entrez.espell(db=db, term=quote_plus(name))
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
             logger.error("Your request was likely refused by NCBI.")
+            return None
+
+        try:
+            record = Entrez.read(handle)
+        except RuntimeError as e:
+            logger.error(f"Server error ({e})")
             return None
 
         if "CorrectedQuery" in record:
