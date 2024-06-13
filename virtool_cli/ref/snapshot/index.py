@@ -21,7 +21,7 @@ logger = get_logger()
 
 
 @dataclass
-class OTUMetadata:
+class OTUKeys:
     id: UUID
 
     taxid: int
@@ -34,7 +34,7 @@ class OTUMetadata:
 
     @classmethod
     def from_otu(cls, otu: EventSourcedRepoOTU):
-        return OTUMetadata(
+        return OTUKeys(
             id=otu.id,
             taxid=otu.taxid,
             name=otu.name,
@@ -60,10 +60,14 @@ class OTUMetadata:
 
 
 class SnapshotIndex:
+    """Manages OTUSnapshot loading and caching, and maintains an index of the contents."""
+
     def __init__(self, path: Path):
         self.path = path
 
         self._meta_path = self.path / "meta.json"
+        """The path to the reconstructed Repo metadata."""
+
         self._index_path = self.path / "index.json"
 
         if (_index := self._load_index()) is None:
@@ -136,7 +140,7 @@ class SnapshotIndex:
         _index = {}
         for otu in otus:
             self.cache_otu(otu, at_event=at_event, options=options)
-            metadata = OTUMetadata(
+            metadata = OTUKeys(
                 id=otu.id,
                 taxid=otu.taxid,
                 name=otu.name,
@@ -161,7 +165,7 @@ class SnapshotIndex:
         otu_snap = OTUSnapshot(self.path / f"{otu.id}")
         otu_snap.cache(otu, at_event, options)
 
-        self._index[otu.id] = OTUMetadata.from_otu(otu)
+        self._index[otu.id] = OTUKeys.from_otu(otu)
         self._cache_index()
 
     def load_otu(self, otu_id: UUID) -> EventSourcedRepoOTU | None:
@@ -174,7 +178,7 @@ class SnapshotIndex:
         return otu_snap.load()
 
     def load_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
-        """Takes a Taxonomy ID and returns an OTU from the most recent snapshot"""
+        """Takes a Taxonomy ID and returns an OTU from the most recent snapshot."""
         otu_id = self.index_by_taxid[taxid]
 
         return self.load_otu(otu_id)
@@ -210,7 +214,7 @@ class SnapshotIndex:
             otu = self.load_otu(otu_id)
             if otu is None:
                 raise FileNotFoundError("OTU not found")
-            index[otu.id] = OTUMetadata(
+            index[otu.id] = OTUKeys(
                 id=otu.id,
                 taxid=otu.taxid,
                 name=otu.name,
@@ -247,14 +251,14 @@ class SnapshotIndex:
                 )
                 continue
 
-            _index[otu_id] = OTUMetadata(**index_dict[key])
+            _index[otu_id] = OTUKeys(**index_dict[key])
 
         logger.debug("Loaded Snapshot index", loaded_index=index_dict)
 
         return _index
 
     def _update_index(self):
-        """Update the index"""
+        """Update the index."""
         filename_index = set(str(otu_id) for otu_id in self._index)
 
         for subpath in self.path.iterdir():
@@ -268,4 +272,4 @@ class SnapshotIndex:
 
             unindexed_otu = self.load_otu(unlisted_otu_id)
 
-            self._index[unindexed_otu.id] = OTUMetadata.from_otu(unindexed_otu)
+            self._index[unindexed_otu.id] = OTUKeys.from_otu(unindexed_otu)
