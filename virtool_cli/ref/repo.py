@@ -49,6 +49,7 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
     RepoMeta,
 )
+from virtool_cli.ref.snapshot.index import SnapshotIndex
 from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
 from virtool_cli.utils.models import Molecule
 from virtool_cli.ref.utils import DataType, IsolateName, pad_zeroes
@@ -66,15 +67,30 @@ class EventSourcedRepo:
 
         logger.info("Loading repository")
 
-        self._event_store = EventStore(self.path / "src")
-
-        self.checker = Checker(self)
-
         self.cache_path = self.path / ".cache"
+        """The path to the cache subdirectory."""
+
+        self._event_store = EventStore(self.path / "src")
+        """The event store of the event sourced repository."""
+
+        self._snapshot_path = path / ".cache/snapshot"
+        """The path to the snapshot cache subdirectory."""
 
         self._event_index_cache = EventIndexCache(self.cache_path / "event_index")
+        """The event index cache of the event sourced repository."""
 
-        self._otu_metadata_by_taxid = {}
+        self._snapshotter = (
+            SnapshotIndex.new(path=self._snapshot_path, metadata=self.meta)
+            if self._snapshot_path.exists()
+            else SnapshotIndex.new(path=self._snapshot_path, metadata=self.meta)
+        )
+        """The snapshot index. Maintains and caches the read model of the Repo."""
+
+        # Take a new snapshot if no existing data is found.
+        if not self._snapshotter.otu_ids:
+            logger.debug("No snapshot data found. Building new snapshot...")
+            otus = list(self.iter_otus(ignore_cache=True))
+            self._snapshotter.snapshot(otus)
 
         logger.info("Finished loading repository", event_count=self.last_id)
 
@@ -135,6 +151,19 @@ class EventSourcedRepo:
         """The path to the repo src directory."""
         return self._event_store.path
 
+    @property
+    def otu_ids(self) -> set:
+        """Extant OTU ids in the read model"""
+        return self._snapshotter.otu_ids
+
+    @property
+    def index_by_id(self) -> dict[uuid.UUID, int]:
+        return self._snapshotter.index_by_id
+
+    @property
+    def index_by_taxid(self) -> dict[int, uuid.UUID]:
+        return self._snapshotter.index_by_taxid
+
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
         """Get the current event index from the event store,
         binned and indexed by OTU Id."""
@@ -158,7 +187,11 @@ class EventSourcedRepo:
 
         return otu_event_index
 
-    def iter_otus(
+    def snapshot(self):
+        otus = [otu for otu in self._iter_otus(ignore_cache=True)]
+        self._snapshotter.snapshot(otus, indent=True)
+
+    def _iter_otus(
         self, ignore_cache: bool = False
     ) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the repository."""
@@ -202,12 +235,14 @@ class EventSourcedRepo:
         taxid: int,
     ):
         """Create an OTU."""
-        if taxid in self.index_otus():
+        if taxid in self._snapshotter.taxids:
             raise ValueError(
-                f"OTU already exists as {self.index_otus()[taxid]}",
+                f"OTU already exists as {self._snapshotter.index_by_taxid[taxid]}",
             )
-        self.checker.check_otu_name_exists(name)
-        self.checker.check_legacy_id_exists(legacy_id)
+        if name in self._snapshotter.index_by_name:
+            raise ValueError(f"An OTU with the name '{name}' already exists")
+        if legacy_id in self._snapshotter.index_by_legacy_id:
+            raise ValueError(f"An OTU with the legacy ID '{legacy_id}' already exists")
 
         otu_logger = logger.bind(taxid=taxid, name=name, legacy_id=legacy_id)
         otu_logger.info(f"Creating new OTU for Taxonomy ID {taxid}...")
@@ -231,7 +266,11 @@ class EventSourcedRepo:
 
         otu_logger.debug("OTU written", event_id=event.id, otu_id=str(otu_id))
 
-        return self.get_otu(otu_id)
+        otu = self.get_otu(otu_id)
+
+        self._snapshotter.cache_otu(otu)
+
+        return otu
 
     def create_isolate(
         self,
@@ -258,12 +297,16 @@ class EventSourcedRepo:
             name=str(name),
         )
 
-        return EventSourcedRepoIsolate(
+        isolate = EventSourcedRepoIsolate(
             uuid=isolate_id,
             legacy_id=legacy_id,
             name=name,
             sequences=[],
         )
+
+        self._snapshotter.cache_isolate(otu_id, isolate)
+
+        return isolate
 
     def create_sequence(
         self,
@@ -301,7 +344,7 @@ class EventSourcedRepo:
             accession=accession,
         )
 
-        return EventSourcedRepoSequence(
+        sequence = EventSourcedRepoSequence(
             id=sequence_id,
             accession=accession,
             definition=definition,
@@ -309,6 +352,10 @@ class EventSourcedRepo:
             segment=segment,
             sequence=sequence,
         )
+
+        self._snapshotter.cache_sequence(otu_id, isolate_id, sequence)
+
+        return sequence
 
     def exclude_accession(self, otu_id: uuid.UUID, accession: str):
         """Exclude an accession for an OTU.
