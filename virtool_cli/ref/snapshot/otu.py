@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 from uuid import UUID
 
-from orjson import orjson
 from pydantic import BaseModel
 
 from virtool_cli.ref.resources import (
@@ -64,6 +63,42 @@ class OTUSnapshotToC:
             f.write(toc_adapter.dump_json(data, indent=indent))
 
 
+class OTUSnapshotDataStore:
+    """Stores and retrieves OTU data in snapshot models."""
+
+    def __init__(self, path: Path):
+        self.path = path
+
+        if not self.path.exists():
+            self.path.mkdir()
+
+    @property
+    def contents(self):
+        return list(self.path.glob("*.json"))
+
+    def clean(self):
+        shutil.rmtree(self.path)
+        self.path.mkdir()
+
+    def load_isolate(self, isolate_id: UUID) -> OTUSnapshotIsolate:
+        with open(self.path / f"{isolate_id}.json", "rb") as f:
+            return OTUSnapshotIsolate.model_validate_json(f.read())
+
+    def cache_isolate(self, isolate: EventSourcedRepoIsolate):
+        validated_isolate = OTUSnapshotIsolate(**isolate.dict(exclude_contents=True))
+        with open(self.path / f"{isolate.id}.json", "w") as f:
+            f.write(validated_isolate.model_dump_json())
+
+    def load_sequence(self, sequence_id: UUID) -> OTUSnapshotSequence:
+        with open(self.path / f"{sequence_id}.json", "rb") as f:
+            return OTUSnapshotSequence.model_validate_json(f.read())
+
+    def cache_sequence(self, sequence: EventSourcedRepoSequence):
+        validated_sequence = OTUSnapshotSequence(**sequence.dict())
+        with open(self.path / f"{sequence.id}.json", "w") as f:
+            f.write(validated_sequence.model_dump_json())
+
+
 class OTUSnapshot:
     """Manages snapshot data for a single OTU."""
 
@@ -71,19 +106,16 @@ class OTUSnapshot:
         self.path = path
         """The path of this snapshot's directory."""
 
-        self._data_path = self.path / "data"
-        """The path of this snapshot's data directory."""
-
-        self._metadata_path = self.path / "metadata.json"
-        """The path of this snapshot's metadata file."""
-
-        self._toc = OTUSnapshotToC(self.path / "toc.json")
-
         if not self.path.exists():
             self.path.mkdir()
 
-        if not self._data_path.exists():
-            self._data_path.mkdir()
+        self._data = OTUSnapshotDataStore(self.path / "data")
+        """The data store of this snapshot. Holds isolate and sequence data."""
+
+        self._toc = OTUSnapshotToC(self.path / "toc.json")
+
+        self._metadata_path = self.path / "metadata.json"
+        """The path of this snapshot's metadata file."""
 
         self._metadata = (
             self._load_metadata() if self._metadata_path.exists() else OTUSnapshotMeta()
@@ -106,7 +138,7 @@ class OTUSnapshot:
         """Delete and remake OTUSnapshot directory structure."""
         shutil.rmtree(self.path)
         self.path.mkdir()
-        self._data_path.mkdir()
+        self._data.clean()
 
     def cache(
         self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
@@ -114,24 +146,22 @@ class OTUSnapshot:
         """Cache an OTU at a given event."""
         self._metadata.at_event = at_event
 
-        otu_dict = otu.dict(exclude_contents=True)
+        self._cache_otu(otu)
 
-        with open(self._otu_path, "wb") as f:
-            f.write(orjson.dumps(otu_dict, option=options))
+        for isolate in otu.isolates:
+            self._data.cache_isolate(isolate)
+
+            for sequence in isolate.sequences:
+                self._data.cache_sequence(sequence)
 
         self._toc.write(data=OTUSnapshotToC.generate_from_otu(otu))
 
-        for isolate in otu.isolates:
-            with open(self._data_path / f"{isolate.id}.json", "wb") as f:
-                f.write(
-                    orjson.dumps(isolate.dict(exclude_contents=True), option=options)
-                )
-
-            for sequence in isolate.sequences:
-                with open(self._data_path / f"{sequence.id}.json", "wb") as f:
-                    f.write(orjson.dumps(sequence.dict(), option=options))
-
         self._write_metadata(indent=None)
+
+    def _cache_otu(self, otu: EventSourcedRepoOTU):
+        validated_otu = OTUSnapshotOTU(**otu.dict(exclude_contents=True))
+        with open(self._otu_path, "w") as f:
+            f.write(validated_otu.model_dump_json())
 
     def cache_isolate(self, isolate, at_event: int | None = None, options=None):
         self._metadata.at_event = at_event
@@ -146,8 +176,7 @@ class OTUSnapshot:
         )
         self._toc.write(data=toc)
 
-        with open(self._data_path / f"{isolate.id}.json", "wb") as f:
-            f.write(orjson.dumps(isolate.dict(exclude_contents=True), option=options))
+        self._data.cache_isolate(isolate)
 
         self._write_metadata(indent=None)
 
@@ -158,15 +187,13 @@ class OTUSnapshot:
         self._metadata.at_event = at_event
 
         toc = self._toc.load()
-
         for key in toc:
             if toc[key].id == isolate_id:
                 toc[key].accessions[sequence.accession] = sequence.id
                 break
         self._toc.write(toc)
 
-        with open(self._data_path / f"{sequence.id}.json", "wb") as f:
-            f.write(orjson.dumps(sequence.dict(), option=options))
+        self._data.cache_sequence(sequence)
 
         self._write_metadata(indent=None)
 
@@ -181,18 +208,13 @@ class OTUSnapshot:
         for key in toc:
             isolate_entry = toc[key]
 
-            with open(self._data_path / f"{isolate_entry.id}.json", "rb") as f:
-                isolate_structure = OTUSnapshotIsolate.model_validate_json(f.read())
+            isolate_structure = self._data.load_isolate(isolate_entry.id)
 
             sequences = []
 
             for accession in toc[key].accessions:
                 sequence_id = toc[key].accessions[accession]
-
-                with open(self._data_path / f"{sequence_id}.json", "rb") as f:
-                    sequence_structure = OTUSnapshotSequence.model_validate_json(
-                        f.read()
-                    )
+                sequence_structure = self._data.load_sequence(sequence_id)
 
                 sequence = EventSourcedRepoSequence(**sequence_structure.model_dump())
 
