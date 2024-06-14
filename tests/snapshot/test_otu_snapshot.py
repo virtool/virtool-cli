@@ -3,15 +3,10 @@ from uuid import UUID
 
 import orjson
 import pytest
-from pydantic import TypeAdapter, ValidationError
+from pydantic import ValidationError
 
 from virtool_cli.ref.snapshot.otu import OTUSnapshot
-from virtool_cli.ref.snapshot.model import (
-    OTUSnapshotOTU,
-    OTUSnapshotIsolate,
-    OTUSnapshotToCIsolate,
-    toc_adapter,
-)
+from virtool_cli.ref.snapshot.model import OTUSnapshotOTU, toc_adapter
 
 
 @pytest.fixture()
@@ -90,7 +85,7 @@ class TestOTUSnapshot:
 
         assert otu_model.taxid == taxid
 
-    def test_toc(self, taxid: int, snapshotted_scratch, snapshot):
+    def test_toc(self, taxid: int, snapshotted_scratch):
         otu_id = snapshotted_scratch.index_by_taxid[taxid]
         otu_snapshot_path = snapshotted_scratch.cache_path / f"snapshot/{otu_id}"
 
