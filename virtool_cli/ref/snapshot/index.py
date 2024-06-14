@@ -183,7 +183,7 @@ class SnapshotIndex:
 
         return self.load_otu(otu_id)
 
-    def cache_isolate(
+    def cache_isolate_to_otu(
         self,
         otu_id: UUID,
         isolate: EventSourcedRepoIsolate,
@@ -194,7 +194,7 @@ class SnapshotIndex:
         otu_snap = OTUSnapshot(self.path / f"{otu_id}")
         otu_snap.cache_isolate(isolate, at_event, options)
 
-    def cache_sequence(
+    def cache_sequence_to_otu(
         self,
         otu_id: UUID,
         isolate_id: UUID,

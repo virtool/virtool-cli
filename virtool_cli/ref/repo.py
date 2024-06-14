@@ -313,7 +313,7 @@ class EventSourcedRepo:
             sequences=[],
         )
 
-        self._snapshotter.cache_isolate(otu_id, isolate, at_event=self.last_id)
+        self._snapshotter.cache_isolate_to_otu(otu_id, isolate, at_event=self.last_id)
 
         return isolate
 
@@ -362,7 +362,7 @@ class EventSourcedRepo:
             sequence=sequence,
         )
 
-        self._snapshotter.cache_sequence(
+        self._snapshotter.cache_sequence_to_otu(
             otu_id, isolate_id, sequence, at_event=self.last_id
         )
 
