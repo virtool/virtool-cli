@@ -5,7 +5,6 @@ from pydantic import (
     Field,
     TypeAdapter,
     UUID4,
-    ValidationError,
     field_validator,
 )
 
@@ -50,8 +49,8 @@ class OTUSnapshotIsolate(BaseModel):
 
     @field_validator("name", mode="before")
     @classmethod
-    def create_source(cls, raw: dict) -> IsolateName:
-        """Create a source object from the feature table."""
+    def convert_isolate_name(cls, raw: dict) -> IsolateName:
+        """Takes a dictionary and converts to IsolateName."""
         return IsolateName(type=IsolateNameType(raw["type"]), value=raw["value"])
 
 
