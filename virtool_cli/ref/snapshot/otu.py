@@ -23,6 +23,45 @@ class OTUSnapshotMeta(BaseModel):
     """Structures metadata about the OTU snapshot itself."""
 
     at_event: int | None = None
+    """The event ID of the last change made to this snapshot."""
+
+
+class OTUSnapshotToC:
+    """Manages the building and loading of the table of contents."""
+
+    def __init__(self, path: Path):
+        self.path: Path = path
+        """The path to the table of contents."""
+
+    @staticmethod
+    def generate_from_otu(
+        otu: "EventSourcedRepoOTU",
+    ) -> dict[str, OTUSnapshotToCIsolate]:
+        """Return a new table of contents from an OTU."""
+        toc = {
+            f"{isolate.name}": OTUSnapshotToCIsolate(
+                id=isolate.id,
+                accessions={
+                    accession: isolate.get_sequence_by_accession(accession).id
+                    for accession in sorted(isolate.accessions)
+                },
+            )
+            for isolate in otu.isolates
+        }
+        return toc
+
+    def load(self) -> dict[str, OTUSnapshotToCIsolate] | None:
+        """Load a table of contents from file."""
+        if not self.path.exists():
+            return None
+
+        with open(self.path, "rb") as f:
+            return toc_adapter.validate_json(f.read())
+
+    def write(self, data: dict[str, OTUSnapshotToCIsolate], indent: int | None = None):
+        """Write a table of contents to file."""
+        with open(self.path, "wb") as f:
+            f.write(toc_adapter.dump_json(data, indent=indent))
 
 
 class OTUSnapshot:
@@ -37,6 +76,8 @@ class OTUSnapshot:
 
         self._metadata_path = self.path / "metadata.json"
         """The path of this snapshot's metadata file."""
+
+        self._toc = OTUSnapshotToC(self.path / "toc.json")
 
         if not self.path.exists():
             self.path.mkdir()
@@ -61,47 +102,6 @@ class OTUSnapshot:
     def _toc_path(self):
         return self.path / "toc.json"
 
-    def _load_metadata(self) -> OTUSnapshotMeta | None:
-        if self._metadata_path.exists():
-            with open(self._metadata_path, "rb") as f:
-                metadata = OTUSnapshotMeta.model_validate_json(f.read())
-
-            return metadata
-
-        return None
-
-    def _write_metadata(self, indent) -> None:
-        with open(self._metadata_path, "w") as f:
-            f.write(self._metadata.model_dump_json(indent=indent))
-
-    def _load_toc(self):
-        with open(self._toc_path, "rb") as f:
-            toc_dict = orjson.loads(f.read())
-
-        return {key: OTUSnapshotToCIsolate(**toc_dict[key]) for key in toc_dict}
-
-    @staticmethod
-    def _create_toc(otu: "EventSourcedRepoOTU") -> dict[str, OTUSnapshotToCIsolate]:
-        toc = {
-            f"{isolate.name}": OTUSnapshotToCIsolate(
-                id=isolate.id,
-                accessions={
-                    accession: isolate.get_sequence_by_accession(accession).id
-                    for accession in sorted(isolate.accessions)
-                },
-            )
-            for isolate in otu.isolates
-        }
-        return toc
-
-    def _write_toc(self, toc: dict[str, OTUSnapshotToCIsolate], options):
-        with open(self._toc_path, "wb") as f:
-            f.write(
-                orjson.dumps(
-                    {key: toc[key].model_dump() for key in toc}, option=options
-                )
-            )
-
     def clean(self):
         """Delete and remake OTUSnapshot directory structure."""
         shutil.rmtree(self.path)
@@ -119,7 +119,7 @@ class OTUSnapshot:
         with open(self._otu_path, "wb") as f:
             f.write(orjson.dumps(otu_dict, option=options))
 
-        self._write_toc(toc=self._create_toc(otu), options=options)
+        self._toc.write(data=OTUSnapshotToC.generate_from_otu(otu))
 
         for isolate in otu.isolates:
             with open(self._data_path / f"{isolate.id}.json", "wb") as f:
@@ -136,7 +136,7 @@ class OTUSnapshot:
     def cache_isolate(self, isolate, at_event: int | None = None, options=None):
         self._metadata.at_event = at_event
 
-        toc = self._load_toc()
+        toc = self._toc.load()
         toc[f"{isolate.name}"] = OTUSnapshotToCIsolate(
             id=isolate.id,
             accessions={
@@ -144,7 +144,7 @@ class OTUSnapshot:
                 for accession in sorted(isolate.accessions)
             },
         )
-        self._write_toc(toc, options=options)
+        self._toc.write(data=toc)
 
         with open(self._data_path / f"{isolate.id}.json", "wb") as f:
             f.write(orjson.dumps(isolate.dict(exclude_contents=True), option=options))
@@ -154,14 +154,16 @@ class OTUSnapshot:
     def cache_sequence(
         self, sequence, isolate_id: UUID, at_event: int | None = None, options=None
     ):
+        """Add a new sequence to the Snapshot."""
         self._metadata.at_event = at_event
 
-        toc = self._load_toc()
+        toc = self._toc.load()
+
         for key in toc:
             if toc[key].id == isolate_id:
                 toc[key].accessions[sequence.accession] = sequence.id
                 break
-        self._write_toc(toc, options=options)
+        self._toc.write(toc)
 
         with open(self._data_path / f"{sequence.id}.json", "wb") as f:
             f.write(orjson.dumps(sequence.dict(), option=options))
@@ -173,7 +175,7 @@ class OTUSnapshot:
         with open(self._otu_path, "rb") as f:
             otu_structure = OTUSnapshotOTU.model_validate_json(f.read())
 
-        toc = self._load_toc()
+        toc = self._toc.load()
 
         isolates = []
         for key in toc:
@@ -207,3 +209,16 @@ class OTUSnapshot:
         otu_dict["uuid"] = otu_dict.pop("id")
 
         return EventSourcedRepoOTU(**otu_dict, isolates=isolates)
+
+    def _write_metadata(self, indent) -> None:
+        with open(self._metadata_path, "w") as f:
+            f.write(self._metadata.model_dump_json(indent=indent))
+
+    def _load_metadata(self) -> OTUSnapshotMeta | None:
+        if self._metadata_path.exists():
+            with open(self._metadata_path, "rb") as f:
+                metadata = OTUSnapshotMeta.model_validate_json(f.read())
+
+            return metadata
+
+        return None
