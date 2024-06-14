@@ -1,7 +1,8 @@
-from uuid import UUID
 from dataclasses import dataclass
 from enum import StrEnum
+import re
 from pathlib import Path
+from uuid import UUID
 
 import orjson
 
@@ -45,6 +46,9 @@ class IsolateNameType(StrEnum):
         return self.value
 
 
+isolate_name_pattern = re.compile(r"IsolateName\(type=(\w+), value=[\'\"](.+)[\'\"]\)")
+
+
 @dataclass(frozen=True)
 class IsolateName:
     """Represents a sub-species categorization name for sequences.
@@ -57,6 +61,16 @@ class IsolateName:
 
     value: str
     """The name of this subcategory"""
+
+    @classmethod
+    def from_dict(cls, raw: dict):
+        return IsolateName(type=IsolateNameType(raw["type"]), value=raw["value"])
+
+    @classmethod
+    def from_string(cls, raw: str):
+        parts = re.match(isolate_name_pattern, raw).groups()
+
+        return IsolateName(type=IsolateNameType(parts[0]), value=parts[1])
 
 
 def extract_isolate_source(
