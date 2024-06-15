@@ -92,9 +92,6 @@ class EventSourcedRepo:
         with open(path / ".gitignore", "w") as f:
             f.write(".cache\n")
 
-        src_path = path / "src"
-        src_path.mkdir()
-
         shutil.copytree(
             Path(__file__).parent.parent.parent / "assets/github",
             path / ".github",
@@ -104,9 +101,8 @@ class EventSourcedRepo:
 
         repo_id = uuid.uuid4()
 
-        _write_event(
-            src_path,
-            1,
+        _src = EventStore(path / "src")
+        _src.write_event(
             CreateRepo,
             CreateRepoData(
                 id=repo_id,
@@ -546,6 +542,8 @@ class EventStore:
 
     def __init__(self, path: Path):
         self.path = path
+        if not self.path.exists():
+            path.mkdir()
 
         self.last_id = 0
         for event_id in self.event_ids:
@@ -570,7 +568,7 @@ class EventStore:
         for path in sorted(self.path.glob("*.json"), reverse=reverse):
             if path.stem == "meta":
                 continue
-            yield _read_event_at_path(path)
+            yield EventStore._read_event_at_path(path)
 
     def iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
         """Iterates through events in the src directory using the index id.
@@ -589,7 +587,9 @@ class EventStore:
             yield self.read_event(event_index)
 
     def read_event(self, event_id: int) -> Event:
-        return _read_event_at_path(self.path / f"{pad_zeroes(event_id)}.json")
+        return EventStore._read_event_at_path(
+            self.path / f"{pad_zeroes(event_id)}.json"
+        )
 
     def write_event(
         self,
@@ -618,6 +618,25 @@ class EventStore:
         self.last_id = event_id
 
         return event
+
+    @staticmethod
+    def _read_event_at_path(path: Path) -> Event:
+        with open(path, "rb") as f:
+            loaded = orjson.loads(f.read())
+
+            match loaded["type"]:
+                case "CreateRepo":
+                    return CreateRepo(**loaded)
+                case "CreateOTU":
+                    return CreateOTU(**loaded)
+                case "CreateIsolate":
+                    return CreateIsolate(**loaded)
+                case "CreateSequence":
+                    return CreateSequence(**loaded)
+                case "ExcludeAccession":
+                    return ExcludeAccession(**loaded)
+
+            raise ValueError(f"Unknown event type: {loaded['type']}")
 
 
 def _write_event(
