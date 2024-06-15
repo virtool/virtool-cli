@@ -19,10 +19,8 @@ def create_otu(
     """Initialize a new OTU from a Taxonomy ID."""
     logger = base_logger.bind(taxid=taxid)
 
-    otu_index = repo.index_otus()
-
-    if taxid in otu_index:
-        otu = repo.get_otu(otu_index[taxid])
+    if taxid in repo.index_by_taxid:
+        otu = repo.get_otu_by_taxid(taxid)
 
         logger.error(
             f"Taxonomy ID {taxid} has already been added to this reference.",

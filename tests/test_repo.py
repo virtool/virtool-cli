@@ -410,10 +410,11 @@ class TestRetrieveOTU:
         assert otu.accessions == {"TMVABC", "TMVABCB"}
 
     def test_get_blocked_accessions(self, initialized_repo: EventSourcedRepo):
-        otu_id = initialized_repo.index_otus()[12242]
-        isolate_b = initialized_repo.create_isolate(otu_id, None, "B", "isolate")
+        otu = initialized_repo.get_otu_by_taxid(12242)
+
+        isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
         initialized_repo.create_sequence(
-            otu_id,
+            otu.id,
             isolate_b.id,
             "TMVABCB",
             "TMV",
@@ -422,10 +423,10 @@ class TestRetrieveOTU:
             "ACGTGGAGAGACC",
         )
 
-        initialized_repo.exclude_accession(otu_id, "GROK")
-        initialized_repo.exclude_accession(otu_id, "TOK")
+        initialized_repo.exclude_accession(otu.id, "GROK")
+        initialized_repo.exclude_accession(otu.id, "TOK")
 
-        otu = initialized_repo.get_otu(otu_id)
+        otu = initialized_repo.get_otu(otu.id)
 
         assert otu.blocked_accessions == {"TMVABC", "TMVABCB", "GROK", "TOK"}
 

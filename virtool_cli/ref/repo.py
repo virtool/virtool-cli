@@ -213,27 +213,6 @@ class EventSourcedRepo:
 
         return otus
 
-    def index_otus(self, ignore_cache: bool = False):
-        """Index all OTUs"""
-        if not ignore_cache:
-            otu_ids = self._event_index_cache.list_otu_ids()
-            if otu_ids:
-                otu_index = {}
-                for otu_id in otu_ids:
-                    try:
-                        otu_metadata = self._get_otu_metadata(
-                            self._event_index_cache.load_otu_events(otu_id).events
-                        )
-                    except ValueError as e:
-                        logger.error(f"Indexing Error: {e}", otu_id=otu_id)
-                        break
-
-                    if otu_metadata:
-                        otu_index[otu_metadata["taxid"]] = otu_id
-                return otu_index
-
-        return {otu.taxid: otu.id for otu in self.get_all_otus(ignore_cache=True)}
-
     def create_otu(
         self,
         acronym: str,
@@ -409,10 +388,8 @@ class EventSourcedRepo:
 
     def get_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None"""
-        otu_index = self.index_otus()
-
-        if taxid in otu_index:
-            otu = self.get_otu(otu_index[taxid])
+        if (otu_id := self.index_by_taxid[taxid]) is not None:
+            otu = self.get_otu(otu_id)
             return otu
 
         return None
