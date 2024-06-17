@@ -3,10 +3,8 @@ from uuid import UUID
 
 import orjson
 import pytest
-from pydantic import ValidationError
 
 from virtool_cli.ref.snapshot.otu import OTUSnapshot
-from virtool_cli.ref.snapshot.model import OTUSnapshotOTU, toc_adapter
 
 
 @pytest.fixture()
@@ -23,31 +21,21 @@ def snapshotted_scratch(scratch_repo):
     shutil.rmtree(scratch_repo.cache_path / "snapshot")
 
 
-def is_accession_in_toc(accession: str, toc: dict) -> bool:
-    for key in toc:
-        isolate = toc[key]
-        if accession in isolate["accessions"]:
-            return True
-
-    return False
-
-
 @pytest.mark.parametrize("taxid", [438782, 1441799, 430059])
 class TestOTUSnapshot:
     def test_snapshot_direct(self, taxid: int, scratch_repo, empty_otu_snapshot_path):
+        """Test that OTUSnapshot can build a snapshot directly from a floating OTU."""
+
         otu = scratch_repo.get_otu_by_taxid(taxid)
 
         otu_snapshotter = OTUSnapshot(empty_otu_snapshot_path)
 
-        otu_snapshotter.cache(otu, options=None)
+        otu_snapshotter.cache(otu, indent=None)
 
         assert otu_snapshotter.at_event is None
 
-        assert (otu_snapshotter.path / "otu.json").exists()
-
-        assert (otu_snapshotter.path / "toc.json").exists()
-
-        assert (otu_snapshotter.path / "metadata.json").exists()
+        for filestem in ("otu", "toc", "metadata"):
+            assert otu_snapshotter.path / f"{filestem}.json"
 
         data_dir = otu_snapshotter.path / "data"
 
@@ -59,7 +47,9 @@ class TestOTUSnapshot:
 
         assert isolate_ids.issubset(data_set)
 
-    def test_snapshot_from_index(self, taxid: int, scratch_repo):
+    def test_snapshot_metadata(self, taxid: int, scratch_repo):
+        """Test that EventSourcedRepo's snapshot function produces proper OTU metadata (at_event)."""
+
         scratch_repo.snapshot()
 
         otu_id = scratch_repo.index_by_taxid[taxid]
@@ -74,30 +64,42 @@ class TestOTUSnapshot:
 
         assert type(metadata_dict["at_event"]) is int
 
-    def test_otu_data(self, taxid: int, snapshotted_scratch):
+    def test_load(self, taxid: int, snapshotted_scratch):
+        """Test OTUSnapshot.load()"""
+
+        rehydrated_otu = snapshotted_scratch.get_otu_by_taxid(taxid)
+
+        assert rehydrated_otu
+
         otu_id = snapshotted_scratch.index_by_taxid[taxid]
-        otu_snapshot_path = snapshotted_scratch.cache_path / f"snapshot/{otu_id}"
 
-        with open((otu_snapshot_path / "otu.json"), "rb") as f:
-            otu_model = OTUSnapshotOTU.model_validate_json(f.read())
+        otu_snapshotter = OTUSnapshot(
+            path=snapshotted_scratch.cache_path / f"snapshot/{otu_id}"
+        )
 
-        assert otu_model.id == otu_id
+        snapshot_otu = otu_snapshotter.load()
 
-        assert otu_model.taxid == taxid
+        assert snapshot_otu
+
+        assert rehydrated_otu.accessions == snapshot_otu.accessions
 
     def test_toc(self, taxid: int, snapshotted_scratch):
-        otu_id = snapshotted_scratch.index_by_taxid[taxid]
-        otu_snapshot_path = snapshotted_scratch.cache_path / f"snapshot/{otu_id}"
+        """Test that the table of contents is written correctly."""
 
-        with open((otu_snapshot_path / "toc.json"), "rb") as f:
+        rehydrated_otu = snapshotted_scratch.get_otu_by_taxid(taxid)
+
+        otu_id = snapshotted_scratch.index_by_taxid[taxid]
+        otu_snapshotter = OTUSnapshot(
+            path=snapshotted_scratch.cache_path / f"snapshot/{otu_id}"
+        )
+
+        with open((otu_snapshotter.path / "toc.json"), "rb") as f:
             toc_dict = orjson.loads(f.read())
 
-        try:
-            toc_adapter.validate_python(toc_dict)
-        except ValidationError as e:
-            print(e)
+        for isolate in rehydrated_otu.isolates:
+            key = str(isolate.name)
 
-        rehydrated_otu = snapshotted_scratch.get_otu(otu_id)
+            assert key in toc_dict
 
-        for accession in rehydrated_otu.accessions:
-            assert is_accession_in_toc(accession, toc_dict)
+            for accession in isolate.accessions:
+                assert accession in toc_dict[key]["accessions"]
