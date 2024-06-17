@@ -13,7 +13,7 @@ from virtool_cli.ref.utils import IsolateName, IsolateNameType
 
 
 class OTUSnapshotSequence(BaseModel):
-    """Represents a sequence in a Virtool reference repository."""
+    """Stores and parses sequence data."""
 
     id: UUID4
     """The sequence id."""
@@ -38,6 +38,8 @@ class OTUSnapshotSequence(BaseModel):
 
 
 class OTUSnapshotIsolate(BaseModel):
+    """Stores and parses isolate data."""
+
     id: UUID4
     """The isolate ID."""
 
@@ -55,6 +57,8 @@ class OTUSnapshotIsolate(BaseModel):
 
 
 class OTUSnapshotOTU(BaseModel):
+    """Stores and parses OTU data."""
+
     id: UUID4
     """The OTU id."""
 
@@ -79,8 +83,13 @@ class OTUSnapshotOTU(BaseModel):
 
 
 class OTUSnapshotToCIsolate(BaseModel):
+    """Stores a table of contents for an isolate."""
+
     id: UUID4
+    """The isolate id."""
+
     accessions: dict[str, UUID4]
+    """A mapping of accessions to sequence ids."""
 
 
 toc_adapter = TypeAdapter(Dict[str, OTUSnapshotToCIsolate])
