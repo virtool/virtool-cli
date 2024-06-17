@@ -40,12 +40,8 @@ class OTUSnapshotToC:
 
         toc = {}
         for isolate in otu.isolates:
-            toc[f"{isolate.name}"] = OTUSnapshotToCIsolate(
-                id=isolate.id,
-                accessions={
-                    accession: isolate.get_sequence_by_accession(accession).id
-                    for accession in sorted(isolate.accessions)
-                },
+            toc[f"{isolate.name}"] = OTUSnapshotToC._generate_table_from_isolate(
+                isolate
             )
 
         return toc
@@ -84,14 +80,22 @@ class OTUSnapshotToC:
         """Add a new isolate to the table of contents."""
 
         toc = self.load()
-        toc[f"{isolate.name}"] = OTUSnapshotToCIsolate(
+        toc[f"{isolate.name}"] = self._generate_table_from_isolate(isolate)
+        self.write(data=toc, indent=indent)
+
+    @staticmethod
+    def _generate_table_from_isolate(
+        isolate: EventSourcedRepoIsolate,
+    ) -> OTUSnapshotToCIsolate:
+        """Take an isolate and return a table of contents listing for it."""
+
+        return OTUSnapshotToCIsolate(
             id=isolate.id,
             accessions={
                 accession: isolate.get_sequence_by_accession(accession).id
                 for accession in sorted(isolate.accessions)
             },
         )
-        self.write(data=toc, indent=indent)
 
 
 class OTUSnapshotDataStore:
