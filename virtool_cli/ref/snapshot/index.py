@@ -22,6 +22,8 @@ logger = get_logger()
 
 @dataclass
 class OTUKeys:
+    """Stores indexable data about OTUs."""
+
     id: UUID
 
     taxid: int
@@ -64,19 +66,22 @@ class SnapshotIndex:
 
     def __init__(self, path: Path):
         self.path = path
+        """The path to the snapshot root directory."""
 
         self._meta_path = self.path / "meta.json"
         """The path to the reconstructed Repo metadata."""
 
         self._index_path = self.path / "index.json"
+        """The path to the index data."""
 
-        if (_index := self._load_index()) is None:
-            self._index = self._build_index()
-        else:
-            self._index = _index
+        _index = self._load_index()
+
+        self._index = _index if _index is not None else self._build_index()
+        """The index data of this snapshot index."""
 
     @classmethod
     def new(cls, path: Path, metadata: RepoMeta):
+        """Create a new snapshot index."""
         path.mkdir(exist_ok=True)
 
         with open(path / "meta.json", "wb") as f:
@@ -86,24 +91,28 @@ class SnapshotIndex:
 
     @property
     def index_by_id(self) -> dict[UUID, int]:
+        """A mapping of OTU id to Taxonomy IDs."""
         self._update_index()
 
         return {otu_id: self._index[otu_id].taxid for otu_id in self._index}
 
     @property
     def index_by_taxid(self) -> dict[int, UUID]:
+        """A mapping of Taxonomy ID to OTU id."""
         self._update_index()
 
         return {self._index[otu_id].taxid: otu_id for otu_id in self._index}
 
     @property
     def index_by_name(self) -> dict[str, UUID]:
+        """A mapping of OTU organism name to OTU Id"""
         self._update_index()
 
         return {self._index[otu_id].name: otu_id for otu_id in self._index}
 
     @property
     def index_by_legacy_id(self) -> dict[str, UUID]:
+        """A mapping of legacy Virtool id to OTU UUID"""
         self._update_index()
 
         index_by_legacy_id = {}
@@ -115,12 +124,16 @@ class SnapshotIndex:
 
     @property
     def otu_ids(self) -> set[UUID]:
+        """A list of OTU ids of snapshots."""
         self._update_index()
 
         return set(self._index.keys())
 
     @property
     def taxids(self) -> set[int]:
+        """A list of Taxonomy IDs of snapshots."""
+        self._update_index()
+
         return set(self.index_by_taxid.keys())
 
     def clean(self):
@@ -188,11 +201,11 @@ class SnapshotIndex:
         otu_id: UUID,
         isolate: EventSourcedRepoIsolate,
         at_event: int | None = None,
-        options=None,
+        indent: int | None = None,
     ):
         """Cache a new isolate"""
         otu_snap = OTUSnapshot(self.path / f"{otu_id}")
-        otu_snap.cache_isolate(isolate, at_event, options)
+        otu_snap.cache_isolate(isolate, at_event, indent)
 
     def cache_sequence_to_otu(
         self,
@@ -200,11 +213,16 @@ class SnapshotIndex:
         isolate_id: UUID,
         sequence: EventSourcedRepoSequence,
         at_event: int | None = None,
-        options=None,
+        indent: int | None = None,
     ):
         """Cache a new sequence"""
         otu_snap = OTUSnapshot(self.path / f"{otu_id}")
-        otu_snap.cache_sequence(sequence, isolate_id, at_event, options)
+        otu_snap.cache_sequence(
+            sequence,
+            isolate_id,
+            at_event=at_event,
+            indent=indent,
+        )
 
     def _build_index(self) -> dict:
         """Build a new index from the contents of the snapshot cache directory"""

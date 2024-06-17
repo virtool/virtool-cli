@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from virtool_cli.ref.resources import (
     EventSourcedRepoOTU,
@@ -37,20 +37,22 @@ class OTUSnapshotToC:
         otu: "EventSourcedRepoOTU",
     ) -> dict[str, OTUSnapshotToCIsolate]:
         """Return a new table of contents from an OTU."""
-        toc = {
-            f"{isolate.name}": OTUSnapshotToCIsolate(
+
+        toc = {}
+        for isolate in otu.isolates:
+            toc[f"{isolate.name}"] = OTUSnapshotToCIsolate(
                 id=isolate.id,
                 accessions={
                     accession: isolate.get_sequence_by_accession(accession).id
                     for accession in sorted(isolate.accessions)
                 },
             )
-            for isolate in otu.isolates
-        }
+
         return toc
 
     def load(self) -> dict[str, OTUSnapshotToCIsolate] | None:
         """Load a table of contents from file."""
+
         if not self.path.exists():
             return None
 
@@ -59,60 +61,109 @@ class OTUSnapshotToC:
 
     def write(self, data: dict[str, OTUSnapshotToCIsolate], indent: int | None = None):
         """Write a table of contents to file."""
+
         with open(self.path, "wb") as f:
             f.write(toc_adapter.dump_json(data, indent=indent))
+
+    def add_sequence(
+        self,
+        sequence: EventSourcedRepoSequence,
+        isolate_id: UUID,
+        indent: int | None = None,
+    ):
+        """Add a new sequence to the table of contents"""
+
+        toc = self.load()
+        for key in toc:
+            if toc[key].id == isolate_id:
+                toc[key].accessions[sequence.accession] = sequence.id
+                break
+        self.write(toc, indent=indent)
+
+    def add_isolate(self, isolate: EventSourcedRepoIsolate, indent: int | None = None):
+        """Add a new isolate to the table of contents."""
+
+        toc = self.load()
+        toc[f"{isolate.name}"] = OTUSnapshotToCIsolate(
+            id=isolate.id,
+            accessions={
+                accession: isolate.get_sequence_by_accession(accession).id
+                for accession in sorted(isolate.accessions)
+            },
+        )
+        self.write(data=toc, indent=indent)
 
 
 class OTUSnapshotDataStore:
     """Stores and retrieves OTU data in snapshot models."""
 
     def __init__(self, path: Path):
-        self.path = path
+        if not path.exists():
+            path.mkdir()
 
-        if not self.path.exists():
-            self.path.mkdir()
+        self.path = path
+        """The path to the snapshot's data store directory."""
 
     @property
     def contents(self):
+        """A list of the data store's contents."""
+
         return list(self.path.glob("*.json"))
 
     def clean(self):
+        """Delete and remake the data store directory."""
+
         shutil.rmtree(self.path)
         self.path.mkdir()
 
     def load_isolate(self, isolate_id: UUID) -> OTUSnapshotIsolate:
+        """Load and parse an isolate from the data store."""
+
         with open(self.path / f"{isolate_id}.json", "rb") as f:
             return OTUSnapshotIsolate.model_validate_json(f.read())
 
-    def cache_isolate(self, isolate: EventSourcedRepoIsolate):
+    def cache_isolate(
+        self, isolate: EventSourcedRepoIsolate, indent: int | None = None
+    ):
+        """Serialize and cache an isolate to the data store."""
+
         validated_isolate = OTUSnapshotIsolate(**isolate.dict(exclude_contents=True))
         with open(self.path / f"{isolate.id}.json", "w") as f:
-            f.write(validated_isolate.model_dump_json())
+            f.write(validated_isolate.model_dump_json(indent=indent))
 
     def load_sequence(self, sequence_id: UUID) -> OTUSnapshotSequence:
+        """Load and parse a sequence from the data store."""
+
         with open(self.path / f"{sequence_id}.json", "rb") as f:
+            """Serialize and cache a sequence to the data store."""
+
             return OTUSnapshotSequence.model_validate_json(f.read())
 
-    def cache_sequence(self, sequence: EventSourcedRepoSequence):
+    def cache_sequence(
+        self, sequence: EventSourcedRepoSequence, indent: int | None = None
+    ):
+        """Serialize and cache a sequence to the data store."""
+
         validated_sequence = OTUSnapshotSequence(**sequence.dict())
         with open(self.path / f"{sequence.id}.json", "w") as f:
-            f.write(validated_sequence.model_dump_json())
+            f.write(validated_sequence.model_dump_json(indent=indent))
 
 
 class OTUSnapshot:
     """Manages snapshot data for a single OTU."""
 
     def __init__(self, path: Path):
+        if not path.exists():
+            path.mkdir()
+
         self.path = path
         """The path of this snapshot's directory."""
-
-        if not self.path.exists():
-            self.path.mkdir()
 
         self._data = OTUSnapshotDataStore(self.path / "data")
         """The data store of this snapshot. Holds isolate and sequence data."""
 
         self._toc = OTUSnapshotToC(self.path / "toc.json")
+        """The path to this snapshot's table of contents."""
 
         self._metadata_path = self.path / "metadata.json"
         """The path of this snapshot's metadata file."""
@@ -124,26 +175,37 @@ class OTUSnapshot:
 
     @property
     def at_event(self) -> int | None:
+        """The event at which the snapshot was created."""
+
         return self._metadata.at_event
 
     @property
     def _otu_path(self):
+        """The path to the OTU's taxonomy data."""
+
         return self.path / "otu.json"
 
     @property
     def _toc_path(self):
+        """The path to the OTU's table of contents."""
+
         return self.path / "toc.json"
 
     def clean(self):
         """Delete and remake OTUSnapshot directory structure."""
+
         shutil.rmtree(self.path)
         self.path.mkdir()
         self._data.clean()
 
     def cache(
-        self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
+        self,
+        otu: "EventSourcedRepoOTU",
+        at_event: int | None = None,
+        indent: int | None = None,
     ):
         """Cache an OTU at a given event."""
+
         self._metadata.at_event = at_event
 
         self._cache_otu(otu)
@@ -154,51 +216,53 @@ class OTUSnapshot:
             for sequence in isolate.sequences:
                 self._data.cache_sequence(sequence)
 
-        self._toc.write(data=OTUSnapshotToC.generate_from_otu(otu))
+        self._toc.write(data=OTUSnapshotToC.generate_from_otu(otu), indent=indent)
 
         self._write_metadata(indent=None)
 
-    def _cache_otu(self, otu: EventSourcedRepoOTU):
+    def _cache_otu(self, otu: EventSourcedRepoOTU, indent: int | None = None):
+        """Cache OTU data to file."""
+
         validated_otu = OTUSnapshotOTU(**otu.dict(exclude_contents=True))
         with open(self._otu_path, "w") as f:
-            f.write(validated_otu.model_dump_json())
+            f.write(validated_otu.model_dump_json(indent=indent))
 
-    def cache_isolate(self, isolate, at_event: int | None = None, options=None):
+    def cache_isolate(
+        self,
+        isolate: EventSourcedRepoIsolate,
+        at_event: int | None = None,
+        indent: int | None = None,
+    ):
+        """Cache isolate data to file."""
+
         self._metadata.at_event = at_event
 
-        toc = self._toc.load()
-        toc[f"{isolate.name}"] = OTUSnapshotToCIsolate(
-            id=isolate.id,
-            accessions={
-                accession: isolate.get_sequence_by_accession(accession).id
-                for accession in sorted(isolate.accessions)
-            },
-        )
-        self._toc.write(data=toc)
+        self._toc.add_isolate(isolate, indent)
 
-        self._data.cache_isolate(isolate)
+        self._data.cache_isolate(isolate, indent)
 
         self._write_metadata(indent=None)
 
     def cache_sequence(
-        self, sequence, isolate_id: UUID, at_event: int | None = None, options=None
+        self,
+        sequence: EventSourcedRepoSequence,
+        isolate_id: UUID,
+        at_event: int | None = None,
+        indent: int | None = None,
     ):
         """Add a new sequence to the Snapshot."""
+
         self._metadata.at_event = at_event
 
-        toc = self._toc.load()
-        for key in toc:
-            if toc[key].id == isolate_id:
-                toc[key].accessions[sequence.accession] = sequence.id
-                break
-        self._toc.write(toc)
+        self._toc.add_sequence(sequence, isolate_id, indent)
 
-        self._data.cache_sequence(sequence)
+        self._data.cache_sequence(sequence, indent)
 
         self._write_metadata(indent=None)
 
     def load(self) -> "EventSourcedRepoOTU":
         """Load an OTU from the snapshot."""
+
         with open(self._otu_path, "rb") as f:
             otu_structure = OTUSnapshotOTU.model_validate_json(f.read())
 
@@ -232,15 +296,17 @@ class OTUSnapshot:
 
         return EventSourcedRepoOTU(**otu_dict, isolates=isolates)
 
-    def _write_metadata(self, indent) -> None:
+    def _write_metadata(self, indent: int | None = None) -> None:
+        """Write the snapshot's metadata to file."""
+
         with open(self._metadata_path, "w") as f:
             f.write(self._metadata.model_dump_json(indent=indent))
 
     def _load_metadata(self) -> OTUSnapshotMeta | None:
-        if self._metadata_path.exists():
+        """Load the snapshot's metadata from file."""
+
+        try:
             with open(self._metadata_path, "rb") as f:
-                metadata = OTUSnapshotMeta.model_validate_json(f.read())
-
-            return metadata
-
-        return None
+                return OTUSnapshotMeta.model_validate_json(f.read())
+        except (FileNotFoundError, ValidationError):
+            return None
