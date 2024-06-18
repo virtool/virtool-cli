@@ -260,7 +260,7 @@ class SnapshotIndex:
             f.write(orjson.dumps(dict_index))
 
     def _load_index(self) -> dict | None:
-        """Serialize the index"""
+        """Load the index from file."""
         try:
             with open(self._index_path, "rb") as f:
                 index_dict = orjson.loads(f.read())
@@ -285,7 +285,8 @@ class SnapshotIndex:
         return _index
 
     def _update_index(self):
-        """Update the index."""
+        """Update the index in memory."""
+
         filename_index = {str(otu_id) for otu_id in self._index}
 
         for subpath in self.path.iterdir():
@@ -302,6 +303,7 @@ class SnapshotIndex:
             self._index[unindexed_otu.id] = OTUKeys.from_otu(unindexed_otu)
 
     def _get_accession_index(self):
+        """Return a mapping of all accessions in the snapshot to their parent OTU id."""
         accession_dict = {}
         for otu in self.iter_otus():
             for accession in otu.accessions:
