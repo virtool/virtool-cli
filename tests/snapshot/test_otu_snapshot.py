@@ -41,9 +41,9 @@ class TestOTUSnapshot:
 
         assert data_dir.exists()
 
-        data_set = set(UUID(data_path.stem) for data_path in data_dir.glob("*.json"))
+        data_set = {UUID(data_path.stem) for data_path in data_dir.glob("*.json")}
 
-        isolate_ids = set(isolate.id for isolate in otu.isolates)
+        isolate_ids = {isolate.id for isolate in otu.isolates}
 
         assert isolate_ids.issubset(data_set)
 

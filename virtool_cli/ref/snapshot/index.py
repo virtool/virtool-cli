@@ -227,9 +227,9 @@ class SnapshotIndex:
             indent=indent,
         )
 
-    def _build_index(self) -> dict:
+    def _build_index(self) -> dict[UUID, OTUKeys]:
         """Build a new index from the contents of the snapshot cache directory"""
-        index = dict()
+        index = {}
 
         for subpath in self.path.iterdir():
             try:
@@ -285,7 +285,7 @@ class SnapshotIndex:
 
     def _update_index(self):
         """Update the index."""
-        filename_index = set(str(otu_id) for otu_id in self._index)
+        filename_index = {str(otu_id) for otu_id in self._index}
 
         for subpath in self.path.iterdir():
             if not subpath.is_dir() or subpath.stem in filename_index:
