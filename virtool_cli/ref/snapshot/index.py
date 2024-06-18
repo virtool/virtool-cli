@@ -4,7 +4,6 @@ import shutil
 from uuid import UUID
 from collections.abc import Generator
 
-from bidict import bidict
 import orjson
 from structlog import get_logger
 
