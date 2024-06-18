@@ -61,7 +61,8 @@ class OTUKeys:
 
 
 class SnapshotIndex:
-    """Manages OTUSnapshot loading and caching, and maintains an index of the contents."""
+    """Manages OTUSnapshot loading and caching,
+    and maintains an index of the contents."""
 
     def __init__(self, path: Path):
         self.path = path

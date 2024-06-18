@@ -133,8 +133,6 @@ class OTUSnapshotDataStore:
         """Load and parse a sequence from the data store."""
 
         with open(self.path / f"{sequence_id}.json", "rb") as f:
-            """Serialize and cache a sequence to the data store."""
-
             return OTUSnapshotSequence.model_validate_json(f.read())
 
     def cache_sequence(
