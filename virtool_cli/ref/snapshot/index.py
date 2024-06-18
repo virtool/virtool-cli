@@ -90,7 +90,7 @@ class SnapshotIndex:
         return SnapshotIndex(path)
 
     @property
-    def index_by_id(self) -> dict[UUID, int]:
+    def id_to_taxid(self) -> dict[UUID, int]:
         """A mapping of OTU id to Taxonomy IDs."""
         self._update_index()
 

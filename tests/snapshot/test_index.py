@@ -14,7 +14,7 @@ class TestSnapshotIndex:
         assert len(true_otu_ids) == len(scratch_repo._snapshotter.otu_ids)
 
         for otu_id in true_otu_ids:
-            assert otu_id in scratch_repo._snapshotter.index_by_id
+            assert otu_id in scratch_repo._snapshotter.id_to_taxid
 
     def test_taxids(self, scratch_repo):
         true_otu_taxids = [

@@ -156,7 +156,7 @@ class EventSourcedRepo:
 
     @property
     def index_by_id(self) -> dict[uuid.UUID, int]:
-        return self._snapshotter.index_by_id
+        return self._snapshotter.id_to_taxid
 
     @property
     def index_by_taxid(self) -> dict[int, uuid.UUID]:
