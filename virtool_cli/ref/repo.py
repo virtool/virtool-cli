@@ -79,7 +79,7 @@ class EventSourcedRepo:
         """The event index cache of the event sourced repository."""
 
         self._snapshotter = (
-            SnapshotIndex.new(path=self._snapshot_path, metadata=self.meta)
+            SnapshotIndex(path=self._snapshot_path)
             if self._snapshot_path.exists()
             else SnapshotIndex.new(path=self._snapshot_path, metadata=self.meta)
         )
