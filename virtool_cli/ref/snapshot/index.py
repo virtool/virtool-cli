@@ -135,6 +135,10 @@ class SnapshotIndex:
 
         return set(self.index_by_taxid.keys())
 
+    @property
+    def accessions(self) -> set[str]:
+        return set(self._get_accession_index().keys())
+
     def clean(self):
         """Remove and remake snapshot cache directory"""
         shutil.rmtree(self.path)
@@ -295,3 +299,11 @@ class SnapshotIndex:
             unindexed_otu = self.load_otu(unlisted_otu_id)
 
             self._index[unindexed_otu.id] = OTUKeys.from_otu(unindexed_otu)
+
+    def _get_accession_index(self):
+        accession_dict = {}
+        for otu in self.iter_otus():
+            for accession in otu.accessions:
+                accession_dict[accession] = otu.id
+
+        return accession_dict
