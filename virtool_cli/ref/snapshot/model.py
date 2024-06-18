@@ -12,6 +12,13 @@ from virtool_cli.utils.models import Molecule
 from virtool_cli.ref.utils import IsolateName, IsolateNameType
 
 
+class OTUSnapshotMeta(BaseModel):
+    """Structures metadata about the OTU snapshot itself."""
+
+    at_event: int | None = None
+    """The event ID of the last change made to this snapshot."""
+
+
 class OTUSnapshotSequence(BaseModel):
     """Stores and parses sequence data."""
 

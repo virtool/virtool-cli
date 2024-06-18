@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 from uuid import UUID
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from virtool_cli.ref.resources import (
     EventSourcedRepoOTU,
@@ -15,14 +15,8 @@ from virtool_cli.ref.snapshot.model import (
     OTUSnapshotSequence,
     OTUSnapshotToCIsolate,
     toc_adapter,
+    OTUSnapshotMeta,
 )
-
-
-class OTUSnapshotMeta(BaseModel):
-    """Structures metadata about the OTU snapshot itself."""
-
-    at_event: int | None = None
-    """The event ID of the last change made to this snapshot."""
 
 
 class OTUSnapshotToC:
