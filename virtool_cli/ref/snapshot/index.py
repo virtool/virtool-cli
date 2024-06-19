@@ -7,12 +7,7 @@ from collections.abc import Generator
 import orjson
 from structlog import get_logger
 
-from virtool_cli.ref.resources import (
-    RepoMeta,
-    EventSourcedRepoOTU,
-    EventSourcedRepoIsolate,
-    EventSourcedRepoSequence,
-)
+from virtool_cli.ref.resources import RepoMeta, EventSourcedRepoOTU
 from virtool_cli.ref.snapshot.otu import OTUSnapshot
 
 
@@ -199,34 +194,6 @@ class SnapshotIndex:
         otu_id = self.index_by_taxid[taxid]
 
         return self.load_otu(otu_id)
-
-    def cache_isolate_to_otu(
-        self,
-        otu_id: UUID,
-        isolate: EventSourcedRepoIsolate,
-        at_event: int | None = None,
-        indent: int | None = None,
-    ):
-        """Cache a new isolate"""
-        otu_snap = OTUSnapshot(self.path / f"{otu_id}")
-        otu_snap.cache_isolate(isolate, at_event, indent)
-
-    def cache_sequence_to_otu(
-        self,
-        otu_id: UUID,
-        isolate_id: UUID,
-        sequence: EventSourcedRepoSequence,
-        at_event: int | None = None,
-        indent: int | None = None,
-    ):
-        """Cache a new sequence"""
-        otu_snap = OTUSnapshot(self.path / f"{otu_id}")
-        otu_snap.cache_sequence(
-            sequence,
-            isolate_id,
-            at_event=at_event,
-            indent=indent,
-        )
 
     def _build_index(self) -> dict[UUID, OTUKeys]:
         """Build a new index from the contents of the snapshot cache directory"""

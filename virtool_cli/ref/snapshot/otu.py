@@ -204,7 +204,9 @@ class OTUSnapshot:
 
         self._metadata.at_event = at_event
 
-        self._cache_otu(otu)
+        validated_otu = OTUSnapshotOTU(**otu.dict(exclude_contents=True))
+        with open(self._otu_path, "w") as f:
+            f.write(validated_otu.model_dump_json(indent=indent))
 
         for isolate in otu.isolates:
             self._data.cache_isolate(isolate)
@@ -213,46 +215,6 @@ class OTUSnapshot:
                 self._data.cache_sequence(sequence)
 
         self._toc.write(data=OTUSnapshotToC.generate_from_otu(otu), indent=indent)
-
-        self._write_metadata(indent=None)
-
-    def _cache_otu(self, otu: EventSourcedRepoOTU, indent: int | None = None):
-        """Cache OTU data to file."""
-
-        validated_otu = OTUSnapshotOTU(**otu.dict(exclude_contents=True))
-        with open(self._otu_path, "w") as f:
-            f.write(validated_otu.model_dump_json(indent=indent))
-
-    def cache_isolate(
-        self,
-        isolate: EventSourcedRepoIsolate,
-        at_event: int | None = None,
-        indent: int | None = None,
-    ):
-        """Cache isolate data to file."""
-
-        self._metadata.at_event = at_event
-
-        self._toc.add_isolate(isolate, indent)
-
-        self._data.cache_isolate(isolate, indent)
-
-        self._write_metadata(indent=None)
-
-    def cache_sequence(
-        self,
-        sequence: EventSourcedRepoSequence,
-        isolate_id: UUID,
-        at_event: int | None = None,
-        indent: int | None = None,
-    ):
-        """Add a new sequence to the Snapshot."""
-
-        self._metadata.at_event = at_event
-
-        self._toc.add_sequence(sequence, isolate_id, indent)
-
-        self._data.cache_sequence(sequence, indent)
 
         self._write_metadata(indent=None)
 
