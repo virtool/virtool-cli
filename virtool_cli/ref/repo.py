@@ -405,10 +405,12 @@ class EventSourcedRepo:
 
         return None
 
-    def get_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
+    def get_otu_by_taxid(
+        self, taxid: int, ignore_cache: bool = False
+    ) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None"""
         if (otu_id := self._snapshotter.index_by_taxid.get(taxid)) is not None:
-            otu = self.get_otu(otu_id)
+            otu = self.get_otu(otu_id, ignore_cache=ignore_cache)
             return otu
 
         return None
