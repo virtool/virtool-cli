@@ -266,11 +266,19 @@ class EventSourcedRepo:
         legacy_id: str | None,
         source_name: str,
         source_type: str,
-    ):
-        """TODO: Protect from isolate overwrites"""
-        isolate_id = uuid.uuid4()
+    ) -> EventSourcedRepoIsolate | None:
+        """Create and return a new isolate within the given OTU.
+        If the isolate name already exists, return None."""
+        otu = self.get_otu(otu_id, ignore_cache=False)
 
         name = IsolateName(**{"type": source_type, "value": source_name})
+        if otu.get_isolate_id_by_name(name) is not None:
+            logger.warning(
+                "An isolate by this name already exists", isolate_name=str(name)
+            )
+            return None
+
+        isolate_id = uuid.uuid4()
 
         event = self._event_store.write_event(
             CreateIsolate,
@@ -292,7 +300,9 @@ class EventSourcedRepo:
             sequences=[],
         )
 
-        self._snapshotter.cache_isolate_to_otu(otu_id, isolate, at_event=self.last_id)
+        otu.add_isolate(isolate)
+
+        self._snapshotter.cache_otu(otu, at_event=self.last_id)
 
         return isolate
 
@@ -305,7 +315,19 @@ class EventSourcedRepo:
         legacy_id: str | None,
         segment: str,
         sequence: str,
-    ):
+    ) -> EventSourcedRepoSequence | None:
+        """Create and return a new sequence within the given OTU.
+        If the accession already exists in this OTU, return None."""
+        otu = self.get_otu(otu_id, ignore_cache=False)
+
+        if accession in otu.accessions:
+            logger.warning(
+                "This accession already exists in the OTU.",
+                accession=accession,
+                otu_id=str(otu_id),
+            )
+            return None
+
         sequence_id = uuid.uuid4()
 
         event = self._event_store.write_event(
@@ -341,9 +363,9 @@ class EventSourcedRepo:
             sequence=sequence,
         )
 
-        self._snapshotter.cache_sequence_to_otu(
-            otu_id, isolate_id, sequence, at_event=self.last_id
-        )
+        otu.add_sequence(sequence, isolate_id)
+
+        self._snapshotter.cache_otu(otu, at_event=self.last_id)
 
         return sequence
 

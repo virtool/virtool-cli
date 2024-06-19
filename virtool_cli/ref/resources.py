@@ -282,6 +282,10 @@ class EventSourcedRepoOTU:
         """Add an isolate to the OTU."""
         self._isolates_by_id[isolate.id] = isolate
 
+    def add_sequence(self, sequence: EventSourcedRepoSequence, isolate_id: UUID):
+        """Add a sequence to a given isolate"""
+        self._isolates_by_id[isolate_id].add_sequence(sequence)
+
     def get_isolate(self, isolate_id: UUID) -> EventSourcedRepoIsolate | None:
         """Return the isolate instance associated with a given UUID if it exists,
         else None.
