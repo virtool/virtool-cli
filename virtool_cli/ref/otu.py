@@ -20,14 +20,8 @@ def create_otu(
     logger = base_logger.bind(taxid=taxid)
 
     if taxid in repo.taxids:
-        otu = repo.get_otu_by_taxid(taxid)
-
-        logger.error(
-            f"Taxonomy ID {taxid} has already been added to this reference.",
-            otu_id=str(otu.id),
-        )
         raise ValueError(
-            f"Taxonomy ID {taxid} has already been added to this reference under OTU Id {str(otu.id)}."
+            f"Taxonomy ID {taxid} has already been added to this reference."
         )
 
     ncbi = NCBIClient.from_repo(repo.path, ignore_cache)
