@@ -16,15 +16,6 @@ from virtool_cli.ref.resources import (
 )
 
 
-@pytest.fixture()
-def snapshotted_scratch(scratch_repo):
-    scratch_repo.snapshot()
-
-    yield scratch_repo
-
-    shutil.rmtree(scratch_repo.cache_path / "snapshot")
-
-
 class TestRepoToSnapshotModel:
     @pytest.mark.parametrize(
         "taxid,accessions",
@@ -40,12 +31,20 @@ class TestRepoToSnapshotModel:
                     "NC_010319",
                 ],
             ),
+            (
+                1169032,
+                ["MH200607", "NC_003355", "KJ207375", "MK431779", "AB017504"],
+            ),
         ],
     )
     def test_sequence_conversion(
-        self, taxid, accessions, snapshotted_scratch, snapshot: SnapshotAssertion
+        self,
+        taxid: int,
+        accessions: list[str],
+        scratch_repo,
+        snapshot: SnapshotAssertion,
     ):
-        otu = snapshotted_scratch.get_otu_by_taxid(taxid)
+        otu = scratch_repo.get_otu_by_taxid(taxid)
 
         for accession in accessions:
             original_sequence = otu.get_sequence_by_accession(accession)
@@ -57,10 +56,8 @@ class TestRepoToSnapshotModel:
             assert converted_model.model_dump() == snapshot
 
     @pytest.mark.parametrize("taxid", [438782, 1441799, 430059])
-    def test_isolate_conversion(
-        self, taxid, snapshotted_scratch, snapshot: SnapshotAssertion
-    ):
-        otu = snapshotted_scratch.get_otu_by_taxid(taxid)
+    def test_isolate_conversion(self, taxid, scratch_repo, snapshot: SnapshotAssertion):
+        otu = scratch_repo.get_otu_by_taxid(taxid)
 
         for isolate in otu.isolates:
             assert type(isolate) is EventSourcedRepoIsolate
@@ -70,10 +67,8 @@ class TestRepoToSnapshotModel:
             assert converted_model.model_dump() == snapshot
 
     @pytest.mark.parametrize("taxid", [438782, 1441799, 430059])
-    def test_otu_conversion(
-        self, taxid, snapshotted_scratch, snapshot: SnapshotAssertion
-    ):
-        otu = snapshotted_scratch.get_otu_by_taxid(taxid)
+    def test_otu_conversion(self, taxid, scratch_repo, snapshot: SnapshotAssertion):
+        otu = scratch_repo.get_otu_by_taxid(taxid)
 
         assert type(otu) is EventSourcedRepoOTU
 
