@@ -12,15 +12,6 @@ def empty_otu_snapshot_path(tmp_path):
     return tmp_path / "empty_otu_snapshot"
 
 
-@pytest.fixture()
-def snapshotted_scratch(scratch_repo):
-    scratch_repo.snapshot()
-
-    yield scratch_repo
-
-    shutil.rmtree(scratch_repo.cache_path / "snapshot")
-
-
 @pytest.mark.parametrize("taxid", [438782, 1441799, 430059])
 class TestOTUSnapshot:
     def test_snapshot_direct(self, taxid: int, scratch_repo, empty_otu_snapshot_path):
@@ -35,13 +26,13 @@ class TestOTUSnapshot:
         assert otu_snapshotter.at_event is None
 
         for filestem in ("otu", "toc", "metadata"):
-            assert otu_snapshotter.path / f"{filestem}.json"
+            assert (otu_snapshotter.path / f"{filestem}.json").exists()
 
-        data_dir = otu_snapshotter.path / "data"
+        data_path = otu_snapshotter.path / "data"
 
-        assert data_dir.exists()
+        assert data_path.exists()
 
-        data_set = {UUID(data_path.stem) for data_path in data_dir.glob("*.json")}
+        data_set = {UUID(path.stem) for path in data_path.glob("*.json")}
 
         isolate_ids = {isolate.id for isolate in otu.isolates}
 
@@ -64,17 +55,17 @@ class TestOTUSnapshot:
 
         assert type(metadata_dict["at_event"]) is int
 
-    def test_load(self, taxid: int, snapshotted_scratch):
+    def test_load(self, taxid: int, scratch_repo):
         """Test OTUSnapshot.load()"""
 
-        rehydrated_otu = snapshotted_scratch.get_otu_by_taxid(taxid)
+        rehydrated_otu = scratch_repo.get_otu_by_taxid(taxid)
 
         assert rehydrated_otu
 
-        otu_id = snapshotted_scratch.index_by_taxid[taxid]
+        otu_id = scratch_repo.index_by_taxid[taxid]
 
         otu_snapshotter = OTUSnapshot(
-            path=snapshotted_scratch.cache_path / f"snapshot/{otu_id}"
+            path=scratch_repo.cache_path / f"snapshot/{otu_id}"
         )
 
         snapshot_otu = otu_snapshotter.load()
@@ -83,14 +74,14 @@ class TestOTUSnapshot:
 
         assert rehydrated_otu.accessions == snapshot_otu.accessions
 
-    def test_toc(self, taxid: int, snapshotted_scratch):
+    def test_toc(self, taxid: int, scratch_repo):
         """Test that the table of contents is written correctly."""
 
-        rehydrated_otu = snapshotted_scratch.get_otu_by_taxid(taxid)
+        rehydrated_otu = scratch_repo.get_otu_by_taxid(taxid)
 
-        otu_id = snapshotted_scratch.index_by_taxid[taxid]
+        otu_id = scratch_repo.index_by_taxid[taxid]
         otu_snapshotter = OTUSnapshot(
-            path=snapshotted_scratch.cache_path / f"snapshot/{otu_id}"
+            path=scratch_repo.cache_path / f"snapshot/{otu_id}"
         )
 
         with open((otu_snapshotter.path / "toc.json"), "rb") as f:
