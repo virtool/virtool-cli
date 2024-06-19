@@ -607,11 +607,15 @@ class EventStore:
     """Interface for the event store"""
 
     def __init__(self, path: Path):
+        path.mkdir(exist_ok=True)
+
         self.path = path
-        if not self.path.exists():
-            path.mkdir()
+        """The path to the event store directory."""
 
         self.last_id = 0
+        """The id of the latest event."""
+
+        # Check that all events are present and set .last_id to the latest event.
         for event_id in self.event_ids:
             if event_id - self.last_id != 1:
                 raise ValueError("Event IDs are not sequential.")
