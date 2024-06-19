@@ -12,12 +12,22 @@ def empty_otu_snapshot_path(tmp_path):
     return tmp_path / "empty_otu_snapshot"
 
 
-@pytest.mark.parametrize("taxid", [438782, 1441799, 430059])
+@pytest.mark.parametrize(
+    "otu_id",
+    [
+        # 438782
+        UUID("1f88507e-1a9a-4ec7-88ed-cc253c6200ce"),
+        # 1441799
+        UUID("c2a22914-12cf-4b66-aa42-e1395e4498de"),
+        # 430059
+        UUID("352325fa-bff2-44b1-a5ad-64de5c786c74"),
+    ],
+)
 class TestOTUSnapshot:
-    def test_snapshot_direct(self, taxid: int, scratch_repo, empty_otu_snapshot_path):
+    def test_snapshot_direct(self, otu_id: UUID, scratch_repo, empty_otu_snapshot_path):
         """Test that OTUSnapshot can build a snapshot directly from a floating OTU."""
 
-        otu = scratch_repo.get_otu_by_taxid(taxid)
+        otu = scratch_repo.get_otu(otu_id)
 
         otu_snapshotter = OTUSnapshot(empty_otu_snapshot_path)
 
@@ -38,12 +48,8 @@ class TestOTUSnapshot:
 
         assert isolate_ids.issubset(data_set)
 
-    def test_snapshot_metadata(self, taxid: int, scratch_repo):
+    def test_snapshot_metadata(self, otu_id: UUID, scratch_repo):
         """Test that EventSourcedRepo's snapshot function produces proper OTU metadata (at_event)."""
-
-        scratch_repo.snapshot()
-
-        otu_id = scratch_repo.index_by_taxid[taxid]
         otu_snapshot_path = scratch_repo.cache_path / f"snapshot/{otu_id}"
 
         assert otu_snapshot_path.exists()
@@ -55,14 +61,12 @@ class TestOTUSnapshot:
 
         assert type(metadata_dict["at_event"]) is int
 
-    def test_load(self, taxid: int, scratch_repo):
+    def test_load(self, otu_id: UUID, scratch_repo):
         """Test OTUSnapshot.load()"""
 
-        rehydrated_otu = scratch_repo.get_otu_by_taxid(taxid)
+        rehydrated_otu = scratch_repo.get_otu(otu_id)
 
         assert rehydrated_otu
-
-        otu_id = scratch_repo.index_by_taxid[taxid]
 
         otu_snapshotter = OTUSnapshot(
             path=scratch_repo.cache_path / f"snapshot/{otu_id}"
@@ -74,12 +78,11 @@ class TestOTUSnapshot:
 
         assert rehydrated_otu.accessions == snapshot_otu.accessions
 
-    def test_toc(self, taxid: int, scratch_repo):
+    def test_toc(self, otu_id: UUID, scratch_repo):
         """Test that the table of contents is written correctly."""
 
-        rehydrated_otu = scratch_repo.get_otu_by_taxid(taxid)
+        rehydrated_otu = scratch_repo.get_otu(otu_id)
 
-        otu_id = scratch_repo.index_by_taxid[taxid]
         otu_snapshotter = OTUSnapshot(
             path=scratch_repo.cache_path / f"snapshot/{otu_id}"
         )

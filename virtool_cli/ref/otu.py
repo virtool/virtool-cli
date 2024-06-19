@@ -19,7 +19,7 @@ def create_otu(
     """Initialize a new OTU from a Taxonomy ID."""
     logger = base_logger.bind(taxid=taxid)
 
-    if taxid in repo.index_by_taxid:
+    if taxid in repo.taxids:
         otu = repo.get_otu_by_taxid(taxid)
 
         logger.error(

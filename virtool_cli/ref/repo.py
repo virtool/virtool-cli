@@ -150,17 +150,14 @@ class EventSourcedRepo:
         return self._event_store.path
 
     @property
-    def otu_ids(self) -> set:
-        """Extant OTU ids in the read model"""
-        return self._snapshotter.otu_ids
+    def taxids(self) -> set:
+        """Extant Taxonomy ids in the read model"""
+        return self._snapshotter.taxids
 
     @property
-    def index_by_id(self) -> dict[uuid.UUID, int]:
-        return self._snapshotter.id_to_taxid
-
-    @property
-    def index_by_taxid(self) -> dict[int, uuid.UUID]:
-        return self._snapshotter.index_by_taxid
+    def accessions(self) -> set:
+        """Extant accessions in the read model"""
+        return self._snapshotter.accessions
 
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
         """Get the current event index from the event store,
@@ -410,7 +407,7 @@ class EventSourcedRepo:
 
     def get_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None"""
-        if (otu_id := self.index_by_taxid[taxid]) is not None:
+        if (otu_id := self._snapshotter.index_by_taxid.get(taxid)) is not None:
             otu = self.get_otu(otu_id)
             return otu
 
