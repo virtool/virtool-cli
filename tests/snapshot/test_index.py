@@ -81,7 +81,7 @@ class TestSnapshotIndexCaching:
 
         assert rehydrated_otu
 
-        snapshot_otu = snapshotter.load_otu_by_taxid(taxid)
+        snapshot_otu = snapshotter.load_by_taxid(taxid)
 
         assert snapshot_otu
 

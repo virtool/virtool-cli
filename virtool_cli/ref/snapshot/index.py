@@ -160,7 +160,7 @@ class Snapshotter:
     def iter_otus(self) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the snapshot"""
         for otu_id in self.otu_ids:
-            yield self.load_otu(otu_id)
+            yield self.load_by_id(otu_id)
 
     def cache_otu(
         self,
@@ -176,7 +176,7 @@ class Snapshotter:
         self._index[otu.id] = OTUKeys.from_otu(otu)
         self._cache_index()
 
-    def load_otu(self, otu_id: UUID) -> EventSourcedRepoOTU | None:
+    def load_by_id(self, otu_id: UUID) -> EventSourcedRepoOTU | None:
         """Loads an OTU from the most recent repo snapshot"""
         try:
             otu_snap = OTUSnapshot(self.path / f"{otu_id}")
@@ -185,12 +185,23 @@ class Snapshotter:
 
         return otu_snap.load()
 
-    def load_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
+    def load_by_name(self, name: str) -> EventSourcedRepoOTU | None:
+        """Takes an OTU name and returns an OTU from the most recent snapshot."""
+        otu_id = self.index_by_name.get(name)
+
+        if otu_id:
+            return self.load_by_id(otu_id)
+
+        return None
+
+    def load_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
         """Takes a Taxonomy ID and returns an OTU from the most recent snapshot."""
         otu_id = self.index_by_taxid[taxid]
 
-        return self.load_otu(otu_id)
+        if otu_id:
+            return self.load_by_id(otu_id)
 
+        return None
     def _build_index(self) -> dict[UUID, OTUKeys]:
         """Build a new index from the contents of the snapshot cache directory"""
         index = {}
@@ -201,7 +212,7 @@ class Snapshotter:
             except ValueError:
                 continue
 
-            otu = self.load_otu(otu_id)
+            otu = self.load_by_id(otu_id)
             if otu is None:
                 raise FileNotFoundError("OTU not found")
             index[otu.id] = OTUKeys(
@@ -260,7 +271,7 @@ class Snapshotter:
             except ValueError:
                 continue
 
-            unindexed_otu = self.load_otu(unlisted_otu_id)
+            unindexed_otu = self.load_by_id(unlisted_otu_id)
 
             self._index[unindexed_otu.id] = OTUKeys.from_otu(unindexed_otu)
 

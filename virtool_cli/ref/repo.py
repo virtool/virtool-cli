@@ -212,12 +212,14 @@ class EventSourcedRepo:
         taxid: int,
     ):
         """Create an OTU."""
-        if taxid in self._snapshotter.taxids:
+        if self.get_otu_by_taxid(taxid):
             raise ValueError(
                 f"OTU already exists as {self._snapshotter.index_by_taxid[taxid]}",
             )
+
         if name in self._snapshotter.index_by_name:
             raise ValueError(f"An OTU with the name '{name}' already exists")
+
         if legacy_id in self._snapshotter.index_by_legacy_id:
             raise ValueError(f"An OTU with the legacy ID '{legacy_id}' already exists")
 
@@ -380,13 +382,13 @@ class EventSourcedRepo:
         """Return an OTU corresponding to a UUID if found in snapshot, else None"""
         logger.debug("Loading OTU from snapshot...", otu_id=str(otu_id))
 
-        return self._snapshotter.load_otu(otu_id)
+        return self._snapshotter.load_by_id(otu_id)
 
     def read_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding to a Taxonomy ID if found in snapshot, else None"""
         logger.debug("Loading OTU from snapshot...", taxid=taxid)
 
-        return self._snapshotter.load_otu_by_taxid(taxid)
+        return self._snapshotter.load_by_taxid(taxid)
 
     def get_otu(
         self,

@@ -14,19 +14,22 @@ base_logger = structlog.get_logger()
 
 
 def create_otu(
-    repo: EventSourcedRepo, taxid: int, ignore_cache: bool = False
+    repo: EventSourcedRepo,
+    taxid: int,
+    ignore_cache: bool = False,
 ) -> EventSourcedRepoOTU:
     """Initialize a new OTU from a Taxonomy ID."""
     logger = base_logger.bind(taxid=taxid)
 
-    if taxid in repo.taxids:
+    if repo.get_otu_by_taxid(taxid):
         raise ValueError(
-            f"Taxonomy ID {taxid} has already been added to this reference."
+            f"Taxonomy ID {taxid} has already been added to this reference.",
         )
 
     ncbi = NCBIClient.from_repo(repo.path, ignore_cache)
 
     taxonomy = ncbi.fetch_taxonomy_record(taxid)
+
     if taxonomy is None:
         logger.fatal(f"Taxonomy ID {taxid} not found")
         sys.exit(1)
@@ -49,10 +52,13 @@ def create_otu(
 
 
 def update_otu(
-    repo: EventSourcedRepo, otu: EventSourcedRepoOTU, ignore_cache: bool = False
+    repo: EventSourcedRepo,
+    otu: EventSourcedRepoOTU,
+    ignore_cache: bool = False,
 ):
     """Fetch a full list of Nucleotide accessions associated with the OTU
-    and pass the list to the add method."""
+    and pass the list to the add method.
+    """
     ncbi = NCBIClient.from_repo(repo.path, ignore_cache)
 
     linked_accessions = ncbi.link_accessions_from_taxid(otu.taxid)
@@ -79,10 +85,8 @@ def group_genbank_records_by_isolate(
             for source_type in IsolateNameType:
                 if source_type in record.source.model_fields_set:
                     isolate_name = IsolateName(
-                        **{
-                            "type": IsolateNameType(source_type),
-                            "value": record.source.model_dump()[source_type],
-                        },
+                        type=IsolateNameType(source_type),
+                        value=record.source.model_dump()[source_type],
                     )
 
                     isolates[isolate_name][record.accession] = record
@@ -97,10 +101,8 @@ def group_genbank_records_by_isolate(
             )
 
             isolate_name = IsolateName(
-                **{
-                    "type": IsolateNameType(IsolateNameType.REFSEQ),
-                    "value": record.accession,
-                },
+                type=IsolateNameType(IsolateNameType.REFSEQ),
+                value=record.accession,
             )
 
             isolates[isolate_name][record.accession] = record
@@ -119,7 +121,8 @@ def add_sequences(
     ignore_cache: bool = False,
 ):
     """Take a list of accessions, filter for eligible accessions and
-    add new sequences to the OTU"""
+    add new sequences to the OTU
+    """
     client = NCBIClient.from_repo(repo.path, ignore_cache)
 
     otu_logger = base_logger.bind(taxid=otu.taxid, otu_id=str(otu.id), name=otu.name)
@@ -147,7 +150,7 @@ def add_sequences(
         isolate_id = otu.get_isolate_id_by_name(isolate_key)
         if isolate_id is None:
             otu_logger.debug(
-                f"Creating isolate for {isolate_key.type}, {isolate_key.value}"
+                f"Creating isolate for {isolate_key.type}, {isolate_key.value}",
             )
             isolate = repo.create_isolate(
                 otu_id=otu.id,
@@ -181,7 +184,7 @@ def add_sequences(
         )
 
     else:
-        otu_logger.info(f"No new sequences added to OTU")
+        otu_logger.info("No new sequences added to OTU")
 
 
 def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
@@ -189,17 +192,13 @@ def get_molecule_from_records(records: list[NCBIGenbank]) -> Molecule:
     for record in records:
         if record.refseq:
             return Molecule(
-                **{
-                    "strandedness": record.strandedness.value,
-                    "type": record.moltype.value,
-                    "topology": record.topology.value,
-                }
+                strandedness=record.strandedness.value,
+                type=record.moltype.value,
+                topology=record.topology.value,
             )
 
     return Molecule(
-        **{
-            "strandedness": records[0].strandedness.value,
-            "type": records[0].moltype.value,
-            "topology": records[0].topology.value,
-        }
+        strandedness=records[0].strandedness.value,
+        type=records[0].moltype.value,
+        topology=records[0].topology.value,
     )
