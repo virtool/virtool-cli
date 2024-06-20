@@ -1,4 +1,3 @@
-import shutil
 from collections.abc import Generator
 from dataclasses import dataclass
 from pathlib import Path
@@ -123,13 +122,6 @@ class Snapshotter:
         return set(self._index.keys())
 
     @property
-    def taxids(self) -> set[int]:
-        """A list of Taxonomy IDs of snapshots."""
-        self._update_index()
-
-        return set(self.index_by_taxid.keys())
-
-    @property
     def accessions(self) -> set[str]:
         return set(self._get_accession_index().keys())
 
@@ -202,6 +194,7 @@ class Snapshotter:
             return self.load_by_id(otu_id)
 
         return None
+
     def _build_index(self) -> dict[UUID, OTUKeys]:
         """Build a new index from the contents of the snapshot cache directory"""
         index = {}

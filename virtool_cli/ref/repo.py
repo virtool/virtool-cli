@@ -212,9 +212,9 @@ class EventSourcedRepo:
         taxid: int,
     ):
         """Create an OTU."""
-        if self.get_otu_by_taxid(taxid):
+        if otu := self.get_otu_by_taxid(taxid):
             raise ValueError(
-                f"OTU already exists as {self._snapshotter.index_by_taxid[taxid]}",
+                f"OTU already exists as {otu}",
             )
 
         if name in self._snapshotter.index_by_name:
