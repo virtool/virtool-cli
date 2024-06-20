@@ -1,15 +1,13 @@
+from collections.abc import Generator
 from dataclasses import dataclass
 from pathlib import Path
-import shutil
 from uuid import UUID
-from collections.abc import Generator
 
 import orjson
 from structlog import get_logger
 
-from virtool_cli.ref.resources import RepoMeta, EventSourcedRepoOTU
+from virtool_cli.ref.resources import EventSourcedRepoOTU, RepoMeta
 from virtool_cli.ref.snapshot.otu import OTUSnapshot
-
 
 logger = get_logger()
 
@@ -55,9 +53,8 @@ class OTUKeys:
         )
 
 
-class SnapshotIndex:
-    """Manages OTUSnapshot loading and caching,
-    and maintains an index of the contents."""
+class Snapshotter:
+    """Load and cache OTU snapshots."""
 
     def __init__(self, path: Path):
         self.path = path
@@ -82,7 +79,7 @@ class SnapshotIndex:
         with open(path / "meta.json", "wb") as f:
             f.write(orjson.dumps(metadata.model_dump()))
 
-        return SnapshotIndex(path)
+        return Snapshotter(path)
 
     @property
     def id_to_taxid(self) -> dict[UUID, int]:
@@ -125,20 +122,8 @@ class SnapshotIndex:
         return set(self._index.keys())
 
     @property
-    def taxids(self) -> set[int]:
-        """A list of Taxonomy IDs of snapshots."""
-        self._update_index()
-
-        return set(self.index_by_taxid.keys())
-
-    @property
     def accessions(self) -> set[str]:
         return set(self._get_accession_index().keys())
-
-    def clean(self):
-        """Remove and remake snapshot cache directory"""
-        shutil.rmtree(self.path)
-        self.path.mkdir(exist_ok=True)
 
     def snapshot(
         self,
@@ -167,10 +152,13 @@ class SnapshotIndex:
     def iter_otus(self) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the snapshot"""
         for otu_id in self.otu_ids:
-            yield self.load_otu(otu_id)
+            yield self.load_by_id(otu_id)
 
     def cache_otu(
-        self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
+        self,
+        otu: "EventSourcedRepoOTU",
+        at_event: int | None = None,
+        options=None,
     ):
         """Snapshots a single OTU"""
         logger.debug(f"Writing a snapshot for {otu.taxid}...")
@@ -180,7 +168,7 @@ class SnapshotIndex:
         self._index[otu.id] = OTUKeys.from_otu(otu)
         self._cache_index()
 
-    def load_otu(self, otu_id: UUID) -> EventSourcedRepoOTU | None:
+    def load_by_id(self, otu_id: UUID) -> EventSourcedRepoOTU | None:
         """Loads an OTU from the most recent repo snapshot"""
         try:
             otu_snap = OTUSnapshot(self.path / f"{otu_id}")
@@ -189,11 +177,23 @@ class SnapshotIndex:
 
         return otu_snap.load()
 
-    def load_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
+    def load_by_name(self, name: str) -> EventSourcedRepoOTU | None:
+        """Takes an OTU name and returns an OTU from the most recent snapshot."""
+        otu_id = self.index_by_name.get(name)
+
+        if otu_id:
+            return self.load_by_id(otu_id)
+
+        return None
+
+    def load_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
         """Takes a Taxonomy ID and returns an OTU from the most recent snapshot."""
         otu_id = self.index_by_taxid[taxid]
 
-        return self.load_otu(otu_id)
+        if otu_id:
+            return self.load_by_id(otu_id)
+
+        return None
 
     def _build_index(self) -> dict[UUID, OTUKeys]:
         """Build a new index from the contents of the snapshot cache directory"""
@@ -205,7 +205,7 @@ class SnapshotIndex:
             except ValueError:
                 continue
 
-            otu = self.load_otu(otu_id)
+            otu = self.load_by_id(otu_id)
             if otu is None:
                 raise FileNotFoundError("OTU not found")
             index[otu.id] = OTUKeys(
@@ -253,7 +253,6 @@ class SnapshotIndex:
 
     def _update_index(self):
         """Update the index in memory."""
-
         filename_index = {str(otu_id) for otu_id in self._index}
 
         for subpath in self.path.iterdir():
@@ -265,7 +264,7 @@ class SnapshotIndex:
             except ValueError:
                 continue
 
-            unindexed_otu = self.load_otu(unlisted_otu_id)
+            unindexed_otu = self.load_by_id(unlisted_otu_id)
 
             self._index[unindexed_otu.id] = OTUKeys.from_otu(unindexed_otu)
 
