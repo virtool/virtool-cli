@@ -1,5 +1,6 @@
 import pytest
 
+from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.snapshot.index import Snapshotter
 
 
@@ -19,27 +20,36 @@ class TestSnapshotIndex:
         for otu_id in true_otu_ids:
             assert otu_id in snapshotter.id_to_taxid
 
-    def test_taxids(self, scratch_repo, snapshotter):
-        true_otu_taxids = [
-            otu.taxid for otu in scratch_repo.get_all_otus(ignore_cache=True)
-        ]
+    def test_load_by_id(self, snapshotter: Snapshotter, scratch_repo: EventSourcedRepo):
+        """Test that we can load an OTU by its ID."""
+        otu_ids = [otu.id for otu in scratch_repo.get_all_otus(ignore_cache=True)]
 
-        assert snapshotter.taxids
+        for otu_id in otu_ids:
+            assert snapshotter.load_by_id(otu_id).id == otu_id
 
-        assert len(true_otu_taxids) == len(snapshotter.taxids)
+    def test_load_by_taxid(
+        self,
+        scratch_repo: EventSourcedRepo,
+        snapshotter: Snapshotter,
+    ):
+        """Test that we can load an OTU by its taxid."""
+        taxids = [otu.taxid for otu in scratch_repo.get_all_otus(ignore_cache=True)]
 
-        for taxid in true_otu_taxids:
-            assert taxid in snapshotter.index_by_taxid
+        for taxid in taxids:
+            assert snapshotter.load_by_taxid(taxid).taxid == taxid
 
-    def test_names(self, scratch_repo, snapshotter):
+    def test_load_by_name(
+        self,
+        scratch_repo: EventSourcedRepo,
+        snapshotter: Snapshotter,
+    ):
+        """Test that we can load an OTU by its name."""
         true_otu_names = [
             otu.name for otu in scratch_repo.get_all_otus(ignore_cache=True)
         ]
 
-        assert len(true_otu_names) == len(snapshotter.index_by_name)
-
         for name in true_otu_names:
-            assert name in snapshotter.index_by_name
+            assert snapshotter.load_by_name(name).name == name
 
     def test_accessions(self, scratch_repo, snapshotter):
         true_accessions = set()

@@ -78,7 +78,7 @@ class EventSourcedRepo:
         self._event_index_cache = EventIndexCache(self.cache_path / "event_index")
         """The event index cache of the event sourced repository."""
 
-        self._snapshotter = (
+        self._snapshotter: Snapshotter = (
             Snapshotter(path=self._snapshot_path)
             if self._snapshot_path.exists()
             else Snapshotter.new(path=self._snapshot_path, metadata=self.meta)
@@ -403,6 +403,12 @@ class EventSourcedRepo:
             return self._rehydrate_otu(event_ids)
 
         return None
+
+    def get_otu_by_name(
+        self,
+        name: str,
+    ):
+        return self._snapshotter.load_by_name(name)
 
     def get_otu_by_taxid(
         self,
