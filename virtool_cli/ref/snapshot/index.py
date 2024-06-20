@@ -133,11 +133,6 @@ class Snapshotter:
     def accessions(self) -> set[str]:
         return set(self._get_accession_index().keys())
 
-    def clean(self):
-        """Remove and remake snapshot cache directory"""
-        shutil.rmtree(self.path)
-        self.path.mkdir(exist_ok=True)
-
     def snapshot(
         self,
         otus: list[EventSourcedRepoOTU],
