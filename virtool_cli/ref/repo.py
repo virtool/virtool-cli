@@ -149,16 +149,6 @@ class EventSourcedRepo:
         """The path to the repo src directory."""
         return self._event_store.path
 
-    @property
-    def taxids(self) -> set:
-        """Extant Taxonomy ids in the read model"""
-        return self._snapshotter.taxids
-
-    @property
-    def accessions(self) -> set:
-        """Extant accessions in the read model"""
-        return self._snapshotter.accessions
-
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
         """Get the current event index from the event store,
         binned and indexed by OTU Id.
