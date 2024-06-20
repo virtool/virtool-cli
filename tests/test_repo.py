@@ -390,7 +390,7 @@ class TestRetrieveOTU:
         assert empty_repo.last_id == 6
 
     def test_get_accessions(self, initialized_repo: EventSourcedRepo):
-        otu = list(initialized_repo.iter_otus())[0]
+        otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
 
         assert otu.accessions == {"TMVABC"}
 
@@ -405,15 +405,16 @@ class TestRetrieveOTU:
             "ACGTGGAGAGACC",
         )
 
-        otu = list(initialized_repo.iter_otus())[0]
+        otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
 
         assert otu.accessions == {"TMVABC", "TMVABCB"}
 
     def test_get_blocked_accessions(self, initialized_repo: EventSourcedRepo):
-        otu_id = initialized_repo.index_otus()[12242]
-        isolate_b = initialized_repo.create_isolate(otu_id, None, "B", "isolate")
+        otu = initialized_repo.get_otu_by_taxid(12242)
+
+        isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
         initialized_repo.create_sequence(
-            otu_id,
+            otu.id,
             isolate_b.id,
             "TMVABCB",
             "TMV",
@@ -422,15 +423,15 @@ class TestRetrieveOTU:
             "ACGTGGAGAGACC",
         )
 
-        initialized_repo.exclude_accession(otu_id, "GROK")
-        initialized_repo.exclude_accession(otu_id, "TOK")
+        initialized_repo.exclude_accession(otu.id, "GROK")
+        initialized_repo.exclude_accession(otu.id, "TOK")
 
-        otu = initialized_repo.get_otu(otu_id)
+        otu = initialized_repo.get_otu(otu.id)
 
         assert otu.blocked_accessions == {"TMVABC", "TMVABCB", "GROK", "TOK"}
 
     def test_get_isolate(self, initialized_repo: EventSourcedRepo):
-        otu = list(initialized_repo.iter_otus())[0]
+        otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
 
         isolate_ids = {isolate.id for isolate in otu.isolates}
 
@@ -438,7 +439,7 @@ class TestRetrieveOTU:
             assert otu.get_isolate(isolate_id) in otu.isolates
 
     def test_get_isolate_id_by_name(self, initialized_repo: EventSourcedRepo):
-        otu = list(initialized_repo.iter_otus())[0]
+        otu = initialized_repo.get_all_otus()[0]
 
         isolate_ids = {isolate.id for isolate in otu.isolates}
 
@@ -499,7 +500,7 @@ class TestEventIndexCache:
     def test_equivalence(self, initialized_repo: EventSourcedRepo):
         assert initialized_repo.last_id == 4
 
-        otu = list(initialized_repo.iter_otus())[0]
+        otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
 
         otu_from_cache = initialized_repo.get_otu(otu.id, ignore_cache=False)
         otu_from_scratch = initialized_repo.get_otu(otu.id, ignore_cache=True)
@@ -531,7 +532,7 @@ class TestEventIndexCache:
         )
 
     def test_get_otu_without_cached_events(self, initialized_repo: EventSourcedRepo):
-        otu = list(initialized_repo.iter_otus())[0]
+        otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
 
         initialized_repo._event_index_cache.clear_cached_otu_events(otu.id)
 

@@ -220,6 +220,7 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     assert NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
 
 
+@pytest.mark.skip("ESpell is encountering issues.")
 @pytest.mark.ncbi()
 @pytest.mark.parametrize(
     "misspelled,expected",

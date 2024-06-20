@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from virtool_cli.ref.utils import format_json, pad_zeroes
+from virtool_cli.ref.utils import format_json, pad_zeroes, IsolateName, IsolateNameType
 
 
 class TestPadZeroes:
@@ -40,3 +40,27 @@ def test_format_json(tmp_path: Path):
         '  "number": 10\n'
         "}"
     )
+
+
+@pytest.mark.parametrize(
+    "isolate_type, isolate_value",
+    [("isolate", "pymav-01"), ("clone", "NOB-3"), ("refseq", "NC_043133")],
+)
+class TestIsolateName:
+    def test_dict_init(self, isolate_type: str, isolate_value: str):
+        complete_name = IsolateName(
+            type=IsolateNameType(isolate_type), value=isolate_value
+        )
+
+        dict_form = {"type": isolate_type, "value": isolate_value}
+
+        assert IsolateName.from_dict(dict_form) == complete_name
+
+    def test_string_init(self, isolate_type: str, isolate_value: str):
+        complete_name = IsolateName(
+            type=IsolateNameType(isolate_type), value=isolate_value
+        )
+
+        string_name = str(complete_name)
+
+        assert IsolateName.from_string(string_name) == complete_name
