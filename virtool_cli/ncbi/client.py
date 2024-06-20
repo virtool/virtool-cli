@@ -105,13 +105,11 @@ class NCBIClient:
         try:
             with log_http_error():
                 try:
-                    records = Entrez.read(
-                        Entrez.efetch(
-                            db=NCBIDatabase.NUCCORE,
-                            id=accessions,
-                            rettype="gb",
-                            retmode="xml",
-                        ),
+                    handle = Entrez.efetch(
+                        db=NCBIDatabase.NUCCORE,
+                        id=accessions,
+                        rettype="gb",
+                        retmode="xml",
                     )
                 except RuntimeError as e:
                     logger.warning(f"Bad ID. (RunTime Error: {e})")
@@ -123,6 +121,12 @@ class NCBIClient:
             else:
                 logger.error(e)
 
+            return []
+
+        try:
+            records = Entrez.read(handle)
+        except RuntimeError as e:
+            logger.error(f"NCBI returned unparseable data ({e})")
             return []
 
         if records:
@@ -175,17 +179,21 @@ class NCBIClient:
         logger = base_logger.bind(taxid=taxid)
         try:
             with log_http_error():
-                elink_results = Entrez.read(
-                    Entrez.elink(
-                        dbfrom="taxonomy",
-                        db=NCBIDatabase.NUCCORE,
-                        id=str(taxid),
-                        idtype="acc",
-                    ),
+                handle = Entrez.elink(
+                    dbfrom="taxonomy",
+                    db=NCBIDatabase.NUCCORE,
+                    id=str(taxid),
+                    idtype="acc",
                 )
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
             logger.error("Your request was likely refused by NCBI.")
+            return []
+
+        try:
+            elink_results = Entrez.read(handle)
+        except RuntimeError as e:
+            logger.error(f"NCBI returned unparseable data ({e})")
             return []
 
         if elink_results:
@@ -258,17 +266,21 @@ class NCBIClient:
         if record is None:
             with log_http_error():
                 try:
-                    records = Entrez.read(
-                        Entrez.efetch(
-                            db=NCBIDatabase.TAXONOMY,
-                            id=taxid,
-                            rettype="null",
-                        ),
+                    handle = Entrez.efetch(
+                        db=NCBIDatabase.TAXONOMY,
+                        id=taxid,
+                        rettype="null",
                     )
                 except HTTPError as e:
                     logger.error(f"{e.code}: {e.reason}")
                     logger.error("Your request was likely refused by NCBI.")
                     return None
+
+            try:
+                records = Entrez.read(handle)
+            except RuntimeError as e:
+                logger.error(f"NCBI returned unparseable data ({e})")
+                return None
 
             if records:
                 record = records[0]
@@ -328,17 +340,21 @@ class NCBIClient:
 
         try:
             with log_http_error():
-                docsum_record = Entrez.read(
-                    Entrez.efetch(
-                        db=NCBIDatabase.TAXONOMY,
-                        id=taxid,
-                        rettype="docsum",
-                        retmode="xml",
-                    ),
+                handle = Entrez.efetch(
+                    db=NCBIDatabase.TAXONOMY,
+                    id=taxid,
+                    rettype="docsum",
+                    retmode="xml",
                 )
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
             logger.error("Your request was likely refused by NCBI.")
+            return None
+
+        try:
+            docsum_record = Entrez.read(handle)
+        except RuntimeError as e:
+            logger.error(f"NCBI returned unparseable data ({e})")
             return None
 
         try:
@@ -387,10 +403,16 @@ class NCBIClient:
         logger = base_logger.bind(name=name)
         try:
             with log_http_error():
-                record = Entrez.read(Entrez.esearch(db="taxonomy", term=name))
+                handle = Entrez.esearch(db="taxonomy", term=name)
         except HTTPError as e:
             logger.error(f"{e.code}: {e.reason}")
             logger.error("Your request was likely refused by NCBI.")
+            return None
+
+        try:
+            record = Entrez.read(handle)
+        except RuntimeError as e:
+            logger.error(f"NCBI returned unparseable data ({e})")
             return None
 
         try:
@@ -422,7 +444,7 @@ class NCBIClient:
         try:
             record = Entrez.read(handle)
         except RuntimeError as e:
-            logger.error(f"Server error ({e})")
+            logger.error(f"NCBI returned unparseable data ({e})")
             return None
 
         if "CorrectedQuery" in record:
