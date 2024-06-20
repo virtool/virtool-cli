@@ -1,15 +1,14 @@
+import shutil
+from collections.abc import Generator
 from dataclasses import dataclass
 from pathlib import Path
-import shutil
 from uuid import UUID
-from collections.abc import Generator
 
 import orjson
 from structlog import get_logger
 
-from virtool_cli.ref.resources import RepoMeta, EventSourcedRepoOTU
+from virtool_cli.ref.resources import EventSourcedRepoOTU, RepoMeta
 from virtool_cli.ref.snapshot.otu import OTUSnapshot
-
 
 logger = get_logger()
 
@@ -55,9 +54,8 @@ class OTUKeys:
         )
 
 
-class SnapshotIndex:
-    """Manages OTUSnapshot loading and caching,
-    and maintains an index of the contents."""
+class Snapshotter:
+    """Load and cache OTU snapshots."""
 
     def __init__(self, path: Path):
         self.path = path
@@ -82,7 +80,7 @@ class SnapshotIndex:
         with open(path / "meta.json", "wb") as f:
             f.write(orjson.dumps(metadata.model_dump()))
 
-        return SnapshotIndex(path)
+        return Snapshotter(path)
 
     @property
     def id_to_taxid(self) -> dict[UUID, int]:
@@ -170,7 +168,10 @@ class SnapshotIndex:
             yield self.load_otu(otu_id)
 
     def cache_otu(
-        self, otu: "EventSourcedRepoOTU", at_event: int | None = None, options=None
+        self,
+        otu: "EventSourcedRepoOTU",
+        at_event: int | None = None,
+        options=None,
     ):
         """Snapshots a single OTU"""
         logger.debug(f"Writing a snapshot for {otu.taxid}...")
@@ -253,7 +254,6 @@ class SnapshotIndex:
 
     def _update_index(self):
         """Update the index in memory."""
-
         filename_index = {str(otu_id) for otu_id in self._index}
 
         for subpath in self.path.iterdir():

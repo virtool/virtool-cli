@@ -1,11 +1,11 @@
 import pytest
 
-from virtool_cli.ref.snapshot.index import SnapshotIndex
+from virtool_cli.ref.snapshot.index import Snapshotter
 
 
 @pytest.fixture()
 def snapshotter(scratch_repo):
-    return SnapshotIndex(scratch_repo.path / ".cache/snapshot")
+    return Snapshotter(scratch_repo.path / ".cache/snapshot")
 
 
 class TestSnapshotIndex:
@@ -69,7 +69,11 @@ class TestSnapshotIndexCaching:
         ],
     )
     def test_load_otu_by_taxid(
-        self, taxid: int, accessions: list[str], scratch_repo, snapshotter
+        self,
+        taxid: int,
+        accessions: list[str],
+        scratch_repo,
+        snapshotter,
     ):
         scratch_repo.snapshot()
 

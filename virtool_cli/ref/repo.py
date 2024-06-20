@@ -23,6 +23,7 @@ import arrow
 from orjson import orjson
 from structlog import get_logger
 
+from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
 from virtool_cli.ref.events import (
     CreateIsolate,
     CreateIsolateData,
@@ -48,10 +49,9 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
     RepoMeta,
 )
-from virtool_cli.ref.snapshot.index import SnapshotIndex
-from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
-from virtool_cli.utils.models import Molecule
+from virtool_cli.ref.snapshot.index import Snapshotter
 from virtool_cli.ref.utils import DataType, IsolateName, pad_zeroes
+from virtool_cli.utils.models import Molecule
 
 logger = get_logger("repo")
 
@@ -79,9 +79,9 @@ class EventSourcedRepo:
         """The event index cache of the event sourced repository."""
 
         self._snapshotter = (
-            SnapshotIndex(path=self._snapshot_path)
+            Snapshotter(path=self._snapshot_path)
             if self._snapshot_path.exists()
-            else SnapshotIndex.new(path=self._snapshot_path, metadata=self.meta)
+            else Snapshotter.new(path=self._snapshot_path, metadata=self.meta)
         )
         """The snapshot index. Maintains and caches the read model of the Repo."""
 
@@ -161,7 +161,8 @@ class EventSourcedRepo:
 
     def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
         """Get the current event index from the event store,
-        binned and indexed by OTU Id."""
+        binned and indexed by OTU Id.
+        """
         otu_event_index = defaultdict(list)
 
         for event in self._event_store.iter_events():
@@ -171,7 +172,8 @@ class EventSourcedRepo:
         return otu_event_index
 
     def _get_event_index_after_start(
-        self, start: int = 1
+        self,
+        start: int = 1,
     ) -> dict[uuid.UUID, list[int]]:
         """Get the current event index, binned and indexed by OTU ID"""
         otu_event_index = defaultdict(list)
@@ -265,13 +267,15 @@ class EventSourcedRepo:
         source_type: str,
     ) -> EventSourcedRepoIsolate | None:
         """Create and return a new isolate within the given OTU.
-        If the isolate name already exists, return None."""
+        If the isolate name already exists, return None.
+        """
         otu = self.get_otu(otu_id, ignore_cache=False)
 
-        name = IsolateName(**{"type": source_type, "value": source_name})
+        name = IsolateName(type=source_type, value=source_name)
         if otu.get_isolate_id_by_name(name) is not None:
             logger.warning(
-                "An isolate by this name already exists", isolate_name=str(name)
+                "An isolate by this name already exists",
+                isolate_name=str(name),
             )
             return None
 
@@ -314,7 +318,8 @@ class EventSourcedRepo:
         sequence: str,
     ) -> EventSourcedRepoSequence | None:
         """Create and return a new sequence within the given OTU.
-        If the accession already exists in this OTU, return None."""
+        If the accession already exists in this OTU, return None.
+        """
         otu = self.get_otu(otu_id, ignore_cache=False)
 
         if accession in otu.accessions:
@@ -394,7 +399,9 @@ class EventSourcedRepo:
         return self._snapshotter.load_otu_by_taxid(taxid)
 
     def get_otu(
-        self, otu_id: uuid.UUID, ignore_cache: bool = False
+        self,
+        otu_id: uuid.UUID,
+        ignore_cache: bool = False,
     ) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None."""
         logger.debug("Getting OTU from events...", otu_id=str(otu_id))
@@ -406,7 +413,9 @@ class EventSourcedRepo:
         return None
 
     def get_otu_by_taxid(
-        self, taxid: int, ignore_cache: bool = False
+        self,
+        taxid: int,
+        ignore_cache: bool = False,
     ) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None"""
         if (otu_id := self._snapshotter.index_by_taxid.get(taxid)) is not None:
@@ -493,10 +502,11 @@ class EventSourcedRepo:
         }
 
     def _get_otu_events(
-        self, otu_id: uuid.UUID, ignore_cache: bool = False
+        self,
+        otu_id: uuid.UUID,
+        ignore_cache: bool = False,
     ) -> list[int]:
-        """
-        Returns an up-to-date list of events associated with this OTU Id.
+        """Returns an up-to-date list of events associated with this OTU Id.
 
         If ignore_cache, loads the OTU's event index cache and makes sure
         the results are up to date before returning the list.
@@ -540,7 +550,9 @@ class EventSourcedRepo:
         otu_logger.debug("Writing events to cache...", events=event_ids)
 
         self._event_index_cache.cache_otu_events(
-            otu_id, event_ids, last_id=self.last_id
+            otu_id,
+            event_ids,
+            last_id=self.last_id,
         )
 
         return event_ids
@@ -569,7 +581,7 @@ class EventSourcedRepo:
             if cached_otu_index.at_event > self.last_id:
                 raise EventIndexCacheError(
                     "Bad Index: "
-                    + "Cached event index is greater than current repo's last ID"
+                    + "Cached event index is greater than current repo's last ID",
                 )
 
             # Update event list
@@ -583,7 +595,7 @@ class EventSourcedRepo:
             otu_event_list = cached_otu_index.events
 
             for event in self._event_store.iter_events_from_index(
-                start=cached_otu_index.at_event
+                start=cached_otu_index.at_event,
             ):
                 if type(event) in OTU_EVENT_TYPES and event.id not in otu_event_list:
                     otu_event_list.append(event.id)
@@ -597,7 +609,9 @@ class EventSourcedRepo:
             )
 
             self._event_index_cache.cache_otu_events(
-                otu_id, otu_event_list, last_id=self.last_id
+                otu_id,
+                otu_event_list,
+                last_id=self.last_id,
             )
 
             return otu_event_list
@@ -660,7 +674,7 @@ class EventStore:
 
     def read_event(self, event_id: int) -> Event:
         return EventStore._read_event_at_path(
-            self.path / f"{pad_zeroes(event_id)}.json"
+            self.path / f"{pad_zeroes(event_id)}.json",
         )
 
     def write_event(
