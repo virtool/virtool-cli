@@ -33,7 +33,7 @@ class TestClientFetchGenbank:
     )
     def test_fetch_genbank_records_from_ncbi(
         self,
-        accessions,
+        accessions: list[str],
         empty_client,
         snapshot: SnapshotAssertion,
     ):
@@ -59,7 +59,7 @@ class TestClientFetchGenbank:
     )
     def test_fetch_genbank_records_from_cache(
         self,
-        accessions,
+        accessions: list[str],
         scratch_ncbi_cache_path,
         snapshot: SnapshotAssertion,
     ):
@@ -151,7 +151,7 @@ class TestClientFetchRawGenbank:
 
 @pytest.mark.ncbi()
 @pytest.mark.parametrize("taxid", [345184, 1198450, 1016856])
-def test_fetch_records_by_taxid(taxid, empty_client, snapshot):
+def test_fetch_records_by_taxid(taxid: int, empty_client, snapshot: SnapshotAssertion):
     assert not list(empty_client.cache._genbank_path.glob("*.json"))
 
     records = empty_client.link_from_taxid_and_fetch(taxid)
@@ -172,7 +172,7 @@ class TestClientFetchTaxonomy:
     @pytest.mark.parametrize("taxid", [438782, 1198450, 1016856])
     def test_fetch_taxonomy_from_ncbi(
         self,
-        taxid,
+        taxid: int,
         empty_client,
         snapshot: SnapshotAssertion,
     ):
@@ -220,7 +220,7 @@ async def test_fetch_taxonomy_by_name(name: str, taxid: int):
     assert NCBIClient.fetch_taxonomy_id_by_name(name) == taxid
 
 
-@pytest.mark.skip("ESpell is encountering issues.")
+# @pytest.mark.skip("ESpell is encountering issues.")
 @pytest.mark.ncbi()
 @pytest.mark.parametrize(
     "misspelled,expected",
