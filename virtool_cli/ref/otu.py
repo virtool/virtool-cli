@@ -21,7 +21,7 @@ def create_otu(
     """Initialize a new OTU from a Taxonomy ID."""
     logger = base_logger.bind(taxid=taxid)
 
-    if taxid in repo.taxids:
+    if repo.get_otu_by_taxid(taxid):
         raise ValueError(
             f"Taxonomy ID {taxid} has already been added to this reference.",
         )

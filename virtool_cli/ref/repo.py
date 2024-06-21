@@ -49,8 +49,8 @@ from virtool_cli.ref.resources import (
     EventSourcedRepoSequence,
     RepoMeta,
 )
-from virtool_cli.ref.snapshot.index import SnapshotIndex
-from virtool_cli.ref.utils import DataType, IsolateName, IsolateNameType, pad_zeroes
+from virtool_cli.ref.snapshot.index import Snapshotter
+from virtool_cli.ref.utils import DataType, IsolateName, pad_zeroes
 from virtool_cli.utils.models import Molecule
 
 logger = get_logger("repo")
@@ -144,9 +144,34 @@ class EventSourcedRepo:
         raise ValueError("No repository creation event found")
 
     @property
-    def taxids(self) -> set:
-        """Extant Taxonomy ids in the read model"""
-        return self._snapshotter.taxids
+    def src_path(self) -> Path:
+        """The path to the repo src directory."""
+        return self._event_store.path
+
+    def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
+        """Get the current event index from the event store,
+        binned and indexed by OTU Id.
+        """
+        otu_event_index = defaultdict(list)
+
+        for event in self._event_store.iter_events():
+            if type(event) in OTU_EVENT_TYPES:
+                otu_event_index[event.query.otu_id].append(event.id)
+
+        return otu_event_index
+
+    def _get_event_index_after_start(
+        self,
+        start: int = 1,
+    ) -> dict[uuid.UUID, list[int]]:
+        """Get the current event index, binned and indexed by OTU ID"""
+        otu_event_index = defaultdict(list)
+
+        for event in self._event_store.iter_events_from_index(start):
+            if type(event) in OTU_EVENT_TYPES:
+                otu_event_index[event.query.otu_id].append(event.id)
+
+        return otu_event_index
 
     def snapshot(self):
         """Create a snapshot using all the OTUs in the event store."""
@@ -190,9 +215,9 @@ class EventSourcedRepo:
         taxid: int,
     ):
         """Create an OTU."""
-        if taxid in self._snapshotter.taxids:
+        if otu := self.get_otu_by_taxid(taxid):
             raise ValueError(
-                f"OTU already exists as {self._snapshotter.index_by_taxid[taxid]}",
+                f"OTU already exists as {otu}",
             )
 
         if name in self._snapshotter.index_by_name:
