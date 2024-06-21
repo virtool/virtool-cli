@@ -50,7 +50,7 @@ from virtool_cli.ref.resources import (
     RepoMeta,
 )
 from virtool_cli.ref.snapshot.index import Snapshotter
-from virtool_cli.ref.utils import DataType, IsolateName, pad_zeroes
+from virtool_cli.ref.utils import DataType, IsolateName, IsolateNameType, pad_zeroes
 from virtool_cli.utils.models import Molecule
 
 logger = get_logger("repo")
@@ -78,9 +78,9 @@ class EventSourcedRepo:
         snapshot_path = path / ".cache/snapshot"
 
         self._snapshotter = (
-            SnapshotIndex(path=snapshot_path)
+            Snapshotter(path=snapshot_path)
             if snapshot_path.exists()
-            else SnapshotIndex.new(path=snapshot_path, metadata=self.meta)
+            else Snapshotter.new(path=snapshot_path, metadata=self.meta)
         )
         """The snapshot index. Maintains and caches the read model of the Repo."""
 
@@ -142,36 +142,6 @@ class EventSourcedRepo:
                 return RepoMeta(**repo, created_at=event.timestamp)
 
         raise ValueError("No repository creation event found")
-
-    @property
-    def src_path(self) -> Path:
-        """The path to the repo src directory."""
-        return self._event_store.path
-
-    def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
-        """Get the current event index from the event store,
-        binned and indexed by OTU Id.
-        """
-        otu_event_index = defaultdict(list)
-
-        for event in self._event_store.iter_events():
-            if type(event) in OTU_EVENT_TYPES:
-                otu_event_index[event.query.otu_id].append(event.id)
-
-        return otu_event_index
-
-    def _get_event_index_after_start(
-        self,
-        start: int = 1,
-    ) -> dict[uuid.UUID, list[int]]:
-        """Get the current event index, binned and indexed by OTU ID"""
-        otu_event_index = defaultdict(list)
-
-        for event in self._event_store.iter_events_from_index(start):
-            if type(event) in OTU_EVENT_TYPES:
-                otu_event_index[event.query.otu_id].append(event.id)
-
-        return otu_event_index
 
     def snapshot(self):
         """Create a snapshot using all the OTUs in the event store."""
