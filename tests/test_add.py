@@ -54,7 +54,7 @@ class TestCreateOTU:
 
         # Ensure only one OTU is present in the repository, and it matches the return
         # value of the creation function.
-        assert [otu for otu in precached_repo.iter_otus()] == [otu]
+        assert list(precached_repo.iter_otus()) == [otu]
 
     @pytest.mark.ncbi()
     def test_autofill(
@@ -86,23 +86,13 @@ class TestCreateOTU:
 
 
 class TestAddSequences:
-    @pytest.mark.parametrize(
-        "taxid,accessions",
-        [
-            (
-                345184,
-                ["DQ178614", "DQ178613", "DQ178610", "DQ178611"],
-            ),
-        ],
-    )
     def test_success(
         self,
-        taxid,
-        accessions,
-        precached_repo,
+        precached_repo: EventSourcedRepo,
         snapshot: SnapshotAssertion,
     ):
-        run_add_sequences_command(taxid, accessions, precached_repo.path)
+        accessions = ["DQ178614", "DQ178613", "DQ178610", "DQ178611"]
+        run_add_sequences_command(345184, accessions, precached_repo.path)
 
         for otu in precached_repo.get_all_otus():
             assert otu.accessions == set(accessions)

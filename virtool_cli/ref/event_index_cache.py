@@ -63,15 +63,15 @@ class EventIndex:
         return event_index
 
     def get(self, otu_id: UUID) -> EventIndexItem | None:
-        """Takes a requested OTU Id and returns an OTUEventCache(otu_id, at_event, events)
-        if possible, else None if the event record does not exist.
+        """Takes a requested OTU Id and returns an OTUEventCache object.
+
+        If no object exists for ``otu_id``, ``None`` is returned.
 
         If the cached data is not compatible with the repo's event store,
         raise an EventIndexCacheError.
 
         :param otu_id: A Virtool OTU Id
-        :return: OTUEventIndex(at_event, events) if a valid event list
-            can be found in the cache, else None
+        :return: An OTUEventCache object or None
         """
         path = self.path / f"{otu_id}.json"
 
