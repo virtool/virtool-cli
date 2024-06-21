@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 from uuid import UUID
 
@@ -14,7 +15,7 @@ from virtool_cli.ref.utils import DataType, IsolateName
 from virtool_cli.utils.models import Molecule, MolType, Strandedness, Topology
 
 
-@pytest.fixture
+@pytest.fixture()
 def initialized_repo(empty_repo: EventSourcedRepo):
     otu = empty_repo.create_otu(
         "TMV",
@@ -40,7 +41,7 @@ def initialized_repo(empty_repo: EventSourcedRepo):
         "ACGT",
     )
 
-    yield empty_repo
+    return empty_repo
 
 
 def init_otu(empty_repo: EventSourcedRepo) -> EventSourcedRepoOTU:
@@ -333,13 +334,13 @@ class TestRetrieveOTU:
             "ACGTGGAGAGACC",
         )
 
-        otu = empty_repo.get_otu(otu.id, ignore_cache=True)
+        otu = empty_repo.get_otu(otu.id)
 
         otu_contents = [
             EventSourcedRepoIsolate(
                 uuid=isolate_a.id,
                 legacy_id=None,
-                name=IsolateName(**{"type": "isolate", "value": "A"}),
+                name=IsolateName(type="isolate", value="A"),
                 sequences=[
                     EventSourcedRepoSequence(
                         id=otu.isolates[0].sequences[0].id,
@@ -354,7 +355,7 @@ class TestRetrieveOTU:
             EventSourcedRepoIsolate(
                 uuid=isolate_b.id,
                 legacy_id=None,
-                name=IsolateName(**{"type": "isolate", "value": "B"}),
+                name=IsolateName(type="isolate", value="B"),
                 sequences=[
                     EventSourcedRepoSequence(
                         id=otu.isolates[1].sequences[0].id,
@@ -388,6 +389,10 @@ class TestRetrieveOTU:
         )
 
         assert empty_repo.last_id == 6
+
+    def test_retrieve_nonexistent_otu(self, initialized_repo: EventSourcedRepo):
+        """Test that getting an OTU that does not exist returns ``None``."""
+        assert initialized_repo.get_otu(uuid.uuid4()) is None
 
     def test_get_accessions(self, initialized_repo: EventSourcedRepo):
         otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
@@ -430,6 +435,8 @@ class TestRetrieveOTU:
 
         assert otu.blocked_accessions == {"TMVABC", "TMVABCB", "GROK", "TOK"}
 
+
+class TestGetIsolate:
     def test_get_isolate(self, initialized_repo: EventSourcedRepo):
         otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
 
@@ -444,7 +451,7 @@ class TestRetrieveOTU:
         isolate_ids = {isolate.id for isolate in otu.isolates}
 
         assert (
-            otu.get_isolate_id_by_name(IsolateName(**{"type": "isolate", "value": "A"}))
+            otu.get_isolate_id_by_name(IsolateName(type="isolate", value="A"))
             in isolate_ids
         )
 
@@ -484,56 +491,13 @@ def test_exclude_accession(empty_repo: EventSourcedRepo):
             "type": "ExcludeAccession",
         }
 
-    assert empty_repo.get_otu(otu.id, ignore_cache=True).excluded_accessions == {
-        "TMVABC"
+    assert empty_repo.get_otu(otu.id).excluded_accessions == {
+        "TMVABC",
     }
 
     empty_repo.exclude_accession(otu.id, "ABTV")
 
-    assert empty_repo.get_otu(otu.id, ignore_cache=True).excluded_accessions == {
+    assert empty_repo.get_otu(otu.id).excluded_accessions == {
         "TMVABC",
         "ABTV",
     }
-
-
-class TestEventIndexCache:
-    def test_equivalence(self, initialized_repo: EventSourcedRepo):
-        assert initialized_repo.last_id == 4
-
-        otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
-
-        otu_from_cache = initialized_repo.get_otu(otu.id, ignore_cache=False)
-        otu_from_scratch = initialized_repo.get_otu(otu.id, ignore_cache=True)
-        assert otu_from_cache.dict() == otu_from_scratch.dict()
-
-        isolate_b = initialized_repo.create_isolate(otu.id, None, "B", "isolate")
-        initialized_repo.create_sequence(
-            otu.id,
-            isolate_b.id,
-            "TMVABCB",
-            "TMV",
-            None,
-            "RNA",
-            "ACGTGGAGAGACC",
-        )
-
-        assert initialized_repo.last_id == 6
-
-        otu_from_cache = initialized_repo.get_otu(otu.id, ignore_cache=False)
-        otu_from_scratch = initialized_repo.get_otu(otu.id, ignore_cache=True)
-        assert otu_from_cache.dict() == otu_from_scratch.dict()
-
-    def test_retrieve_nonexistent_otu(self, initialized_repo: EventSourcedRepo):
-        assert (
-            initialized_repo.get_otu(
-                UUID("48b453fb-b60a-4f53-85f1-2941cd3ac5af"), ignore_cache=False
-            )
-            is None
-        )
-
-    def test_get_otu_without_cached_events(self, initialized_repo: EventSourcedRepo):
-        otu = list(initialized_repo.get_all_otus(ignore_cache=True))[0]
-
-        initialized_repo._event_index_cache.clear_cached_otu_events(otu.id)
-
-        assert initialized_repo.get_otu(otu.id, ignore_cache=False) is not None

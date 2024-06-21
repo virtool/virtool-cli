@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestAddOTU.test_autofill_success[345184]
+# name: TestCreateOTU.test_autofill
   dict({
     'acronym': '',
     'excluded_accessions': list([
@@ -12,7 +12,7 @@
     'taxid': 345184,
   })
 # ---
-# name: TestAddOTU.test_empty_success[345184]
+# name: TestCreateOTU.test_empty_success
   dict({
     'acronym': '',
     'excluded_accessions': list([
@@ -24,4 +24,19 @@
     ]),
     'taxid': 345184,
   })
+# ---
+# name: TestUpdateOTU.test_success_no_exclusions
+  list([
+    dict({
+      'acronym': '',
+      'excluded_accessions': list([
+      ]),
+      'legacy_id': None,
+      'molecule': None,
+      'name': 'Cabbage leaf curl Jamaica virus',
+      'schema': list([
+      ]),
+      'taxid': 345184,
+    }),
+  ])
 # ---

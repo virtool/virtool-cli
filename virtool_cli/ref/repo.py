@@ -23,6 +23,7 @@ import arrow
 from orjson import orjson
 from structlog import get_logger
 
+from virtool_cli.ref.event_index_cache import EventIndex, EventIndexError
 from virtool_cli.ref.events import (
     CreateIsolate,
     CreateIsolateData,
@@ -49,9 +50,8 @@ from virtool_cli.ref.resources import (
     RepoMeta,
 )
 from virtool_cli.ref.snapshot.index import SnapshotIndex
-from virtool_cli.ref.event_index_cache import EventIndexCache, EventIndexCacheError
+from virtool_cli.ref.utils import DataType, IsolateName, IsolateNameType, pad_zeroes
 from virtool_cli.utils.models import Molecule
-from virtool_cli.ref.utils import DataType, IsolateName, pad_zeroes
 
 logger = get_logger("repo")
 
@@ -72,16 +72,15 @@ class EventSourcedRepo:
         self._event_store = EventStore(self.path / "src")
         """The event store of the event sourced repository."""
 
-        self._snapshot_path = path / ".cache/snapshot"
-        """The path to the snapshot cache subdirectory."""
-
-        self._event_index_cache = EventIndexCache(self.cache_path / "event_index")
+        self._event_index = EventIndex(self.cache_path / "index")
         """The event index cache of the event sourced repository."""
 
+        snapshot_path = path / ".cache/snapshot"
+
         self._snapshotter = (
-            SnapshotIndex(path=self._snapshot_path)
-            if self._snapshot_path.exists()
-            else SnapshotIndex.new(path=self._snapshot_path, metadata=self.meta)
+            SnapshotIndex(path=snapshot_path)
+            if snapshot_path.exists()
+            else SnapshotIndex.new(path=snapshot_path, metadata=self.meta)
         )
         """The snapshot index. Maintains and caches the read model of the Repo."""
 
@@ -145,42 +144,9 @@ class EventSourcedRepo:
         raise ValueError("No repository creation event found")
 
     @property
-    def src_path(self) -> Path:
-        """The path to the repo src directory."""
-        return self._event_store.path
-
-    @property
     def taxids(self) -> set:
         """Extant Taxonomy ids in the read model"""
         return self._snapshotter.taxids
-
-    @property
-    def accessions(self) -> set:
-        """Extant accessions in the read model"""
-        return self._snapshotter.accessions
-
-    def _get_event_index(self) -> dict[uuid.UUID, list[int]]:
-        """Get the current event index from the event store,
-        binned and indexed by OTU Id."""
-        otu_event_index = defaultdict(list)
-
-        for event in self._event_store.iter_events():
-            if type(event) in OTU_EVENT_TYPES:
-                otu_event_index[event.query.otu_id].append(event.id)
-
-        return otu_event_index
-
-    def _get_event_index_after_start(
-        self, start: int = 1
-    ) -> dict[uuid.UUID, list[int]]:
-        """Get the current event index, binned and indexed by OTU ID"""
-        otu_event_index = defaultdict(list)
-
-        for event in self._event_store.iter_events_from_index(start):
-            if type(event) in OTU_EVENT_TYPES:
-                otu_event_index[event.query.otu_id].append(event.id)
-
-        return otu_event_index
 
     def snapshot(self):
         """Create a snapshot using all the OTUs in the event store."""
@@ -192,20 +158,24 @@ class EventSourcedRepo:
 
     def iter_otus(self) -> Generator[EventSourcedRepoOTU, None, None]:
         """Iterate over the OTUs in the snapshot."""
-        for otu_id in self._snapshotter.otu_ids:
-            otu = self._snapshotter.get_otu(otu_id)
-            yield otu
+        for otu_id in self._event_index.load():
+            yield self.get_otu(otu_id)
 
     def get_all_otus(self, ignore_cache: bool = False) -> list[EventSourcedRepoOTU]:
         """Retrieve all OTUs from the event store and return as a list."""
         if ignore_cache:
-            event_index = self._get_event_index()
+            event_index = defaultdict(list)
+
+            for event in self._event_store.iter_events():
+                if type(event) in OTU_EVENT_TYPES:
+                    event_index[event.query.otu_id].append(event.id)
         else:
-            event_index = self._event_index_cache.load_index()
+            event_index = self._event_index.load()
 
         otus = []
+
         for otu_id in event_index:
-            if otu := self.get_otu(otu_id, ignore_cache):
+            if otu := self.get_otu(otu_id):
                 otus.append(otu)
 
         return otus
@@ -224,8 +194,10 @@ class EventSourcedRepo:
             raise ValueError(
                 f"OTU already exists as {self._snapshotter.index_by_taxid[taxid]}",
             )
+
         if name in self._snapshotter.index_by_name:
             raise ValueError(f"An OTU with the name '{name}' already exists")
+
         if legacy_id in self._snapshotter.index_by_legacy_id:
             raise ValueError(f"An OTU with the legacy ID '{legacy_id}' already exists")
 
@@ -262,16 +234,18 @@ class EventSourcedRepo:
         otu_id: uuid.UUID,
         legacy_id: str | None,
         source_name: str,
-        source_type: str,
+        source_type: IsolateNameType,
     ) -> EventSourcedRepoIsolate | None:
         """Create and return a new isolate within the given OTU.
-        If the isolate name already exists, return None."""
-        otu = self.get_otu(otu_id, ignore_cache=False)
+        If the isolate name already exists, return None.
+        """
+        otu = self.get_otu(otu_id)
 
-        name = IsolateName(**{"type": source_type, "value": source_name})
+        name = IsolateName(type=source_type, value=source_name)
         if otu.get_isolate_id_by_name(name) is not None:
             logger.warning(
-                "An isolate by this name already exists", isolate_name=str(name)
+                "An isolate by this name already exists",
+                isolate_name=str(name),
             )
             return None
 
@@ -314,8 +288,9 @@ class EventSourcedRepo:
         sequence: str,
     ) -> EventSourcedRepoSequence | None:
         """Create and return a new sequence within the given OTU.
-        If the accession already exists in this OTU, return None."""
-        otu = self.get_otu(otu_id, ignore_cache=False)
+        If the accession already exists in this OTU, return None.
+        """
+        otu = self.get_otu(otu_id)
 
         if accession in otu.accessions:
             logger.warning(
@@ -381,36 +356,17 @@ class EventSourcedRepo:
             OTUQuery(otu_id=otu_id),
         )
 
-    def read_otu(self, otu_id: uuid.UUID) -> EventSourcedRepoOTU | None:
-        """Return an OTU corresponding to a UUID if found in snapshot, else None"""
-        logger.debug("Loading OTU from snapshot...", otu_id=str(otu_id))
-
-        return self._snapshotter.load_otu(otu_id)
-
-    def read_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
-        """Return an OTU corresponding to a Taxonomy ID if found in snapshot, else None"""
-        logger.debug("Loading OTU from snapshot...", taxid=taxid)
-
-        return self._snapshotter.load_otu_by_taxid(taxid)
-
-    def get_otu(
-        self, otu_id: uuid.UUID, ignore_cache: bool = False
-    ) -> EventSourcedRepoOTU | None:
+    def get_otu(self, otu_id: uuid.UUID) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None."""
-        logger.debug("Getting OTU from events...", otu_id=str(otu_id))
-        event_ids = self._get_otu_events(otu_id, ignore_cache)
-
-        if event_ids:
+        if event_ids := self._get_otu_event_ids(otu_id):
             return self._rehydrate_otu(event_ids)
 
         return None
 
-    def get_otu_by_taxid(
-        self, taxid: int, ignore_cache: bool = False
-    ) -> EventSourcedRepoOTU | None:
+    def get_otu_by_taxid(self, taxid: int) -> EventSourcedRepoOTU | None:
         """Return an OTU corresponding with a given OTU Id if it exists, else None"""
         if (otu_id := self._snapshotter.index_by_taxid.get(taxid)) is not None:
-            otu = self.get_otu(otu_id, ignore_cache=ignore_cache)
+            otu = self.get_otu(otu_id)
             return otu
 
         return None
@@ -467,142 +423,46 @@ class EventSourcedRepo:
                             ),
                         )
 
+        otu.isolates.sort(key=lambda i: f"{i.name.type} {i.name.value}")
+
+        for isolate in otu.isolates:
+            isolate.sequences.sort(key=lambda s: s.accession)
+
         return otu
 
-    def _get_otu_metadata(self, event_ids: list[int]) -> dict | None:
-        """Retrieves OTU metadata from a list of event IDs"""
-        if not event_ids:
-            return None
+    def _get_otu_event_ids(self, otu_id: uuid.UUID) -> list[int]:
+        """Gets a list of all event IDs associated with ``otu_id``."""
+        event_ids = []
+
+        # Start at zero if no events are indexed.
+        at_event = 0
+
+        if indexed := self._event_index.get(otu_id):
+            if indexed.at_event == self.last_id:
+                return indexed.event_ids
+
+            if indexed.at_event > self.last_id:
+                raise EventIndexError("Event index is ahead of the event store.")
+
+            at_event = indexed.at_event
+            event_ids = indexed.event_ids
+
+        for event in self._event_store.iter_events(start=at_event + 1):
+            if type(event) in OTU_EVENT_TYPES and event.query.otu_id == otu_id:
+                if event.id in event_ids:
+                    raise ValueError("Event ID already in event list.")
+
+                event_ids.append(event.id)
+
         event_ids.sort()
-        first_event_id = event_ids[0]
 
-        event = self._event_store.read_event(first_event_id)
-
-        if not isinstance(event, CreateOTU):
-            raise ValueError(
-                f"The first event ({first_event_id}) for an OTU is not a CreateOTU "
-                "event",
-            )
-
-        return {
-            "id": event.data.id,
-            "acronym": event.data.acronym,
-            "legacy_id": event.data.legacy_id,
-            "name": event.data.name,
-            "taxid": event.data.taxid,
-        }
-
-    def _get_otu_events(
-        self, otu_id: uuid.UUID, ignore_cache: bool = False
-    ) -> list[int]:
-        """
-        Returns an up-to-date list of events associated with this OTU Id.
-
-        If ignore_cache, loads the OTU's event index cache and makes sure
-        the results are up to date before returning the list.
-
-        If cache load fails or ignore_cache is False, generates a new event list.
-        """
-        otu_logger = logger.bind(otu_id=str(otu_id), ignore_cache=ignore_cache)
-
-        if not ignore_cache:
-            try:
-                otu_event_list = self._load_otu_events_from_cache_and_update(otu_id)
-
-                if otu_event_list:
-                    otu_logger.debug(
-                        "Cached events found",
-                        event_ids=otu_event_list,
-                        last_event=self.last_id,
-                    )
-                    return otu_event_list
-
-                otu_logger.debug(
-                    "Event index cache was empty.",
-                    event_ids=otu_event_list,
-                    last_event=self.last_id,
-                )
-
-            except EventIndexCacheError as e:
-                logger.warning(e, last_event=self.last_id)
-
-                logger.debug("Deleting bad index...")
-                self._event_index_cache.clear_cached_otu_events(otu_id)
-
-        otu_logger.debug("Searching event store for matching events...")
-
-        event_ids = [
-            event.id
-            for event in self._event_store.iter_events()
-            if (type(event) in OTU_EVENT_TYPES and event.query.otu_id == otu_id)
-        ]
-
-        otu_logger.debug("Writing events to cache...", events=event_ids)
-
-        self._event_index_cache.cache_otu_events(
-            otu_id, event_ids, last_id=self.last_id
+        self._event_index.set(
+            otu_id,
+            event_ids,
+            self.last_id,
         )
 
         return event_ids
-
-    def _load_otu_events_from_cache_and_update(self, otu_id: uuid.UUID) -> list[int]:
-        """Gets OTU events from the event index cache,
-        updates the list it is not up to date and returns the list.
-        """
-        otu_logger = logger.bind(otu_id=str(otu_id))
-
-        cached_otu_index = None
-        try:
-            cached_otu_index = self._event_index_cache.load_otu_events(otu_id)
-
-        except EventIndexCacheError as e:
-            logger.error(e)
-
-            logger.warning("Deleting bad index...")
-
-            self._event_index_cache.clear_cached_otu_events(otu_id)
-
-        if cached_otu_index is not None:
-            if cached_otu_index.at_event == self.last_id:
-                return cached_otu_index.events
-
-            if cached_otu_index.at_event > self.last_id:
-                raise EventIndexCacheError(
-                    "Bad Index: "
-                    + "Cached event index is greater than current repo's last ID"
-                )
-
-            # Update event list
-            otu_logger.debug(
-                "Cached event list is out of date",
-                cached_events=cached_otu_index.events,
-                cache_at=cached_otu_index.at_event,
-                last_event=self.last_id,
-            )
-
-            otu_event_list = cached_otu_index.events
-
-            for event in self._event_store.iter_events_from_index(
-                start=cached_otu_index.at_event
-            ):
-                if type(event) in OTU_EVENT_TYPES and event.id not in otu_event_list:
-                    otu_event_list.append(event.id)
-
-            otu_event_list.sort()
-
-            otu_logger.debug(
-                "Added new events to event list.",
-                cached_events=cached_otu_index.events,
-                updated_events=otu_event_list,
-            )
-
-            self._event_index_cache.cache_otu_events(
-                otu_id, otu_event_list, last_id=self.last_id
-            )
-
-            return otu_event_list
-
-        return []
 
 
 class EventStore:
@@ -627,40 +487,38 @@ class EventStore:
     @property
     def event_ids(self) -> list:
         event_ids = []
+
         for event_path in self.path.iterdir():
             try:
                 event_ids.append(int(event_path.stem))
             except ValueError:
                 continue
+
         event_ids.sort()
 
         return event_ids
 
-    def iter_events(self, reverse: bool = False):
-        for path in sorted(self.path.glob("*.json"), reverse=reverse):
+    def iter_events(
+        self,
+        start: int = 1,
+    ) -> Generator[Event, None, None]:
+        """"""
+        if start < 1:
+            raise IndexError("Start event ID cannot be less than 1")
+
+        if start not in [int(path.stem) for path in self.path.glob("*.json")]:
+            raise IndexError(f"Event {start} not found in event store")
+
+        for path in sorted(self.path.glob("*.json")):
             if path.stem == "meta":
                 continue
-            yield EventStore._read_event_at_path(path)
 
-    def iter_events_from_index(self, start: int = 1) -> Generator[Event, None, None]:
-        """Iterates through events in the src directory using the index id.
-
-        :param start: The event ID to be read first.
-            Setting start > 1 will begin the iterator
-            from the middle of the event store.
-        """
-        if start < 1:
-            raise IndexError("Start index cannot be <1")
-
-        if start > self.last_id:
-            raise IndexError(f"Start index cannot be >{self.last_id}")
-
-        for event_index in range(start, self.last_id + 1):
-            yield self.read_event(event_index)
+            if int(path.stem) >= start:
+                yield EventStore._read_event_at_path(path)
 
     def read_event(self, event_id: int) -> Event:
         return EventStore._read_event_at_path(
-            self.path / f"{pad_zeroes(event_id)}.json"
+            self.path / f"{pad_zeroes(event_id)}.json",
         )
 
     def write_event(

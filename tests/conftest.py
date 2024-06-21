@@ -6,8 +6,6 @@ import pytest
 from virtool_cli.legacy.utils import build_legacy_otu
 from virtool_cli.ncbi.cache import NCBICache
 from virtool_cli.ncbi.client import NCBIClient
-from virtool_cli.ref.init import init_reference
-from virtool_cli.ref.legacy import Repo
 from virtool_cli.ref.repo import EventSourcedRepo
 from virtool_cli.ref.utils import DataType
 
@@ -26,36 +24,16 @@ def scratch_path(scratch_repo: EventSourcedRepo) -> Path:
 @pytest.fixture()
 def scratch_repo(test_files_path: Path, tmp_path: Path) -> EventSourcedRepo:
     """A prepared scratch repository."""
-    path = tmp_path / "reference"
+    path = tmp_path / "scratch_repo"
 
-    shutil.copytree(test_files_path / "src_test", path / "src", dirs_exist_ok=True)
-    shutil.copytree(test_files_path / "cache_test", path / ".cache", dirs_exist_ok=True)
+    shutil.copytree(test_files_path / "src_test", path / "src")
+    shutil.copytree(test_files_path / "cache_test", path / ".cache")
 
-    yield EventSourcedRepo(path)
-
-    shutil.rmtree(path / ".cache")
-    shutil.rmtree(path / "src")
-
-
-@pytest.fixture()
-def scratch_src_path(scratch_path: Path) -> Path:
-    """The source path of a scratch reference repository.
-
-    TODO: Remove this along with flattened repo code.
-    """
-    return scratch_path / "src"
+    return EventSourcedRepo(path)
 
 
 @pytest.fixture()
 def scratch_ncbi_cache_path(
-    scratch_path: Path,
-) -> Path:
-    """The path to a scratch NCBI client cache."""
-    return scratch_path / ".cache"
-
-
-@pytest.fixture()
-def scratch_partial_ncbi_cache_path(
     scratch_path: Path,
 ) -> Path:
     """The path to a scratch NCBI client cache."""
@@ -90,7 +68,7 @@ def legacy_repo_path(
     tmp_path: Path,
 ) -> Path:
     """The path to a scratch legacy reference."""
-    path = tmp_path / "reference"
+    path = tmp_path / "legacy_repo"
 
     shutil.copytree(test_files_path / "src_v1", path / "src", dirs_exist_ok=True)
 
@@ -102,3 +80,19 @@ def legacy_otu(legacy_repo_path: Path) -> dict:
     return build_legacy_otu(
         legacy_repo_path / "src" / "a" / "abaca_bunchy_top_virus",
     )
+
+
+@pytest.fixture()
+def cache_example_path(test_files_path):
+    return test_files_path / "cache_test"
+
+
+@pytest.fixture()
+def precached_repo(cache_example_path: Path, tmp_path: Path) -> EventSourcedRepo:
+    path = tmp_path / "precached_repo"
+
+    repo = EventSourcedRepo.new(DataType.GENOME, "Empty", path, "virus")
+
+    shutil.copytree(cache_example_path, path / ".cache" / "ncbi")
+
+    return repo
