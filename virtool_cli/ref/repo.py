@@ -23,7 +23,6 @@ import arrow
 from orjson import orjson
 from structlog import get_logger
 
-from virtool_cli.ref.event_index_cache import EventIndex, EventIndexError
 from virtool_cli.ref.events import (
     CreateIsolate,
     CreateIsolateData,
@@ -43,6 +42,7 @@ from virtool_cli.ref.events import (
     RepoQuery,
     SequenceQuery,
 )
+from virtool_cli.ref.index import EventIndex, EventIndexError
 from virtool_cli.ref.resources import (
     EventSourcedRepoIsolate,
     EventSourcedRepoOTU,
