@@ -51,8 +51,12 @@ class EventIndex:
                 ),
             )
 
-    def load(self):
-        """Cache an event index dictionary"""
+    def load(self) -> dict[UUID, list[int]]:
+        """Load the entire event index into a dictionary of OTU IDs to all associated
+        event IDs.
+
+        returns: a dictionary of OTU IDs to event IDs
+        """
         event_index = {}
 
         for path in self.path.iterdir():
