@@ -61,6 +61,10 @@ class NCBISource(BaseModel):
     segment: str = ""
     strain: str = ""
     clone: str = ""
+    proviral: bool = False
+    macronuclear: bool = False
+    focus: bool = False
+    transgenic: bool = False
 
     @model_validator(mode="before")
     @classmethod
@@ -117,12 +121,17 @@ class NCBIGenbank(BaseModel):
         """Create a source object from the feature table."""
         for feature in raw:
             if feature["GBFeature_key"] == "source":
-                return NCBISource(
-                    **{
-                        qual["GBQualifier_name"]: qual.get("GBQualifier_value", "")
-                        for qual in feature["GBFeature_quals"]
-                    },
-                )
+                source_dict = {}
+
+                for qualifier in feature["GBFeature_quals"]:
+                    key = qualifier["GBQualifier_name"]
+
+                    if "GBQualifier_value" in qualifier:
+                        source_dict[key] = qualifier["GBQualifier_value"]
+                    else:
+                        source_dict[key] = True
+
+                return NCBISource(**source_dict)
 
         raise ValueError("Feature table contains no ``source`` table.")
 
