@@ -8,7 +8,7 @@ from virtool_cli.ref.event_index_cache import EventIndex, EventIndexItem
 
 def test_index(tmp_path: Path):
     """Test that we can set, get, and load cached events for an OTU."""
-    path = Path("tests/data")
+    path = Path(tmp_path / "index")
 
     index = EventIndex(path)
 
@@ -27,8 +27,8 @@ def test_index(tmp_path: Path):
     )
 
 
-def test_index_not_found():
+def test_index_not_found(tmp_path: Path):
     """Test that we get ``None`` when an OTU ID is not found."""
-    path = Path("tests/data")
+    path = Path(tmp_path / "index")
 
     assert EventIndex(path).get(uuid.uuid4()) is None
