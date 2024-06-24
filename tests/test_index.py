@@ -3,10 +3,15 @@
 import uuid
 from pathlib import Path
 
+import pytest
+
 from virtool_cli.ref.event_index_cache import EventIndex, EventIndexItem
 
 
-def test_index(tmp_path: Path):
+@pytest.mark.parametrize(
+    "event_ids", ([1, 5, 20, 99, 110], [5, 20, 1, 99, 110]), ids=["sorted", "unsorted"]
+)
+def test_index(event_ids: list[int], tmp_path: Path):
     """Test that we can set, get, and load cached events for an OTU."""
     path = Path(tmp_path / "index")
 
@@ -14,7 +19,7 @@ def test_index(tmp_path: Path):
 
     otu_id = uuid.uuid4()
 
-    index.set(otu_id, [1, 5, 20, 99, 110], 112)
+    index.set(otu_id, event_ids, 112)
 
     assert (
         index.get(otu_id)
