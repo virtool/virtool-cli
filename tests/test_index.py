@@ -5,11 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from virtool_cli.ref.event_index_cache import EventIndex, EventIndexItem
+from virtool_cli.ref.index import EventIndex, EventIndexItem
 
 
 @pytest.mark.parametrize(
-    "event_ids", ([1, 5, 20, 99, 110], [5, 20, 1, 99, 110]), ids=["sorted", "unsorted"]
+    "event_ids",
+    ([1, 5, 20, 99, 110], [5, 20, 1, 99, 110]),
+    ids=["sorted", "unsorted"],
 )
 def test_index(event_ids: list[int], tmp_path: Path):
     """Test that we can set, get, and load cached events for an OTU."""
