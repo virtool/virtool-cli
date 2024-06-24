@@ -62,6 +62,9 @@ class NCBISource(BaseModel):
     strain: str = ""
     clone: str = ""
     proviral: bool = False
+    macronuclear: bool = False
+    focus: bool = False
+    transgenic: bool = False
 
     @model_validator(mode="before")
     @classmethod
