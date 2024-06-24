@@ -43,7 +43,6 @@ def create_otu(
             schema=[],
             taxid=taxid,
         )
-        logger.debug("Created OTU", id=str(otu.id), name=otu.name, taxid=taxid)
 
         return otu
     except ValueError as e:
